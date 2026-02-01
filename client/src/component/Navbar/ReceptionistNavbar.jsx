@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Logo from '../../assets/Logo.png'
+import CompanyLogo from '../ComapnyLogo/CompanyLogo';
 
 
 const ReceptionistNavbar = () => {
@@ -13,12 +14,7 @@ const ReceptionistNavbar = () => {
               min-h-16
               md:min-h-12 md:px-24
               ">
-                <img
-                    src={Logo}
-                    alt="Lanka-Capital"
-                    className="cursor-pointer w-[clamp(4rem,8vw,6rem)] object-contain"
-                // onClick={handleNavigate}
-                />
+                <CompanyLogo />
 
                 <nav className="hidden md:flex gap-8">
                     <div className="cursor-pointer hover:text-blue-600">Home</div>
