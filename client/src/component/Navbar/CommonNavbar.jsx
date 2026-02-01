@@ -7,7 +7,7 @@ const CommonNavbar = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <header className="bg-white text-black shadow-lg relative">
+        <header className="fixed top-0 left-0 w-full bg-white text-black shadow-lg z-50">
             <div className="
             flex items-center justify-between
             px-4 py-3
