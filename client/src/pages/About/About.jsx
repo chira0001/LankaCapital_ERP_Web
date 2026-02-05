@@ -17,7 +17,7 @@ const About = () => {
         {
             Image: about1,
             Title: "Simple, Smart, and Secure Lending",
-            Description: "Our company delivers easy‑to‑access loan services with fair interest rates and quick approvals. We prioritize customer satisfaction, data security, and long‑term financial stability."
+            Description: "Our company delivers easy access loan services with fair interest rates and quick approvals. We prioritize customer satisfaction, data security, and long‑term financial stability."
         }
     ]
 
@@ -44,7 +44,7 @@ const About = () => {
                         >
                             <img src={detail.Image} alt="" className='w-[12rem] self-center' />
                             <span className='bg-gray-400 px-6 py-3 font-bold text-4xl'>
-                                {index < 9 ? `0${index+1}` : index+1}
+                                {index < 9 ? `0${index + 1}` : index + 1}
                             </span>
                             <div className='bg-gray-100 py-4 rounded-b-2xl'>
                                 <h2 className='px-6 font-bold text-2xl'>{detail.Title}</h2>
