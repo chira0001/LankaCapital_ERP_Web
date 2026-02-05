@@ -5,7 +5,7 @@ const Footer = () => {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="bg-white text-black flex flex-col items-center justify-center gap-4 py-6">
+        <footer className="bg-gray-100 text-black shadow-2xl flex flex-col items-center justify-center gap-4 py-6">
             <CompanyLogo />
             <div className=' md:text-2xl'>
                 N K R S Lanka Capital Pvt. Ltd
