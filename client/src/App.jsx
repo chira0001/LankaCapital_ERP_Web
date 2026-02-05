@@ -23,6 +23,7 @@ const App = () => {
     //   <About />
     //   <Footer />
     // </div>
+    //
   )
 }
 
