@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
-import Logo from '../../assets/Logo.png'
 import CompanyLogo from '../ComapnyLogo/CompanyLogo';
+import { Link } from 'react-router-dom';
 
 const CommonNavbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -17,9 +17,9 @@ const CommonNavbar = () => {
                 <CompanyLogo />
 
                 <nav className="hidden md:flex gap-8">
-                    <div className="cursor-pointer hover:text-blue-600">Home</div>
-                    <div className="cursor-pointer hover:text-blue-600">About</div>
-                    <div className="cursor-pointer hover:text-blue-600">Contact</div>
+                    <Link to="/" className='cursor-pointer'>Home</Link>
+                    <Link to="/about" className='cursor-pointer'>About</Link>
+                    <Link to="/contact" className="cursor-pointer">Contact</Link>
                 </nav>
 
                 <div className="hidden md:flex gap-4">
@@ -49,9 +49,9 @@ const CommonNavbar = () => {
                 `}
             >
                 <nav className="flex flex-col items-center gap-6 py-6">
-                    <div className="cursor-pointer hover:text-blue-600">Home</div>
-                    <div className="cursor-pointer hover:text-blue-600">About</div>
-                    <div className="cursor-pointer hover:text-blue-600">Contact</div>
+                    <Link to="/" className='cursor-pointer'>Home</Link>
+                    <Link to="/about" className='cursor-pointer'>About</Link>
+                    <Link to="/contact" className="cursor-pointer">Contact</Link>
 
                     <div className="flex gap-4 pt-4">
                         <button className="px-4 py-1.5 bg-black text-white rounded">
