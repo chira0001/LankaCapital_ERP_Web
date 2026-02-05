@@ -1,7 +1,7 @@
 import React from 'react'
-import about1 from '../../assets/about1.png'
-import about2 from '../../assets/about2.png'
-import about3 from '../../assets/about3.png'
+import about1 from '../../assets/About1.png'
+import about2 from '../../assets/About2.png'
+import about3 from '../../assets/About3.png'
 import CommonNavbar from '../../component/Navbar/CommonNavbar'
 import Footer from '../../component/Footer/Footer'
 
