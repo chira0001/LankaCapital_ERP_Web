@@ -3,8 +3,15 @@ import React from 'react'
 import HomeImg from '../../assets/Home.jpg'
 import CommonNavbar from '../../component/Navbar/CommonNavbar'
 import Footer from '../../component/Footer/Footer'
+import { useNavigate } from 'react-router-dom'
 
 const Home = () => {
+  const navigate = useNavigate();
+
+  const navigateContact = () => {
+    navigate('/contact');
+  }
+
   return (
     <>
       <CommonNavbar />
@@ -25,7 +32,7 @@ const Home = () => {
             We provide fast, secure, and transparent financial solutions tailored to your needs. Your financial growth is our priority.
           </span>
 
-          <button className='w-fit border hover:bg-amber-50 hover:text-black'>Contact Us</button>
+          <button className='w-fit border hover:bg-amber-50 hover:text-black' onClick={navigateContact}>Contact Us</button>
         </div>
       </div>
       <Footer />

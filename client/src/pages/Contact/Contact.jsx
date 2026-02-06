@@ -1,8 +1,32 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ContactInfo from '../../component/ContactInfo/ContactInfo'
 import CommonNavbar from '../../component/Navbar/CommonNavbar'
+import Footer from '../../component/Footer/Footer'
 
 const Contact = () => {
+
+    const [firstName, setFirstName] = useState();
+    const [businessName, setBusinessName] = useState();
+    const [businessEmail, setBusinessEmail] = useState();
+    const [businessPhone, setBusinessPhone] = useState();
+    const [message, setMessage] = useState();
+
+    const [isError, setIsError] = useState(false);
+
+
+    const sendMessage = (e) => {
+        e.preventDefault();
+        validate();
+        console.log(`${firstName}, ${businessName}, ${businessEmail}, ${businessPhone}, ${message}`);
+    }
+
+    const validate = () => {
+        if (firstName == "" || firstName == null) {
+            setIsError(true);
+        }
+    }
+
+    const icon = <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill={"currentColor"} viewBox={"0 0 24 24"}>{/* Boxicons v3.0.8 https://boxicons.com | License  https://docs.boxicons.com/free */}<path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path><path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path></svg>;
 
     const contactInfos = [
         {
@@ -31,8 +55,8 @@ const Contact = () => {
     return (
         <>
             <CommonNavbar />
-            <div className='text-black bg-white flex flex-col items-center px-4 md:px-24 gap-4 py-30'>
-                <h1>Contact Us</h1>
+            <div className='text-black bg-white flex flex-col items-center px-4 md:px-24 gap-8 py-30'>
+                <h1 className='font-bold'>Contact Us</h1>
                 <p className='md:pb-4'>Lorem ipsum dolor sit amet consectetur adipisicing elit.
                     Neque dolorum tenetur recusandae magnam, incidunt corporis quidem sunt a perspiciatis vero optio
                 </p>
@@ -40,25 +64,140 @@ const Contact = () => {
                     <form action="">
                         <div className='flex flex-col gap-4'>
                             <div className='flex flex-col md:flex-row gap-4 md:items-center'>
-                                <label htmlFor="">Name :</label>
-                                <input type="text" placeholder='First Name' className='border rounded-lg px-3 py-1.5' />
-                                <label htmlFor="">Business Name :</label>
-                                <input type="text" placeholder='Business Name' className='border rounded-lg px-3 py-1.5' />
+                                <div className='flex flex-col gap-2'>
+                                    <label htmlFor="">Name :</label>
+                                    <div className="relative w-full">
+                                        <input
+                                            type="text"
+                                            placeholder={isError ? "Enter first name" : "First Name"}
+                                            className={`border rounded-lg px-3 py-1.5 pr-10 w-full
+                                        ${isError ? "border-red-600 border-2 placeholder-red-600" : ""}`}
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                        />
+
+                                        {isError && (
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width={18}
+                                                    height={18}
+                                                    fill="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                                    <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                                </svg>
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className='flex flex-col gap-2'>
+                                    <label htmlFor="">Business Name :</label>
+                                    <div className='relative w-full'>
+                                        <input type="text" placeholder='Business Name' className='border rounded-lg px-3 py-1.5'
+                                            onChange={(e) => {
+                                                setBusinessName(e.target.value)
+                                            }}
+                                        />
+                                        {isError && (
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width={18}
+                                                    height={18}
+                                                    fill="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                                    <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                                </svg>
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div className='flex flex-col gap-4'>
+                            <div className='flex flex-col gap-2'>
                                 <label htmlFor="">Business Email: </label>
-                                <input type="email" placeholder='Business Email' className='border rounded-lg px-3 py-1.5 w-full' />
+                                <div className='relative w-full'>
+                                    <input type="email" placeholder='Business Email' className='border rounded-lg px-3 py-1.5 w-full'
+                                        onChange={(e) => {
+                                            setBusinessEmail(e.target.value)
+                                        }}
+                                    />
+                                    {isError && (
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width={18}
+                                                height={18}
+                                                fill="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                                <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                            </svg>
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <div className='flex flex-col gap-4'>
+                            <div className='flex flex-col gap-2'>
                                 <label htmlFor="">Business Phone: </label>
-                                <input type="email" placeholder='Business Email' className='border rounded-lg px-3 py-1.5 w-full' />
+                                <div className='relative w-full'>
+                                    <input type="tel" placeholder='Business Phone Number' className='border rounded-lg px-3 py-1.5 w-full'
+                                        onChange={(e) => {
+                                            setBusinessPhone(e.target.value)
+                                        }}
+                                    />
+                                    {isError && (
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width={18}
+                                                height={18}
+                                                fill="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                                <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                            </svg>
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+
+                            <div className='flex flex-col gap-2'>
+                                <label htmlFor="">Message: </label>
+                                <div className='relative w-full'>
+                                    <textarea name="" id="" className='border rounded-lg px-3 py-1.5 w-full' rows="6"
+                                        onChange={(e) => {
+                                            setMessage(e.target.value)
+                                        }}
+                                    ></textarea>
+                                    {isError && (
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width={18}
+                                                height={18}
+                                                fill="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                                <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                            </svg>
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <button className='border w-1/2 self-end px-4 py-1.5 bg-black text-white rounded' onClick={sendMessage}>SUBMIT</button>
                         </div>
                     </form>
-                    <hr className='md:hidden my-4 w-[75%] border-gray-200 self-center' />
+                    <hr className='md:hidden my-4 w-3/4 border-gray-200 self-center' />
                     <ContactInfo />
                 </div>
             </div>
+            <Footer />
         </>
     )
 }
