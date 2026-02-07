@@ -21,7 +21,6 @@ const Contact = () => {
 
     const sendMessage = (e) => {
         e.preventDefault();
-
         const errors = {
             fname: !firstName || firstName.trim() === "",
             bname: !businessName || businessName.trim() === "",
@@ -29,9 +28,7 @@ const Contact = () => {
             bphone: !businessPhone || businessPhone.trim() === "",
             msg: !message || message.trim() === ""
         };
-
         setInputs(errors);
-
     }
 
     return (
@@ -39,8 +36,8 @@ const Contact = () => {
             <CommonNavbar />
             <div className='text-black bg-white flex flex-col items-center px-4 md:px-24 gap-8 pt-30 pb-15'>
                 <h1 className='font-bold'>Contact Us</h1>
-                <p className='md:pb-4'>Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                    Neque dolorum tenetur recusandae magnam, incidunt corporis quidem sunt a perspiciatis vero optio
+                <p className='md:pb-4 text-center font-light'>We’re here to help with all your lending needs and we’ll respond as quickly as possible to provide reliable and friendly assistance.
+                    Contact us for inquiries about loans, applications, or account support.
                 </p>
                 <div className='w-full flex gap-4 flex-col md:flex-row justify-evenly'>
                     <form action="">
@@ -52,7 +49,7 @@ const Contact = () => {
                                         <input
                                             type="text"
                                             name="fname"
-                                            placeholder="Enter first name"
+                                            placeholder={inputs.fname ? "Please enter name" : "Your name"}
                                             className={`border rounded-lg px-3 py-1.5 pr-10 w-full
                                                 ${inputs.fname ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                                             value={firstName}
@@ -86,7 +83,7 @@ const Contact = () => {
                                     <div className='relative w-full'>
                                         <input type="text"
                                             name='bname'
-                                            placeholder='Business Name'
+                                            placeholder={inputs.bname ? "Business name required" : "Business name"}
                                             className={`border rounded-lg px-3 py-1.5 pr-10 w-full
                                                 ${inputs.bname ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                                             value={businessName}
@@ -116,11 +113,11 @@ const Contact = () => {
                                 </div>
                             </div>
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Business Email: </label>
+                                <label htmlFor="">Business Email : </label>
                                 <div className='relative w-full'>
                                     <input type="email"
                                         name='bemail'
-                                        placeholder='Business Email'
+                                        placeholder={inputs.bemail ? "Please enter email" : "Business email"}
                                         className={`border rounded-lg px-3 py-1.5 w-full pr-10
                                             ${inputs.bemail ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                                         value={businessEmail}
@@ -149,10 +146,10 @@ const Contact = () => {
                                 </div>
                             </div>
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Business Phone: </label>
+                                <label htmlFor="">Business Phone : </label>
                                 <div className='relative w-full'>
                                     <input type="tel"
-                                        placeholder='Business Phone Number'
+                                        placeholder={inputs.bphone ? "Please enter phone" : "Phone number"}
                                         className={`border rounded-lg px-3 py-1.5 w-full pr-10
                                             ${inputs.bphone ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                                         name='bphone'
@@ -183,11 +180,12 @@ const Contact = () => {
                             </div>
 
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Message: </label>
+                                <label htmlFor="">Message : </label>
                                 <div className='relative w-full'>
                                     <textarea
                                         name="msg"
                                         id=""
+                                        placeholder={inputs.msg  ? "Enter a message" : "Message"}
                                         className={`border rounded-lg px-3 py-1.5 w-full pr-10
                                             ${inputs.msg ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                                         rows="6"
