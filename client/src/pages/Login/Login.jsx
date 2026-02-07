@@ -45,7 +45,7 @@ const Login = () => {
 
                     <div className='flex flex-col items-center mb-4'>
                         <CompanyLogo />
-                        <h3 className='font-bold text-5xl'>Log in</h3>
+                        <h3 className='font-bold text-5xl'>Login</h3>
                     </div>
 
                     <div className='w-full flex flex-col gap-2'>
