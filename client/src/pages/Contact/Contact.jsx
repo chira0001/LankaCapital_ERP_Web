@@ -113,7 +113,7 @@ const Contact = () => {
                                 </div>
                             </div>
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Business Email: </label>
+                                <label htmlFor="">Business Email : </label>
                                 <div className='relative w-full'>
                                     <input type="email"
                                         name='bemail'
@@ -146,7 +146,7 @@ const Contact = () => {
                                 </div>
                             </div>
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Business Phone: </label>
+                                <label htmlFor="">Business Phone : </label>
                                 <div className='relative w-full'>
                                     <input type="tel"
                                         placeholder={inputs.bphone ? "Please enter phone" : "Phone number"}
@@ -180,7 +180,7 @@ const Contact = () => {
                             </div>
 
                             <div className='flex flex-col gap-2'>
-                                <label htmlFor="">Message: </label>
+                                <label htmlFor="">Message : </label>
                                 <div className='relative w-full'>
                                     <textarea
                                         name="msg"
