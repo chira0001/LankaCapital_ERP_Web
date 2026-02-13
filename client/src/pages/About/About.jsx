@@ -22,7 +22,7 @@ const About = () => {
             Image: about3,
             Title: "Simple, Smart, and Secure Lending",
             Description: "Our company delivers easy access loan services with fair interest rates and quick approvals. We prioritize customer satisfaction, data security, and long‑term financial stability."
-        }
+        },
     ]
 
     return (
@@ -45,10 +45,10 @@ const About = () => {
                             <div
                                 key={index}
                                 className={`rounded-xl w-[20rem] flex flex-col 
-                                        ${index % 3 === 1 ? "md:mt-15 md:scale-[1.1]" : "md:scale-[0.9]"}
+                                        ${index % 3 === 1 ? "md:mt-15 md:scale-[1.1]" : "md:scale-[0.8]"}
                                         `}
                             >
-                                <img src={detail.Image} alt="" className='w-[12rem] self-center' />
+                                <img src={detail.Image} alt="" className='w-[20rem] self-center' />
                                 <span className='bg-gray-400 px-6 py-3 font-bold text-4xl'>
                                     {index < 9 ? `0${index + 1}` : index + 1}
                                 </span>

@@ -1,10 +1,15 @@
 import React, { useState } from 'react'
 
 import CompanyLogo from '../ComapnyLogo/CompanyLogo';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const CommonNavbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const authNavigate = (page) => {
+        navigate(`/${page}`);
+    }
 
     return (
         <header className="fixed top-0 left-0 w-full bg-white text-black shadow-lg z-50">
@@ -23,10 +28,10 @@ const CommonNavbar = () => {
                 </nav>
 
                 <div className="hidden md:flex gap-4">
-                    <button className="px-4 py-1.5 bg-black text-white rounded">
+                    <button className="px-4 py-1.5 bg-black text-white rounded" onClick={() => authNavigate("login")}>
                         Login
                     </button>
-                    <button className="px-4 py-1.5 border border-black rounded">
+                    <button className="px-4 py-1.5 border border-black rounded" onClick={() => authNavigate("signup")}>
                         Sign Up
                     </button>
                 </div>
@@ -54,10 +59,10 @@ const CommonNavbar = () => {
                     <Link to="/contact" className="cursor-pointer">Contact</Link>
 
                     <div className="flex gap-4 pt-4">
-                        <button className="px-4 py-1.5 bg-black text-white rounded">
+                        <button className="px-4 py-1.5 bg-black text-white rounded" onClick={() => authNavigate("login")}>
                             Login
                         </button>
-                        <button className="px-4 py-1.5 border border-black rounded">
+                        <button className="px-4 py-1.5 border border-black rounded" onClick={() => authNavigate("signup")}>
                             Sign Up
                         </button>
                     </div>
