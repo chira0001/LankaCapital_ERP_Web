@@ -1,0 +1,120 @@
+employee 
+employee_id ->pk
+full name 
+nic
+address 
+phone_no
+join-date 
+role_id->fk
+basic salary 
+status 
+
+role 
+role_id ->pk
+role_name 
+
+customer 
+customer_id ->pk
+name 
+file_no
+address
+phone_no
+register_date 
+status
+
+loans  
+loan_id ->pk
+customer_id->fk
+loan_amount 
+interest_charge 
+document_charges 
+installment (daily)
+no_of_installment
+start_date 
+end_date
+status (close/active)
+issued by(fk-> empoyee_id)
+
+loan installment 
+installment_id -> pk
+loan id -> fk
+due_date
+due_amount 
+paid_amount 
+balance 
+status(paid/pending/late)
+
+daily collection
+collection_id(pk)
+officer_id(fk->employee)
+date
+total_collection
+submitted_amount
+submitted_time 
+status (pending/submitted)
+
+collection details 
+detail_id (pk)
+collection_id(fk)
+intallment_id (fk)
+amount_paid
+payment_time
+
+payroll-monthly 
+payroll_id ->pk
+employee-id -> fk
+month
+year
+basic_salary
+allowance_total
+overtime_payment 
+gross_salary 
+loan_deduction
+salary_advance 
+epf
+etf
+total_deduction
+net_salary
+
+allowace 
+allowance_id(pk)
+payroll_id(fk)
+type(incentive/sales/attendance)
+amount 
+
+overtime 
+ot_id (pk)
+payroll_id (fk)
+hours
+rate 
+amount 
+
+salary advances
+advance_id (pk)
+employee_id (fk)
+date 
+amount
+type(rent/salary...)
+description 
+
+users 
+employee_id 
+username 
+password 
+
+cash book 
+cash_id 
+date 
+opening_balance 
+cash_id
+cash_out
+closing_balance 
+
+
+
+
+
+
+
+
+
