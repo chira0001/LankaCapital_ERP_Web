@@ -37,7 +37,7 @@ const ReceptionistDashboard = () => {
     return (
         <>
             <ReceptionistNavbar panelNames={panelNames} panel={panel} setPanel={setPanel} />
-            <div className='bg-gray-100 text-black flex gap-8 min-h-dvh p-8'>
+            <div className='bg-gray-100 text-black flex gap-8 h-fit md:min-h-dvh p-8'>
                 <div className='bg-white w-1/6 p-8 rounded-2xl shadow-xl hidden md:flex md:flex-col'>
                     {panelNames.map((value, key) => (
                         <button key={key} className={value.css} onClick={() => setPanel(value.func)}>
@@ -46,7 +46,7 @@ const ReceptionistDashboard = () => {
                         </button>
                     ))}
                 </div>
-                <div className='bg-white w-full md:w-5/6 p-8 rounded-2xl shadow-xl'>
+                <div className='bg-white w-full md:w-5/6 p-4 md:p-8 rounded-2xl shadow-xl'>
                     {panel === "add" &&
                         <div>
                             <h1 className='mb-8'>Add New Customer</h1>
