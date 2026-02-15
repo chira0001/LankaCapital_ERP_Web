@@ -118,7 +118,7 @@ const Login = () => {
                     </div>
 
                     <button className='border w-full px-4 py-4 bg-black text-white' onClick={login}>Log in</button>
-                    <span className='underline cursor-pointer'>Forgot your password?</span>
+                    {/* <span className='underline cursor-pointer'>Forgot your password?</span> */}
                 </div>
 
                 <div className='flex bg-white flex-col items-center justify-center md:w-1/3 shadow-2xl p-10 rounded-2xl gap-6'>
