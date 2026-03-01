@@ -22,18 +22,30 @@ CREATE TABLE Emp_Tele (
 );
 
 CREATE TABLE Customer (
-    Customer_ID INT PRIMARY KEY,
+    Customer_ID DOUBLE PRIMARY KEY,
     Customer_Name VARCHAR(255) NOT NULL,
     Customer_Email VARCHAR(50) NOT NULL,
     Customer_Address VARCHAR(255) NOT NULL,
-    Customer_Role VARCHAR(50) NOT NULL DEFAULT 'customer'
+    Customer_Role VARCHAR(50) NOT NULL DEFAULT 'customer',
     Customer_Password VARCHAR(255) NOT NULL DEFAULT '1234'
 );
 
 CREATE TABLE Customer_Tele (
-    Customer_ID INT,
+    Customer_ID DOUBLE,
     Customer_Tele VARCHAR(12),
     PRIMARY KEY (Customer_ID, Customer_Tele),
+    FOREIGN KEY (Customer_ID) REFERENCES Customer(Customer_ID)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE Loan (
+    File_ID INT AUTO_INCREMENT PRIMARY KEY,
+    File_No VARCHAR(255) UNIQUE,
+    Customer_ID DOUBLE NOT NULL,
+    Loan_Amount DECIMAL(10,2) NOT NULL,
+    Loan_Installments INT NOT NULL,
+    Loan_Interest_Rate DECIMAL(5,2) NOT NULL,
+    Loan_Created_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Customer_ID) REFERENCES Customer(Customer_ID)
         ON DELETE CASCADE
 );
@@ -51,13 +63,18 @@ SELECT
     Customer_Password AS password
 FROM Customer;
 
+DELIMITER $$
+CREATE TRIGGER before_insert_loan
+BEFORE INSERT ON Loan
+FOR EACH ROW
+BEGIN
+    DECLARE next_id INT;
+    SELECT AUTO_INCREMENT 
+    INTO next_id
+    FROM information_schema.TABLES
+    WHERE TABLE_NAME = 'Loan'
+    AND TABLE_SCHEMA = DATABASE();
 
-
-
-
-
-
-
-
-
-
+    SET NEW.File_No = CONCAT('D', LPAD(next_id, 3, '0'));
+END$$
+DELIMITER ;
