@@ -1,0 +1,63 @@
+CREATE DATABASE lankacapital;
+
+USE lankacapital;
+
+CREATE TABLE Employee (
+    Emp_ID INT PRIMARY KEY,
+    Emp_FirstName VARCHAR(50) NOT NULL,
+    Emp_LastName VARCHAR(50) NOT NULL,
+    Emp_Email VARCHAR(50) NOT NULL,
+    Emp_Role ENUM('fo','admin','receptionist','user','customer') DEFAULT 'user',
+    Emp_Address VARCHAR(150) NOT NULL,
+    Emp_BasicSalary DECIMAL(10,2) NOT NULL,
+    Emp_Password VARCHAR(255) NOT NULL DEFAULT '1234'
+);
+
+CREATE TABLE Emp_Tele (
+    Emp_ID INT,
+    Emp_Tele VARCHAR(12),
+    PRIMARY KEY (Emp_ID, Emp_Tele),
+    FOREIGN KEY (Emp_ID) REFERENCES Employee(Emp_ID)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE Customer (
+    Customer_ID INT PRIMARY KEY,
+    Customer_Name VARCHAR(255) NOT NULL,
+    Customer_Email VARCHAR(50) NOT NULL,
+    Customer_Address VARCHAR(255) NOT NULL,
+    Customer_Role VARCHAR(50) NOT NULL DEFAULT 'customer'
+    Customer_Password VARCHAR(255) NOT NULL DEFAULT '1234'
+);
+
+CREATE TABLE Customer_Tele (
+    Customer_ID INT,
+    Customer_Tele VARCHAR(12),
+    PRIMARY KEY (Customer_ID, Customer_Tele),
+    FOREIGN KEY (Customer_ID) REFERENCES Customer(Customer_ID)
+        ON DELETE CASCADE
+);
+
+CREATE VIEW Accounts AS
+SELECT 
+    Emp_Email AS username,
+    Emp_Password AS password
+FROM Employee
+
+UNION
+
+SELECT 
+    Customer_Email AS username,
+    Customer_Password AS password
+FROM Customer;
+
+
+
+
+
+
+
+
+
+
+
