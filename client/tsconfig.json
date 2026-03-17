@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",           
+    "paths": {
+      "@/*": ["src/*"]       
+    }
+  },
+  "include": ["src"]           
+}
+
+//new tsconfig.json for client with path aliasing and strict type checking. 
