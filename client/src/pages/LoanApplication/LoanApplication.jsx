@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/AdminSidebar/AdminSidebar.jsx';
+//import Sidebar from '@/components/AdminSidebar/AdminSidebar.jsx';
 //import pb from '@/lib/pocketbaseClient.js';
 import { CheckCircle, XCircle, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/component/ui/button';
+import { Input } from '@/component/ui/input';
+import { Label } from '@/component/ui/label';
+import { Textarea } from '@/component/ui/textarea';
 //import { useToast } from '@/hooks/use-toast';
 //import { useAuth } from '@/contexts/AuthContext.jsx';
 //import Sidebar from '../../components/AdminSidebar/AdminSidebar.jsx';
@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/component/ui/alert-dialog';
 
 
 // Temporary stub for toast-need to change after implementing the actual toast system
@@ -199,7 +199,7 @@ const LoanApplication = () => {
   if (loading) {
     return (
       <div className="flex">
-        <Sidebar />
+      {/*  <Sidebar /> */}
         <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -215,7 +215,7 @@ const LoanApplication = () => {
       
 
       <div className="flex min-h-screen bg-gray-50">
-        <Sidebar />
+        {/*  <Sidebar /> */}
         
         <div className="flex-1 overflow-auto">
           <div className="p-8">
@@ -409,3 +409,6 @@ const LoanApplication = () => {
 };
 
 export default LoanApplication;
+
+
+
