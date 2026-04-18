@@ -20,6 +20,7 @@ import FinancialReportsPage from "./pages/AdminFinancialReport/FinancialReportsP
 import PerformanceTargetsPages from "./pages/AdminPerformanceNTarget/PerformanceTargetsPages";
 import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfigPage";
 import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
+import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
 
 const App = () => {
   return (
@@ -45,6 +46,7 @@ const App = () => {
         <Route path="targets" element={<PerformanceTargetsPages />} />
         <Route path="categories" element={<LoanCategoryConfigPage />} />
         <Route path="users" element={<UserManagementPage />} />
+        <Route path="audit" element={<AuditLogsPage />} />
         </Route>
         
       </Routes>
