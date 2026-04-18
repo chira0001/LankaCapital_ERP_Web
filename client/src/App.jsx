@@ -15,6 +15,7 @@ import RevenueTracking from "./pages/AdminRevenueTracking/RevenueTrackingPage";
 import CustomerManagementPage from "./pages/AdminCustomerManagement/CustomerManagementPage";
 import FieldOfficerPerformancePage from "./pages/AdminFieldOfficerPerformance/FeildOfficerPerformance";
 import PettyCashPage from "./pages/AdminPettyCash/PettyCashPage";
+import FinancialReportsPage from "./pages/AdminFinancialReport/FinancialReportsPage";
 const App = () => {
   return (
     <BrowserRouter>
@@ -35,6 +36,7 @@ const App = () => {
         <Route path="customers" element={<CustomerManagementPage />} />
         <Route path="officers" element={<FieldOfficerPerformancePage />} />
         <Route path="petty-cash" element={<PettyCashPage />} />
+        <Route path="reports" element={<FinancialReportsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
