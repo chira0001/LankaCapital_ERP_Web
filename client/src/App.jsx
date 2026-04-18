@@ -19,6 +19,7 @@ import PettyCashPage from "./pages/AdminPettyCash/PettyCashPage";
 import FinancialReportsPage from "./pages/AdminFinancialReport/FinancialReportsPage";
 import PerformanceTargetsPages from "./pages/AdminPerformanceNTarget/PerformanceTargetsPages";
 import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfigPage";
+import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
         <Route path="reports" element={<FinancialReportsPage />} />
         <Route path="targets" element={<PerformanceTargetsPages />} />
         <Route path="categories" element={<LoanCategoryConfigPage />} />
+        <Route path="users" element={<UserManagementPage />} />
         </Route>
         
       </Routes>
