@@ -5,26 +5,27 @@ import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCa
 
 
 const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Loan Applications", icon: FileText, path: "/dashboard/loan-applications" },
-  { name: "Portfolio Overview", icon: BarChart2, path: "/dashboard/portfolio" },
-  { name: "Loan Performance", icon: TrendingUp, path: "/dashboard/performance" },
-  { name: "Revenue Tracking", icon: DollarSign, path: "/dashboard/revenue" },
-  { name: "Customer Management", icon: Users, path: "/dashboard/customers" },
-  { name: "Field Officer Performance", icon: UserCheck, path: "/dashboard/officers" },
-  { name: "Petty Cash", icon: CreditCard, path: "/dashboard/petty-cash" },
-  { name: "Financial Reports", icon: BarChart2, path: "/dashboard/reports" },
-  { name: "Performance & Targets", icon: Target, path: "/dashboard/targets" },
-  { name: "Loan Categories", icon: Layers, path: "/dashboard/categories" },
-  { name: "User Management", icon: UserPlus, path: "/dashboard/users" },
-  { name: "Audit Logs", icon: ClipboardList, path: "/dashboard/audit" },
-  { name: "System Configuration", icon: Settings, path: "/dashboard/settings" },
+  { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+  { name: "Loan Applications", icon: FileText, path: "/admin/loan-applications" },
+  { name: "Portfolio Overview", icon: BarChart2, path: "/admin/portfolio" },
+  { name: "Loan Performance", icon: TrendingUp, path: "/admin/performance" },
+  { name: "Revenue Tracking", icon: DollarSign, path: "/admin/revenue" },
+  { name: "Customer Management", icon: Users, path: "/admin/customers" },
+  { name: "Field Officer Performance", icon: UserCheck, path: "/admin/officers" },
+  { name: "Petty Cash", icon: CreditCard, path: "/admin/petty-cash" },
+  { name: "Financial Reports", icon: BarChart2, path: "/admin/reports" },
+  { name: "Performance & Targets", icon: Target, path: "/admin/targets" },
+  { name: "Loan Categories", icon: Layers, path: "/admin/categories" },
+  { name: "User Management", icon: UserPlus, path: "/admin/users" },
+  { name: "Audit Logs", icon: ClipboardList, path: "/admin/audit" },
+  { name: "System Configuration", icon: Settings, path: "/admin/settings" },
 ];
 
 
 const Sidebar = () => {
   return (
-    <div className="w-64 mt-18 h-[calc(100vh-64px)] bg-[#071428] text-white flex flex-col px-3 py-4 overflow-y-auto border-r border-gray-800">
+    <div className="w-64 mt-22 h-full min-h-screen bg-[#071428] text-white flex flex-col px-3 py-4 overflow-y-auto border-r border-gray-800 min-w-[220px] max-w-[280px]">
+
 {/* menu Section */}
       <div className="flex-1 overflow-y-auto">
         <ul className="space-y-2">
@@ -41,7 +42,7 @@ const Sidebar = () => {
                    hover:bg-gray-800 hover:!text-yellow-500
                   ${
                     isActive
-                     ? "bg-white text-[#071428] font-semibold shadow"
+                     ? "bg-yellow-600 !text-black font-semibold shadow"
                      : ""
                   }`
                 }

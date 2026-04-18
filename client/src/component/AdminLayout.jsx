@@ -5,10 +5,8 @@ import AdminNavbar from "./Navbar/AdminNavbar";
 
 const AdminLayout = () => {
   return (
-    
-
       
-      <div className="flex flex-col h-screen">
+      <div className="flex h-screen overflow-hidden">
 
         {/* Top Navbar */}
         <AdminNavbar />
