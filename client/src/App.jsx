@@ -21,6 +21,7 @@ import PerformanceTargetsPages from "./pages/AdminPerformanceNTarget/Performance
 import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfigPage";
 import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
 import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
+import SystemConfigurationPage from "./pages/AdminSystemConfiguration/SystemConfigurationPage";
 
 const App = () => {
   return (
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="categories" element={<LoanCategoryConfigPage />} />
         <Route path="users" element={<UserManagementPage />} />
         <Route path="audit" element={<AuditLogsPage />} />
+        <Route path="settings" element={<SystemConfigurationPage />} />
         </Route>
         
       </Routes>
