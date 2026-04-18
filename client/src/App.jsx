@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 
 import CommonNavbar from './component/Navbar/CommonNavbar'
 import Footer from './component/Footer/Footer'
+import { Toaster } from "@/components/ui/sonner";//add sonner toaster for notifications
 import Home from './pages/Home/Home'
 import About from './pages/About/About'
 import Contact from "./pages/Contact/Contact";
@@ -16,6 +17,9 @@ import CustomerManagementPage from "./pages/AdminCustomerManagement/CustomerMana
 import FieldOfficerPerformancePage from "./pages/AdminFieldOfficerPerformance/FeildOfficerPerformance";
 import PettyCashPage from "./pages/AdminPettyCash/PettyCashPage";
 import FinancialReportsPage from "./pages/AdminFinancialReport/FinancialReportsPage";
+import PerformanceTargetsPages from "./pages/AdminPerformanceNTarget/PerformanceTargetsPages";
+import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfigPage";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -37,8 +41,12 @@ const App = () => {
         <Route path="officers" element={<FieldOfficerPerformancePage />} />
         <Route path="petty-cash" element={<PettyCashPage />} />
         <Route path="reports" element={<FinancialReportsPage />} />
+        <Route path="targets" element={<PerformanceTargetsPages />} />
+        <Route path="categories" element={<LoanCategoryConfigPage />} />
         </Route>
+        
       </Routes>
+      <Toaster position="top-right" />
     </BrowserRouter>
   )
 }
