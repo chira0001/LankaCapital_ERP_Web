@@ -12,6 +12,10 @@ import AdminLayout from "./component/AdminLayout";
 import LoanApplications from "./pages/LoanApplication/LoanApplication";
 import Dashboard from "./pages/AdminDashBoard/Dashboard";
 import PortfolioOverview from "./pages/AdminPortfolioOverview/PortfolioOverviewPage";
+import LoanPerformance from "./pages/AdminLoanPerfomance/LoanPerformancePage";
+import RevenueTracking from "./pages/AdminRevenueTracking/RevenueTrackingPage";
+import CustomerManagementPage from "./pages/AdminCustomerManagement/CustomerManagementPage";
+import FieldOfficerPerformancePage from "./pages/AdminFieldOfficerPerformance/FeildOfficerPerformance";
 const App = () => {
   return (
     <BrowserRouter>
@@ -27,6 +31,10 @@ const App = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="loan-applications" element={<LoanApplications />} /> 
         <Route path="portfolio" element={<PortfolioOverview />} />
+        <Route path="performance" element={<LoanPerformance />} />
+        <Route path="revenue" element={<RevenueTracking />} />
+        <Route path="customers" element={<CustomerManagementPage />} />
+        <Route path="officers" element={<FieldOfficerPerformancePage />} />
         </Route>
       </Routes>
     </BrowserRouter>
