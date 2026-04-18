@@ -6,8 +6,6 @@ import Home from './pages/Home/Home'
 import About from './pages/About/About'
 import Contact from "./pages/Contact/Contact";
 import Login from "./pages/Login/Login";
-// import LoanApplication from "./pages/LoanApplication/LoanApplication";
-//import LoanApplication from "./pages/LoanApplication/LoanApplication";
 import AdminLayout from "./component/AdminLayout";
 import LoanApplications from "./pages/LoanApplication/LoanApplication";
 import Dashboard from "./pages/AdminDashBoard/Dashboard";
@@ -16,6 +14,7 @@ import LoanPerformance from "./pages/AdminLoanPerfomance/LoanPerformancePage";
 import RevenueTracking from "./pages/AdminRevenueTracking/RevenueTrackingPage";
 import CustomerManagementPage from "./pages/AdminCustomerManagement/CustomerManagementPage";
 import FieldOfficerPerformancePage from "./pages/AdminFieldOfficerPerformance/FeildOfficerPerformance";
+import PettyCashPage from "./pages/AdminPettyCash/PettyCashPage";
 const App = () => {
   return (
     <BrowserRouter>
@@ -35,6 +34,7 @@ const App = () => {
         <Route path="revenue" element={<RevenueTracking />} />
         <Route path="customers" element={<CustomerManagementPage />} />
         <Route path="officers" element={<FieldOfficerPerformancePage />} />
+        <Route path="petty-cash" element={<PettyCashPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
