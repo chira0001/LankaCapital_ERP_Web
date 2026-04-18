@@ -11,6 +11,7 @@ import Login from "./pages/Login/Login";
 import AdminLayout from "./component/AdminLayout";
 import LoanApplications from "./pages/LoanApplication/LoanApplication";
 import Dashboard from "./pages/AdminDashBoard/Dashboard";
+import PortfolioOverview from "./pages/AdminPortfolioOverview/PortfolioOverviewPage";
 const App = () => {
   return (
     <BrowserRouter>
@@ -25,6 +26,7 @@ const App = () => {
         <Route index element={<Dashboard />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="loan-applications" element={<LoanApplications />} /> 
+        <Route path="portfolio" element={<PortfolioOverview />} />
         </Route>
       </Routes>
     </BrowserRouter>
