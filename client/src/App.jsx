@@ -7,6 +7,7 @@ import Home from './pages/Home/Home'
 import About from './pages/About/About'
 import Contact from "./pages/Contact/Contact";
 import Login from "./pages/Login/Login";
+
 import AdminLayout from "./component/AdminLayout";
 import LoanApplications from "./pages/LoanApplication/LoanApplication";
 import Dashboard from "./pages/AdminDashBoard/Dashboard";
@@ -22,6 +23,9 @@ import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfig
 import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
 import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
 import SystemConfigurationPage from "./pages/AdminSystemConfiguration/SystemConfigurationPage";
+
+import Signup from "./pages/Signup/Signup";
+import ReceptionistDashboard from "./pages/ReceptionistDashboard/ReceptionistDashboard";
 
 const App = () => {
   return (
@@ -51,6 +55,9 @@ const App = () => {
         <Route path="settings" element={<SystemConfigurationPage />} />
         </Route>
         
+        <Route path="/signup" element={<Signup />}></Route>
+        <Route path="/reception" element={<ReceptionistDashboard />}></Route>
+
       </Routes>
       <Toaster position="top-right" />
     </BrowserRouter>
