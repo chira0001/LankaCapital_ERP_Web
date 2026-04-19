@@ -135,89 +135,200 @@ const ReceptionistDashboard = () => {
                     </div>
                     }
 
-                    {panel === 'home' && <div className="relative w-full h-fit">
-                        <img
-                            src={HomeImg}
-                            alt=""
-                            className="w-auto h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60"></div>
-                        <div className="absolute inset-0 flex flex-col gap-15 md:justify-center items-center md:items-start px-4 md:px-24 py-24">
-                            <span className="text-white text-6xl md:text-9xl text-center md:text-left font-bold leading-20 md:leading-none">
-                                Lanka <br /> Capital <br className='md:hidden' /> Pvt.Ltd
-                            </span>
-                            <span className='md:w-[50%] text-center md:text-left text-white'>
-                                We provide fast, secure, and transparent financial solutions tailored to your needs. Your financial growth is our priority.
-                            </span>
+                    {panel === 'home' && (
+                        <div className="flex flex-col gap-6">
+
+                            {/* HEADER */}
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                                <div>
+                                    <h1 className="text-2xl md:text-3xl font-bold">Receptionist Dashboard</h1>
+                                    <p className="text-gray-500">Manage customers and daily operations</p>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setPanel('add')}
+                                        className="bg-black text-white px-4 py-2 rounded-lg"
+                                    >
+                                        + Add Customer
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPanel('view')}
+                                        className="border px-4 py-2 rounded-lg"
+                                    >
+                                        View Customers
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* STATS */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {[
+                                    { title: "Total Customers", value: "1,240" },
+                                    { title: "Active Loans", value: "860" },
+                                    { title: "Pending Requests", value: "12" },
+                                    { title: "Completed Today", value: "24" }
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-white shadow-md rounded-xl p-4">
+                                        <p className="text-gray-400 text-sm">{item.title}</p>
+                                        <h2 className="text-xl font-bold">{item.value}</h2>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* QUICK ACTIONS */}
+                            <div className="bg-white shadow-md rounded-xl p-6">
+                                <h2 className="font-semibold text-lg mb-4">Quick Actions</h2>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <button
+                                        onClick={() => setPanel('add')}
+                                        className="border rounded-lg p-4 hover:bg-gray-100 text-sm font-medium"
+                                    >
+                                        Register Customer
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPanel('view')}
+                                        className="border rounded-lg p-4 hover:bg-gray-100 text-sm font-medium"
+                                    >
+                                        Search Customer
+                                    </button>
+
+                                    <button className="border rounded-lg p-4 hover:bg-gray-100 text-sm font-medium">
+                                        Process Loan
+                                    </button>
+
+                                    <button className="border rounded-lg p-4 hover:bg-gray-100 text-sm font-medium">
+                                        Generate Receipt
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* RECENT ACTIVITY */}
+                            <div className="bg-white shadow-md rounded-xl p-6 flex flex-col gap-4">
+                                <h2 className="font-semibold text-lg">Recent Customers</h2>
+
+                                {[1, 2, 3].map((item) => (
+                                    <div key={item} className="flex justify-between items-center border-b pb-2">
+                                        <div>
+                                            <p className="font-medium">John Business Ltd</p>
+                                            <p className="text-sm text-gray-400">Registered today</p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setPanel('view')}
+                                            className="text-sm border px-3 py-1 rounded"
+                                        >
+                                            View
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
                         </div>
-                    </div>
-                    }
+                    )}
 
                     {panel === 'settings' &&
-                        <div className='flex flex-col gap-4 md:gap-8'>
-                            <h1 className=''>Settings</h1>
+                        <div className="flex flex-col gap-8">
 
-                            <div className='flex flex-col gap-4 shadow-2xl p-8 rounded-2xl bg-white'>
-                                <div className='flex justify-between items-center'>
-                                    <label>Personal Information</label>
-                                    <button className='border px-4 py-4 bg-black text-white flex gap-2'>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill={"currentColor"} viewBox={"0 0 24 24"}>{/* Boxicons v3.0.8 https://boxicons.com | License  https://docs.boxicons.com/free */}<path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path><path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path></svg>
+                            <h1 className="text-2xl font-semibold">Settings</h1>
+
+                            {/* PERSONAL INFORMATION */}
+                            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-lg font-semibold">Personal Information</h2>
+
+                                    <button className="px-4 py-2 bg-black text-white rounded-lg text-sm">
                                         Edit
                                     </button>
                                 </div>
-                                <hr />
-                                <div className='flex flex-col md:grid md:grid-cols-3 gap-4'>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>First Name</span>
-                                        <p>Natashia</p>
+
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div>
+                                        <span className="text-gray-400 text-sm">First Name</span>
+                                        <p className="font-medium">Natashia</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Last Name</span>
-                                        <p>Ferdman</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Last Name</span>
+                                        <p className="font-medium">Ferdman</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Date of Birth</span>
-                                        <p>Natashia</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Date of Birth</span>
+                                        <p className="font-medium">15 May 1998</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Email address</span>
-                                        <p>jhondoe@gmail.com</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Email Address</span>
+                                        <p className="font-medium">jhondoe@gmail.com</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Phone Number</span>
-                                        <p>+94 12 123 4565</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Phone Number</span>
+                                        <p className="font-medium">+94 12 123 4565</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>User Role</span>
-                                        <p>Receptionist</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">User Role</span>
+                                        <p className="font-medium">Receptionist</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className='flex flex-col gap-4 shadow-2xl p-8 rounded-2xl bg-white'>
-                                <div className='flex justify-between items-center'>
-                                    <label>Address</label>
-                                    <button className='flex border'>
-                                        {editIcon}
+                            {/* ADDRESS */}
+                            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-lg font-semibold">Address</h2>
+
+                                    <button className="px-4 py-2 border rounded-lg text-sm">
                                         Edit
                                     </button>
                                 </div>
-                                <hr />
-                                <div className='flex flex-col md:grid md:grid-cols-3 gap-4'>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Street</span>
-                                        <p>14/P, John St</p>
+
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Street</span>
+                                        <p className="font-medium">14/P, John St</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Town</span>
-                                        <p>Kalutara</p>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Town</span>
+                                        <p className="font-medium">Kalutara</p>
                                     </div>
-                                    <div className='flex flex-col gap-2'>
-                                        <span className='text-gray-400'>Date of Birth</span>
-                                        <p>15/05/2022</p>
-                                    </div>                                    
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Postal Code</span>
+                                        <p className="font-medium">12000</p>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* SECURITY */}
+                            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-lg font-semibold">Security</h2>
+
+                                    <button className="px-4 py-2 bg-black text-white rounded-lg text-sm">
+                                        Change Password
+                                    </button>
+                                </div>
+
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Password</span>
+                                        <p className="font-medium">••••••••••</p>
+                                    </div>
+
+                                    <div>
+                                        <span className="text-gray-400 text-sm">Last Updated</span>
+                                        <p className="font-medium">2 months ago</p>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     }
                 </div>
