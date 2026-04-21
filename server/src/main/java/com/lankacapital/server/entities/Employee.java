@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "employees")
 @Data
@@ -40,8 +42,8 @@ public class Employee {
     @Column(nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false)
-    private Double basicSalary;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal basicSalary;
 
     @JsonIgnore
     private String password = "pass@123";

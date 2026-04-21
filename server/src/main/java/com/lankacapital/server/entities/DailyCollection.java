@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -26,7 +27,8 @@ public class DailyCollection {
 
     private Integer installmentNumber;
 
-    private Double paidAmount;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal paidAmount;
 
     @Column(columnDefinition = "DATE DEFAULT CURRENT_DATE", updatable = false, insertable = false)
     private LocalDate paidOn;

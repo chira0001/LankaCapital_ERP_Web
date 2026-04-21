@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -21,11 +22,13 @@ public class Loan {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    private Long amount;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal amount;
 
     private Double interestRate;
 
-    private Double documentCharge;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal documentCharge;
 
     @ManyToOne
     @JoinColumn(name = "no_of_installments")

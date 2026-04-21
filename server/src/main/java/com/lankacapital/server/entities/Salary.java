@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -27,26 +28,48 @@ public class Salary {
 
     private Integer workingDays;
 
-    private Double incentive;
-    private Double sales;
-    private Double attendance;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal incentive;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal sales;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal attendance;
 
     private Double otHours;
-    private Double PayPerOtHour;
 
-    private Double grossSalary;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal PayPerOtHour;
 
-    private Double unpaidLeave;
-    private Double loan;
-    private Double salaryAdvance;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal grossSalary;
 
-    private Double employeeEPF;
-    private Double companyEPF;
-    private Double companyETF;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal unpaidLeave;
 
-    private Double totalSalary;
-    private Double totalDeduction;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal loan;
 
-    private Double netSalary;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal salaryAdvance;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal employeeEPF;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal companyEPF;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal companyETF;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal totalSalary;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal totalDeduction;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal netSalary;
 
 }
