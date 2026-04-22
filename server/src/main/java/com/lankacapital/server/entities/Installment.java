@@ -20,8 +20,4 @@ public class Installment {
 
     @Column(nullable = false, unique = true)
     private Integer value;
-
-    @OneToMany(mappedBy = "numberOfInstallments")
-    private List<Loan> loans;
-
 }

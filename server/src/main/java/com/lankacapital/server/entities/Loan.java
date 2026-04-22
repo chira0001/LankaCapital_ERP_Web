@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "loans")
@@ -20,7 +20,7 @@ public class Loan {
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
-    private Customer customer;
+    private Customer customerId;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
@@ -34,7 +34,15 @@ public class Loan {
     @JoinColumn(name = "no_of_installments")
     private Installment numberOfInstallments;
 
-    @OneToMany(mappedBy = "fileNumber")
-    private List<DailyCollection> dailyCollections;
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
+    private LocalDateTime createdAt;
 
+    @ManyToOne
+    @JoinColumn(name = "employee_id")
+    private Employee employeeId;
+
+    @PrePersist
+    public void update(){
+        this.createdAt = LocalDateTime.now();
+    }
 }

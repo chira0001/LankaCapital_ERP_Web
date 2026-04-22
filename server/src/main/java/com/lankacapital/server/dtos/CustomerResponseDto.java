@@ -1,12 +1,13 @@
 package com.lankacapital.server.dtos;
 
-import com.lankacapital.server.entities.Loan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class CustomerResponseDto {
     private long nic;
@@ -15,5 +16,5 @@ public class CustomerResponseDto {
     private String address;
     private String role;
     private String phoneNumber;
-    private List<Loan> loans;
+    private List<LoanResponseDto> loans;
 }

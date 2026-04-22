@@ -39,6 +39,7 @@ public class Customer {
     @JsonIgnore
     private String password = "pass@123";
 
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "customerId")
+    @JsonIgnore
     private List<Loan> loans;
 }

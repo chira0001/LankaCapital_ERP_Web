@@ -2,32 +2,56 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.CustomerRegisterDto;
 import com.lankacapital.server.dtos.CustomerResponseDto;
+import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.enums.Role;
+import com.lankacapital.server.repositories.CustomerRepository;
+import com.lankacapital.server.repositories.LoanRepository;
+import lombok.AllArgsConstructor;
 
+import java.util.List;
+
+@AllArgsConstructor
 public class CustomerMapper {
+
     public static Customer mapToCustomer(CustomerRegisterDto customerRegisterDto){
-        return new Customer(
-                customerRegisterDto.getNic(),
-                customerRegisterDto.getName(),
-                customerRegisterDto.getEmail(),
-                customerRegisterDto.getAddress(),
-                Role.customer,
-                customerRegisterDto.getPhoneNumber(),
-                "pass@123",
-                null
-        );
+
+        Customer customer = new Customer();
+        customer.setNic(customerRegisterDto.getNic());
+        customer.setName(customerRegisterDto.getName());
+        customer.setEmail(customerRegisterDto.getEmail());
+        customer.setAddress(customerRegisterDto.getAddress());
+        customer.setRole(Role.customer);
+        customer.setPhoneNumber(customerRegisterDto.getPhoneNumber());
+
+        return customer;
     }
 
-    public static CustomerResponseDto mapToCustomerResponse(Customer customer){
-        return new CustomerResponseDto(
-                customer.getNic(),
-                customer.getName(),
-                customer.getEmail(),
-                customer.getAddress(),
-                customer.getRole().toString(),
-                customer.getPhoneNumber(),
-                customer.getLoans()
-        );
+    public static CustomerResponseDto mapToCustomerResponseDto(Customer customer){
+
+        CustomerResponseDto dto = new CustomerResponseDto();
+        List<LoanResponseDto> loans = customer.getLoans() == null ? List.of() :
+                customer.getLoans().stream()
+                        .map(loan -> new LoanResponseDto(
+                                loan.getFileNumber(),
+                                loan.getInterestRate(),
+                                loan.getAmount().toString(),
+                                loan.getCreatedAt(),
+                                loan.getNumberOfInstallments().getValue(),
+                                loan.getDocumentCharge().doubleValue(),
+                                loan.getEmployeeId().getId(),
+                                loan.getCustomerId().getNic()
+                        ))
+                        .toList();
+
+        dto.setNic(customer.getNic());
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setAddress(customer.getAddress());
+        dto.setRole(customer.getRole().toString());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        dto.setLoans(loans);
+
+        return dto;
     }
 }
