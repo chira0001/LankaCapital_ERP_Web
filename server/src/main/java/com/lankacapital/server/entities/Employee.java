@@ -1,14 +1,12 @@
 package com.lankacapital.server.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.lankacapital.server.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Entity
 @Table(name = "employees")
@@ -33,8 +31,8 @@ public class Employee {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "role_id")
     private Role role;
 
     @Column(nullable = false)

@@ -20,7 +20,7 @@ public class Salary {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate month;
+    private String month;
 
     @OneToOne
     @JoinColumn(name = "employee_id")

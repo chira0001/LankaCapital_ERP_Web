@@ -1,7 +1,6 @@
 package com.lankacapital.server.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.lankacapital.server.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,9 +27,9 @@ public class Customer {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role = Role.customer;
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
 
     @Column(nullable = false)
     private String phoneNumber;

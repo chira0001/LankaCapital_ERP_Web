@@ -4,9 +4,6 @@ import com.lankacapital.server.dtos.CustomerRegisterDto;
 import com.lankacapital.server.dtos.CustomerResponseDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
-import com.lankacapital.server.enums.Role;
-import com.lankacapital.server.repositories.CustomerRepository;
-import com.lankacapital.server.repositories.LoanRepository;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -21,7 +18,6 @@ public class CustomerMapper {
         customer.setName(customerRegisterDto.getName());
         customer.setEmail(customerRegisterDto.getEmail());
         customer.setAddress(customerRegisterDto.getAddress());
-        customer.setRole(Role.customer);
         customer.setPhoneNumber(customerRegisterDto.getPhoneNumber());
 
         return customer;
@@ -48,9 +44,9 @@ public class CustomerMapper {
         dto.setName(customer.getName());
         dto.setEmail(customer.getEmail());
         dto.setAddress(customer.getAddress());
-        dto.setRole(customer.getRole().toString());
         dto.setPhoneNumber(customer.getPhoneNumber());
         dto.setLoans(loans);
+        dto.setRole(customer.getRole());
 
         return dto;
     }

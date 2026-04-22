@@ -1,5 +1,6 @@
 package com.lankacapital.server.dtos;
 
+import com.lankacapital.server.entities.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ public class CustomerResponseDto {
     private String name;
     private String email;
     private String address;
-    private String role;
+    private Role role;
     private String phoneNumber;
     private List<LoanResponseDto> loans;
 }

@@ -6,22 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "employeeMetaData")
+@Table(name = "roles")
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class EmployeeMetaData {
+public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
-    private String category;
-
-    @Column(nullable = false)
-    private Double fieldOfficer;
-
-    @Column(nullable = false)
-    private Double receptionist;
+    private String roleName;
 }

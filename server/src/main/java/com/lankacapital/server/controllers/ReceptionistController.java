@@ -1,10 +1,6 @@
 package com.lankacapital.server.controllers;
 
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
-import com.lankacapital.server.dtos.LoanCreateDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
-import com.lankacapital.server.entities.EmployeeMetaData;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.services.CustomerService;
 import com.lankacapital.server.services.EmployeeMetaDataService;
 import com.lankacapital.server.services.LoanService;
@@ -24,24 +20,24 @@ public class ReceptionistController {
     private final CustomerService customerService;
     private final LoanService loanService;
 
-    @GetMapping("/empmetadata")
-    public ResponseEntity<?> getAllData() {
-        List<EmployeeMetaData> metaDataList = employeeMetaDataService.getAllData();
-        if (metaDataList.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(metaDataList);
-    }
-
-    @GetMapping("/empmetadata/category/{id}")
-    public ResponseEntity<?> getDataByCategory(@PathVariable String id) {
-        EmployeeMetaData data = employeeMetaDataService.getDataById(id);
-        if (data == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Not found item with id " + id);
-        }
-        return ResponseEntity.ok(data);
-    }
+//    @GetMapping("/empmetadata")
+//    public ResponseEntity<?> getAllData() {
+//        List<SalaryMetaData> metaDataList = employeeMetaDataService.getAllData();
+//        if (metaDataList.isEmpty()) {
+//            return ResponseEntity.noContent().build();
+//        }
+//        return ResponseEntity.ok(metaDataList);
+//    }
+//
+//    @GetMapping("/empmetadata/category/{id}")
+//    public ResponseEntity<?> getDataByCategory(@PathVariable String id) {
+//        SalaryMetaData data = employeeMetaDataService.getDataById(id);
+//        if (data == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("Not found item with id " + id);
+//        }
+//        return ResponseEntity.ok(data);
+//    }
 
     @PostMapping(path = "/customer/register")
     public ResponseEntity<?> registerCustomer(@RequestBody CustomerRegisterDto customerRegisterDto){
@@ -75,4 +71,9 @@ public class ReceptionistController {
         }
         return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
     }
+
+//    @PostMapping(path = "/employee/salary/add")
+//    public ResponseEntity<?> addSalary(@RequestBody EmployeeSalaryAddDto salaryAddDto){
+//
+//    }
 }

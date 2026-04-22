@@ -4,10 +4,12 @@ import com.lankacapital.server.dtos.CustomerRegisterDto;
 import com.lankacapital.server.dtos.CustomerResponseDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.repositories.CustomerRepository;
 import com.lankacapital.server.repositories.LoanRepository;
+import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private CustomerRepository customerRepository;
     private LoanRepository loanRepository;
+    private RoleRepository roleRepository;
 
     @Transactional
     @Override
@@ -33,6 +36,8 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         Customer customer = CustomerMapper.mapToCustomer(dto);
+        Role role = roleRepository.findByRoleName("Customer");
+        customer.setRole(role);
         Customer savedCustomer = customerRepository.save(customer);
 
         return CustomerMapper.mapToCustomerResponseDto(savedCustomer);
