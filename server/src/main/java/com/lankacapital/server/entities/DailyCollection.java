@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "dailyCollections")
+@Table(name = "daily_collections")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -30,14 +30,10 @@ public class DailyCollection {
     @Column(precision = 12, scale = 2)
     private BigDecimal paidAmount;
 
-    @Column(columnDefinition = "DATE DEFAULT CURRENT_DATE", updatable = false, insertable = false)
-    private LocalDate paidOn;
-
-    @Column(columnDefinition = "TIME DEFAULT CURRENT_TIME", updatable = false, insertable = false)
-    private LocalTime paidAt;
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime paidAt;
 
     @OneToOne
     @JoinColumn(name = "employee_id")
     private Employee employeeId;
-
 }

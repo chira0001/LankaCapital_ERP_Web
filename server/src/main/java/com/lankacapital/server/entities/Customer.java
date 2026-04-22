@@ -17,7 +17,7 @@ import java.util.List;
 public class Customer {
 
     @Id
-    private long nic;
+    private Long nic;
 
     @Column(nullable = false)
     private String name;
@@ -41,5 +41,4 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     private List<Loan> loans;
-
 }
