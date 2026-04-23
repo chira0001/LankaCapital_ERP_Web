@@ -30,7 +30,7 @@ const About = () => {
             <CommonNavbar />
             <div className='bg-white text-black flex flex-col gap-10 py-30 relative px-4 md:px-24'>
                 <div className='flex flex-col items-center gap-4 font-extralight'>
-                    <span className='text-2xl italic'>ABOUT</span>
+                    <span className='text-2xl'>ABOUT</span>
                     <div className='flex flex-col items-center text-3xl md:text-8xl gap-4'>
                         <div>N K R S</div>
                         <div className='tracking-[0.5rem] md:tracking-[2rem] font-medium text-center'>LANKA CAPITAL</div>

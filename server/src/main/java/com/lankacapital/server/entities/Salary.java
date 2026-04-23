@@ -22,9 +22,9 @@ public class Salary {
     @Column(nullable = false)
     private String month;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employeeId;
+    private Employee employee;
 
     private Integer workingDays;
 

@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.EmployeeSalaryAddDto;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.SalaryMapper;
 import com.lankacapital.server.repositories.*;
@@ -11,6 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -26,66 +31,87 @@ public class SalaryServiceImpl implements SalaryService {
     private static final int SCALE = 2;
 
     @Override
-    public void addSalaryToEmployee(EmployeeSalaryAddDto dto) {
+    public void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList) {
 
-        validateDto(dto);
+        if (dtoList == null || dtoList.isEmpty()) {
+            throw new IllegalArgumentException("Salary DTO list cannot be null or empty");
+        }
 
-        Employee employee = getEmployee(dto.getEmployeeId());
-        Role role = getRole(employee);
+        String currentMonth = LocalDate.now()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
-        Salary salary = SalaryMapper.mapToSalary(dto);
-        salary.setEmployeeId(employee);
+        List<Salary> salaries = new ArrayList<>();
 
-        SalaryMetaData incentiveMeta = getMeta("IncentiveRate", role);
-        SalaryMetaData salesMeta = getMeta("SalesRate", role);
-        SalaryMetaData attendanceMeta = getMeta("AttendanceAmount", role);
-        SalaryMetaData otMeta = getMeta("PayPerOtHour", role);
-        SalaryMetaData employeeEPFMeta = getMeta("EmployeeEPF", role);
-        SalaryMetaData companyEPFMeta = getMeta("CompanyEPF", role);
-        SalaryMetaData companyETFMeta = getMeta("CompanyETF", role);
+        for (EmployeeSalaryAddDto dto : dtoList) {
 
-        BigDecimal basic = safe(employee.getBasicSalary());
+            validateDto(dto);
 
-        BigDecimal incentive = percentage(basic, incentiveMeta.getValue());
-        BigDecimal sales = percentage(basic, salesMeta.getValue());
-        BigDecimal attendance = multiply(dto.getWorkingDays(), attendanceMeta.getValue());
-        BigDecimal otAmount = multiply(dto.getOtHours(), otMeta.getValue());
+            Employee employee = getEmployee(dto.getEmployeeId());
+            Role role = getRole(employee);
 
-        BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount);
+            if (salaryRepository.existsByEmployeeAndMonth(employee, currentMonth)) {
+                throw new ResourceExistException(
+                        "Salary already exists for employee: " + employee.getId() + " for month " + currentMonth
+                );
+            }
 
-        BigDecimal employeeEPF = percentage(basic, employeeEPFMeta.getValue());
-        BigDecimal companyEPF = percentage(basic, companyEPFMeta.getValue());
-        BigDecimal companyETF = percentage(basic, companyETFMeta.getValue());
+            Salary salary = SalaryMapper.mapToSalary(dto);
+            salary.setEmployee(employee);
+            salary.setMonth(currentMonth);
 
-        BigDecimal unpaidLeave = toBigDecimal(dto.getUnpaidLeaves());
-        BigDecimal loans = toBigDecimal(dto.getLoans());
-        BigDecimal advance = toBigDecimal(dto.getSalaryAdvance());
+            SalaryMetaData incentiveMeta = getMeta("IncentiveRate", role);
+            SalaryMetaData salesMeta = getMeta("SalesRate", role);
+            SalaryMetaData attendanceMeta = getMeta("AttendanceAmount", role);
+            SalaryMetaData otMeta = getMeta("PayPerOtHour", role);
+            SalaryMetaData employeeEPFMeta = getMeta("EmployeeEPF", role);
+            SalaryMetaData companyEPFMeta = getMeta("CompanyEPF", role);
+            SalaryMetaData companyETFMeta = getMeta("CompanyETF", role);
 
-        BigDecimal totalDeduction = sum(unpaidLeave, loans, advance, employeeEPF);
+            BigDecimal basic = safe(employee.getBasicSalary());
 
-        BigDecimal net = gross.subtract(totalDeduction).setScale(SCALE, RoundingMode.HALF_UP);
+            BigDecimal incentive = percentage(basic, incentiveMeta.getValue());
+            BigDecimal sales = percentage(basic, salesMeta.getValue());
+            BigDecimal attendance = multiply(dto.getWorkingDays(), attendanceMeta.getValue());
+            BigDecimal otAmount = multiply(dto.getOtHours(), otMeta.getValue());
 
-        BigDecimal totalSalary = sum(net, totalDeduction, companyEPF, companyETF);
+            BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount);
 
-        salary.setIncentive(incentive);
-        salary.setSales(sales);
-        salary.setAttendance(attendance);
-        salary.setOtAmount(otAmount);
-        salary.setGrossSalary(gross);
+            BigDecimal employeeEPF = percentage(basic, employeeEPFMeta.getValue());
+            BigDecimal companyEPF = percentage(basic, companyEPFMeta.getValue());
+            BigDecimal companyETF = percentage(basic, companyETFMeta.getValue());
 
-        salary.setUnpaidLeave(unpaidLeave);
-        salary.setLoans(loans);
-        salary.setSalaryAdvance(advance);
+            BigDecimal unpaidLeave = toBigDecimal(dto.getUnpaidLeaves());
+            BigDecimal loans = toBigDecimal(dto.getLoans());
+            BigDecimal advance = toBigDecimal(dto.getSalaryAdvance());
 
-        salary.setEmployeeEPF(employeeEPF);
-        salary.setCompanyEPF(companyEPF);
-        salary.setCompanyETF(companyETF);
+            BigDecimal totalDeduction = sum(unpaidLeave, loans, advance, employeeEPF);
 
-        salary.setTotalDeduction(totalDeduction);
-        salary.setNetSalary(net);
-        salary.setTotalSalary(totalSalary);
+            BigDecimal net = gross.subtract(totalDeduction)
+                    .setScale(SCALE, RoundingMode.HALF_UP);
 
-        salaryRepository.save(salary);
+            BigDecimal totalSalary = sum(net, totalDeduction, companyEPF, companyETF);
+
+            salary.setIncentive(incentive);
+            salary.setSales(sales);
+            salary.setAttendance(attendance);
+            salary.setOtAmount(otAmount);
+            salary.setGrossSalary(gross);
+
+            salary.setUnpaidLeave(unpaidLeave);
+            salary.setLoans(loans);
+            salary.setSalaryAdvance(advance);
+
+            salary.setEmployeeEPF(employeeEPF);
+            salary.setCompanyEPF(companyEPF);
+            salary.setCompanyETF(companyETF);
+
+            salary.setTotalDeduction(totalDeduction);
+            salary.setNetSalary(net);
+            salary.setTotalSalary(totalSalary);
+
+            salaries.add(salary);
+        }
+        salaryRepository.saveAll(salaries);
     }
 
     private void validateDto(EmployeeSalaryAddDto dto) {

@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.EmployeeAddDto;
+import com.lankacapital.server.dtos.EmployeeResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
@@ -10,7 +11,11 @@ import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -18,6 +23,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
+
+    @Override
+    public UserDetailsService userDetailsService() {
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String username) {
+                return employeeRepository.findByEmail(username);
+            }
+        };
+    }
 
     @Override
     public Employee addNewEmployee(EmployeeAddDto dto) {
@@ -32,5 +47,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         newEmployee.setRole(role);
         return employeeRepository.save(newEmployee);
+    }
+
+    @Override
+    public List<EmployeeResponseDto> getAllEmployees() {
+        List<Employee> employeeList = employeeRepository.findAll();
+        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
     }
 }

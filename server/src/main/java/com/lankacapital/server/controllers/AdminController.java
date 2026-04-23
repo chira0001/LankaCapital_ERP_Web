@@ -37,7 +37,6 @@ public class AdminController {
     }
 
 
-
     @PostMapping(path = "/salary-condition")
     public ResponseEntity<?> addNewSalaryCondition(@RequestBody ConditionRegisterDto dto){
         return new ResponseEntity<>(salaryConditionService.addNewSalaryCondition(dto), HttpStatus.CREATED);
