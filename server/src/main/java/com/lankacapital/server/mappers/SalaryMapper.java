@@ -18,7 +18,7 @@ public class SalaryMapper {
 
         salary.setOtHours(salaryAddDto.getOtHours());
         salary.setUnpaidLeave(BigDecimal.valueOf(salaryAddDto.getUnpaidLeaves()));
-        salary.setLoan(BigDecimal.valueOf(salaryAddDto.getLoans()));
+        salary.setLoans(BigDecimal.valueOf(salaryAddDto.getLoans()));
         salary.setSalaryAdvance(BigDecimal.valueOf(salaryAddDto.getSalaryAdvance()));
 
         return salary;

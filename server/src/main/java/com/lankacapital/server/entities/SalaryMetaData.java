@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "employeeMetaData")
+@Table(name = "salaryMetaData")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -18,11 +18,11 @@ public class SalaryMetaData {
 
     @ManyToOne
     @JoinColumn(name = "salary_condition_id")
-    private SalaryCondition salaryConditionId;
+    private SalaryCondition salaryCondition;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
-    private Role roleId;
+    private Role role;
 
     private Double value;
 }

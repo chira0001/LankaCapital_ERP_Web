@@ -1,9 +1,10 @@
 package com.lankacapital.server.controllers;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.lankacapital.server.dtos.ConditionRegisterDto;
+import com.lankacapital.server.dtos.EmployeeAddDto;
 import com.lankacapital.server.dtos.RoleRegisterDto;
+import com.lankacapital.server.entities.Employee;
+import com.lankacapital.server.services.EmployeeService;
 import com.lankacapital.server.services.RoleService;
 import com.lankacapital.server.services.SalaryConditionService;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ public class AdminController {
 
     private final RoleService roleService;
     private final SalaryConditionService salaryConditionService;
+    private final EmployeeService employeeService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -35,6 +37,7 @@ public class AdminController {
     }
 
 
+
     @PostMapping(path = "/salary-condition")
     public ResponseEntity<?> addNewSalaryCondition(@RequestBody ConditionRegisterDto dto){
         return new ResponseEntity<>(salaryConditionService.addNewSalaryCondition(dto), HttpStatus.CREATED);
@@ -48,6 +51,12 @@ public class AdminController {
     @GetMapping(path = "/salary-condition")
     public ResponseEntity<?> getAllSalaryConditions(){
         return new ResponseEntity<>(salaryConditionService.getAllSalaryConditions(), HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/employee")
+    public ResponseEntity<?> addNewEmployee(@RequestBody EmployeeAddDto dto){
+        Employee newEmployee = employeeService.addNewEmployee(dto);
+        return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
 

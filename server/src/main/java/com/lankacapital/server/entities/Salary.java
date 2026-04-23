@@ -40,7 +40,7 @@ public class Salary {
     private Double otHours;
 
     @Column(precision = 12, scale = 2)
-    private BigDecimal PayPerOtHour;
+    private BigDecimal otAmount;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal grossSalary;
@@ -49,7 +49,7 @@ public class Salary {
     private BigDecimal unpaidLeave;
 
     @Column(precision = 12, scale = 2)
-    private BigDecimal loan;
+    private BigDecimal loans;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal salaryAdvance;
