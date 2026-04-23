@@ -15,94 +15,148 @@ import java.math.RoundingMode;
 @Service
 @AllArgsConstructor
 public class SalaryServiceImpl implements SalaryService {
+
     private final SalaryRepository salaryRepository;
     private final EmployeeRepository employeeRepository;
     private final SalaryMetaDataRepository salaryMetaDataRepository;
     private final SalaryConditionRepository salaryConditionRepository;
     private final RoleRepository roleRepository;
 
+    private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
+    private static final int SCALE = 2;
+
     @Override
     public void addSalaryToEmployee(EmployeeSalaryAddDto dto) {
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id " + dto.getEmployeeId()));
 
-        Salary newSalary = SalaryMapper.mapToSalary(dto);
-        newSalary.setEmployeeId(employee);
+        validateDto(dto);
+
+        Employee employee = getEmployee(dto.getEmployeeId());
+        Role role = getRole(employee);
+
+        Salary salary = SalaryMapper.mapToSalary(dto);
+        salary.setEmployeeId(employee);
+
+        SalaryMetaData incentiveMeta = getMeta("IncentiveRate", role);
+        SalaryMetaData salesMeta = getMeta("SalesRate", role);
+        SalaryMetaData attendanceMeta = getMeta("AttendanceAmount", role);
+        SalaryMetaData otMeta = getMeta("PayPerOtHour", role);
+        SalaryMetaData employeeEPFMeta = getMeta("EmployeeEPF", role);
+        SalaryMetaData companyEPFMeta = getMeta("CompanyEPF", role);
+        SalaryMetaData companyETFMeta = getMeta("CompanyETF", role);
+
+        BigDecimal basic = safe(employee.getBasicSalary());
+
+        BigDecimal incentive = percentage(basic, incentiveMeta.getValue());
+        BigDecimal sales = percentage(basic, salesMeta.getValue());
+        BigDecimal attendance = multiply(dto.getWorkingDays(), attendanceMeta.getValue());
+        BigDecimal otAmount = multiply(dto.getOtHours(), otMeta.getValue());
+
+        BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount);
+
+        BigDecimal employeeEPF = percentage(basic, employeeEPFMeta.getValue());
+        BigDecimal companyEPF = percentage(basic, companyEPFMeta.getValue());
+        BigDecimal companyETF = percentage(basic, companyETFMeta.getValue());
+
+        BigDecimal unpaidLeave = toBigDecimal(dto.getUnpaidLeaves());
+        BigDecimal loans = toBigDecimal(dto.getLoans());
+        BigDecimal advance = toBigDecimal(dto.getSalaryAdvance());
+
+        BigDecimal totalDeduction = sum(unpaidLeave, loans, advance, employeeEPF);
+
+        BigDecimal net = gross.subtract(totalDeduction).setScale(SCALE, RoundingMode.HALF_UP);
+
+        BigDecimal totalSalary = sum(net, totalDeduction, companyEPF, companyETF);
+
+        salary.setIncentive(incentive);
+        salary.setSales(sales);
+        salary.setAttendance(attendance);
+        salary.setOtAmount(otAmount);
+        salary.setGrossSalary(gross);
+
+        salary.setUnpaidLeave(unpaidLeave);
+        salary.setLoans(loans);
+        salary.setSalaryAdvance(advance);
+
+        salary.setEmployeeEPF(employeeEPF);
+        salary.setCompanyEPF(companyEPF);
+        salary.setCompanyETF(companyETF);
+
+        salary.setTotalDeduction(totalDeduction);
+        salary.setNetSalary(net);
+        salary.setTotalSalary(totalSalary);
+
+        salaryRepository.save(salary);
+    }
+
+    private void validateDto(EmployeeSalaryAddDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Salary DTO cannot be null");
+        }
+        if (dto.getEmployeeId() == null) {
+            throw new IllegalArgumentException("Employee ID is required");
+        }
+    }
+
+    private Employee getEmployee(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
+    }
+
+    private Role getRole(Employee employee) {
+        if (employee.getRole() == null) {
+            throw new IllegalStateException("Employee role is not assigned");
+        }
 
         Role role = roleRepository.findByRoleName(employee.getRole().getRoleName());
+        if (role == null) {
+            throw new ResourceNotFoundException("Role not found: " + employee.getRole().getRoleName());
+        }
+        return role;
+    }
 
-        SalaryCondition incentives = salaryConditionRepository.findByConditionName("IncentiveRate");
-        SalaryMetaData incentiveMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(incentives,role);
+    private SalaryMetaData getMeta(String conditionName, Role role) {
+        SalaryCondition condition = salaryConditionRepository.findByConditionName(conditionName);
 
-        SalaryCondition sales = salaryConditionRepository.findByConditionName("SalesRate");
-        SalaryMetaData salesMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(sales,role);
+        if (condition == null) {
+            throw new ResourceNotFoundException("Condition not found: " + conditionName);
+        }
 
-        SalaryCondition attendance = salaryConditionRepository.findByConditionName("AttendanceAmount");
-        SalaryMetaData attendanceMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(attendance,role);
+        SalaryMetaData meta = salaryMetaDataRepository.findBySalaryConditionAndRole(condition, role);
 
-        SalaryCondition otHours = salaryConditionRepository.findByConditionName("PayPerOtHour");
-        SalaryMetaData otHoursMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(otHours,role);
+        if (meta == null) {
+            throw new ResourceNotFoundException(
+                    "Metadata not found for condition: " + conditionName + " and role: " + role.getRoleName()
+            );
+        }
 
-        SalaryCondition employeeEPF = salaryConditionRepository.findByConditionName("EmployeeEPF");
-        SalaryMetaData employeeEPFMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(employeeEPF,role);
+        return meta;
+    }
 
-        SalaryCondition companyEPF = salaryConditionRepository.findByConditionName("CompanyEPF");
-        SalaryMetaData companyEPFMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(companyEPF,role);
+    private BigDecimal percentage(BigDecimal base, Double percent) {
+        return safe(base)
+                .multiply(BigDecimal.valueOf(percent))
+                .divide(ONE_HUNDRED, SCALE, RoundingMode.HALF_UP);
+    }
 
-        SalaryCondition companyETF = salaryConditionRepository.findByConditionName("CompanyETF");
-        SalaryMetaData companyETFMetaData = salaryMetaDataRepository.findBySalaryConditionAndRole(companyETF,role);
+    private BigDecimal multiply(Number a, Double b) {
+        return toBigDecimal(a)
+                .multiply(BigDecimal.valueOf(b))
+                .setScale(SCALE, RoundingMode.HALF_UP);
+    }
 
-        BigDecimal incentiveVal = employee.getBasicSalary()
-                .multiply(BigDecimal.valueOf(incentiveMetaData.getValue()))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        newSalary.setIncentive(incentiveVal);
+    private BigDecimal sum(BigDecimal... values) {
+        BigDecimal result = BigDecimal.ZERO;
+        for (BigDecimal val : values) {
+            result = result.add(safe(val));
+        }
+        return result.setScale(SCALE, RoundingMode.HALF_UP);
+    }
 
-        BigDecimal salesVal = employee.getBasicSalary()
-                .multiply(BigDecimal.valueOf(salesMetaData.getValue()))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        newSalary.setSales(salesVal);
+    private BigDecimal safe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
 
-        BigDecimal attendanceVal = BigDecimal.valueOf(dto.getWorkingDays())
-                .multiply(BigDecimal.valueOf(attendanceMetaData.getValue()));
-        newSalary.setAttendance(attendanceVal);
-
-        BigDecimal otAmountVal = BigDecimal.valueOf(dto.getOtHours())
-                .multiply(BigDecimal.valueOf(otHoursMetaData.getValue()));
-        newSalary.setOtAmount(otAmountVal);
-
-        BigDecimal grossSalaryVal = employee.getBasicSalary()
-                .add(incentiveVal)
-                .add(salesVal)
-                .add(attendanceVal)
-                .add(otAmountVal);
-        newSalary.setGrossSalary(grossSalaryVal);
-
-        BigDecimal employeeEPFVal = employee.getBasicSalary()
-                .multiply(BigDecimal.valueOf(employeeEPFMetaData.getValue())
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
-        newSalary.setEmployeeEPF(employeeEPFVal);
-
-        BigDecimal companyEPFVal = employee.getBasicSalary()
-                .multiply(BigDecimal.valueOf(companyEPFMetaData.getValue())
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
-        newSalary.setCompanyEPF(companyEPFVal);
-
-        BigDecimal companyETFVal = employee.getBasicSalary()
-                .multiply(BigDecimal.valueOf(companyETFMetaData.getValue())
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
-        newSalary.setCompanyETF(companyETFVal);
-
-        BigDecimal totalDeductionVal = BigDecimal.valueOf(dto.getUnpaidLeaves())
-                .add(BigDecimal.valueOf(dto.getLoans()))
-                .add(BigDecimal.valueOf(dto.getSalaryAdvance()))
-                .add(employeeEPFVal);
-        newSalary.setTotalDeduction(totalDeductionVal);
-
-        BigDecimal netSalaryVal = grossSalaryVal.subtract(totalDeductionVal);
-        newSalary.setNetSalary(netSalaryVal);
-
-        newSalary.setTotalSalary(totalDeductionVal.add(netSalaryVal).add(companyEPFVal).add(companyETFVal));
-
-        System.out.println(newSalary);
+    private BigDecimal toBigDecimal(Number value) {
+        return value == null ? BigDecimal.ZERO : BigDecimal.valueOf(value.doubleValue());
     }
 }
