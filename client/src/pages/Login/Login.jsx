@@ -30,6 +30,13 @@ const Login = () => {
         };
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
+
+            if(email == "admin@email.com"){
+                navigate('/admin')
+            }else if(email == "receptionist@email.com"){
+                navigate('/reception')
+            }
+
             console.log('Logging in with:', { email, password });
         }
     }
