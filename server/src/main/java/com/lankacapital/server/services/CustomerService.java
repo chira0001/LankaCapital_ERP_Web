@@ -8,4 +8,5 @@ import java.util.List;
 public interface CustomerService {
     CustomerResponseDto registerCustomer(CustomerRegisterDto customerRegisterDto);
     List<CustomerResponseDto> getAllCustomer();
+    CustomerResponseDto getCustomerById(Long nic);
 }

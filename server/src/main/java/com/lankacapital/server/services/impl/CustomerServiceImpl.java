@@ -6,6 +6,7 @@ import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
+import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.repositories.CustomerRepository;
 import com.lankacapital.server.repositories.LoanRepository;
@@ -49,5 +50,12 @@ public class CustomerServiceImpl implements CustomerService {
                 .stream()
                 .map(CustomerMapper::mapToCustomerResponseDto)
                 .toList();
+    }
+
+    @Override
+    public CustomerResponseDto getCustomerById(Long nic) {
+        Customer customer = customerRepository.findById(nic)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not exists with id : " + nic));
+        return CustomerMapper.mapToCustomerResponseDto(customer);
     }
 }

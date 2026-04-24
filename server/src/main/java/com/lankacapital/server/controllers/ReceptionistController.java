@@ -19,6 +19,12 @@ public class ReceptionistController {
     private final LoanService loanService;
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
+    private final InstallmentService installmentService;
+
+    @GetMapping(path = "/installments")
+    public ResponseEntity<?> getAllInstallments(){
+        return new ResponseEntity<>(installmentService.getAllInstallments(), HttpStatus.OK);
+    }
 
     @PostMapping(path = "/customers")
     public ResponseEntity<?> registerCustomer(@RequestBody CustomerRegisterDto customerRegisterDto){
@@ -27,6 +33,16 @@ public class ReceptionistController {
             return new ResponseEntity<>("Customer not registered", HttpStatus.EXPECTATION_FAILED);
         }
          return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/customers/{id}")
+    public ResponseEntity<?> getCustomerById(@PathVariable String id){
+        try {
+            CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
+            return new ResponseEntity<>(existCustomer, HttpStatus.OK);
+        }catch (NumberFormatException e){
+            return new ResponseEntity<>("Enter valid NIC", HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping(path = "/customers")
@@ -38,8 +54,11 @@ public class ReceptionistController {
         return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
     }
 
-    @PostMapping(path = "/loans/create")
+    @PostMapping(path = "/loans")
     public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto){
+        if(loanCreateDto.getEmployeeId() == null){
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
         return new ResponseEntity<>(loanService.addLoan(loanCreateDto), HttpStatus.CREATED);
     }
 
