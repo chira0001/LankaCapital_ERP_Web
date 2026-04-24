@@ -20,12 +20,11 @@ public class ReceptionistController {
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
 
-    @PostMapping(path = "/customers/register")
+    @PostMapping(path = "/customers")
     public ResponseEntity<?> registerCustomer(@RequestBody CustomerRegisterDto customerRegisterDto){
-
         CustomerResponseDto registeredCustomer = customerService.registerCustomer(customerRegisterDto);
         if (registeredCustomer == null){
-            return new ResponseEntity<>("User not registered", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("Customer not registered", HttpStatus.EXPECTATION_FAILED);
         }
          return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
     }

@@ -2,17 +2,12 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
-import com.lankacapital.server.entities.Customer;
-import com.lankacapital.server.entities.Employee;
-import com.lankacapital.server.entities.Installment;
-import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.entities.*;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
-import com.lankacapital.server.repositories.CustomerRepository;
-import com.lankacapital.server.repositories.EmployeeRepository;
-import com.lankacapital.server.repositories.InstallmentRepository;
-import com.lankacapital.server.repositories.LoanRepository;
+import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +20,25 @@ public class LoanServiceImpl implements LoanService {
     private final CustomerRepository customerRepository;
     private final InstallmentRepository installmentRepository;
     private final EmployeeRepository employeeRepository;
+    private final RoleRepository roleRepository;
 
+    @Transactional
     @Override
     public Loan addLoan(LoanCreateDto loanCreateDto) {
-
         Loan loan = LoanMapper.mapToLoan(loanCreateDto);
+        Customer customer;
+        //customer not exists => create new customer
+        if (!customerRepository.existsById(loanCreateDto.getCustomerId())){
+            Customer newCustomer = LoanMapper.mapToCustomer(loanCreateDto);
+            Role role = roleRepository.findByRoleName("Customer");
+            newCustomer.setRole(role);
+            customerRepository.save(newCustomer);
+        }
 
-        Customer customer = customerRepository.findById(loanCreateDto.getCustomerId())
+        customer = customerRepository.findById(loanCreateDto.getCustomerId())
                 .orElseThrow(()->new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerId()));
 
-        loan.setCustomerId(customer);
+        loan.setCustomer(customer);
 
         Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
@@ -52,7 +56,7 @@ public class LoanServiceImpl implements LoanService {
         try {
             Customer customer = customerRepository.findById(Long.parseLong(id))
                     .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
-            List<Loan> loanList = loanRepository.findAllByCustomerId(customer);
+            List<Loan> loanList = loanRepository.findAllByCustomerNic(customer);
             return loanList.stream().map(LoanMapper::mapToLoanResponseDto).toList();
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Invalid Customer Id " + id);

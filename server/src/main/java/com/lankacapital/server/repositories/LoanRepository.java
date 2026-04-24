@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface LoanRepository extends JpaRepository<Loan, String> {
-    List<Loan> findAllByCustomerId(Customer customer);
+    List<Loan> findAllByCustomerNic(Customer customer);
 }

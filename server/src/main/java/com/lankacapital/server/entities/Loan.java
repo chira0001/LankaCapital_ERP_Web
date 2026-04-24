@@ -20,7 +20,7 @@ public class Loan {
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
-    private Customer customerId;
+    private Customer customer;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
