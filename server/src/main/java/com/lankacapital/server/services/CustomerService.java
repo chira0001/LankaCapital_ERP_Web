@@ -1,5 +1,6 @@
 package com.lankacapital.server.services;
 
+import com.lankacapital.server.dtos.CustomerInfoDto;
 import com.lankacapital.server.dtos.CustomerRegisterDto;
 import com.lankacapital.server.dtos.CustomerResponseDto;
 
@@ -9,4 +10,4 @@ public interface CustomerService {
     CustomerResponseDto registerCustomer(CustomerRegisterDto customerRegisterDto);
     List<CustomerResponseDto> getAllCustomer();
     CustomerResponseDto getCustomerById(Long nic);
-}
+    CustomerInfoDto getCustomerInfoById(Long nic);}

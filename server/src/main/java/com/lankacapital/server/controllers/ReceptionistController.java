@@ -54,6 +54,20 @@ public class ReceptionistController {
         return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
     }
 
+    @GetMapping(path = "/customers/loans/{id}")
+    public ResponseEntity<?> getLoanDetailsByCustomerId(@PathVariable String id){
+        if(id == null){
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        long nic;
+        try {
+            nic = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter valid id");
+        }
+        return new ResponseEntity<>(customerService.getCustomerInfoById(nic), HttpStatus.OK);
+    }
+
     @PostMapping(path = "/loans")
     public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto){
         if(loanCreateDto.getEmployeeId() == null){

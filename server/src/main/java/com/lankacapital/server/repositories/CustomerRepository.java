@@ -14,5 +14,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.loans")
     List<Customer> findAllWithLoans();
 
+    @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.loans WHERE c.nic = :nic")
+    Customer findByNicWithLoans(Long nic);
+
     Boolean existsByNic(Long nic);
+    Customer findByNic(Long nic);
 }

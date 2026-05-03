@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface LoanRepository extends JpaRepository<Loan, String> {
-    List<Loan> findAllByCustomerNic(Customer customer);
+    List<Loan> findAllByCustomer(Customer customer);
     Boolean existsByFileNumber(String fileNumber);
 }

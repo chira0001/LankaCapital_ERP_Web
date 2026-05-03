@@ -1,13 +1,16 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.CustomerInfoDto;
 import com.lankacapital.server.dtos.CustomerRegisterDto;
 import com.lankacapital.server.dtos.CustomerResponseDto;
+import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
+import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.CustomerRepository;
 import com.lankacapital.server.repositories.LoanRepository;
 import com.lankacapital.server.repositories.RoleRepository;
@@ -57,5 +60,32 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = customerRepository.findById(nic)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not exists with id : " + nic));
         return CustomerMapper.mapToCustomerResponseDto(customer);
+    }
+
+    @Transactional(Transactional.TxType.SUPPORTS)
+    @Override
+    public CustomerInfoDto getCustomerInfoById(Long nic) {
+
+        Customer customer = customerRepository.findByNicWithLoans(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not found with id : " + nic);
+        }
+
+        CustomerInfoDto dto = new CustomerInfoDto();
+
+        dto.setCustomerNIC(customer.getNic());
+        dto.setBusinessName(customer.getName());
+        dto.setBusinessAddress(customer.getAddress());
+        dto.setBusinessEmail(customer.getEmail());
+        dto.setContactNumber(customer.getPhoneNumber());
+
+        dto.setLoans(
+                customer.getLoans()
+                        .stream()
+                        .map(LoanMapper::mapToLoanResponseDto)
+                        .toList()
+        );
+
+        return dto;
     }
 }

@@ -61,7 +61,7 @@ public class LoanServiceImpl implements LoanService {
         try {
             Customer customer = customerRepository.findById(Long.parseLong(id))
                     .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
-            List<Loan> loanList = loanRepository.findAllByCustomerNic(customer);
+            List<Loan> loanList = loanRepository.findAllByCustomer(customer);
             return loanList.stream().map(LoanMapper::mapToLoanResponseDto).toList();
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Invalid Customer Id " + id);
