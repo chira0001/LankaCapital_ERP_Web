@@ -3,6 +3,7 @@ package com.lankacapital.server.services.impl;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.*;
@@ -33,6 +34,10 @@ public class LoanServiceImpl implements LoanService {
             Role role = roleRepository.findByRoleName("Customer");
             newCustomer.setRole(role);
             customerRepository.save(newCustomer);
+        }
+
+        if(loanRepository.existsByFileNumber(loan.getFileNumber())){
+            throw new ResourceExistException("Loan exists with file number : " + loan.getFileNumber());
         }
 
         customer = customerRepository.findById(loanCreateDto.getCustomerId())

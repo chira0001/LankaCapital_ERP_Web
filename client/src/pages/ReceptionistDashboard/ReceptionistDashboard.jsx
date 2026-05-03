@@ -65,7 +65,7 @@ const ReceptionistDashboard = () => {
         email: '',
         address: '',
         phoneNumber: '',
-        employeeId : empId
+        employeeId: empId
     });
 
 
@@ -294,14 +294,23 @@ const ReceptionistDashboard = () => {
         }
 
         try {
-            // Your loan submission logic here
             const response = await axiosAPI.post('/loans', loanForm);
+            console.log("299 : ", response)
             toast.success('Loan created successfully!');
             clearLoanForm();
-
         } catch (error) {
-            console.error(error);
-            toast.error('Failed to create loan. Please try again.');
+            if (error.response) {
+                const status = error.response.status;
+                const message = error.response.data?.message;
+
+                if (status === 409 && message) {
+                    toast.error(message);
+                } else {
+                    toast.error(message || 'Something went wrong');
+                }
+            } else {
+                toast.error('Failed to connect to server');
+            }
         }
     };
 
@@ -328,7 +337,7 @@ const ReceptionistDashboard = () => {
             email: '',
             address: '',
             phoneNumber: '',
-            employeeId : empId
+            employeeId: empId
         });
         setSearchCustomer('');
         setExistCustomer(null);
@@ -528,7 +537,8 @@ const ReceptionistDashboard = () => {
                                                 <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Amount</th>
                                                 <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Interest</th>
                                                 <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Installments</th>
-                                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Employee</th>
+                                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Installment Amount</th>
+                                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Entered By (Emp. Id)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -548,6 +558,9 @@ const ReceptionistDashboard = () => {
                                                     </td>
                                                     <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
                                                         {loan.noOfInstallments}
+                                                    </td>
+                                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+                                                        Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
                                                     </td>
                                                     <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
                                                         {loan.employeeId}

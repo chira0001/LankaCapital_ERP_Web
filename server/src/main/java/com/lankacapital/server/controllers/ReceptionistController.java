@@ -78,7 +78,6 @@ public class ReceptionistController {
 
     @PostMapping(path = "/employees/salary")
     public ResponseEntity<?> addSalary(@RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList){
-        System.out.println("Here 1");
         salaryService.addSalaryToEmployee(salaryAddDtoList);
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
     }
