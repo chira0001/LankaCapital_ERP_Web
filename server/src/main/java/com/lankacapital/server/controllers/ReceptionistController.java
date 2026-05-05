@@ -35,6 +35,23 @@ public class ReceptionistController {
          return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
     }
 
+    @PutMapping(path = "/customers")
+    public ResponseEntity<?> updateCustomer(
+            @RequestParam String customerId,
+            @RequestBody CustomerRegisterDto customerRegisterDto
+    ){
+        if(customerId == null){
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        long nic;
+        try {
+            nic = Long.parseLong(customerId);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter valid id");
+        }
+        return new ResponseEntity<>(customerService.updateCustomerById(nic,customerRegisterDto), HttpStatus.OK);
+    }
+
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
         try {

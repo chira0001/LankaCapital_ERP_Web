@@ -50,4 +50,14 @@ public class CustomerMapper {
 
         return dto;
     }
+
+    public static CustomerRegisterDto mapToCustomerRegisterDto(Customer customer){
+        CustomerRegisterDto dto = new CustomerRegisterDto();
+        dto.setNic(customer.getNic());
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setAddress(customer.getAddress());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        return dto;
+    }
 }
