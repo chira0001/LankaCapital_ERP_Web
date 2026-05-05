@@ -1,5 +1,7 @@
 package com.lankacapital.server.entities;
 
+import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.RiskLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,8 +43,21 @@ public class Loan {
     @JoinColumn(name = "employee_id")
     private Employee employeeId;
 
+    @Enumerated(EnumType.STRING)
+    private RiskLevel risk;
+
+    @Enumerated(EnumType.STRING)
+    private LoanStatus status;
+
+    @Column(length = 1000)
+    private String rejectionNote;
+
+
     @PrePersist
     public void update(){
         this.createdAt = LocalDateTime.now();
+        this.status = LoanStatus.PENDING;
     }
+
+
 }

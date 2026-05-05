@@ -2,9 +2,12 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.ConditionRegisterDto;
 import com.lankacapital.server.dtos.EmployeeAddDto;
+import com.lankacapital.server.dtos.LoanActionDto;
 import com.lankacapital.server.dtos.RoleRegisterDto;
 import com.lankacapital.server.entities.Employee;
+import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.services.EmployeeService;
+import com.lankacapital.server.services.LoanService;
 import com.lankacapital.server.services.RoleService;
 import com.lankacapital.server.services.SalaryConditionService;
 import lombok.AllArgsConstructor;
@@ -20,6 +23,7 @@ public class AdminController {
     private final RoleService roleService;
     private final SalaryConditionService salaryConditionService;
     private final EmployeeService employeeService;
+    private final LoanService loanService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -56,6 +60,32 @@ public class AdminController {
     public ResponseEntity<?> addNewEmployee(@RequestBody EmployeeAddDto dto){
         Employee newEmployee = employeeService.addNewEmployee(dto);
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/loans")
+    public ResponseEntity<?> getAllLoans(){
+        return ResponseEntity.ok(loanService.getAllLoans());
+    }
+
+
+    @GetMapping("/loans/customer/{id}")
+    public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
+        return ResponseEntity.ok(loanService.getLoansByCustomerId(id));
+    }
+
+    @GetMapping("/loans/{fileNumber}")
+    public ResponseEntity<?> getLoanById(@PathVariable String fileNumber) {
+        return ResponseEntity.ok(loanService.getLoan(fileNumber));
+    }
+
+    @PutMapping("/approve")
+    public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){
+        return  ResponseEntity.ok(loanService.approveLoan(dto));
+    }
+
+    @PutMapping("/reject")
+    public ResponseEntity<?> reject(@RequestBody LoanActionDto dto){
+        return ResponseEntity.ok(loanService.rejectLoan(dto));
     }
 
 

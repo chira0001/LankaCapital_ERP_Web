@@ -1,8 +1,10 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.LoanActionDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
@@ -67,5 +69,51 @@ public class LoanServiceImpl implements LoanService {
             throw new NumberFormatException("Invalid Customer Id " + id);
         }
 
+    }
+
+
+    @Override
+    public List<LoanResponseDto>getAllLoans(){
+        return loanRepository.findAll()
+                .stream()
+                .map(LoanMapper::mapToLoanResponseDto)
+                .toList();
+    }
+
+
+    @Override
+    public LoanResponseDto getLoan(String fileNumber) {
+
+        Loan loan = loanRepository.findById(fileNumber)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Loan not found: " + fileNumber));
+
+        return LoanMapper.mapToLoanResponseDto(loan);
+    }
+
+    @Transactional
+    @Override
+    public Loan approveLoan(LoanActionDto dto) {
+        //find loan from DB
+        Loan loan =loanRepository.findById(dto.getFileNumber())
+                .orElseThrow(()->new ResourceNotFoundException("Loan not found: "+ dto.getFileNumber()));
+
+        //update status
+        loan.setStatus(LoanStatus.APPROVED);
+
+        //clear rejection note
+        loan.setRejectionNote(null);
+        //save and return
+        return loanRepository.save(loan);
+    }
+
+    @Transactional
+    @Override
+    public Loan rejectLoan(LoanActionDto dto) {
+        Loan loan =loanRepository.findById(dto.getFileNumber())
+                .orElseThrow(()->new ResourceNotFoundException("Loan not found:"+dto.getFileNumber()));
+    loan.setStatus(LoanStatus.REJECTED);
+    loan.setRejectionNote(dto.getRejectionNote());
+    return loanRepository.save(loan);
     }
 }

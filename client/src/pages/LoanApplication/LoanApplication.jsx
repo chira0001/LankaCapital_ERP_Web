@@ -77,6 +77,22 @@ const LoanApplication = () => {
 
     */
 
+    // ✅ FETCH FROM BACKEND (NO DUMMY DATA)
+  const fetchApplications = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/loans');
+      const data = await res.json();
+
+      setApplicationData(data);
+      setFilteredApps(data); // IMPORTANT FIX
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  /*
+
     const fetchApplications = async () => {
       const apps = [
         {
@@ -108,6 +124,7 @@ const LoanApplication = () => {
       setApplicationData(apps);  // sets the table data
       setLoading(false);          // stop the loading spinner
     };
+    */
 
 
      const applyFilters = () => {
@@ -136,47 +153,82 @@ const LoanApplication = () => {
     setShowDialog(true);
   };
 
-  const confirmAction = async () => {
-    if (actionType === 'reject' && !rejectionReason.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Rejection reason is required',
-        variant: 'destructive'
+const confirmAction = async () => {
+  if (!selectedApp) {
+    return;
+  }
+
+  if (actionType === 'reject' && !rejectionReason.trim()) {
+    toast({
+      title: 'Error',
+      description: 'Rejection reason is required',
+      variant: 'destructive'
+    });
+    return;
+  }
+
+  try {
+    let response;
+
+    if (actionType === 'approve') {
+      response = await fetch('http://localhost:8080/loans/approve', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileNumber: selectedApp.fileNumber
+        })
       });
-      return;
+    } else {
+      response = await fetch('http://localhost:8080/loans/reject', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileNumber: selectedApp.fileNumber,
+          rejectionNote: rejectionReason
+        })
+      });
     }
 
-    try {
-      const updateData = {
-        status: actionType === 'approve' ? 'Approved' : 'Rejected'
-      };
-
-      if (actionType === 'reject') {
-        updateData.rejection_reason = rejectionReason;
-      }
-
-      await pb.collection('loan_applications').update(selectedApp.id, updateData, { $autoCancel: false });
-
-      toast({
-        title: 'Success',
-        description: `Application ${actionType === 'approve' ? 'approved' : 'rejected'} successfully`
-      });
-
-      fetchApplications();
-    } catch (error) {
-      console.error('Failed to update application:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update application',
-        variant: 'destructive'
-      });
-    } finally {
-      setShowDialog(false);
-      setSelectedApp(null);
-      setActionType(null);
-      setRejectionReason('');
+    if (!response.ok) {
+      throw new Error('Failed to update application');
     }
-  };
+
+    const updatedLoan = await response.json();
+
+    setApplicationData(prev =>
+      prev.map(app =>
+        app.fileNumber === selectedApp.fileNumber
+          ? {
+              ...app,
+              status: updatedLoan.status,
+              rejection_reason: updatedLoan.rejectionNote || ''
+            }
+          : app
+      )
+    );
+
+    toast({
+      title: 'Success',
+      description: `Application ${actionType === 'approve' ? 'approved' : 'rejected'} successfully`
+    });
+  } catch (error) {
+    console.error('Failed to update application:', error);
+    toast({
+      title: 'Error',
+      description: 'Failed to update application',
+      variant: 'destructive'
+    });
+  } finally {
+    setShowDialog(false);
+    setSelectedApp(null);
+    setActionType(null);
+    setRejectionReason('');
+  }
+};
 
   const getRiskBadge = (risk) => {
     const styles = {
@@ -291,9 +343,9 @@ const LoanApplication = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredApps.map((app) => (
-                      <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={app.fileNumber} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
-                          <p className="font-mono text-sm text-gray-600">{app.id.slice(0, 8)}</p>
+                          <p className="font-mono text-sm text-gray-600">{app.fileNumber.slice(0, 8)}</p>
                         </td>
                         <td className="px-6 py-4">
                           <p className="font-medium text-black">{app.applicant_name}</p>
@@ -409,6 +461,3 @@ const LoanApplication = () => {
 };
 
 export default LoanApplication;
-
-
-
