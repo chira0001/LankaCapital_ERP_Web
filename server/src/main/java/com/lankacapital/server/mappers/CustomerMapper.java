@@ -35,7 +35,7 @@ public class CustomerMapper {
                                 loan.getCreatedAt(),
                                 loan.getNumberOfInstallments().getValue(),
                                 loan.getDocumentCharge().doubleValue(),
-                                loan.getEmployeeId().getId(),
+                                loan.getEmployee().getId(),
                                 loan.getCustomer().getNic()
                         ))
                         .toList();

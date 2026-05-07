@@ -11,6 +11,6 @@ public interface LoanService {
 
     Loan addLoan(LoanCreateDto loanCreateDto);
     List<LoanResponseDto> getLoansByCustomerId(String id);
-    void addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
+    Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
 }

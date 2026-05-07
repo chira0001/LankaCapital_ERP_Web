@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 @Data
 public class FieldOfficerLoanCreateDto {
 
-    private String customerId;
+    private String customerNic;
     private BigDecimal amount;
-    private Long employeeId;
+    private String employeeEmail;
 
 }
