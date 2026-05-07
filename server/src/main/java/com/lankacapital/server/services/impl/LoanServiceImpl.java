@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.*;
@@ -66,6 +67,13 @@ public class LoanServiceImpl implements LoanService {
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Invalid Customer Id " + id);
         }
+
+    }
+
+    @Override
+    public void addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
+        Customer customer = customerRepository.findById(loanCreateDto.getCustomerId())
+                .orElseThrow(()->new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerId()));
 
     }
 }
