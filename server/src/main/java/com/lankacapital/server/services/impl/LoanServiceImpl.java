@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.InterestUpdateDTO;
 import com.lankacapital.server.dtos.LoanActionDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
@@ -125,5 +126,28 @@ public class LoanServiceImpl implements LoanService {
     loan.setStatus(LoanStatus.REJECTED);
     loan.setRejectionNote(dto.getRejectionNote());
     return loanRepository.save(loan);
+    }
+
+    @Override
+    public LoanResponseDto updateInterest(InterestUpdateDTO dto) {
+        Loan loan=loanRepository.findById(dto.getFileNumber())
+                .orElseThrow(()->new ResourceNotFoundException("Loan not Founded"+dto.getFileNumber()));
+        loan.setInterestRate(dto.getInterestRate());
+        return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
+    }
+
+    @Override
+    public LoanResponseDto getInterest(String fileNumber) {
+        Loan loan=loanRepository.findById(fileNumber)
+                .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
+        return LoanMapper.mapToLoanResponseDto(loan);
+    }
+
+    @Override
+    public LoanResponseDto resetInterest(String fileNumber) {
+        Loan loan = loanRepository.findById(fileNumber)
+                .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
+        loan.setInterestRate(0.0);
+        return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 }

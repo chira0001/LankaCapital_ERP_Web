@@ -27,6 +27,7 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
+   // @Column(name="interest_rate",precision=5,scale=2)
     private Double interestRate;
 
     @Column(precision = 12, scale = 2)

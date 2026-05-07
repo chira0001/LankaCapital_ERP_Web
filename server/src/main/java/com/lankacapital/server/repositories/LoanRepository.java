@@ -11,4 +11,6 @@ import java.util.List;
 public interface LoanRepository extends JpaRepository<Loan, String> {
     List<Loan> findAllByCustomer(Customer customer);
     Boolean existsByFileNumber(String fileNumber);
+
+
 }
