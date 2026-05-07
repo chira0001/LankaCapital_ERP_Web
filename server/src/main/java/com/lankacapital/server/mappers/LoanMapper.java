@@ -1,5 +1,6 @@
 package com.lankacapital.server.mappers;
 
+import com.lankacapital.server.dtos.CustomerInfoDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
@@ -27,8 +28,24 @@ public class LoanMapper {
         responseDto.setCreatedAt(loan.getCreatedAt());
         responseDto.setNoOfInstallments(loan.getNumberOfInstallments().getValue());
         responseDto.setDocumentCharge(loan.getDocumentCharge().toBigInteger().doubleValue());
-        responseDto.setEmployeeId(loan.getEmployeeId().getId());
-        responseDto.setCustomerId(loan.getCustomer().getNic());
+        responseDto.setEmployeeId(loan.getEmployee().getId());
+        responseDto.setStatus(loan.getStatus());
+       // responseDto.setCustomerId(loan.getCustomer().getNic());
+
+        if (loan.getCustomer() != null) {
+
+            CustomerInfoDto customerDto = new CustomerInfoDto();
+
+            customerDto.setCustomerNIC(loan.getCustomer().getNic());
+            customerDto.setBusinessName(loan.getCustomer().getName());
+            customerDto.setBusinessEmail(loan.getCustomer().getEmail());
+            customerDto.setBusinessAddress(loan.getCustomer().getAddress());
+            customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
+
+            responseDto.setCustomer(customerDto);
+        }
+
+
 
         return responseDto;
     }

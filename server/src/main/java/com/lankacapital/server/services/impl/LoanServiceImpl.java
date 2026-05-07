@@ -53,7 +53,10 @@ public class LoanServiceImpl implements LoanService {
 
         Employee employee = employeeRepository.findById(loanCreateDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanCreateDto.getEmployeeId()));
-        loan.setEmployeeId(employee);
+        loan.setEmployee(employee);
+
+        //Add Loan Status as pending
+        loan.setStatus(LoanStatus.PENDING);
 
         return loanRepository.save(loan);
     }
@@ -98,6 +101,10 @@ public class LoanServiceImpl implements LoanService {
         Loan loan =loanRepository.findById(dto.getFileNumber())
                 .orElseThrow(()->new ResourceNotFoundException("Loan not found: "+ dto.getFileNumber()));
 
+        Employee employee=employeeRepository.findById(dto.getEmployeeId())
+                .orElseThrow(()->new ResourceNotFoundException("Employee not founded"+ dto.getEmployeeId()));
+
+        loan.setEmployee(employee);
         //update status
         loan.setStatus(LoanStatus.APPROVED);
 
@@ -112,6 +119,9 @@ public class LoanServiceImpl implements LoanService {
     public Loan rejectLoan(LoanActionDto dto) {
         Loan loan =loanRepository.findById(dto.getFileNumber())
                 .orElseThrow(()->new ResourceNotFoundException("Loan not found:"+dto.getFileNumber()));
+        Employee employee=employeeRepository.findById(dto.getEmployeeId())
+                        .orElseThrow(()->new ResourceNotFoundException("Employee not founded"+dto.getEmployeeId()));
+   loan.setEmployee(employee);
     loan.setStatus(LoanStatus.REJECTED);
     loan.setRejectionNote(dto.getRejectionNote());
     return loanRepository.save(loan);

@@ -15,9 +15,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(path = "/api/v1/admin")
 @AllArgsConstructor
+
 public class AdminController {
 
     private final RoleService roleService;

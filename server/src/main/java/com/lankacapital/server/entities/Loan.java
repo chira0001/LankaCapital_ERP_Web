@@ -41,13 +41,13 @@ public class Loan {
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employeeId;
+    private Employee employee;
 
     @Enumerated(EnumType.STRING)
     private RiskLevel risk;
 
     @Enumerated(EnumType.STRING)
-    private LoanStatus status;
+    private LoanStatus status=LoanStatus.PENDING;
 
     @Column(length = 1000)
     private String rejectionNote;
@@ -58,6 +58,7 @@ public class Loan {
         this.createdAt = LocalDateTime.now();
         this.status = LoanStatus.PENDING;
     }
+
 
 
 }
