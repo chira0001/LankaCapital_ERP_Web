@@ -28,27 +28,32 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public EmployeeResponseDto signUp(SignUpRequest signUpRequest) {
         Long id;
-        try{
-            id = Long.parseLong(signUpRequest.getId());
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid employee id");
-        }
-        if(employeeRepository.existsById(id)){
-            throw new ResourceExistException("Employee already registered with id : " + signUpRequest.getId());
+        System.out.println("31 : " + signUpRequest);
+//        try{
+//            id = Long.parseLong(signUpRequest.getId());
+//        } catch (NumberFormatException e) {
+//            throw new NumberFormatException("Enter valid employee id");
+//        }
+//        System.out.println("37 : " + id);
+        if(employeeRepository.existsByEmail(signUpRequest.getEmail())){
+            throw new ResourceExistException("Employee already registered with email : " + signUpRequest.getEmail());
         }
 
-        if (employeeRepository.existsByEmail(signUpRequest.getEmail())){
-            throw new ResourceExistException("User already exists with email : " + signUpRequest.getEmail());
-        }
+//        if (employeeRepository.existsByEmail(signUpRequest.getEmail())){
+//            throw new ResourceExistException("User already exists with email : " + signUpRequest.getEmail());
+//        }
 
         Employee employee = new Employee();
 
-        employee.setId(id);
+//        employee.setId(id);
         employee.setFirstName(signUpRequest.getFirstName());
         employee.setLastName(signUpRequest.getLastName());
         employee.setEmail(signUpRequest.getEmail());
+        employee.setAddress("Default");
         employee.setPhoneNumber(signUpRequest.getPhoneNumber());
         employee.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+
+        System.out.println("54 : " + employee);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(employee));
     }

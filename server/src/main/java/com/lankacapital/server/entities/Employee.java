@@ -23,8 +23,8 @@ public class Employee implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long nic;
+    @Column(nullable = true)
+    private Long nic = 0000000000L;
 
     @Column(nullable = false)
     private String firstName;
@@ -39,14 +39,14 @@ public class Employee implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String address;
 
     @Column(nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal basicSalary;
+    @Column(nullable = true, precision = 12, scale = 2)
+    private BigDecimal basicSalary = BigDecimal.valueOf(0);
 
     @JsonIgnore
     private String password = "pass@123";
