@@ -26,7 +26,7 @@ public class SecurityConfiguration {
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
     private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
-
+/*
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,9 +43,9 @@ public class SecurityConfiguration {
         return http.build();
     }
 
+*/
 
-
-/*for check the status in loan application
+//for check the status in loan application
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -64,7 +64,7 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    */
+
 
 
     @Bean

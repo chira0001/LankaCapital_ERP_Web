@@ -38,7 +38,7 @@ const useToast = () => {
 const formatLKR=(amount) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
 const LoanApplication = () => {
     const toast = useToast();//temporary stub- replace with actual toast hook
-    const currentEmployeeId = 1;
+    const currentEmployeeId = 3;
     const [applicationData, setApplicationData] = useState([]);
     const[filteredApps, setFilteredApps] = useState([]);
     const[loading, setLoading] = useState(true);
@@ -92,6 +92,16 @@ const LoanApplication = () => {
       const data = await res.json();
 
       console.log("RAW API DATA:", data);
+
+      if (!Array.isArray(data)) {
+        console.error("Backend did not return an array:", data);
+
+        setApplicationData([]);
+        setFilteredApps([]);
+        return;
+      }
+
+
       const normalized = data.map(app => ({
         ...app,
        // status: (app.status ?? '').toUpperCase() // can use after backend fixed as prnding all
@@ -184,6 +194,7 @@ const LoanApplication = () => {
 
 
   const handleAction = (app, action) => {
+    console.log("SELECTED APP FULL OBJECT:", app);
     setSelectedApp(app);
     setActionType(action);
     setRejectionNote('');
@@ -462,7 +473,7 @@ await fetchApplications();
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Duration</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Interest</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Risk</th>
+                      
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Status</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee Id</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Actions</th>
@@ -489,11 +500,7 @@ await fetchApplications();
                         <td className="px-6 py-4">
                           <p className="text-gray-700">{app.interestRate}</p>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRiskBadge(app.risk)}`}>
-                            {app.risk|| 'Medium'}
-                          </span>
-                        </td>
+                       
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(app.status)}`}>
                             {(app.status || '').toUpperCase()}
@@ -530,8 +537,20 @@ await fetchApplications();
                                 <XCircle className="w-4 h-4 mr-1" />
                                 Reject
                               </Button>
-                            </div>
+                                </div>
                           )}
+                              {(app.status || '').toUpperCase() !== 'PENDING' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAction(app, 'reset')}
+                                  className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                >
+                                  Reset
+                                </Button>
+                              )}
+
+                          
                         </td>
                       </tr>
                       );
