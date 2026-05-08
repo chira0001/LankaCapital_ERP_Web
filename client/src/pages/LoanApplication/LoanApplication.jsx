@@ -225,29 +225,42 @@ const confirmAction = async () => {
     let response;
 
     if (actionType === 'approve') {
-      response = await fetch('http://localhost:8080/api/v1/admin/approve', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId
-        })
-      });
-    } else {
-      response = await fetch('http://localhost:8080/api/v1/admin/reject', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileNumber: selectedApp.fileNumber,
-          rejectionNote: rejectionNote,
-          employeeId: currentEmployeeId
-        })
-      });
-    }
+        response = await fetch('http://localhost:8080/api/v1/admin/approve', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fileNumber: selectedApp.fileNumber,
+            employeeId: currentEmployeeId
+          })
+        });
+      } 
+      else if (actionType === 'reject') {
+        response = await fetch('http://localhost:8080/api/v1/admin/reject', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fileNumber: selectedApp.fileNumber,
+            rejectionNote: rejectionNote,
+            employeeId: currentEmployeeId
+          })
+        });
+      } 
+      else if (actionType === 'reset') {
+        response = await fetch('http://localhost:8080/api/v1/admin/reset', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fileNumber: selectedApp.fileNumber,
+            employeeId: currentEmployeeId
+          })
+        });
+      }
 
     if (!response.ok) {
       throw new Error('Failed to update application');
@@ -516,42 +529,38 @@ await fetchApplications();
                             {app.employeeId || '1'}
                           </p>
                         </td>
-                        <td className="px-6 py-4">
-                          {(app.status || '').toUpperCase() === 'PENDING' && (
-
-                          
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleAction(app, 'approve')}
-                                className="bg-black hover:bg-gray-800 text-white"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleAction(app, 'reject')}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                                </div>
-                          )}
-                              {(app.status || '').toUpperCase() !== 'PENDING' && (
+                          <td className="px-6 py-4">
+                            {(app.status || '').toUpperCase() === 'PENDING' ? (
+                              <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAction(app, 'reset')}
-                                  className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                  onClick={() => handleAction(app, 'approve')}
+                                  className="bg-black hover:bg-gray-800 text-white"
                                 >
-                                  Reset
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Approve
                                 </Button>
-                              )}
 
-                          
-                        </td>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleAction(app, 'reject')}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleAction(app, 'reset')}
+                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </td>
                       </tr>
                       );
                     })}

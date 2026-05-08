@@ -89,6 +89,11 @@ public class AdminController {
         return ResponseEntity.ok(loanService.rejectLoan(dto));
     }
 
+    @PutMapping("/reset")
+    public ResponseEntity<Loan> resetLoan(@RequestBody LoanActionDto dto) {
+        return ResponseEntity.ok(loanService.resetLoan(dto));
+    }
+
     //admin interest management
     @PutMapping("/loans/interest")
     public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto){

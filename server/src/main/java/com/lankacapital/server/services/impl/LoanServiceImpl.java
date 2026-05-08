@@ -16,7 +16,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import  java.util.Optional;
 @Service
 @AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
@@ -127,6 +127,28 @@ public class LoanServiceImpl implements LoanService {
     loan.setRejectionNote(dto.getRejectionNote());
     return loanRepository.save(loan);
     }
+
+    @Override
+    public Loan resetLoan(LoanActionDto dto) {
+        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
+
+        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found: " + dto.getEmployeeId()));
+
+        loan.setEmployee(employee);
+
+        // RESET BACK TO PENDING
+        loan.setStatus(LoanStatus.PENDING);
+
+        // clear rejection note
+        loan.setRejectionNote(null);
+
+        return loanRepository.save(loan);
+    }
+
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto) {
