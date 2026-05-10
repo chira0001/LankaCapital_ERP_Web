@@ -113,4 +113,37 @@ public class ReceptionistController {
         salaryService.addSalaryToEmployee(salaryAddDtoList);
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
     }
+
+    @GetMapping(path = "/employees/{id}")
+    public ResponseEntity<?> getProfileDetails(@PathVariable String id){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.getEmployeeDetailById(empId), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/password/{id}")
+    public ResponseEntity<?> changePrfilePassword(@PathVariable String id, @RequestBody PasswordRequestDto passwordRequestDto){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.updatePasswordById(empId, passwordRequestDto), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/{id}")
+    public ResponseEntity<?> updateProfileInfo(@PathVariable String id, @RequestBody EmployeeResponseDto dto){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(empId,dto), HttpStatus.OK);
+    }
 }

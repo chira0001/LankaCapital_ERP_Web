@@ -106,9 +106,9 @@ const submitCustomer = async (e) => {
         try {
             const response = await axiosAPI.post('/customers', customerForm);
             if (response.status == 201) {
-                alert('Customer added successfully')
+                toast.success('Customer added successfully')
             } else {
-                alert('Customer not added successfully!');
+                toast.error('Customer not added successfully!');
                 console.log(response.data)
             }
         } catch (e) {

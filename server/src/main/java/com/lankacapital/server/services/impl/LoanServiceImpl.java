@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.*;
@@ -51,7 +52,7 @@ public class LoanServiceImpl implements LoanService {
 
         Employee employee = employeeRepository.findById(loanCreateDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanCreateDto.getEmployeeId()));
-        loan.setEmployeeId(employee);
+        loan.setEmployee(employee);
 
         return loanRepository.save(loan);
     }
@@ -67,5 +68,30 @@ public class LoanServiceImpl implements LoanService {
             throw new NumberFormatException("Invalid Customer Id " + id);
         }
 
+    }
+
+    @Override
+    public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
+        Long nic;
+        try{
+            nic = Long.parseLong(loanCreateDto.getCustomerNic());
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
+        }
+        Customer customer = customerRepository.findByNic(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
+        }
+        Employee employee = employeeRepository.findByEmail(loanCreateDto.getEmployeeEmail());
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found");
+        }
+
+        Loan loan = new Loan();
+        loan.setCustomer(customer);
+        loan.setAmount(loanCreateDto.getAmount());
+        loan.setEmployee(employee);
+
+        return loanRepository.save(loan);
     }
 }

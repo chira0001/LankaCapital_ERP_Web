@@ -16,6 +16,7 @@ const Signup = () => {
     const [fname, setFname] = useState("");
     const [lname, setLname] = useState("");
     const [email, setEmail] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
     const [empNo, setEmpNo] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,6 +24,7 @@ const Signup = () => {
         fname: false,
         lname: false,
         email: false,
+        phoneNumber: false,
         empNo: false,
         password: false,
         confirmPassword: false
@@ -38,6 +40,7 @@ const Signup = () => {
             fname: !fname || fname.trim() === "",
             lname: !lname || lname.trim() === "",
             email: !email || email.trim() === "",
+            phoneNumber: !phoneNumber || phoneNumber.trim() === "",
             empNo: !empNo || empNo.trim() === "",
             password: !password || password.trim() === "",
             confirmPassword: !confirmPassword || confirmPassword.trim() === ""
@@ -61,6 +64,36 @@ const Signup = () => {
                     <div className='flex flex-col items-center mb-4'>
                         <CompanyLogo />
                         <h3 className='font-bold text-3xl md:text-5xl'>Sign Up</h3>
+                    </div>
+
+                    <div className='w-full flex flex-col gap-2'>
+                        <label htmlFor="email">Employee Number :</label>
+                        <div className='relative w-full'>
+                            <input
+                                type="text"
+                                name="empNo"
+                                id="empNo"
+                                value={empNo}
+                                onChange={(e) => setEmpNo(e.target.value)}
+                                placeholder={errors.empNo ? "Please enter employee number" : "Your employee number"}
+                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
+                                    ${errors.empNo ? "border-red-600 border-2 placeholder-red-600" : ""}`}
+                            />
+                            {errors.empNo && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width={18}
+                                        height={18}
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
+                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
+                                    </svg>
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div className='w-full flex flex-col gap-2'>
@@ -154,19 +187,19 @@ const Signup = () => {
                     </div>
 
                     <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Employee Number :</label>
+                        <label htmlFor="email">Phone Number :</label>
                         <div className='relative w-full'>
                             <input
                                 type="text"
-                                name="empNo"
-                                id="empNo"
-                                value={empNo}
-                                onChange={(e) => setEmpNo(e.target.value)}
-                                placeholder={errors.empNo ? "Please enter employee number" : "Your employee number"}
+                                name="phoneNumber"
+                                id="phoneNumber"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                placeholder={errors.phoneNumber ? "Please phone number" : "Your phone number"}
                                 className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.empNo ? "border-red-600 border-2 placeholder-red-600" : ""}`}
+                                    ${errors.phoneNumber ? "border-red-600 border-2 placeholder-red-600" : ""}`}
                             />
-                            {errors.empNo && (
+                            {errors.phoneNumber && (
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
