@@ -5,7 +5,7 @@ import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
 
-    const empId = 1 || localStorage.getItem("empId");
+    const empId = 3 || localStorage.getItem("empId");
 
 
     const [searchCustomer, setSearchCustomer] = useState('');
