@@ -27,7 +27,7 @@ public class LoanMapper {
         responseDto.setCreatedAt(loan.getCreatedAt());
         responseDto.setNoOfInstallments(loan.getNumberOfInstallments().getValue());
         responseDto.setDocumentCharge(loan.getDocumentCharge().toBigInteger().doubleValue());
-        responseDto.setEmployeeId(loan.getEmployeeId().getId());
+        responseDto.setEmployeeId(loan.getEmployee().getId());
         responseDto.setCustomerId(loan.getCustomer().getNic());
 
         return responseDto;

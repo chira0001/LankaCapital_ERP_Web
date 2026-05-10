@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 @Entity
 @Table(name = "loans")
@@ -39,10 +41,11 @@ public class Loan {
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employeeId;
+    private Employee employee;
 
     @PrePersist
     public void update(){
         this.createdAt = LocalDateTime.now();
+        this.fileNumber = UUID.randomUUID().toString();
     }
 }
