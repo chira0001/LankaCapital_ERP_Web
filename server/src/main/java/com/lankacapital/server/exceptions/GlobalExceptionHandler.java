@@ -41,4 +41,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(PasswordUpdateException.class)
+    public ResponseEntity<Map<String, Object>> handlePasswordUpdateException (PasswordUpdateException passwordUpdateException){
+
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", HttpStatus.BAD_REQUEST.value());
+        error.put("message", passwordUpdateException.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
 }
