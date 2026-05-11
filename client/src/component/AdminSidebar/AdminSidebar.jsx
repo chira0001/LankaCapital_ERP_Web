@@ -1,7 +1,7 @@
 import { LayoutDashboard } from "lucide-react";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings } from "lucide-react";
+import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings} from "lucide-react";
 
 
 const menuItems = [
@@ -19,16 +19,17 @@ const menuItems = [
   { name: "User Management", icon: UserPlus, path: "/admin/users" },
   { name: "Audit Logs", icon: ClipboardList, path: "/admin/audit" },
   { name: "System Configuration", icon: Settings, path: "/admin/settings" },
+//  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
 ];
 
 
 const Sidebar = () => {
   return (
-    <div className="w-64 mt-22 h-full min-h-screen bg-[#071428] text-white flex flex-col px-3 py-4 overflow-y-auto border-r border-gray-800 min-w-[220px] max-w-[280px]">
+    <div className="w-64 h-full bg-[#071428] text-white flex flex-col border-r border-gray-800 ">
 
 {/* menu Section */}
-      <div className="flex-1 overflow-y-auto">
-        <ul className="space-y-2">
+      <div className="flex-1 overflow-y-auto  px-3 py-24">
+        <ul className="space-y-1">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
 
@@ -56,6 +57,40 @@ const Sidebar = () => {
         </ul>
 
       </div>
+
+                {/* Bottom Profile Box */}
+      <NavLink
+        to="/admin/profile"
+        className="mx-3 mb-3 bg-[#0f1d35] border border-gray-700 rounded-xl p-3 hover:bg-[#162544] transition-all duration-200"
+      >
+
+        <div className="flex items-center gap-3">
+
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full bg-yellow-600 flex items-center justify-center text-black font-bold">
+            P
+          </div>
+
+          {/* User Info */}
+          <div className="flex-1 overflow-hidden">
+            <h3 className="text-sm font-semibold truncate">
+              director@email.com
+            </h3>
+
+            <p className="text-xs text-gray-400">
+              Director
+            </p>
+          </div>
+        </div>
+
+        {/* Logout Button */}
+        <button className="mt-3 w-full bg-[#1f2d4a] hover:bg-red-600 transition-all duration-200 rounded-lg py-2 text-sm font-medium">
+          Logout
+        </button>
+
+      </NavLink>
+
+      
 
 </div>
 

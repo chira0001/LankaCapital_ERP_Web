@@ -33,10 +33,13 @@ public interface LoanService {
 
     //interest update
     LoanResponseDto updateInterest(InterestUpdateDTO dto);
+
     //get interest
     LoanResponseDto getInterest(String fileNumber);
+
     //reset interest
     LoanResponseDto resetInterest(String fileNumber);
-
-
 }
+
+
+
