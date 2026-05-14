@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const ReceptionistSetting = () => {
 
     const empId = localStorage.getItem("empId") || 3;
+
+    const [viewPasswordForm, setViewPasswordForm] = useState(false);
     const [passwordForm, setPasswordForm] = useState({
         oldPassword: "",
         newPassword: "",
@@ -61,12 +63,13 @@ const ReceptionistSetting = () => {
             const response = await axiosAPI.put(`/employees/password/${empId}`, passwordForm);
             if (response.status === 200) {
                 toast.success("Password changed successfully");
-                // Clear form
+                // Clear form and hide it
                 setPasswordForm({
                     oldPassword: "",
                     newPassword: "",
                     confirmPassword: ""
                 });
+                setViewPasswordForm(false);
             } else {
                 toast.error("Something went wrong");
             }
@@ -103,6 +106,16 @@ const ReceptionistSetting = () => {
         }
     }
 
+    const handlePasswordButtonClick = () => {
+        if (viewPasswordForm) {
+            // If form is visible, submit the password change
+            updatePassword();
+        } else {
+            // If form is hidden, show it
+            setViewPasswordForm(true);
+        }
+    }
+
     useEffect(() => {
         fetchProfileInfo();
     }, [])
@@ -117,7 +130,7 @@ const ReceptionistSetting = () => {
             <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
                 <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold">Personal Information</h2>
-                    <button 
+                    <button
                         onClick={updateProfileInfo}
                         className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
                     >
@@ -128,51 +141,52 @@ const ReceptionistSetting = () => {
                 <div className="grid md:grid-cols-3 gap-6">
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">First Name</span>
-                        <input 
+                        <input
                             type="text"
                             name="firstName"
                             value={profileForm.firstName}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">Last Name</span>
-                        <input 
+                        <input
                             type="text"
                             name="lastName"
                             value={profileForm.lastName}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">NIC</span>
-                        <input 
+                        <input
                             type="text"
                             name="nic"
                             value={profileForm.nic}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                            disabled
                         />
                     </div>
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">Email Address</span>
-                        <input 
+                        <input
                             type="email"
                             name="email"
                             value={profileForm.email}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">Phone Number</span>
-                        <input 
+                        <input
                             type="text"
                             name="phoneNumber"
                             value={profileForm.phoneNumber}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
@@ -192,10 +206,10 @@ const ReceptionistSetting = () => {
                 <div className="grid md:grid-cols-1 gap-6">
                     <div className="flex flex-col">
                         <span className="text-gray-400 text-sm mb-1">Full Address</span>
-                        <textarea 
+                        <textarea
                             name="address"
                             value={profileForm.address}
-                            onChange={(e) => setProfileForm({...profileForm, [e.target.name]: e.target.value})}
+                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
                             rows="3"
                             className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
                         />
@@ -209,48 +223,65 @@ const ReceptionistSetting = () => {
                     <h2 className="text-lg font-semibold">Security</h2>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Old Password</span>
-                        <input 
-                            type="password"
-                            name="oldPassword"
-                            value={passwordForm.oldPassword}
-                            onChange={(e) => setPasswordForm({...passwordForm, oldPassword: e.target.value})}
-                            placeholder="Enter old password"
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
+                {viewPasswordForm &&
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="flex flex-col">
+                            <span className="text-gray-400 text-sm mb-1">Old Password</span>
+                            <input
+                                type="password"
+                                name="oldPassword"
+                                value={passwordForm.oldPassword}
+                                onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                                placeholder="Enter old password"
+                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-gray-400 text-sm mb-1">New Password</span>
+                            <input
+                                type="password"
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                placeholder="Enter new password"
+                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-gray-400 text-sm mb-1">Confirm Password</span>
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                value={passwordForm.confirmPassword}
+                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                placeholder="Confirm new password"
+                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                            />
+                        </div>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">New Password</span>
-                        <input 
-                            type="password"
-                            name="newPassword"
-                            value={passwordForm.newPassword}
-                            onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                            placeholder="Enter new password"
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Confirm Password</span>
-                        <input 
-                            type="password"
-                            name="confirmPassword"
-                            value={passwordForm.confirmPassword}
-                            onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                            placeholder="Confirm new password"
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                </div>
-                
-                <div className="flex justify-end">
-                    <button 
-                        onClick={updatePassword}
+                }
+
+                <div className="flex justify-end gap-3">
+                    {viewPasswordForm && (
+                        <button
+                            onClick={() => {
+                                setViewPasswordForm(false);
+                                setPasswordForm({
+                                    oldPassword: "",
+                                    newPassword: "",
+                                    confirmPassword: ""
+                                });
+                            }}
+                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    )}
+                    <button
+                        onClick={handlePasswordButtonClick}
                         className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
                     >
-                        Change Password
+                        {viewPasswordForm ? "Update Password" : "Change Password"}
                     </button>
                 </div>
             </div>

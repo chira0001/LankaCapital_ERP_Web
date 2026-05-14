@@ -31,6 +31,7 @@ import ReceptionistLoan from "./pages/Receptionist/ReceptionistLoan";
 import ReceptionistSalary from "./pages/Receptionist/ReceptionistSalary";
 import ReceptionistView from "./pages/Receptionist/ReceptionistView";
 import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
+import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
 
 const App = () => {
   return (
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="loan" element={<ReceptionistLoan />} />
           <Route path="salary" element={<ReceptionistSalary />} />
           <Route path="view" element={<ReceptionistView />} />
+          <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
 
