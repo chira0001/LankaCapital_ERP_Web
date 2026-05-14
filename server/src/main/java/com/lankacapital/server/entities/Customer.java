@@ -34,10 +34,6 @@ public class Customer {
     @Column(nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false)
-    @JsonIgnore
-    private String password = "pass@123";
-
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
     private List<Loan> loans;

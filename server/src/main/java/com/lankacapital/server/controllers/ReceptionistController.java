@@ -20,6 +20,7 @@ public class ReceptionistController {
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
     private final InstallmentService installmentService;
+    private final MonthlyExpenseService monthlyExpenseService;
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -145,5 +146,10 @@ public class ReceptionistController {
             throw new NumberFormatException("Invalid employee Id");
         }
         return new ResponseEntity<>(employeeService.updateEmployeeInfo(empId,dto), HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/monthlyExpenses")
+    public ResponseEntity<?> addMonthlyExpenses(@RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto){
+        return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto), HttpStatus.CREATED);
     }
 }

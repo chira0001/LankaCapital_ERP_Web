@@ -1,12 +1,12 @@
 package com.lankacapital.server.entities;
 
+import com.lankacapital.server.enums.Request;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "monthly_expenses")
@@ -19,7 +19,8 @@ public class MonthlyExpense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDate timePeriod;
+    @Column(nullable = false, unique = true)
+    private String month;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal salary;
@@ -45,10 +46,17 @@ public class MonthlyExpense {
     @Column(precision = 12, scale = 2)
     private BigDecimal otherExpenses;
 
+    private String note;
+
     @Column(precision = 14, scale = 2)
     private BigDecimal totalExpenses;
 
-    private String note;
+    @ManyToOne
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
+
+    @Enumerated(EnumType.STRING)
+    private Request request = Request.PENDING;
 
     @PrePersist
     @PreUpdate

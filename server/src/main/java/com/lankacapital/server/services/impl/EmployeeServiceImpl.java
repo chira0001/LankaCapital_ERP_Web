@@ -5,6 +5,7 @@ import com.lankacapital.server.dtos.EmployeeResponseDto;
 import com.lankacapital.server.dtos.PasswordRequestDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
+import com.lankacapital.server.exceptions.PasswordUpdateException;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.EmployeeMapper;
@@ -76,9 +77,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
-        // Manually verify old password using passwordEncoder
         if (!passwordEncoder.matches(dto.getOldPassword(), emp.getPassword())) {
-            throw new RuntimeException("Old password is incorrect");
+            throw new PasswordUpdateException("Old password is incorrect");
         }
 
         try {
@@ -86,7 +86,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             employeeRepository.save(emp);
             return "Password changed successfully";
         } catch (Exception e) {
-            throw new RuntimeException("Failed to update password: " + e.getMessage());
+            throw new PasswordUpdateException("Failed to update password: " + e.getMessage());
         }
     }
 
