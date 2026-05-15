@@ -23,7 +23,7 @@ public class DailyCollection {
 
     @ManyToOne
     @JoinColumn(name = "file_number")
-    private Loan fileNumber;
+    private Loan loan;
 
     private Integer installmentNumber;
 
@@ -35,5 +35,5 @@ public class DailyCollection {
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employeeId;
+    private Employee employee;
 }
