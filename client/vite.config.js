@@ -10,6 +10,11 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+
+  server: {
+    port: 5173
+  },
+
   //add Configure path aliases 
   resolve: {
     alias: {

@@ -6,6 +6,8 @@ import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 
+import java.math.BigDecimal;
+
 public class LoanMapper {
     public static Loan mapToLoan(LoanCreateDto loanCreateDto){
 
@@ -28,7 +30,7 @@ public class LoanMapper {
         responseDto.setInterestRate(loan.getInterestRate());
 
         responseDto.setAmount(
-                loan.getAmount() != null ? loan.getAmount().toString() : "0"
+                loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO
         );
 
         responseDto.setCreatedAt(loan.getCreatedAt());

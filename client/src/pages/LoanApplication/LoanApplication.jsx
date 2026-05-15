@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-//import Sidebar from '@/components/AdminSidebar/AdminSidebar.jsx';
-//import pb from '@/lib/pocketbaseClient.js';
+
 import { CheckCircle, XCircle, Filter } from 'lucide-react';
 import { Button } from '@/component/ui/button';
 import { Input } from '@/component/ui/input';
@@ -8,7 +7,6 @@ import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
 //import { useToast } from '@/hooks/use-toast';
 //import { useAuth } from '@/contexts/AuthContext.jsx';
-//import Sidebar from '../../components/AdminSidebar/AdminSidebar.jsx';
 
 import {
   Select,
@@ -30,7 +28,7 @@ import {
 } from '@/component/ui/alert-dialog';
 
 
-// Temporary stub for toast-need to change after implementing the actual toast system
+
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
@@ -49,6 +47,7 @@ const LoanApplication = () => {
     const[filters, setFilters] = useState({
         status: "ALL",
         search: "",
+        loanId: "",
         minAmount: "",
         maxAmount: "",
     });
@@ -85,7 +84,7 @@ const LoanApplication = () => {
 
     */
 
-    // FETCH FROM BACKEND (NO DUMMY DATA)
+    // FETCH LOANS FROM BACKEND 
   const fetchApplications = async () => {
     try {
       const res = await fetch('http://localhost:8080/api/v1/admin/loans');
@@ -124,40 +123,7 @@ const LoanApplication = () => {
       setLoading(false);
     }
   };
-  /*
-
-    const fetchApplications = async () => {
-      const apps = [
-        {
-          id: "1",
-          applicant_name: "John Doe",
-          phone: "0771234567",
-          requested_amount: 50000,
-          duration_months: 12,
-          interest_rate: 5,
-          risk_level: "Low",
-          status: "Pending",
-          request_date: "2026-03-17",
-          rejection_reason: ""
-        },
-        {
-          id: "2",
-          applicant_name: "Jane Smith",
-          phone: "0779876543",
-          requested_amount: 100000,
-          duration_months: 24,
-          interest_rate: 7,
-          risk_level: "High",
-          status: "Approved",
-          request_date: "2026-03-15",
-          rejection_reason: ""
-        }
-      ];
-
-      setApplicationData(apps);  // sets the table data
-      setLoading(false);          // stop the loading spinner
-    };
-    */
+ 
 
 
   const applyFilters = () => {
@@ -176,6 +142,14 @@ const LoanApplication = () => {
           .includes(filters.search.toLowerCase())
       );
     }
+
+    if (filters.loanId) {
+      filtered = filtered.filter(app =>
+       app.fileNumber
+        ?.toLowerCase()
+        .includes(filters.loanId.toLowerCase())
+  );
+  }
 
     if (filters.minAmount) {
       filtered = filtered.filter(app =>
@@ -268,41 +242,7 @@ const confirmAction = async () => {
 
     const updatedLoan = await response.json();
     console.log("UPDATED LOAN:", updatedLoan);
-/*
-    setApplicationData(prev =>
-      prev.map(app =>
-        app.fileNumber === selectedApp.fileNumber
-          ? {
-              ...app,
-              status: updatedLoan.status,
-              rejectionNote:updatedLoan.rejectionNote || ''
-            }
-          : app
-      )
-    );
-*/
 
-/*
-    setApplicationData(prev =>
-  prev.map(app =>
-    app.fileNumber === selectedApp.fileNumber
-      ? {
-          ...app,
-          //status: actionType === 'approve' ? 'APPROVED' : 'REJECTED',
-          //rejectionNote: rejectionNote || ''
-
-          status: actionType === 'approve'
-            ? 'APPROVED'
-            : 'REJECTED',
-
-          rejectionNote: actionType === 'reject'
-            ? rejectionNote
-            : ''
-        }
-      : app
-  )
-);
-*/
 
 await fetchApplications();
 
@@ -393,7 +333,7 @@ await fetchApplications();
               </div>
 
               {/* Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
                 {/* STATUS FILTER */}
                 <div className="space-y-2">
@@ -426,6 +366,20 @@ await fetchApplications();
                     className="w-full bg-gray-50 border-gray-300 text-black"
                   />
                 </div>
+
+                    {/* LOAN ID SEARCH */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-700">Loan ID</Label>
+
+                    <Input
+                      placeholder="Search by Loan ID"
+                      value={filters.loanId}
+                      onChange={(e) =>
+                        setFilters({ ...filters, loanId: e.target.value })
+                      }
+                      className="w-full bg-gray-50 border-gray-300 text-black"
+                    />
+                  </div>
 
                 {/* MIN AMOUNT */}
                 <div className="space-y-2">
@@ -465,6 +419,7 @@ await fetchApplications();
                     setFilters({
                       status: "ALL",
                       search: "",
+                      loanId: "",
                       minAmount: "",
                       maxAmount: ""
                     })
@@ -486,7 +441,7 @@ await fetchApplications();
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Duration</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Interest</th>
-                      
+                       
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Status</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee Id</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Actions</th>
