@@ -231,6 +231,27 @@ const ReceptionistView = () => {
         });
     };
 
+    const viewLoanDetails = async (fileNumber) =>{
+        const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
+        return(
+            <div>
+                <button>X</button>
+                <div>
+                    {response.map((value)=>{
+                        return(
+                            <div key={value.fileNumber}>
+                                <p>Entered by : {value.employeeId}</p>
+                                <p>{value.installmentNumber}</p>
+                                <p>{value.paidAmount}</p>
+                                <p>{value.paidAt.toLocaleDateString}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             <ToastContainer position="top-right" autoClose={3000} />
@@ -411,6 +432,7 @@ const ReceptionistView = () => {
                                         key={key}
                                         id={`loan-${infoDetail.fileNumber}`}
                                         className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
+                                        onClick={() =>viewLoanDetails(infoDetail.fileNumber)}
                                     >
                                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                                             <div className='flex flex-col'>
