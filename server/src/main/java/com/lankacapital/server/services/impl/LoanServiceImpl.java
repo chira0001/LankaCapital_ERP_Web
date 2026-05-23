@@ -26,6 +26,7 @@ public class LoanServiceImpl implements LoanService {
     private final InstallmentRepository installmentRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
+    private final InterestRateRepository interestRateRepository;
 
     @Transactional
     @Override
@@ -51,11 +52,15 @@ public class LoanServiceImpl implements LoanService {
 
         Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
-        loan.setNumberOfInstallments(installment);
+        loan.setInstallment(installment);
 
         Employee employee = employeeRepository.findById(loanCreateDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanCreateDto.getEmployeeId()));
         loan.setEmployee(employee);
+
+        InterestRate rate = interestRateRepository.findById(loanCreateDto.getInterestRate())
+                .orElseThrow(() -> new ResourceNotFoundException("Interest rate not found with id : " + loanCreateDto.getInterestRate()));
+        loan.setInterestRate(rate);
 
         //Add Loan Status as pending
         loan.setStatus(LoanStatus.PENDING);
@@ -178,8 +183,12 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto) {
         Loan loan=loanRepository.findById(dto.getFileNumber())
-                .orElseThrow(()->new ResourceNotFoundException("Loan not Founded"+dto.getFileNumber()));
-        loan.setInterestRate(dto.getInterestRate());
+                .orElseThrow(()->new ResourceNotFoundException("Loan not Found"+dto.getFileNumber()));
+
+        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
+                        .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
+
+        loan.setInterestRate(rate);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 
@@ -194,7 +203,7 @@ public class LoanServiceImpl implements LoanService {
     public LoanResponseDto resetInterest(String fileNumber) {
         Loan loan = loanRepository.findById(fileNumber)
                 .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
-        loan.setInterestRate(0.0);
+//        loan.setInterestRate(0.0);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 }

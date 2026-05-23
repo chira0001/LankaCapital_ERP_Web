@@ -94,7 +94,6 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     @Override
     public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
-        System.out.println("95 : " + nic);
         Customer customer = customerRepository.findByNic(nic);
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found with NIC : " + nic);

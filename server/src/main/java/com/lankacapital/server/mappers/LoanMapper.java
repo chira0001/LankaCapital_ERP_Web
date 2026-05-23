@@ -15,7 +15,6 @@ public class LoanMapper {
 
         loan.setFileNumber(loanCreateDto.getFileNumber());
         loan.setAmount(loanCreateDto.getLoanAmount());
-        loan.setInterestRate(loanCreateDto.getInterestRate());
         loan.setDocumentCharge(loanCreateDto.getDocumentCharge());
 
         return loan;
@@ -27,7 +26,6 @@ public class LoanMapper {
         LoanResponseDto responseDto = new LoanResponseDto();
 
         responseDto.setFileNumber(loan.getFileNumber());
-        responseDto.setInterestRate(loan.getInterestRate());
 
         responseDto.setAmount(
                 loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO
@@ -36,8 +34,8 @@ public class LoanMapper {
         responseDto.setCreatedAt(loan.getCreatedAt());
 
         responseDto.setNoOfInstallments(
-                loan.getNumberOfInstallments() != null
-                        ? loan.getNumberOfInstallments().getValue()
+                loan.getInstallment() != null
+                        ? loan.getInstallment().getValue()
                         : 0
         );
 
@@ -52,6 +50,7 @@ public class LoanMapper {
                         ? loan.getEmployee().getId()
                         : null
         );
+        responseDto.setInterestRate(loan.getInterestRate().getRate());
 
         responseDto.setStatus(loan.getStatus());
 

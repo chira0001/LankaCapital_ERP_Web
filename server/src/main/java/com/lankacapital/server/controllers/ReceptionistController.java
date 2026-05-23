@@ -23,6 +23,8 @@ public class ReceptionistController {
     private final InstallmentService installmentService;
     private final MonthlyExpenseService monthlyExpenseService;
     private final DailyCollectionService dailyCollectionService;
+    private final InterestRateService interestRateService;
+
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -163,5 +165,10 @@ public class ReceptionistController {
                 dailyCollectionService.getLoanCollectionDetailsByFileNumber(fileNumber);
 
         return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/interestRates")
+    public ResponseEntity<?> getAllInterestRates(){
+        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
     }
 }

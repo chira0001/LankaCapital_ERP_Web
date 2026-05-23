@@ -54,7 +54,7 @@ const ReceptionistLoan = () => {
 
         try {
             const response = await axiosAPI.get(`/customers/${searchCustomer}`);
-            console.log(response);
+            console.log("57 : ",response.data);
 
             if (response.status === 200) {
                 setExistCustomer(response.data);
