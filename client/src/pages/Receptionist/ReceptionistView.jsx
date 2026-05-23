@@ -14,6 +14,9 @@ const ReceptionistView = () => {
     const [infoDetails, setInfoDetails] = useState([]);
     const [highlightTimeout, setHighlightTimeout] = useState(null);
 
+    const [loanDetails, setLoanDetails] = useState([]);
+    const [showLoanModal, setShowLoanModal] = useState(false);
+
     const [infoForm, setInfoForm] = useState({
         businessName: '',
         businessAddress: '',
@@ -172,7 +175,6 @@ const ReceptionistView = () => {
 
             if (response.status === 200) {
                 setExistCustomer(response.data);
-                console.log("178 : ", response.data)
                 setInfoForm({
                     businessName: response.data.businessName || '',
                     businessAddress: response.data.businessAddress || '',
@@ -229,6 +231,17 @@ const ReceptionistView = () => {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
+    };
+
+    const viewLoanDetails = async (fileNumber) => {
+        try {
+            const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
+            setLoanDetails(response.data); // <-- correct data
+            setShowLoanModal(true);        // <-- trigger popup
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load loan details");
+        }
     };
 
     return (
@@ -411,6 +424,7 @@ const ReceptionistView = () => {
                                         key={key}
                                         id={`loan-${infoDetail.fileNumber}`}
                                         className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
+                                        onClick={() => viewLoanDetails(infoDetail.fileNumber)}
                                     >
                                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                                             <div className='flex flex-col'>
@@ -468,6 +482,38 @@ const ReceptionistView = () => {
                             <p className='text-lg font-medium'>No loan records found</p>
                         </div>
                     )}
+
+                    {showLoanModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl relative">
+
+                                {/* Close */}
+                                <button
+                                    onClick={() => setShowLoanModal(false)}
+                                    className="absolute top-3 right-3 text-gray-600 hover:text-black text-lg"
+                                >
+                                    ✕
+                                </button>
+
+                                <h2 className="text-xl font-bold mb-4">Loan Payment Details</h2>
+
+                                <div className="max-h-80 overflow-y-auto space-y-3">
+                                    {loanDetails.map((value) => (
+                                        <div key={value.id} className="border rounded-lg p-4 shadow-sm">
+                                            <p><strong>Entered by:</strong> {value.employeeId}</p>
+                                            <p><strong>Installment:</strong> {value.installmentNumber}</p>
+                                            <p><strong>Paid Amount:</strong> Rs. {formatCurrency(value.paidAmount)}</p>
+                                            <p>
+                                                <strong>Date:</strong> {new Date(value.paidAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             )}
 

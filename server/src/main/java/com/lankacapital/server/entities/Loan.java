@@ -27,10 +27,10 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    private Double interestRate;
+    private Double interestRate = (double) 0;
 
     @Column(precision = 12, scale = 2)
-    private BigDecimal documentCharge;
+    private BigDecimal documentCharge = BigDecimal.valueOf(0);
 
     @ManyToOne
     @JoinColumn(name = "no_of_installments")
