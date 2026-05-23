@@ -23,6 +23,7 @@ import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfig
 import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
 import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
 import SystemConfigurationPage from "./pages/AdminSystemConfiguration/SystemConfigurationPage";
+import AdminProfile from "./pages/AdminProfile/AdminProfile";
 
 import Signup from "./pages/Signup/Signup";
 import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
@@ -59,6 +60,7 @@ const App = () => {
           <Route path="users" element={<UserManagementPage />} />
           <Route path="audit" element={<AuditLogsPage />} />
           <Route path="settings" element={<SystemConfigurationPage />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
 
         <Route path="/signup" element={<Signup />}></Route>

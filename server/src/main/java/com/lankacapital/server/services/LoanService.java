@@ -1,16 +1,47 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
+import com.lankacapital.server.dtos.InterestUpdateDTO;
+import com.lankacapital.server.dtos.LoanActionDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Loan;
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 
 public interface LoanService {
 
     Loan addLoan(LoanCreateDto loanCreateDto);
+
     List<LoanResponseDto> getLoansByCustomerId(String id);
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
+    List<LoanResponseDto> getAllLoans();
+
+    LoanResponseDto getLoan(String fileNumber);
+
+
+    //approve loan
+    @Transactional
+    Loan approveLoan(LoanActionDto dto);
+
+    @Transactional
+    Loan rejectLoan(LoanActionDto dto);
+
+    @Transactional
+    Loan resetLoan(LoanActionDto dto);
+
+
+    //interest update
+    LoanResponseDto updateInterest(InterestUpdateDTO dto);
+
+    //get interest
+    LoanResponseDto getInterest(String fileNumber);
+
+    //reset interest
+    LoanResponseDto resetInterest(String fileNumber);
 }
+
+
+

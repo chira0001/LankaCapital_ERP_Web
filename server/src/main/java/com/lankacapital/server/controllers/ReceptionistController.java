@@ -2,6 +2,7 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.services.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ public class ReceptionistController {
     private final EmployeeService employeeService;
     private final InstallmentService installmentService;
     private final MonthlyExpenseService monthlyExpenseService;
+    private final DailyCollectionService dailyCollectionService;
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -151,5 +153,15 @@ public class ReceptionistController {
     @PostMapping(path = "/monthlyExpenses")
     public ResponseEntity<?> addMonthlyExpenses(@RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto){
         return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/loan/collection/{fileNumber}")
+    public ResponseEntity<List<DailyCollectionResponseDto>> getCollectionForLoan(
+            @PathVariable @NotBlank(message = "File number is required") String fileNumber) {
+
+        List<DailyCollectionResponseDto> collections =
+                dailyCollectionService.getLoanCollectionDetailsByFileNumber(fileNumber);
+
+        return ResponseEntity.ok(collections);
     }
 }
