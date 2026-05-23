@@ -23,9 +23,16 @@ import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfig
 import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
 import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
 import SystemConfigurationPage from "./pages/AdminSystemConfiguration/SystemConfigurationPage";
+import AdminProfile from "./pages/AdminProfile/AdminProfile";
 
 import Signup from "./pages/Signup/Signup";
-import ReceptionistDashboard from "./pages/ReceptionistDashboard/ReceptionistDashboard";
+import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
+import ReceptionistHome from "./pages/Receptionist/ReceptionistHome";
+import ReceptionistLoan from "./pages/Receptionist/ReceptionistLoan";
+import ReceptionistSalary from "./pages/Receptionist/ReceptionistSalary";
+import ReceptionistView from "./pages/Receptionist/ReceptionistView";
+import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
+import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
 
 const App = () => {
   return (
@@ -38,25 +45,34 @@ const App = () => {
 
         <Route path="/" element={<Navigate to="/admin/dashboard" />} />
         <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="loan-applications" element={<LoanApplications />} /> 
-        <Route path="portfolio" element={<PortfolioOverview />} />
-        <Route path="performance" element={<LoanPerformance />} />
-        <Route path="revenue" element={<RevenueTracking />} />
-        <Route path="customers" element={<CustomerManagementPage />} />
-        <Route path="officers" element={<FieldOfficerPerformancePage />} />
-        <Route path="petty-cash" element={<PettyCashPage />} />
-        <Route path="reports" element={<FinancialReportsPage />} />
-        <Route path="targets" element={<PerformanceTargetsPages />} />
-        <Route path="categories" element={<LoanCategoryConfigPage />} />
-        <Route path="users" element={<UserManagementPage />} />
-        <Route path="audit" element={<AuditLogsPage />} />
-        <Route path="settings" element={<SystemConfigurationPage />} />
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="loan-applications" element={<LoanApplications />} />
+          <Route path="portfolio" element={<PortfolioOverview />} />
+          <Route path="performance" element={<LoanPerformance />} />
+          <Route path="revenue" element={<RevenueTracking />} />
+          <Route path="customers" element={<CustomerManagementPage />} />
+          <Route path="officers" element={<FieldOfficerPerformancePage />} />
+          <Route path="petty-cash" element={<PettyCashPage />} />
+          <Route path="reports" element={<FinancialReportsPage />} />
+          <Route path="targets" element={<PerformanceTargetsPages />} />
+          <Route path="categories" element={<LoanCategoryConfigPage />} />
+          <Route path="users" element={<UserManagementPage />} />
+          <Route path="audit" element={<AuditLogsPage />} />
+          <Route path="settings" element={<SystemConfigurationPage />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
-        
+
         <Route path="/signup" element={<Signup />}></Route>
-        <Route path="/reception" element={<ReceptionistDashboard />}></Route>
+        <Route path="/reception" element={<ReceptionistDashboard />}>
+          <Route index element={<ReceptionistHome />} />
+          <Route path="home" element={<ReceptionistHome />} />
+          <Route path="loan" element={<ReceptionistLoan />} />
+          <Route path="salary" element={<ReceptionistSalary />} />
+          <Route path="view" element={<ReceptionistView />} />
+          <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
+          <Route path="settings" element={<ReceptionistSetting />} />
+        </Route>
 
       </Routes>
       <Toaster position="top-right" />

@@ -28,11 +28,11 @@ const Home = () => {
           <span className="text-white text-6xl md:text-9xl text-center md:text-left font-bold leading-20 md:leading-none">
             Lanka <br /> Capital <br className='md:hidden' /> Pvt.Ltd
           </span>
-          <span className='w-[50%] text-center md:text-left'>
+          <span className='w-[50%] text-center md:text-left text-white'>
             We provide fast, secure, and transparent financial solutions tailored to your needs. Your financial growth is our priority.
           </span>
 
-          <button className='w-fit border hover:bg-amber-50 hover:text-black' onClick={navigateContact}>Contact Us</button>
+          <button className='w-fit border text-white hover:bg-amber-50 hover:text-black' onClick={navigateContact}>Contact Us</button>
         </div>
       </div>
       <Footer />

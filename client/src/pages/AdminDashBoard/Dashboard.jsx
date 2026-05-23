@@ -113,6 +113,7 @@ const DashboardPage = () => {
   // REPLACE ENTIRE FUNCTION
 const fetchDashboardData = async () => {
   try {
+    /*
     // HARD CODED DATA
     setMetrics({
       totalActiveLoans: 12,
@@ -140,7 +141,7 @@ const fetchDashboardData = async () => {
       { type: 'warning', message: '2 loan applications pending approval' },
       { type: 'danger', message: '3 loans overdue - immediate action required' }
     ]);
-
+*/
   } catch (error) {
     console.error(error);
   } finally {

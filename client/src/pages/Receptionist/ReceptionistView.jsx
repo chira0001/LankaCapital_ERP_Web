@@ -1,0 +1,544 @@
+import React, { useState, useEffect } from 'react'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axiosAPI from '../../api/axiosAPI'
+
+const ReceptionistView = () => {
+    const empId = localStorage.getItem("empId") || 1;
+
+    const [searchCustomer, setSearchCustomer] = useState('');
+    const [searchFileNumber, setSearchFileNumber] = useState('');
+    const [existCustomer, setExistCustomer] = useState(null);
+    const [isEmployee, setIsEmployee] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [infoDetails, setInfoDetails] = useState([]);
+    const [highlightTimeout, setHighlightTimeout] = useState(null);
+
+    const [loanDetails, setLoanDetails] = useState([]);
+    const [showLoanModal, setShowLoanModal] = useState(false);
+
+    const [infoForm, setInfoForm] = useState({
+        businessName: '',
+        businessAddress: '',
+        businessEmail: '',
+        contactNumber: '',
+        customerId: null // Add this to track customer ID
+    });
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (highlightTimeout) {
+                clearTimeout(highlightTimeout);
+            }
+        };
+    }, [highlightTimeout]);
+
+    const handleInfoChange = (e) => {
+        const { name, value } = e.target;
+        setInfoForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const checkFileNumberExists = () => {
+        if (!searchFileNumber.trim()) {
+            toast.error('Please enter a file number');
+            return;
+        }
+
+        const foundLoan = infoDetails.find(
+            loan => loan.fileNumber.toLowerCase() === searchFileNumber.toLowerCase()
+        );
+
+        if (foundLoan) {
+            toast.success('Loan file found!');
+            const element = document.getElementById(`loan-${foundLoan.fileNumber}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('highlight-loan');
+
+                // Clear previous timeout
+                if (highlightTimeout) {
+                    clearTimeout(highlightTimeout);
+                }
+
+                // Set new timeout
+                const timeout = setTimeout(() => {
+                    element.classList.remove('highlight-loan');
+                }, 2000);
+                setHighlightTimeout(timeout);
+            }
+        } else {
+            toast.error('File number not found');
+        }
+    };
+
+    const saveCustomer = async () => {
+        // Validation
+        if (!infoForm.businessName.trim()) {
+            toast.error('Business name is required');
+            return;
+        }
+
+        if (!infoForm.contactNumber.trim()) {
+            toast.error('Contact number is required');
+            return;
+        }
+
+        // Email validation (if provided)
+        if (infoForm.businessEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(infoForm.businessEmail)) {
+            toast.error('Please enter a valid email address');
+            return;
+        }
+
+        try {
+            const payload = {
+                nic: infoForm.customerId || existCustomer?.customerId,
+                name: infoForm.businessName,
+                email: infoForm.businessEmail || '',
+                address: infoForm.businessAddress || '',
+                phoneNumber: infoForm.contactNumber
+            };
+
+            console.log("Updating customer:", payload);
+            console.log("104 : ", infoForm.customerId || existCustomer?.customerId)
+            const response = await axiosAPI.put("/customers", payload, {
+                params: {
+                    customerId: infoForm.customerId || existCustomer?.customerId
+                }
+            });
+            console.log("110 : ", response)
+            if (response.status === 200) {
+                toast.success("Customer successfully updated");
+
+                // Update form with response data
+                setInfoForm(prev => ({
+                    ...prev,
+                    businessName: response.data.name || prev.businessName,
+                    businessAddress: response.data.address || prev.businessAddress,
+                    businessEmail: response.data.email || prev.businessEmail,
+                    contactNumber: response.data.phoneNumber || prev.contactNumber,
+                    customerId: response.data.customerId || prev.customerId
+                }));
+
+                // Update existCustomer state
+                setExistCustomer(prev => ({
+                    ...prev,
+                    ...response.data
+                }));
+
+                setIsEdit(false);
+            }
+        } catch (error) {
+            console.error("Error updating customer:", error);
+
+            if (error.response?.status === 400) {
+                toast.error(error.response.data.message || 'Invalid customer data');
+            } else if (error.response?.status === 404) {
+                toast.error('Customer not found');
+            } else {
+                toast.error('Failed to update customer. Please try again.');
+            }
+        }
+    };
+
+    const handleCancelEdit = () => {
+        // Restore original data
+        if (existCustomer) {
+            setInfoForm({
+                businessName: existCustomer.businessName || '',
+                businessAddress: existCustomer.businessAddress || '',
+                businessEmail: existCustomer.businessEmail || '',
+                contactNumber: existCustomer.contactNumber || '',
+                customerId: existCustomer.customerId || null
+            });
+        }
+        setIsEdit(false);
+    };
+
+    const checkCustomerExists = async () => {
+        if (!searchCustomer.trim()) {
+            toast.error('Please enter a customer NIC');
+            return;
+        }
+
+        // NIC validation (basic)
+        if (searchCustomer.trim().length < 9) {
+            toast.error('Please enter a valid NIC');
+            return;
+        }
+
+        try {
+            const response = await axiosAPI.get(`/customers/loans/${searchCustomer}`);
+
+            if (response.status === 200) {
+                setExistCustomer(response.data);
+                setInfoForm({
+                    businessName: response.data.businessName || '',
+                    businessAddress: response.data.businessAddress || '',
+                    businessEmail: response.data.businessEmail || '',
+                    contactNumber: response.data.contactNumber || '',
+                    customerId: response.data.customerNIC || null
+                });
+                setInfoDetails(response.data.loans || []);
+                setIsEmployee(false);
+                setIsEdit(false); // Reset edit mode
+                toast.success('Customer found!');
+            }
+        } catch (error) {
+            console.error("Error checking customer:", error);
+
+            if (error.response?.status === 404) {
+                setExistCustomer(null);
+                setIsEmployee(true);
+                setInfoForm({
+                    businessName: '',
+                    businessAddress: '',
+                    businessEmail: '',
+                    contactNumber: '',
+                    customerId: searchCustomer
+                });
+                setInfoDetails([]);
+                toast.info('Customer not found. Please fill in customer details.');
+            } else if (error.response?.status === 400) {
+                setExistCustomer(null);
+                setIsEmployee(false);
+                toast.error('Please enter a valid NIC.');
+            } else {
+                toast.error('Error checking customer. Please try again.');
+            }
+        }
+    };
+
+    const calculateInterest = (amount, rate) => {
+        const principal = parseFloat(amount) || 0;
+        const rateValue = parseFloat(rate) || 0;
+        return (principal * rateValue) / 100;
+    };
+
+    const calculateInstallment = (amount, rate, installments) => {
+        const principal = parseFloat(amount) || 0;
+        const interest = calculateInterest(amount, rate);
+        const totalAmount = principal + interest;
+        const numInstallments = parseFloat(installments) || 1;
+        return totalAmount / numInstallments;
+    };
+
+    const formatCurrency = (value) => {
+        return parseFloat(value || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    const viewLoanDetails = async (fileNumber) => {
+        try {
+            const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
+            setLoanDetails(response.data); // <-- correct data
+            setShowLoanModal(true);        // <-- trigger popup
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load loan details");
+        }
+    };
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <ToastContainer position="top-right" autoClose={3000} />
+
+            {/* Header Section */}
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8'>
+                <h1 className='text-3xl font-bold text-gray-800'>View Customer</h1>
+                <div className='w-full md:w-1/2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2'>
+                    <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
+                    <input
+                        type="text"
+                        value={searchCustomer}
+                        className='border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        placeholder="Enter NIC"
+                        onChange={(e) => setSearchCustomer(e.target.value.toUpperCase())}
+                        onKeyPress={(e) => e.key === 'Enter' && checkCustomerExists()}
+                    />
+                    <button
+                        onClick={checkCustomerExists}
+                        className='bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed'
+                        disabled={!searchCustomer.trim()}
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            {/* Edit Button */}
+            {existCustomer && (
+                <div className='w-full flex justify-end gap-4 mb-6'>
+                    {isEdit ? (
+                        <div className='flex gap-2'>
+                            <button
+                                onClick={handleCancelEdit}
+                                className='bg-gray-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition-colors shadow-md'
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                                </svg>
+                                Cancel
+                            </button>
+                            <button
+                                onClick={saveCustomer}
+                                className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-md'
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                </svg>
+                                Save
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setIsEdit(true)}
+                            className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
+                                <path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path>
+                            </svg>
+                            Edit
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Customer Information Form */}
+            <div className='bg-white rounded-xl shadow-lg p-6 mb-6'>
+                <h2 className='text-xl font-semibold text-gray-800 mb-4 border-b pb-2'>Customer Information</h2>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>
+                            Customer NIC <span className='text-red-500'>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name='customerNic'
+                            className='border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-600 cursor-not-allowed'
+                            value={infoForm.customerId || existCustomer?.customerId}
+                            readOnly
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>
+                            Business Name <span className='text-red-500'>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name='businessName'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.businessName}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            required
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Business Address</label>
+                        <input
+                            type="text"
+                            name='businessAddress'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.businessAddress}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Business Email</label>
+                        <input
+                            type="email"
+                            name='businessEmail'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.businessEmail}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>
+                            Contact Number <span className='text-red-500'>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name='contactNumber'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.contactNumber}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Loan Information Section */}
+            {existCustomer && (
+                <div className='bg-white rounded-xl shadow-lg p-6'>
+                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'>
+                        <h2 className='text-xl font-semibold text-gray-800 border-b pb-2'>Loan Information</h2>
+                        <div className='w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2'>
+                            <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search File Number</span>
+                            <input
+                                type="text"
+                                value={searchFileNumber}
+                                className='border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                                placeholder="File Number"
+                                onChange={(e) => setSearchFileNumber(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && checkFileNumberExists()}
+                            />
+                            <button
+                                onClick={checkFileNumberExists}
+                                className='bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed'
+                                disabled={!searchFileNumber.trim()}
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    {infoDetails.length > 0 ? (
+                        <div className='flex flex-col gap-4 max-h-96 overflow-y-auto pr-2'>
+                            {infoDetails.map((infoDetail, key) => {
+                                const interestAmount = calculateInterest(infoDetail.amount, infoDetail.interestRate);
+                                const totalLoan = parseFloat(infoDetail.amount || 0) + interestAmount;
+                                const installmentAmount = calculateInstallment(
+                                    infoDetail.amount,
+                                    infoDetail.interestRate,
+                                    infoDetail.noOfInstallments
+                                );
+
+                                return (
+                                    <div
+                                        key={key}
+                                        id={`loan-${infoDetail.fileNumber}`}
+                                        className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
+                                        onClick={() => viewLoanDetails(infoDetail.fileNumber)}
+                                    >
+                                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>File Number</span>
+                                                <span className='text-base font-semibold text-gray-800'>{infoDetail.fileNumber}</span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Created At</span>
+                                                <span className='text-base font-semibold text-gray-800'>
+                                                    {new Date(infoDetail.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Loan Amount</span>
+                                                <span className='text-base font-semibold text-blue-600'>
+                                                    Rs. {formatCurrency(infoDetail.amount)}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Interest Rate</span>
+                                                <span className='text-base font-semibold text-gray-800'>{infoDetail.interestRate}%</span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>No. of Installments</span>
+                                                <span className='text-base font-semibold text-gray-800'>{infoDetail.noOfInstallments}</span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Interest Amount</span>
+                                                <span className='text-base font-semibold text-orange-600'>
+                                                    Rs. {formatCurrency(interestAmount)}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Total Loan</span>
+                                                <span className='text-base font-semibold text-green-600'>
+                                                    Rs. {formatCurrency(totalLoan)}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col md:col-span-2'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Installment Amount</span>
+                                                <span className='text-lg font-bold text-purple-600'>
+                                                    Rs. {formatCurrency(installmentAmount)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className='text-center py-12 text-gray-500'>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p className='text-lg font-medium'>No loan records found</p>
+                        </div>
+                    )}
+
+                    {showLoanModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl relative">
+
+                                {/* Close */}
+                                <button
+                                    onClick={() => setShowLoanModal(false)}
+                                    className="absolute top-3 right-3 text-gray-600 hover:text-black text-lg"
+                                >
+                                    ✕
+                                </button>
+
+                                <h2 className="text-xl font-bold mb-4">Loan Payment Details</h2>
+
+                                <div className="max-h-80 overflow-y-auto space-y-3">
+                                    {loanDetails.map((value) => (
+                                        <div key={value.id} className="border rounded-lg p-4 shadow-sm">
+                                            <p><strong>Entered by:</strong> {value.employeeId}</p>
+                                            <p><strong>Installment:</strong> {value.installmentNumber}</p>
+                                            <p><strong>Paid Amount:</strong> Rs. {formatCurrency(value.paidAmount)}</p>
+                                            <p>
+                                                <strong>Date:</strong> {new Date(value.paidAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            )}
+
+            {/* Add CSS for highlight animation */}
+            <style jsx>{`
+                .highlight-loan {
+                    animation: highlight 2s ease-in-out;
+                }
+
+                @keyframes highlight {
+                    0%, 100% {
+                        background: linear-gradient(to right, rgb(249 250 251), white);
+                    }
+                    50% {
+                        background: linear-gradient(to right, rgb(254 249 195), rgb(254 240 138));
+                        transform: scale(1.02);
+                    }
+                }
+
+                .loan-card {
+                    transition: all 0.3s ease;
+                }
+            `}</style>
+        </div>
+    );
+};
+
+export default ReceptionistView;
