@@ -9,7 +9,12 @@ public class ServerApplication {
 
 	public static void main(String[] args) {
 
-		Dotenv dotenv = Dotenv.load();
+		//Dotenv dotenv = Dotenv.load();
+		Dotenv dotenv = Dotenv.configure()
+				.ignoreIfMissing()
+				.load();
+
+		System.out.println("DB_URL = " + dotenv.get("DB_URL"));
 
 		System.setProperty("DB_URL",dotenv.get("DB_URL"));
 		System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
