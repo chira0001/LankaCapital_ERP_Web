@@ -11,6 +11,6 @@ public interface CustomerService {
     List<CustomerResponseDto> getAllCustomer();
     CustomerResponseDto getCustomerById(Long nic);
     CustomerInfoDto getCustomerInfoById(Long nic);
-    CustomerRegisterDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
+    CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
 }
 
