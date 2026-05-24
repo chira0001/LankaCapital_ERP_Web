@@ -90,11 +90,12 @@ public class CustomerMapper {
 
                             loanDto.setFileNumber(loan.getFileNumber());
                             loanDto.setInterestRate(loan.getInterestRate().getRate());
-                           // loanDto.setAmount(loan.getAmount().toString());
+                            loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());
                             loanDto.setNoOfInstallments(loan.getInstallment().getValue());
                             loanDto.setDocumentCharge(loan.getDocumentCharge().doubleValue());
                             loanDto.setEmployeeId(loan.getEmployee().getId());
+                            loanDto.setStatus(loan.getStatus());
 
                             // CUSTOMER INFO INSIDE LOAN
                             CustomerInfoDto customerDto = new CustomerInfoDto();
@@ -104,7 +105,7 @@ public class CustomerMapper {
                             customerDto.setBusinessAddress(loan.getCustomer().getAddress());
                             customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
 
-                            loanDto.setCustomer(customerDto);
+                            //loanDto.setCustomer(customerDto);
 
                             return loanDto;
                         })

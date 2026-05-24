@@ -63,7 +63,7 @@ public class LoanMapper {
             customerDto.setBusinessAddress(loan.getCustomer().getAddress());
             customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
 
-            responseDto.setCustomer(customerDto);
+            //responseDto.setCustomer(customerDto);
         }
 
         return responseDto;

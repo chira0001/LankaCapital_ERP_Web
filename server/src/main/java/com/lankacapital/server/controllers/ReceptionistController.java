@@ -59,7 +59,7 @@ public class ReceptionistController {
 
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
-        System.out.println(id);
+        System.out.println("62 : " + id);
         try {
             CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
             return new ResponseEntity<>(existCustomer, HttpStatus.OK);
@@ -101,11 +101,13 @@ public class ReceptionistController {
 
     @GetMapping(path = "/loan/customers/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
-        List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
-        if (responseDtoList.isEmpty()){
+        CustomerResponseDto dto = loanService.getLoansByCustomerId(id);
+        //List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
+
+        if (dto == null){
             return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     @GetMapping(path = "/employees")

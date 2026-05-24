@@ -1,14 +1,11 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
-import com.lankacapital.server.dtos.InterestUpdateDTO;
-import com.lankacapital.server.dtos.LoanActionDto;
-import com.lankacapital.server.dtos.LoanCreateDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
@@ -69,16 +66,22 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResponseDto> getLoansByCustomerId(String id) {
+    public CustomerResponseDto getLoansByCustomerId(String id) {
+    //public List<LoanResponseDto> getLoansByCustomerId(String id) {
+
         try {
             Customer customer = customerRepository.findById(Long.parseLong(id))
                     .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
+
+            CustomerResponseDto dto = CustomerMapper.mapToCustomerResponseDto(customer);
+
             List<Loan> loanList = loanRepository.findAllByCustomer(customer);
-            return loanList.stream().map(LoanMapper::mapToLoanResponseDto).toList();
+            List<LoanResponseDto> loanResponseDtos = loanList.stream().map(LoanMapper::mapToLoanResponseDto).toList();
+            dto.setLoans(loanResponseDtos);
+            return dto;
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Invalid Customer Id " + id);
         }
-
     }
 
     @Override
