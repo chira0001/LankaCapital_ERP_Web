@@ -42,9 +42,7 @@ public class LoanServiceImpl implements LoanService {
             throw new ResourceExistException("Loan exists with file number : " + loan.getFileNumber());
         }
 
-        customer = customerRepository.findById(loanCreateDto.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerId()));
-
+        customer = customerRepository.findByNic(loanCreateDto.getCustomerId());
         loan.setCustomer(customer);
 
         Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
@@ -61,7 +59,8 @@ public class LoanServiceImpl implements LoanService {
 
         //Add Loan Status as pending
         loan.setStatus(LoanStatus.PENDING);
-
+        //System.out.println("62 : " + loan);
+        loan.setFileNumber(loanCreateDto.getFileNumber());
         return loanRepository.save(loan);
     }
 

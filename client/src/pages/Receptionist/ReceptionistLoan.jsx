@@ -54,7 +54,7 @@ const ReceptionistLoan = () => {
 
         try {
             const response = await axiosAPI.get(`/customers/${searchCustomer}`);
-            console.log("57 : ",response.data);
+            console.log("57 : ", response.data);
 
             if (response.status === 200) {
                 setExistCustomer(response.data);
@@ -92,15 +92,15 @@ const ReceptionistLoan = () => {
         }
     };
     const clearCustomerForm = () => {
-            setCustomerForm({
-                nic: '',
-                name: '',
-                email: '',
-                address: '',
-                phoneNumber: ''
-            });
-        };
-const submitCustomer = async (e) => {
+        setCustomerForm({
+            nic: '',
+            name: '',
+            email: '',
+            address: '',
+            phoneNumber: ''
+        });
+    };
+    const submitCustomer = async (e) => {
         e.preventDefault();
         console.log('Customer Data:', customerForm);
         try {
@@ -133,6 +133,7 @@ const submitCustomer = async (e) => {
         }
 
         try {
+            console.log("136 : ", loanForm)
             const response = await axiosAPI.post('/loans', loanForm);
             console.log("299 : ", response)
             toast.success('Loan created successfully!');

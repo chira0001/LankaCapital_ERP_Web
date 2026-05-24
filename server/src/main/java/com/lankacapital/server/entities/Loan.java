@@ -60,7 +60,9 @@ public class Loan {
     @PrePersist
     public void update(){
         this.createdAt = LocalDateTime.now();
-        this.fileNumber = UUID.randomUUID().toString();
+        if(this.fileNumber == null){
+            this.fileNumber = UUID.randomUUID().toString();
+        }
         this.status = LoanStatus.PENDING;
     }
 }
