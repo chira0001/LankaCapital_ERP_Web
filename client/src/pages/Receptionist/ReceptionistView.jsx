@@ -5,6 +5,10 @@ import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistView = () => {
     const empId = localStorage.getItem("empId") || 1;
+    const rowsPerPage = 5;
+
+    const [currentPage, setCurrentPage] = useState(1);
+
 
     const [searchCustomer, setSearchCustomer] = useState('');
     const [searchFileNumber, setSearchFileNumber] = useState('');
@@ -247,6 +251,12 @@ const ReceptionistView = () => {
             }
         }
     };
+
+    const indexOfLastRow = currentPage * rowsPerPage;
+    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+    const currentRows = loanDetails.slice(indexOfFirstRow, indexOfLastRow);
+
+    const totalPages = Math.ceil(loanDetails.length / rowsPerPage);
 
     return (
         <div className="p-3 bg-gray-50 min-h-screen">
@@ -503,7 +513,7 @@ const ReceptionistView = () => {
                                 <h2 className="text-xl font-bold mb-4">Loan Payment Details</h2>
 
                                 <div className="max-h-150 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                                    {loanDetails.map((value, index) => (
+                                    {currentRows.map((value) => (
                                         <div
                                             key={value.id}
                                             className="group bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-0.5"
@@ -591,6 +601,54 @@ const ReceptionistView = () => {
                                             </div>
                                         </div>
                                     ))}
+                                    {/* Pagination */}
+                                    {totalPages > 1 && (
+                                        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
+
+                                            <button
+                                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                                disabled={currentPage === 1}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition 
+                ${currentPage === 1
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                    }`}
+                                            >
+                                                Previous
+                                            </button>
+
+                                            <div className="flex items-center gap-2">
+                                                {Array.from({ length: totalPages }, (_, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setCurrentPage(index + 1)}
+                                                        className={`flex items-center justify-center w-9 h-9 text-sm rounded-lg transition
+                                                            ${currentPage === index + 1
+                                                                ? "bg-gray-800 text-white"
+                                                                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                            }`}
+                                                    >
+                                                        {index + 1}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <button
+                                                onClick={() =>
+                                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                                                }
+                                                disabled={currentPage === totalPages}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition 
+                ${currentPage === totalPages
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                    }`}
+                                            >
+                                                Next
+                                            </button>
+
+                                        </div>
+                                    )}
                                 </div>
 
                             </div>
