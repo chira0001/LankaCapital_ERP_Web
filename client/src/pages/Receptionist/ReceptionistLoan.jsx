@@ -12,6 +12,7 @@ const ReceptionistLoan = () => {
     const [existCustomer, setExistCustomer] = useState(null);
     const [isEmployee, setIsEmployee] = useState(false);
     const [displayInstallments, setDisplayInstallments] = useState([]);
+    const [displayInterestRates, setDisplayInterestRates] = useState([]);
 
     const [nic, setNic] = useState();
     const [name, setName] = useState();
@@ -125,7 +126,6 @@ const ReceptionistLoan = () => {
         }
 
         if (isEmployee) {
-            // Validate customer details are filled
             if (!loanForm.name || !loanForm.email || !loanForm.address || !loanForm.phoneNumber) {
                 toast.error('Please fill in all customer details');
                 return;
@@ -133,9 +133,7 @@ const ReceptionistLoan = () => {
         }
 
         try {
-            console.log("136 : ", loanForm)
             const response = await axiosAPI.post('/loans', loanForm);
-            console.log("299 : ", response)
             toast.success('Loan created successfully!');
             clearLoanForm();
         } catch (error) {
@@ -189,10 +187,20 @@ const ReceptionistLoan = () => {
             toast.error('Failed to fetch installment options');
         }
     };
+    const fetchInterestRates = async () => {
+        try {
+            const response = await axiosAPI.get('/interestRates');
+            setDisplayInterestRates(response.data);
+        } catch (e) {
+            console.log(e);
+            toast.error('Failed to fetch interest rates');
+        }
+    }
 
 
     useEffect(() => {
         // fetchEmployees();
+        fetchInterestRates();
         fetchInstallments();
     }, [])
     return (
@@ -200,7 +208,7 @@ const ReceptionistLoan = () => {
             <ToastContainer position="top-right" autoClose={3000} />
 
             <div className='flex justify-between items-start mb-8'>
-                <h1 className='text-2xl font-bold text-center md:text-left'>Create New Loan</h1>
+                <h1 className='text-4xl font-bold text-center md:text-left'>Create New Loan</h1>
                 <div className='w-1/2 flex justify-between items-center gap-4'>
                     <span className='text-sm font-medium whitespace-nowrap'>Search Customer</span>
                     <input
@@ -224,41 +232,83 @@ const ReceptionistLoan = () => {
             {existCustomer && existCustomer.loans?.length > 0 && (
                 <div className='mb-6 p-4 bg-blue-50 rounded-lg'>
                     <h2 className='text-lg font-semibold mb-3'>{`${existCustomer.name}'s loan details`}</h2>
-                    <table className='w-full border border-gray-300 bg-white'>
+                    <table className='table-auto border border-gray-300 bg-white'>
                         <thead>
                             <tr className='bg-gradient-to-r from-zinc-500 to-zinc-600 text-white'>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>File Number</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Created At</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Amount</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Interest</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Installments</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Installment Amount</th>
-                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold'>Entered By (Emp. Id)</th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    File Number
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Created At
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Amount
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Interest
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Installments
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Installment<br />Amount
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Entered By <br /> (Emp. Id)
+                                </th>
+                                <th className='border border-gray-300 px-3 py-3 text-left text-sm font-semibold whitespace-nowrap'>
+                                    Status
+                                </th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {existCustomer.loans.map((loan, key) => (
-                                <tr key={loan.fileNumber} className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors`}>
-                                    <td className='border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700'>
+                                <tr
+                                    key={loan.fileNumber}
+                                    className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                                        } hover:bg-blue-50 transition-colors`}
+                                >
+                                    <td className='border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 whitespace-nowrap'>
                                         {loan.fileNumber}
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 font-medium'>
-                                        {new Date(loan.createdAt).toLocaleDateString()}
+
+                                    <td className='border border-gray-300 px-3 py-2 font-medium whitespace-nowrap'>
+                                        {new Date(loan.createdAt).toLocaleDateString('en-GB')}
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+
+                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600 whitespace-nowrap'>
                                         Rs. {parseFloat(loan.amount).toLocaleString()}
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+
+                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600 whitespace-nowrap'>
                                         {loan.interestRate}%
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+
+                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600 whitespace-nowrap'>
                                         {loan.noOfInstallments}
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+
+                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600 whitespace-nowrap'>
                                         Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
                                     </td>
-                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
+
+                                    <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600 whitespace-nowrap'>
                                         {loan.employeeId}
+                                    </td>
+
+                                    <td
+                                        className={`border border-gray-300 px-3 py-2 text-sm font-semibold whitespace-nowrap
+                                            ${loan.status === "PENDING"
+                                                ? "text-yellow-600"
+                                                : loan.status === "REJECTED"
+                                                    ? "text-red-600"
+                                                    : loan.status === "APPROVED"
+                                                        ? "text-green-600"
+                                                        : "text-gray-600"
+                                            }`}
+                                    >
+                                        {loan.status}
                                     </td>
                                 </tr>
                             ))}
@@ -319,18 +369,20 @@ const ReceptionistLoan = () => {
                         <span className='mb-1 text-sm font-medium'>
                             Interest Rate (%) <span className='text-red-500'>*</span>
                         </span>
-                        <input
-                            type="number"
+                        <select
                             name="interestRate"
                             value={loanForm.interestRate}
                             onChange={handleLoanChange}
                             className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black'
-                            placeholder="12.5"
-                            min="0"
-                            max="100"
-                            step="0.1"
                             required
-                        />
+                        >
+                            <option value="">Select Interest Rate</option>
+                            {displayInterestRates?.map((displayInterestRate) => (
+                                <option key={displayInterestRate.id} value={displayInterestRate.id}>
+                                    {displayInterestRate.rate}%
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div className='flex flex-col'>
                         <span className='mb-1 text-sm font-medium'>

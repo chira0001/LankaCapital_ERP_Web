@@ -201,7 +201,7 @@ const ReceptionistView = () => {
                     customerId: searchCustomer
                 });
                 setInfoDetails([]);
-                toast.info('Customer not found. Please fill in customer details.');
+                toast.info('Customer not found.');
             } else if (error.response?.status === 400) {
                 setExistCustomer(null);
                 setIsEmployee(false);
@@ -236,22 +236,26 @@ const ReceptionistView = () => {
     const viewLoanDetails = async (fileNumber) => {
         try {
             const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
-            setLoanDetails(response.data); // <-- correct data
-            setShowLoanModal(true);        // <-- trigger popup
+            setLoanDetails(response.data);
+            setShowLoanModal(true);
+
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to load loan details");
+            if (error.response?.status === 404) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error("Failed to load loan details");
+            }
         }
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-3 bg-gray-50 min-h-screen">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8'>
-                <h1 className='text-3xl font-bold text-gray-800'>View Customer</h1>
-                <div className='w-full md:w-1/2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2'>
+                <h1 className='text-4xl font-bold text-gray-800'>View Customer</h1>
+                <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
                     <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
                     <input
                         type="text"
@@ -484,7 +488,8 @@ const ReceptionistView = () => {
                     )}
 
                     {showLoanModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div className="fixed h-full inset-0 backdrop-blur-xs flex items-center justify-center z-50 border border-white/30 rounded-2xl shadow-2xl">
+                            {/* <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-full max-w-2xl relative"> */}
                             <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl relative">
 
                                 {/* Close */}
@@ -497,15 +502,93 @@ const ReceptionistView = () => {
 
                                 <h2 className="text-xl font-bold mb-4">Loan Payment Details</h2>
 
-                                <div className="max-h-80 overflow-y-auto space-y-3">
-                                    {loanDetails.map((value) => (
-                                        <div key={value.id} className="border rounded-lg p-4 shadow-sm">
-                                            <p><strong>Entered by:</strong> {value.employeeId}</p>
-                                            <p><strong>Installment:</strong> {value.installmentNumber}</p>
-                                            <p><strong>Paid Amount:</strong> Rs. {formatCurrency(value.paidAmount)}</p>
-                                            <p>
-                                                <strong>Date:</strong> {new Date(value.paidAt).toLocaleDateString()}
-                                            </p>
+                                <div className="max-h-150 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                                    {loanDetails.map((value, index) => (
+                                        <div
+                                            key={value.id}
+                                            className="group bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-0.5"
+                                        >
+                                            {/* Header Section */}
+                                            <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+                                                        <span className="text-xl font-bold text-gray-700">
+                                                            {value.installmentNumber}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                            Installment
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-600">
+                                                            Payment #{value.installmentNumber}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Badge/Status indicator (optional) */}
+                                                <div className="px-3 py-1 bg-green-50 rounded-full">
+                                                    <span className="text-xs font-semibold text-green-600">Paid</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Details Grid */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {/* Amount - Emphasized */}
+                                                <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100">
+                                                    <div className="flex items-baseline gap-2">
+                                                        <div className="flex-1">
+                                                            <p className="text-xs font-medium text-gray-500 mb-1">
+                                                                Amount Paid
+                                                            </p>
+                                                            <p className="text-2xl font-bold text-gray-800">
+                                                                Rs. {formatCurrency(value.paidAmount)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Date & Time */}
+                                                <div className="flex items-start gap-2">
+                                                    <svg className="w-4 h-4 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-500 mb-1">
+                                                            Payment Date & Time
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-700">
+                                                            {new Date(value.paidAt).toLocaleDateString('en-US', {
+                                                                day: 'numeric',
+                                                                month: 'short',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">
+                                                            {new Date(value.paidAt).toLocaleTimeString('en-US', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Entered By */}
+                                                <div className="flex items-start gap-2">
+                                                    <svg className="w-4 h-4 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-500 mb-1">
+                                                            Processed By
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-700">
+                                                            {value.employeeId}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

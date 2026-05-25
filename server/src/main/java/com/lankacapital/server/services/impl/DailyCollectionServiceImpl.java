@@ -20,7 +20,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
 
     @Override
     public List<DailyCollectionResponseDto> getLoanCollectionDetailsByFileNumber(String fileNumber) {
-        List<DailyCollection> collections = dailyCollectionRepository.findByLoanFileNumberOrderByPaidAtDesc(fileNumber);
+        List<DailyCollection> collections = dailyCollectionRepository.findByLoanFileNumberOrderByInstallmentNumberDesc(fileNumber);
 
         if (collections.isEmpty()) {
             throw new ResourceNotFoundException("Loan " + fileNumber + " does not contain any collection");
