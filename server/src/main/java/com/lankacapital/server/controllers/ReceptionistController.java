@@ -24,7 +24,7 @@ public class ReceptionistController {
     private final MonthlyExpenseService monthlyExpenseService;
     private final DailyCollectionService dailyCollectionService;
     private final InterestRateService interestRateService;
-
+    private final PettyCashService pettyCashService;
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -172,5 +172,21 @@ public class ReceptionistController {
     @GetMapping("/interestRates")
     public ResponseEntity<?> getAllInterestRates(){
         return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
+    }
+
+    @PostMapping("/pettyCash")
+    public ResponseEntity<?> addPettyCashRequest(@RequestBody PettyCashDto pettyCashDto){
+        return new ResponseEntity<>(pettyCashService.addPettyCash(pettyCashDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/pettyCash/{id}")
+    public ResponseEntity<?> getEmployeeAddedPettyCash(@PathVariable String id){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(empId), HttpStatus.OK);
     }
 }

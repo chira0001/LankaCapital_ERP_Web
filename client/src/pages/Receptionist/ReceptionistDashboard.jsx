@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const ReceptionistDashboard = () => {
     const navigate = useNavigate();
-    const [panel, setPanel] = useState('view');
+    const [panel, setPanel] = useState('home');
     const panelNames = [
         {
             name: "Home",
@@ -43,12 +43,29 @@ const ReceptionistDashboard = () => {
             func: 'monthlyExp'
         },
         {
+            name: "Monthly Petty Cash",
+            icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M21 8H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1m-1 8c-1.1 0-2 .9-2 2h-8c0-1.1-.9-2-2-2v-4c1.1 0 2-.9 2-2h8c0 1.1.9 2 2 2z"></path><path d="M18 4H3c-.55 0-1 .45-1 1v11h2V6h14zm-4 8a2 2 0 1 0 0 4 2 2 0 1 0 0-4"></path></svg>,
+            css: `flex gap-3 items-center ${panel === 'monthlyPetty' ? "text-black" : "text-gray-400"}`,
+            func: 'monthlyPetty'
+        },
+        {
             name: "Settings",
             icon: <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M22 12.5v-1h-1.03c-.04-.78-.18-1.54-.41-2.26l.95-.37-.36-.93-.95.37c-.38-.85-.89-1.62-1.5-2.3l.73-.73-.71-.71-.73.73c-.57-.51-1.2-.95-1.89-1.3l.42-.93-.91-.41-.42.94a8.9 8.9 0 0 0-2.69-.57V2h-1v1.03c-.78.04-1.54.18-2.26.41l-.37-.95-.93.36.37.95c-.85.38-1.62.89-2.3 1.5l-.73-.73-.71.71.73.73c-.51.57-.95 1.2-1.3 1.89l-.93-.42-.41.91.94.42a8.9 8.9 0 0 0-.57 2.69H2v1h1.03c.04.78.18 1.54.41 2.26l-.95.37.36.93.95-.37c.38.85.89 1.62 1.5 2.3l-.73.73.71.71.73-.73c.57.51 1.2.95 1.89 1.3l-.42.93.91.41.42-.94a8.9 8.9 0 0 0 2.69.57V22h1v-1.03c.78-.04 1.54-.18 2.26-.41l.37.95.93-.36-.37-.95c.85-.38 1.62-.89 2.3-1.5l.73.73.71-.71-.73-.73c.51-.57.95-1.2 1.3-1.89l.93.42.41-.91-.94-.42a8.9 8.9 0 0 0 .57-2.69zM12 5c3.1 0 5.72 2.02 6.65 4.81l-4.05.71c-.52-.91-1.48-1.53-2.6-1.53-.37 0-.72.08-1.05.2L8.31 6.05a6.9 6.9 0 0 1 3.68-1.06Zm1 7c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1m-4.31 6.17a6.99 6.99 0 0 1-1.9-10.83l2.64 3.14c-.26.45-.42.96-.42 1.51 0 .93.43 1.75 1.1 2.3L8.7 18.15ZM12 19c-.49 0-.97-.05-1.43-.15l1.4-3.85H12a2.99 2.99 0 0 0 2.95-2.5l4.04-.71c0 .07.01.14.01.22 0 3.86-3.14 7-7 7Z"></path></svg>,
             css: `flex gap-3 w-full items-center ${panel === 'settings' ? "text-red-700" : "text-red-300"}`,
             func: 'settings'
+        },
+        {
+            name: "Logout",
+            icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M15 11H8v2h7v4l6-5-6-5z"></path><path d="M5 21h7v-2H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path></svg>,
+            css: `flex gap-3 items-center ${panel === 'monthlyPetty' ? "text-black" : "text-gray-400"}`,
+            func: 'logout'
         }
     ];
+
+    const logoutFunc = () =>{
+        navigate("/")
+        localStorage.clear();
+    }
 
     return (
         <>
@@ -57,8 +74,11 @@ const ReceptionistDashboard = () => {
                 <div className='bg-white md:w-[25%] p-8 rounded-2xl shadow-xl hidden md:flex md:flex-col gap-4'>
                     {panelNames.map((value, key) => (
                         <button key={key} className={value.css} onClick={() => {
-                            navigate(`/reception/${value.func}`)
-                            setPanel(value.func)
+                            value.func == 'logout' ?
+                                logoutFunc() 
+                                :
+                                navigate(`/reception/${value.func}`)
+                                setPanel(value.func)
                         }}>
                             {value.icon}
                             {value.name}

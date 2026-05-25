@@ -12,7 +12,7 @@ public class LoanCreateDto {
     private BigDecimal loanAmount;
     private Integer interestRate;
     private BigDecimal documentCharge;
-    private Double numberOfInstallments;
+    private Integer numberOfInstallments;
     private Long employeeId;
 
     private Long customerId;
