@@ -29,6 +29,17 @@ public class CustomerMapper {
         CustomerResponseDto dto = new CustomerResponseDto();
         List<LoanResponseDto> loans = customer.getLoans() == null ? List.of() :
                 customer.getLoans().stream()
+                        .map(loan -> new LoanResponseDto(
+                                loan.getFileNumber(),
+                                loan.getInterestRate(),
+                                loan.getAmount().toString(),
+                                loan.getCreatedAt(),
+                                loan.getNumberOfInstallments().getValue(),
+                                loan.getDocumentCharge().doubleValue(),
+                                loan.getEmployee().getId(),
+                                loan.getCustomer().getNic()
+                        ))
+                        .toList();
 //                        .map(loan -> new LoanResponseDto(
 //                                loan.getFileNumber(),
 //                                loan.getInterestRate(),
@@ -53,6 +64,16 @@ public class CustomerMapper {
 
         return dto;
     }
+
+    public static CustomerRegisterDto mapToCustomerRegisterDto(Customer customer){
+        CustomerRegisterDto dto = new CustomerRegisterDto();
+        dto.setNic(customer.getNic());
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setAddress(customer.getAddress());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        return dto;
+    }
 }
 
 
@@ -68,12 +89,13 @@ public class CustomerMapper {
                             LoanResponseDto loanDto = new LoanResponseDto();
 
                             loanDto.setFileNumber(loan.getFileNumber());
-                            loanDto.setInterestRate(loan.getInterestRate());
-                           // loanDto.setAmount(loan.getAmount().toString());
+                            loanDto.setInterestRate(loan.getInterestRate().getRate());
+                            loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());
-                            loanDto.setNoOfInstallments(loan.getNumberOfInstallments().getValue());
+                            loanDto.setNoOfInstallments(loan.getInstallment().getValue());
                             loanDto.setDocumentCharge(loan.getDocumentCharge().doubleValue());
                             loanDto.setEmployeeId(loan.getEmployee().getId());
+                            loanDto.setStatus(loan.getStatus());
 
                             // CUSTOMER INFO INSIDE LOAN
                             CustomerInfoDto customerDto = new CustomerInfoDto();
@@ -83,7 +105,7 @@ public class CustomerMapper {
                             customerDto.setBusinessAddress(loan.getCustomer().getAddress());
                             customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
 
-                            loanDto.setCustomer(customerDto);
+                            //loanDto.setCustomer(customerDto);
 
                             return loanDto;
                         })

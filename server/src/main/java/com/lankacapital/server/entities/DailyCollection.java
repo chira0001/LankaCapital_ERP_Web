@@ -23,7 +23,7 @@ public class DailyCollection {
 
     @ManyToOne
     @JoinColumn(name = "file_number")
-    private Loan fileNumber;
+    private Loan loan;
 
     private Integer installmentNumber;
 
@@ -33,7 +33,7 @@ public class DailyCollection {
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime paidAt;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employeeId;
+    private Employee employee;
 }

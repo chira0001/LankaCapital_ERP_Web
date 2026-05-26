@@ -57,8 +57,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponseDto getCustomerById(Long nic) {
-        Customer customer = customerRepository.findById(nic)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not exists with id : " + nic));
+        Customer customer = customerRepository.findByNic(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not exists with id : " + nic);
+        }
         return CustomerMapper.mapToCustomerResponseDto(customer);
     }
 
@@ -87,5 +89,16 @@ public class CustomerServiceImpl implements CustomerService {
         );
 
         return dto;
+    }
+
+    @Transactional
+    @Override
+    public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
+        Customer customer = customerRepository.findByNic(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not found with NIC : " + nic);
+        }
+        customer = CustomerMapper.mapToCustomer(customerRegisterDto);
+        return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 }

@@ -2,6 +2,7 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.services.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,10 @@ public class ReceptionistController {
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
     private final InstallmentService installmentService;
+    private final MonthlyExpenseService monthlyExpenseService;
+    private final DailyCollectionService dailyCollectionService;
+    private final InterestRateService interestRateService;
+    private final PettyCashService pettyCashService;
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -35,8 +40,26 @@ public class ReceptionistController {
          return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
     }
 
+    @PutMapping(path = "/customers")
+    public ResponseEntity<?> updateCustomer(
+            @RequestParam String customerId,
+            @RequestBody CustomerRegisterDto customerRegisterDto
+    ){
+        if(customerId == null){
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        long nic;
+        try {
+            nic = Long.parseLong(customerId);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter valid id");
+        }
+        return new ResponseEntity<>(customerService.updateCustomerById(nic,customerRegisterDto), HttpStatus.OK);
+    }
+
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
+        System.out.println("62 : " + id);
         try {
             CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
             return new ResponseEntity<>(existCustomer, HttpStatus.OK);
@@ -78,11 +101,13 @@ public class ReceptionistController {
 
     @GetMapping(path = "/loan/customers/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
-        List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
-        if (responseDtoList.isEmpty()){
+        CustomerResponseDto dto = loanService.getLoansByCustomerId(id);
+        //List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
+
+        if (dto == null){
             return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     @GetMapping(path = "/employees")
@@ -94,5 +119,74 @@ public class ReceptionistController {
     public ResponseEntity<?> addSalary(@RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList){
         salaryService.addSalaryToEmployee(salaryAddDtoList);
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/employees/{id}")
+    public ResponseEntity<?> getProfileDetails(@PathVariable String id){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.getEmployeeDetailById(empId), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/password/{id}")
+    public ResponseEntity<?> changePrfilePassword(@PathVariable String id, @RequestBody PasswordRequestDto passwordRequestDto){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.updatePasswordById(empId, passwordRequestDto), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/{id}")
+    public ResponseEntity<?> updateProfileInfo(@PathVariable String id, @RequestBody EmployeeResponseDto dto){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(empId,dto), HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/monthlyExpenses")
+    public ResponseEntity<?> addMonthlyExpenses(@RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto){
+        return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/loan/collection/{fileNumber}")
+    public ResponseEntity<List<DailyCollectionResponseDto>> getCollectionForLoan(
+            @PathVariable @NotBlank(message = "File number is required") String fileNumber) {
+
+        List<DailyCollectionResponseDto> collections =
+                dailyCollectionService.getLoanCollectionDetailsByFileNumber(fileNumber);
+
+        return ResponseEntity.ok(collections);
+    }
+
+    @GetMapping("/interestRates")
+    public ResponseEntity<?> getAllInterestRates(){
+        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
+    }
+
+    @PostMapping("/pettyCash")
+    public ResponseEntity<?> addPettyCashRequest(@RequestBody PettyCashDto pettyCashDto){
+        return new ResponseEntity<>(pettyCashService.addPettyCash(pettyCashDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/pettyCash/{id}")
+    public ResponseEntity<?> getEmployeeAddedPettyCash(@PathVariable String id){
+        long empId;
+        try{
+            empId = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Invalid employee Id");
+        }
+        return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(empId), HttpStatus.OK);
     }
 }

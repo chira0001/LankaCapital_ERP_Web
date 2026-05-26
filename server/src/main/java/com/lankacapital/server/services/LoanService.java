@@ -1,9 +1,6 @@
 package com.lankacapital.server.services;
 
-import com.lankacapital.server.dtos.InterestUpdateDTO;
-import com.lankacapital.server.dtos.LoanActionDto;
-import com.lankacapital.server.dtos.LoanCreateDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Loan;
 import jakarta.transaction.Transactional;
 
@@ -13,7 +10,10 @@ public interface LoanService {
 
     Loan addLoan(LoanCreateDto loanCreateDto);
 
-    List<LoanResponseDto> getLoansByCustomerId(String id);
+    CustomerResponseDto getLoansByCustomerId(String id);
+    //List<LoanResponseDto> getLoansByCustomerId(String id);
+
+    Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
     List<LoanResponseDto> getAllLoans();
 

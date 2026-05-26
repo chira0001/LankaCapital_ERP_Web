@@ -20,11 +20,11 @@ public class DailyCollectionDue {
 
     @OneToOne
     @JoinColumn(name = "daily_collection_id")
-    private DailyCollection dailyCollectionId;
+    private DailyCollection dailyCollection;
 
     @ManyToOne
     @JoinColumn(name = "loan_id")
-    private Loan loanId;
+    private Loan loan;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal dueAmount;

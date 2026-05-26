@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Entity
 @Table(name = "installments")
 @AllArgsConstructor
@@ -16,7 +14,7 @@ public class Installment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Double id;
+    private Integer id;
 
     @Column(nullable = false, unique = true)
     private Integer value;

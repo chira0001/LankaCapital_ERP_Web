@@ -3,35 +3,38 @@ import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 import CommonNavbar from './component/Navbar/CommonNavbar'
 import Footer from './component/Footer/Footer'
 import { Toaster } from "@/components/ui/sonner";//add sonner toaster for notifications
-import Home from './pages/Home/Home'
-import About from './pages/About/About'
-import Contact from "./pages/Contact/Contact";
-import Login from "./pages/Login/Login";
+
+import Home from './pages/User/Home'
+import About from './pages/User/About'
+import Contact from "./pages/User/Contact";
+import Login from "./pages/User/Login";
+import Signup from "./pages/User/Signup";
 
 import AdminLayout from "./component/AdminLayout";
-import LoanApplications from "./pages/LoanApplication/LoanApplication";
-import Dashboard from "./pages/AdminDashBoard/Dashboard";
-import PortfolioOverview from "./pages/AdminPortfolioOverview/PortfolioOverviewPage";
-import LoanPerformance from "./pages/AdminLoanPerfomance/LoanPerformancePage";
-import RevenueTracking from "./pages/AdminRevenueTracking/RevenueTrackingPage";
-import CustomerManagementPage from "./pages/AdminCustomerManagement/CustomerManagementPage";
-import FieldOfficerPerformancePage from "./pages/AdminFieldOfficerPerformance/FeildOfficerPerformance";
-import PettyCashPage from "./pages/AdminPettyCash/PettyCashPage";
-import FinancialReportsPage from "./pages/AdminFinancialReport/FinancialReportsPage";
-import PerformanceTargetsPages from "./pages/AdminPerformanceNTarget/PerformanceTargetsPages";
-import LoanCategoryConfigPage from "./pages/AdminLoanCategogy/LoanCategoryConfigPage";
-import UserManagementPage from "./pages/AdminUserManagement/UserManagementPage";
-import AuditLogsPage from "./pages/AdminAuditLogs/AuditLogsPage";
-import SystemConfigurationPage from "./pages/AdminSystemConfiguration/SystemConfigurationPage";
-import AdminProfile from "./pages/AdminProfile/AdminProfile";
+import LoanApplications from "./pages/Admin/LoanApplication";
+import Dashboard from "./pages/Admin/Dashboard";
+import PortfolioOverview from "./pages/Admin/PortfolioOverviewPage";
+import LoanPerformance from "./pages/Admin/LoanPerformancePage";
+import RevenueTracking from "./pages/Admin/RevenueTrackingPage";
+import CustomerManagementPage from "./pages/Admin/CustomerManagementPage";
+import FieldOfficerPerformancePage from "./pages/Admin/FeildOfficerPerformance";
+import PettyCashPage from "./pages/Admin/PettyCashPage";
+import FinancialReportsPage from "./pages/Admin/FinancialReportsPage";
+import PerformanceTargetsPages from "./pages/Admin/PerformanceTargetsPages";
+import LoanCategoryConfigPage from "./pages/Admin/LoanCategoryConfigPage";
+import UserManagementPage from "./pages/Admin/UserManagementPage";
+import AuditLogsPage from "./pages/Admin/AuditLogsPage";
+import SystemConfigurationPage from "./pages/Admin/SystemConfigurationPage";
+import AdminProfile from "./pages/Admin/AdminProfile";
 
-import Signup from "./pages/Signup/Signup";
 import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
 import ReceptionistHome from "./pages/Receptionist/ReceptionistHome";
 import ReceptionistLoan from "./pages/Receptionist/ReceptionistLoan";
 import ReceptionistSalary from "./pages/Receptionist/ReceptionistSalary";
 import ReceptionistView from "./pages/Receptionist/ReceptionistView";
 import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
+import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
+import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 
 const App = () => {
   return (
@@ -69,6 +72,8 @@ const App = () => {
           <Route path="loan" element={<ReceptionistLoan />} />
           <Route path="salary" element={<ReceptionistSalary />} />
           <Route path="view" element={<ReceptionistView />} />
+          <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
+          <Route path="monthlyPetty" element={<ReceptionistPettyCash />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
 

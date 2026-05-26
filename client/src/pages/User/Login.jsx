@@ -31,9 +31,9 @@ const Login = () => {
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
 
-            if(email == "admin@email.com"){
+            if (email == "admin@email.com") {
                 navigate('/admin')
-            }else if(email == "receptionist@email.com"){
+            } else if (email == "receptionist@email.com") {
                 navigate('/reception')
             }
 
@@ -124,13 +124,18 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <button className='border w-full px-4 py-4 bg-black text-white' onClick={login}>Log in</button>
-                    {/* <span className='underline cursor-pointer'>Forgot your password?</span> */}
+                    <button
+                        className='border w-full px-4 py-4 bg-black text-white'
+                        onClick={login}
+                        onKeyDown={(e) => e.key === 'Enter' && login()}
+                    >
+                        Log in
+                    </button>
                 </div>
 
                 <div className='flex bg-white flex-col items-center justify-center md:w-1/3 shadow-2xl p-10 rounded-2xl gap-6'>
                     <span>Don't have an account? <Link to="/signup" className='underline cursor-pointer'>Sign up</Link></span>
-                    
+
                 </div>
             </div>
             <Footer />

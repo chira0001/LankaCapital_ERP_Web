@@ -51,7 +51,7 @@ public class SalaryServiceImpl implements SalaryService {
 
             if (salaryRepository.existsByEmployeeAndMonth(employee, currentMonth)) {
                 throw new ResourceExistException(
-                        "Salary already exists for employee: " + employee.getId() + " for month " + currentMonth
+                        "Salary already exists for month " + currentMonth
                 );
             }
 

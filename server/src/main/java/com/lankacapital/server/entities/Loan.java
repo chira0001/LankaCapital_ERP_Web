@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 @Entity
 @Table(name = "loans")
@@ -27,15 +29,16 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name="interest_rate")
-    private Double interestRate;
+    @ManyToOne
+    @JoinColumn(name = "interest_rate_id")
+    private InterestRate interestRate;
 
     @Column(precision = 12, scale = 2)
-    private BigDecimal documentCharge;
+    private BigDecimal documentCharge = BigDecimal.valueOf(0);
 
     @ManyToOne
-    @JoinColumn(name = "no_of_installments")
-    private Installment numberOfInstallments;
+    @JoinColumn(name = "installment_id")
+    private Installment installment;
 
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
     private LocalDateTime createdAt;
@@ -57,9 +60,9 @@ public class Loan {
     @PrePersist
     public void update(){
         this.createdAt = LocalDateTime.now();
+        if(this.fileNumber == null){
+            this.fileNumber = UUID.randomUUID().toString();
+        }
         this.status = LoanStatus.PENDING;
     }
-
-
-
 }

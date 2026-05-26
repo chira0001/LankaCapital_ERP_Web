@@ -22,15 +22,4 @@ public class LoanResponseDto {
     private Double documentCharge;
     private Long employeeId;
     private LoanStatus status;
-   // private Long customerId;
-
-    //private RiskLevel risk;
-    //private String rejectionNote;
-    //private String customerName;
-    //private String customerContact;
-
-    private CustomerInfoDto customer;
-
-
-
 }
