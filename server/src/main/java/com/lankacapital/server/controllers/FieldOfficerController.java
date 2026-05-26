@@ -2,11 +2,9 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Installment;
+import com.lankacapital.server.entities.InterestRate;
 import com.lankacapital.server.entities.Loan;
-import com.lankacapital.server.services.CustomerService;
-import com.lankacapital.server.services.EmployeeService;
-import com.lankacapital.server.services.InstallmentService;
-import com.lankacapital.server.services.LoanService;
+import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +20,7 @@ public class FieldOfficerController {
     private final CustomerService customerService;
     private final InstallmentService installmentService;
     private final EmployeeService employeeService;
+    private final InterestRateService interestRateService;
 
     @PostMapping(path = "/customers/loans")
     public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto){
@@ -55,6 +54,19 @@ public class FieldOfficerController {
         }
         return new ResponseEntity<>(installmentList, HttpStatus.OK);
     }
+
+    @PostMapping(path = "/async/interests")
+    public ResponseEntity<?> asyncToInstallments(@RequestBody InterestRateAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+        if(dto.getId() == null){
+            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
+        }
+        List<InterestRate> interestRateList = interestRateService.findAllinterestRatesById(dto, page);
+        if(interestRateList == null){
+            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(interestRateList, HttpStatus.OK);
+    }
+
 
     @PostMapping(path = "/async/fieldOfficers")
     public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
