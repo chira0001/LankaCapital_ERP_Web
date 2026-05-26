@@ -46,7 +46,7 @@ const ReceptionistSalary = () => {
                 salaryAdvance: parseFloat(employeeSalaries[employee.id]?.salaryAdvance) || 0
             }));
             
-            const response = await axiosAPI.post('/employees/salary', payload);
+            const response = await axiosAPI.post('/recep/employees/salary', payload);
             toast.success('Salaries submitted successfully!');
             clearAllSalaries();
         } catch (error) {
@@ -56,7 +56,7 @@ const ReceptionistSalary = () => {
     };
     const fetchInstallments = async () => {
         try {
-            const response = await axiosAPI.get('/installments');
+            const response = await axiosAPI.get('/recep/installments');
             setDisplayInstallments(response.data);
         } catch (e) {
             console.log(e);
@@ -65,7 +65,7 @@ const ReceptionistSalary = () => {
     };
     const fetchEmployees = async () => {
         try {
-            const response = await axiosAPI.get('/employees');
+            const response = await axiosAPI.get('/recep/employees');
             setEmployees(response.data);
 
             const initialSalaries = {};

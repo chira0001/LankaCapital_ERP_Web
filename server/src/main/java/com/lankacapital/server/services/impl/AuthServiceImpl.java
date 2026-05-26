@@ -60,21 +60,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtAuthenticationResponse signIn(SignInRequest signInRequest) {
-
+        System.out.println("Here 63");
+        System.out.println(signInRequest.getUsername() + "64");
+        System.out.println(signInRequest.getPassword() + "65");
         if(!employeeRepository.existsByEmail(signInRequest.getUsername())){
             throw new ResourceNotFoundException("Employee not found with username : "+signInRequest.getUsername());
         }
-
+        System.out.println("Here 67");
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         signInRequest.getUsername(),
                         signInRequest.getPassword()
                 )
         );
+        System.out.println("Here 74");
         var employee = employeeRepository.findByEmail(signInRequest.getUsername());
-        if(employee == null){
-            throw new ResourceNotFoundException("Employee not found with username : " + signInRequest.getUsername());
-        }
+
+        System.out.println("Here 77");
 
         var jwt = jwtService.generateToken(employee);
         var refreshToken = jwtService.generateRefreshToken(new HashMap<>(), employee);
@@ -86,19 +88,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        String userEmail = jwtService.extractUserName(refreshTokenRequest.getToken());
+    public JwtAuthenticationResponse refreshToken(String refreshToken) {
+        String userEmail = jwtService.extractUserName(refreshToken);
         System.out.println("Username : " + userEmail);
         Employee employee = employeeRepository.findByEmail(userEmail);
         if(employee == null){
             throw new ResourceNotFoundException("User not found with : " + userEmail);
         }
 
-        if(jwtService.isTokenValid(refreshTokenRequest.getToken(), employee)){
+        if(jwtService.isTokenValid(refreshToken, employee)){
             var jwt = jwtService.generateToken(employee);
             JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
             jwtAuthenticationResponse.setToken(jwt);
-            jwtAuthenticationResponse.setRefreshToken(refreshTokenRequest.getToken());
+            jwtAuthenticationResponse.setRefreshToken(refreshToken);
             return jwtAuthenticationResponse;
         }
         return null;

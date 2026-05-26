@@ -35,7 +35,7 @@ const ReceptionistPettyCash = () => {
     const fetchPettyCashDetails = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosAPI.get(`/pettyCash/${empId}`);
+            const response = await axiosAPI.get(`/recep/pettyCash/${empId}`);
             setPettyCashDetails(response.data);
         } catch (e) {
             console.log(e);
@@ -78,7 +78,7 @@ const ReceptionistPettyCash = () => {
 
         setIsSubmitting(true);
         try {
-            const response = await axiosAPI.post("/pettyCash", pettyCashForm);
+            const response = await axiosAPI.post("/recep/pettyCash", pettyCashForm);
 
             if (response.status === 200 || response.status === 201) {
                 toast.success("Petty cash expense submitted successfully");

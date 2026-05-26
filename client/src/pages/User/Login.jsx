@@ -3,6 +3,7 @@ import CommonNavbar from '../../component/Navbar/CommonNavbar'
 import CompanyLogo from '../../component/ComapnyLogo/CompanyLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../component/Footer/Footer'
+import axiosAPI from '../../api/axiosAPI'
 
 const Login = () => {
     const navigate = useNavigate();
@@ -22,7 +23,26 @@ const Login = () => {
         navigate('/');
     }
 
-    const login = (e) => {
+    // const login = (e) => {
+    //     e.preventDefault();
+    //     const newErrors = {
+    //         email: !email || email.trim() === "",
+    //         password: !password || password.trim() === ""
+    //     };
+    //     setErrors(newErrors);
+    //     if (!newErrors.email && !newErrors.password) {
+
+    //         if (email == "admin@email.com") {
+    //             navigate('/admin')
+    //         } else if (email == "receptionist@email.com") {
+    //             navigate('/reception')
+    //         }
+
+    //         console.log('Logging in with:', { email, password });
+    //     }
+    // }
+
+    const login = async (e) => {
         e.preventDefault();
         const newErrors = {
             email: !email || email.trim() === "",
@@ -30,14 +50,28 @@ const Login = () => {
         };
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
+            // const response = await axiosAPI.get('/recep/employees');
+            const response = await axiosAPI.post(
+                "/auth/login",
+                {
+                    username: email,
+                    password: password
+                },
+                {
+                    withCredentials: true
+                }
+            );
 
-            if (email == "admin@email.com") {
-                navigate('/admin')
-            } else if (email == "receptionist@email.com") {
-                navigate('/reception')
+            if (response.status == 200) {
+                localStorage.setItem(
+                    "token",
+                    response.data.token
+                );
+                console.log("69 token : ", response.data.token);
+            } else {
+                console.log(response);
             }
 
-            console.log('Logging in with:', { email, password });
         }
     }
 

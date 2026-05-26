@@ -83,7 +83,7 @@ const ReceptionistMonthlyExpense = () => {
             };
 
             console.log("83 : ", payload)
-            const response = await axiosAPI.post("/monthlyExpenses", payload);
+            const response = await axiosAPI.post("/recep/monthlyExpenses", payload);
 
             if (response.status === 200 || response.status === 201) {
                 toast.success("Monthly expenses submitted successfully");

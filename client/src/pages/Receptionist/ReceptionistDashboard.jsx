@@ -3,7 +3,6 @@ import { Link, useNavigate, Outlet } from 'react-router-dom'
 import ReceptionistNavbar from '../../component/Navbar/ReceptionistNavbar'
 import Footer from '../../component/Footer/Footer'
 import HomeImg from '../../assets/Home.jpg'
-import axiosAPI from '../../api/axiosAPI'
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
