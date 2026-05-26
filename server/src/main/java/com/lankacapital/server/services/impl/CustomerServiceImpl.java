@@ -1,9 +1,6 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.CustomerInfoDto;
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.entities.Role;
@@ -17,8 +14,11 @@ import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -100,5 +100,27 @@ public class CustomerServiceImpl implements CustomerService {
         }
         customer = CustomerMapper.mapToCustomer(customerRegisterDto);
         return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
+    }
+
+    @Override
+    public List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page){
+        List<Long> allCustomerIds =  customerRepository.findAllCustomerIds();
+        if(allCustomerIds == null){
+            throw new ResourceNotFoundException("Server Error: Customer");
+        }
+        List<Long> notSyncedIds = new ArrayList<>();
+        for (Long id : allCustomerIds) {
+            if (!nicList.getNic().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        if(notSyncedIds.isEmpty()){
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(page, 5);
+        return customerRepository.findCustomersByIds(notSyncedIds ,pageable)
+                .stream()
+                .map(CustomerMapper::mapToCustomerAsyncDto)
+                .toList();
     }
 }

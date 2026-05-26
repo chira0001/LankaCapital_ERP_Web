@@ -1,8 +1,6 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.EmployeeAddDto;
-import com.lankacapital.server.dtos.EmployeeResponseDto;
-import com.lankacapital.server.dtos.PasswordRequestDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
@@ -13,6 +11,8 @@ import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -104,5 +105,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setPhoneNumber(dto.getPhoneNumber());
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(emp));
+    }
+
+    @Override
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page){
+        List<Long> allOfficerIds = employeeRepository.findAllFieldOfficersIds();
+        if(allOfficerIds == null){
+            throw new ResourceNotFoundException("FieldOfficer not found with NIC");
+        }
+        List<Long> notSyncedIds = new ArrayList<>();
+        for (Long id : allOfficerIds) {
+            if (!idList.getId().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        if(notSyncedIds.isEmpty()){
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(page, 5);
+        return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
+                .stream()
+                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .toList();
     }
 }

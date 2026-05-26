@@ -1,21 +1,27 @@
 package com.lankacapital.server.controllers;
 
-import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
+import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.services.CustomerService;
+import com.lankacapital.server.services.EmployeeService;
+import com.lankacapital.server.services.InstallmentService;
 import com.lankacapital.server.services.LoanService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/v1/field")
 @AllArgsConstructor
 public class FieldOfficerController {
-    private LoanService loanService;
+    private final LoanService loanService;
+    private final CustomerService customerService;
+    private final InstallmentService installmentService;
+    private final EmployeeService employeeService;
 
     @PostMapping(path = "/customers/loans")
     public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto){
@@ -24,5 +30,53 @@ public class FieldOfficerController {
             return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
         }
         return new ResponseEntity<>("Loan submitted successfully", HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/async/customers")
+    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+        if(dto.getNic() == null){
+            return new ResponseEntity<>("Nic cannot be empty", HttpStatus.BAD_REQUEST);
+        }
+        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto, page);
+        if(customerList == null){
+            return new ResponseEntity<>("No customers found", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(customerList, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/async/installments")
+    public ResponseEntity<?> asyncToInstallments(@RequestBody InstallmentsAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+        if(dto.getId() == null){
+            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
+        }
+        List<Installment> installmentList = installmentService.findAllInstallmentsById(dto, page);
+        if(installmentList == null){
+            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(installmentList, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/async/fieldOfficers")
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+        if(dto.getId() == null){
+            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
+        }
+        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto, page);
+        if(employeeList == null){
+            return new ResponseEntity<>("No Field Officer found", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(employeeList, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/async/loans")
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+        if(dto.getFile_number() == null){
+            return new ResponseEntity<>("File Number cannot be empty", HttpStatus.BAD_REQUEST);
+        }
+        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto, page);
+        if(loanList == null){
+            return new ResponseEntity<>("No Loans found", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(loanList, HttpStatus.OK);
     }
 }

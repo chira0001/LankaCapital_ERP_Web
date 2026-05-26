@@ -2,6 +2,7 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.CustomerInfoDto;
 import com.lankacapital.server.dtos.LoanCreateDto;
+import com.lankacapital.server.dtos.LoanResAsyncDto;
 import com.lankacapital.server.dtos.LoanResponseDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
@@ -112,6 +113,20 @@ public class LoanMapper {
         customer.setPhoneNumber(loanCreateDto.getPhoneNumber());
 
         return customer;
+    }
+
+    public static LoanResAsyncDto mapToCustomerAsyncDto(Loan loan) {
+        LoanResAsyncDto dto = new LoanResAsyncDto();
+
+        dto.setFile_number(loan.getFileNumber());
+        dto.setAmount(loan.getAmount());
+        dto.setCustomer_id(loan.getCustomer().getNic());
+        dto.setEmployee_id(loan.getEmployee().getId());
+        dto.setCreated_at(loan.getCreatedAt());
+        dto.setDocument_charge(loan.getDocumentCharge());
+//        dto.setInstallment_id(loan.getNumberOfInstallments().getId());
+
+        return dto;
     }
 
 }

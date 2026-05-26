@@ -14,7 +14,7 @@ public class Installment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Double id;
+    private Integer id;
 
     @Column(nullable = false, unique = true)
     private Integer value;

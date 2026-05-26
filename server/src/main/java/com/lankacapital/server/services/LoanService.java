@@ -39,6 +39,9 @@ public interface LoanService {
 
     //reset interest
     LoanResponseDto resetInterest(String fileNumber);
+
+    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page);
+
 }
 
 

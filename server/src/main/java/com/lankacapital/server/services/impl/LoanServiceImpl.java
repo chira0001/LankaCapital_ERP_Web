@@ -11,10 +11,15 @@ import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import  java.util.Optional;
+@Slf4j
 @Service
 @AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
@@ -85,25 +90,36 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
-        Long nic;
-        try{
-            nic = Long.parseLong(loanCreateDto.getCustomerNic());
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
-        }
-        Customer customer = customerRepository.findByNic(nic);
+//        Long nic;
+//        try{
+//            nic = Long.parseLong(loanCreateDto.getCustomerNic());
+//        } catch (NumberFormatException e) {
+//            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
+//        }
+        Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
         }
-        Employee employee = employeeRepository.findByEmail(loanCreateDto.getEmployeeEmail());
-        if(employee == null){
-            throw new ResourceNotFoundException("Employee not found");
-        }
+        Employee employee = employeeRepository
+                .findById(loanCreateDto.getEmployeeId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found")
+                );
+
+        Installment installment = installmentRepository
+                .findById(loanCreateDto.getInstallmentId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Installment not found"
+                        )
+                );
+
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
         loan.setAmount(loanCreateDto.getAmount());
         loan.setEmployee(employee);
+        loan.setInstallment(installment);
 
         return loanRepository.save(loan);
     }
@@ -207,5 +223,23 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
 //        loan.setInterestRate(0.0);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
+    }
+
+    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page){
+        List<String> allLoanIds = loanRepository.findAllLoanIds();
+        if(allLoanIds == null){
+            throw new ResourceNotFoundException("Server Error: Loan");
+        }
+        List<String> notSyncedIds = new ArrayList<>();
+        for (String id : allLoanIds) {
+            if (!fileNoLis.getFile_number().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, 3);
+        return loanRepository.findLoansByIds(notSyncedIds, pageable)
+                .stream()
+                .map(LoanMapper::mapToCustomerAsyncDto)
+                .toList();
     }
 }

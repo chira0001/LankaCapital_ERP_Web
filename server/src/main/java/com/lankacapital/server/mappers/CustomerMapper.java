@@ -1,9 +1,6 @@
 package com.lankacapital.server.mappers;
 
-import com.lankacapital.server.dtos.CustomerInfoDto;
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
 import lombok.AllArgsConstructor;
 
@@ -120,5 +117,16 @@ public class CustomerMapper {
         dto.setRole(customer.getRole());
 
         return dto;
-    }}
+    }
+
+    public static CustomerResAsyncDto mapToCustomerAsyncDto(Customer customer) {
+        CustomerResAsyncDto dto = new CustomerResAsyncDto();
+        dto.setNic(customer.getNic());
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setAddress(customer.getAddress());
+        dto.setPhone_number(customer.getPhoneNumber());
+        return dto;
+    }
+}
 
