@@ -27,9 +27,7 @@ public class AuthController {
     @PostMapping(path = "/login")
     public ResponseEntity<JwtAuthenticationResponse> login(@RequestBody SignInRequest signInRequest,
                                                            HttpServletResponse response){
-        System.out.println("Here 30");
         JwtAuthenticationResponse jwtResponse = authService.signIn(signInRequest);
-        System.out.println("Here 32");
         Cookie cookie = new Cookie(
                 "refreshToken",
                 jwtResponse.getRefreshToken()

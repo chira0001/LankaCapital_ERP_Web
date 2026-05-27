@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
+import com.lankacapital.server.exceptions.ExpiredJwtException;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.EmployeeMapper;
@@ -27,33 +28,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public EmployeeResponseDto signUp(SignUpRequest signUpRequest) {
-        Long id;
-        System.out.println("31 : " + signUpRequest);
-//        try{
-//            id = Long.parseLong(signUpRequest.getId());
-//        } catch (NumberFormatException e) {
-//            throw new NumberFormatException("Enter valid employee id");
-//        }
-//        System.out.println("37 : " + id);
         if(employeeRepository.existsByEmail(signUpRequest.getEmail())){
             throw new ResourceExistException("Employee already registered with email : " + signUpRequest.getEmail());
         }
-
-//        if (employeeRepository.existsByEmail(signUpRequest.getEmail())){
-//            throw new ResourceExistException("User already exists with email : " + signUpRequest.getEmail());
-//        }
-
         Employee employee = new Employee();
 
-//        employee.setId(id);
         employee.setFirstName(signUpRequest.getFirstName());
         employee.setLastName(signUpRequest.getLastName());
         employee.setEmail(signUpRequest.getEmail());
         employee.setAddress("Default");
         employee.setPhoneNumber(signUpRequest.getPhoneNumber());
         employee.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
-
-        System.out.println("54 : " + employee);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(employee));
     }
@@ -82,20 +67,25 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtAuthenticationResponse refreshToken(String refreshToken) {
-        String userEmail = jwtService.extractUserName(refreshToken);
-        System.out.println("Username : " + userEmail);
-        Employee employee = employeeRepository.findByEmail(userEmail);
-        if(employee == null){
-            throw new ResourceNotFoundException("User not found with : " + userEmail);
-        }
+        try{
+            String userEmail = jwtService.extractUserName(refreshToken);
+            Employee employee = employeeRepository.findByEmail(userEmail);
+            if(employee == null){
+                throw new ResourceNotFoundException("User not found with : " + userEmail);
+            }
 
-        if(jwtService.isTokenValid(refreshToken, employee)){
-            var jwt = jwtService.generateToken(employee);
-            JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
-            jwtAuthenticationResponse.setToken(jwt);
-            jwtAuthenticationResponse.setRefreshToken(refreshToken);
-            return jwtAuthenticationResponse;
+            if(jwtService.isTokenValid(refreshToken, employee)){
+                var jwt = jwtService.generateToken(employee);
+                JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
+                jwtAuthenticationResponse.setToken(jwt);
+                jwtAuthenticationResponse.setRefreshToken(refreshToken);
+                return jwtAuthenticationResponse;
+            }
+            return null;
+        }catch (ExpiredJwtException e) {
+            throw new RuntimeException("Refresh token expired. Please login again");
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid refresh token. Please login");
         }
-        return null;
     }
 }

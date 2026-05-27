@@ -56,7 +56,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         newEmployee.setRole(role);
         return employeeRepository.save(newEmployee);
     }
-
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         List<Employee> employeeList = employeeRepository.findAll();
