@@ -112,7 +112,7 @@ public class ReceptionistController {
 
     @GetMapping(path = "/employees")
     public ResponseEntity<?> getAllEmployees(){
-        return new ResponseEntity<>(employeeService.getAllEmployees(), HttpStatus.OK);
+        return new ResponseEntity<>(employeeService.getAllEmployeesWithRole(), HttpStatus.OK);
     }
 
     @PostMapping(path = "/employees/salary")

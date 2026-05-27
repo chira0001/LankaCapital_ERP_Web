@@ -64,6 +64,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public List<EmployeeResponseDto> getAllEmployeesWithRole() {
+        List<Employee> employeeList = employeeRepository.findByRoleIsNotNull();
+        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+    }
+
+    @Override
     public EmployeeResponseDto getEmployeeDetailById(Long id) {
         Employee emp = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));

@@ -17,4 +17,5 @@ public interface EmployeeService {
     EmployeeResponseDto getEmployeeDetailById(Long id);
     String updatePasswordById(Long id, PasswordRequestDto dto);
     EmployeeResponseDto updateEmployeeInfo(Long id, EmployeeResponseDto dto);
+    List<EmployeeResponseDto> getAllEmployeesWithRole();
 }
