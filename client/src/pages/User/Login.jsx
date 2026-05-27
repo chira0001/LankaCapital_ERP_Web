@@ -6,6 +6,7 @@ import Footer from '../../component/Footer/Footer'
 import axiosAPI from '../../api/axiosAPI'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { loginFunc } from "../../api/authService";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -53,16 +54,21 @@ const Login = () => {
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
             try {
-                const response = await axiosAPI.post("/auth/login", {
-                    username: email,
-                    password: password
-                }, { withCredentials: true });
+
+                console.log("58 : ", email)
+
+                const response = await loginFunc({
+                    email,
+                    password
+                });
+
+                console.log("65 : ", response)
 
                 if (response.status == 200) {
                     toast.success("Loggin Successfull. Redirecting...")
                     localStorage.setItem("token", response.data.token);
 
-                    const role = response.data.role.slice(0,2).toLowerCase()
+                    const role = response.data.role.slice(0, 2).toLowerCase()
                     navigate(`/${role}`)
                 } else {
                     console.log(response);
