@@ -13,7 +13,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-   background-color: #242424; 
+  background-color: #242424;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -57,6 +57,7 @@ a {
   text-decoration: inherit;
   transition: all .5s;
 }
+
 a:hover {
   color: #1e25af;
   transform: scale(1.1);
@@ -71,7 +72,8 @@ body {
 h1 {
   line-height: 1.1;
 }
-h2{
+
+h2 {
   font-size: 1.5rem;
   line-height: 1.1;
 }
@@ -86,11 +88,11 @@ button {
   transition: all 0.25s;
 }
 
-button:hover{
+button:hover {
   transform: scale(1.02);
 }
 
-label{
+label {
   font-weight: 700;
 }
 
@@ -174,9 +176,11 @@ label{
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -190,4 +194,25 @@ label{
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.highlight-loan {
+  animation: highlight 2s ease-in-out;
+}
+
+@keyframes highlight {
+
+  0%,
+  100% {
+    background: linear-gradient(to right, rgb(249 250 251), white);
+  }
+
+  50% {
+    background: linear-gradient(to right, rgb(254 249 195), rgb(254, 233, 138));
+    transform: scale(1.002);
+  }
+}
+
+.loan-card {
+  transition: all 0.3s ease;
 }

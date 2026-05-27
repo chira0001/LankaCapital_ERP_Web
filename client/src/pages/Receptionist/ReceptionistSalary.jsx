@@ -168,7 +168,7 @@ const ReceptionistSalary = () => {
                                         </td>
 
                                         <td className='border border-gray-300 px-3 py-2 text-sm text-gray-600'>
-                                            {employee.role.roleName === "fo" ? "Field Officer" : toSentenceCase(employee.role.roleName)}
+                                            {employee.role.roleName === "FO" ? "Field Officer" : toSentenceCase(employee.role.roleName)}
                                         </td>
 
                                         <td className='border border-gray-300 px-2 py-2'>

@@ -4,6 +4,8 @@ import CompanyLogo from '../../component/ComapnyLogo/CompanyLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../component/Footer/Footer'
 import axiosAPI from '../../api/axiosAPI'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -50,34 +52,32 @@ const Login = () => {
         };
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
-            // const response = await axiosAPI.get('/recep/employees');
-            const response = await axiosAPI.post(
-                "/auth/login",
-                {
+            try {
+                const response = await axiosAPI.post("/auth/login", {
                     username: email,
                     password: password
-                },
-                {
-                    withCredentials: true
+                }, { withCredentials: true });
+
+                if (response.status == 200) {
+                    toast.success("Loggin Successfull. Redirecting...")
+                    localStorage.setItem("token", response.data.token);
+
+                    const role = response.data.role.slice(0,2).toLowerCase()
+                    navigate(`/${role}`)
+                } else {
+                    console.log(response);
                 }
-            );
-
-            if (response.status == 200) {
-                localStorage.setItem(
-                    "token",
-                    response.data.token
-                );
-                console.log("69 token : ", response.data.token);
-            } else {
-                console.log(response);
+            } catch (e) {
+                console.log(e);
+                toast.error(e.response?.data?.message || "Failed to Login");
             }
-
         }
     }
 
     return (
         <>
             <CommonNavbar />
+            <ToastContainer position="top-right" autoClose={3000} />
             <div className='bg-gray-50 text-black flex flex-col items-center justify-center h-fit gap-8 pt-20 px-3 pb-15'>
                 <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative'>
                     <svg className='absolute left-8 cursor-pointer' onClick={navigateHome} xmlns="http://www.w3.org/2000/svg" width="30" height="30"

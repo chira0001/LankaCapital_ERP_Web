@@ -658,8 +658,7 @@ const ReceptionistView = () => {
                 </div>
             )}
 
-            {/* Add CSS for highlight animation */}
-            <style jsx>{`
+            {/* <style jsx>{`
                 .highlight-loan {
                     animation: highlight 2s ease-in-out;
                 }
@@ -677,7 +676,7 @@ const ReceptionistView = () => {
                 .loan-card {
                     transition: all 0.3s ease;
                 }
-            `}</style>
+            `}</style> */}
         </div>
     );
 };

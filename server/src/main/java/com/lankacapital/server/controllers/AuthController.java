@@ -35,22 +35,13 @@ public class AuthController {
                 jwtResponse.getRefreshToken()
         );
         cookie.setHttpOnly(true);
-
         cookie.setSecure(false);
-
         cookie.setPath("/");
-
-        // 7 days
         cookie.setMaxAge(7 * 24 * 60 * 60);
-
-        // add cookie to response
         response.addCookie(cookie);
-
-        // remove refresh token from JSON
         jwtResponse.setRefreshToken(null);
 
         return ResponseEntity.ok(jwtResponse);
-
     }
 
     @PostMapping(path = "/refresh")
