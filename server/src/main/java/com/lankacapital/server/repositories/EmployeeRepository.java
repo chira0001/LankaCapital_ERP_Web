@@ -19,7 +19,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Long> findAllFieldOfficersIds();
 
     @Query("""
-         SELECT s FROM Employee s WHERE s.id IN :ids AND s.role.id = 3
-         """)
+       SELECT s FROM Employee s
+       WHERE s.id IN :ids
+       AND s.role.id IN (3,4)
+       """)
     List<Employee> findFieldOfficersByIds(@Param("ids") List<Long> ids, Pageable pageable);
 }

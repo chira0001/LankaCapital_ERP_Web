@@ -16,6 +16,6 @@ public class LoanResAsyncDto {
     private String status;
     private Long customer_id;
     private Long employee_id;
-    private Double installment_id;
+    private Integer installment_id;
     private Integer interest_rate_id;
 }

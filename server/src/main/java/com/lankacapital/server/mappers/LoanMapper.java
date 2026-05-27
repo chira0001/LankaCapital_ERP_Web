@@ -124,7 +124,8 @@ public class LoanMapper {
         dto.setEmployee_id(loan.getEmployee().getId());
         dto.setCreated_at(loan.getCreatedAt());
         dto.setDocument_charge(loan.getDocumentCharge());
-//        dto.setInstallment_id(loan.getNumberOfInstallments().getId());
+        dto.setInstallment_id(loan.getInstallment().getId());
+        dto.setInterest_rate_id(loan.getInterestRate().getId());
 
         return dto;
     }
