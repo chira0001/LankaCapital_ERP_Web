@@ -6,12 +6,11 @@ import com.lankacapital.server.dtos.SignInRequest;
 import com.lankacapital.server.dtos.SignUpRequest;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.services.AuthService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @AllArgsConstructor
@@ -26,13 +25,31 @@ public class AuthController {
     }
 
     @PostMapping(path = "/login")
-    public ResponseEntity<JwtAuthenticationResponse> login(@RequestBody SignInRequest signInRequest){
-        return ResponseEntity.ok(authService.signIn(signInRequest));
+    public ResponseEntity<JwtAuthenticationResponse> login(@RequestBody SignInRequest signInRequest,
+                                                           HttpServletResponse response){
+        JwtAuthenticationResponse jwtResponse = authService.signIn(signInRequest);
+        Cookie cookie = new Cookie(
+                "refreshToken",
+                jwtResponse.getRefreshToken()
+        );
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+        jwtResponse.setRefreshToken(null);
+
+        return ResponseEntity.ok(jwtResponse);
     }
 
     @PostMapping(path = "/refresh")
-    public ResponseEntity<JwtAuthenticationResponse> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest){
-        return ResponseEntity.ok(authService.refreshToken(refreshTokenRequest));
+    public ResponseEntity<?> refresh(
+            @CookieValue(name = "refreshToken")
+            String refreshToken
+    ){
+        System.out.println(refreshToken);
+
+        return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
 }

@@ -56,10 +56,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         newEmployee.setRole(role);
         return employeeRepository.save(newEmployee);
     }
-
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         List<Employee> employeeList = employeeRepository.findAll();
+        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+    }
+
+    @Override
+    public List<EmployeeResponseDto> getAllEmployeesWithRole() {
+        List<Employee> employeeList = employeeRepository.findByRoleIsNotNull();
         return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
     }
 

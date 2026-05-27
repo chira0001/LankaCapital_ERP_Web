@@ -108,7 +108,7 @@ const ReceptionistView = () => {
 
             console.log("Updating customer:", payload);
             console.log("104 : ", infoForm.customerId || existCustomer?.customerId)
-            const response = await axiosAPI.put("/customers", payload, {
+            const response = await axiosAPI.put("/recep/customers", payload, {
                 params: {
                     customerId: infoForm.customerId || existCustomer?.customerId
                 }
@@ -175,7 +175,7 @@ const ReceptionistView = () => {
         }
 
         try {
-            const response = await axiosAPI.get(`/customers/loans/${searchCustomer}`);
+            const response = await axiosAPI.get(`/recep/customers/loans/${searchCustomer}`);
 
             if (response.status === 200) {
                 setExistCustomer(response.data);
@@ -239,7 +239,7 @@ const ReceptionistView = () => {
 
     const viewLoanDetails = async (fileNumber) => {
         try {
-            const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
+            const response = await axiosAPI.get(`/recep/loan/collection/${fileNumber}`);
             setLoanDetails(response.data);
             setShowLoanModal(true);
 
@@ -658,8 +658,7 @@ const ReceptionistView = () => {
                 </div>
             )}
 
-            {/* Add CSS for highlight animation */}
-            <style jsx>{`
+            {/* <style jsx>{`
                 .highlight-loan {
                     animation: highlight 2s ease-in-out;
                 }
@@ -677,7 +676,7 @@ const ReceptionistView = () => {
                 .loan-card {
                     transition: all 0.3s ease;
                 }
-            `}</style>
+            `}</style> */}
         </div>
     );
 };

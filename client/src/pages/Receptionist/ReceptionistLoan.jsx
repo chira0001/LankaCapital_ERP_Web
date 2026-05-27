@@ -54,7 +54,7 @@ const ReceptionistLoan = () => {
         }
 
         try {
-            const response = await axiosAPI.get(`/customers/${searchCustomer}`);
+            const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
             console.log("57 : ", response.data);
 
             if (response.status === 200) {
@@ -105,7 +105,7 @@ const ReceptionistLoan = () => {
         e.preventDefault();
         console.log('Customer Data:', customerForm);
         try {
-            const response = await axiosAPI.post('/customers', customerForm);
+            const response = await axiosAPI.post('/recep/customers', customerForm);
             if (response.status == 201) {
                 toast.success('Customer added successfully')
             } else {
@@ -133,7 +133,7 @@ const ReceptionistLoan = () => {
         }
 
         try {
-            const response = await axiosAPI.post('/loans', loanForm);
+            const response = await axiosAPI.post('/recep/loans', loanForm);
             toast.success('Loan created successfully!');
             clearLoanForm();
         } catch (error) {
@@ -180,7 +180,7 @@ const ReceptionistLoan = () => {
     };
     const fetchInstallments = async () => {
         try {
-            const response = await axiosAPI.get('/installments');
+            const response = await axiosAPI.get('/recep/installments');
             setDisplayInstallments(response.data);
         } catch (e) {
             console.log(e);
@@ -189,7 +189,7 @@ const ReceptionistLoan = () => {
     };
     const fetchInterestRates = async () => {
         try {
-            const response = await axiosAPI.get('/interestRates');
+            const response = await axiosAPI.get('/recep/interestRates');
             setDisplayInterestRates(response.data);
         } catch (e) {
             console.log(e);

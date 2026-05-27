@@ -59,7 +59,7 @@ public class ReceptionistController {
 
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
-        System.out.println("62 : " + id);
+        System.out.println("getCustomerById - 62 : " + id);
         try {
             CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
             return new ResponseEntity<>(existCustomer, HttpStatus.OK);
@@ -112,7 +112,7 @@ public class ReceptionistController {
 
     @GetMapping(path = "/employees")
     public ResponseEntity<?> getAllEmployees(){
-        return new ResponseEntity<>(employeeService.getAllEmployees(), HttpStatus.OK);
+        return new ResponseEntity<>(employeeService.getAllEmployeesWithRole(), HttpStatus.OK);
     }
 
     @PostMapping(path = "/employees/salary")

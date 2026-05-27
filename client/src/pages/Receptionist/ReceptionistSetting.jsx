@@ -33,7 +33,7 @@ const ReceptionistSetting = () => {
 
     const fetchProfileInfo = async () => {
         try {
-            const response = await axiosAPI.get(`/employees/${empId}`);
+            const response = await axiosAPI.get(`/recep/employees/${empId}`);
             if (response.status === 200) {
                 setProfileForm(response.data);
             }
@@ -60,7 +60,7 @@ const ReceptionistSetting = () => {
         }
 
         try {
-            const response = await axiosAPI.put(`/employees/password/${empId}`, passwordForm);
+            const response = await axiosAPI.put(`/recep/employees/password/${empId}`, passwordForm);
             if (response.status === 200) {
                 toast.success("Password changed successfully");
                 // Clear form and hide it
@@ -93,7 +93,7 @@ const ReceptionistSetting = () => {
                 role: profileForm.role
             };
 
-            const response = await axiosAPI.put(`/employees/${empId}`, payload)
+            const response = await axiosAPI.put(`/recep/employees/${empId}`, payload)
             if (response.status === 200) {
                 toast.success("Profile updated successfully");
                 fetchProfileInfo(); // Refresh the data

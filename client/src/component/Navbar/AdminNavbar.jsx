@@ -29,20 +29,20 @@ const AdminNavbar = () => {
   const [search, setSearch] = useState("");
 
   const pages = [
-    { keyword: "dashboard", path: "/admin/dashboard" },
-    { keyword: "loan", path: "/admin/loan-applications" },
-    { keyword: "portfolio", path: "/admin/portfolio" },
-    { keyword: "performance", path: "/admin/performance" },
-    { keyword: "revenue", path: "/admin/revenue" },
-    { keyword: "customers", path: "/admin/customers" },
-    { keyword: "officers", path: "/admin/officers" },
-    { keyword: "petty cash", path: "/admin/petty-cash" },
-    { keyword: "reports", path: "/admin/reports" },
-    { keyword: "targets", path: "/admin/targets" },
-    { keyword: "categories", path: "/admin/categories" },
-    { keyword: "users", path: "/admin/users" },
-    { keyword: "audit", path: "/admin/audit" },
-    { keyword: "settings", path: "/admin/settings" },
+    { keyword: "dashboard", path: "/ad/dashboard" },
+    { keyword: "loan", path: "/ad/loan-applications" },
+    { keyword: "portfolio", path: "/ad/portfolio" },
+    { keyword: "performance", path: "/ad/performance" },
+    { keyword: "revenue", path: "/ad/revenue" },
+    { keyword: "customers", path: "/ad/customers" },
+    { keyword: "officers", path: "/ad/officers" },
+    { keyword: "petty cash", path: "/ad/petty-cash" },
+    { keyword: "reports", path: "/ad/reports" },
+    { keyword: "targets", path: "/ad/targets" },
+    { keyword: "categories", path: "/ad/categories" },
+    { keyword: "users", path: "/ad/users" },
+    { keyword: "audit", path: "/ad/audit" },
+    { keyword: "settings", path: "/ad/settings" },
   ];
 
   const handleSearch = (e) => {
