@@ -27,7 +27,7 @@ public class LoanServiceImpl implements LoanService {
 
     @Transactional
     @Override
-    public Loan addLoan(LoanCreateDto loanCreateDto) {
+    public Loan addLoan(LoanCreateDto loanCreateDto, String username) {
         Loan loan = LoanMapper.mapToLoan(loanCreateDto);
         Customer customer;
         //customer not exists => create new customer
@@ -49,17 +49,14 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
         loan.setInstallment(installment);
 
-        Employee employee = employeeRepository.findById(loanCreateDto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanCreateDto.getEmployeeId()));
+        Employee employee = employeeRepository.findByEmail(username);
         loan.setEmployee(employee);
 
         InterestRate rate = interestRateRepository.findById(loanCreateDto.getInterestRate())
                 .orElseThrow(() -> new ResourceNotFoundException("Interest rate not found with id : " + loanCreateDto.getInterestRate()));
         loan.setInterestRate(rate);
-
-        //Add Loan Status as pending
         loan.setStatus(LoanStatus.PENDING);
-        //System.out.println("62 : " + loan);
+
         loan.setFileNumber(loanCreateDto.getFileNumber());
         return loanRepository.save(loan);
     }

@@ -5,7 +5,7 @@ import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
 
-    const empId = 3 || localStorage.getItem("empId");
+    // const empId = 3 || localStorage.getItem("empId");
 
 
     const [searchCustomer, setSearchCustomer] = useState('');
@@ -42,8 +42,7 @@ const ReceptionistLoan = () => {
         name: '',
         email: '',
         address: '',
-        phoneNumber: '',
-        employeeId: empId
+        phoneNumber: ''
     });
 
     const checkCustomerExists = async () => {
@@ -171,8 +170,7 @@ const ReceptionistLoan = () => {
             name: '',
             email: '',
             address: '',
-            phoneNumber: '',
-            employeeId: empId
+            phoneNumber: ''
         });
         setSearchCustomer('');
         setExistCustomer(null);

@@ -9,6 +9,7 @@ import com.lankacapital.server.services.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class AuthController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<?> signup(@RequestBody SignUpRequest signUpRequest){
-        return ResponseEntity.ok(authService.signUp(signUpRequest));
+        return new ResponseEntity<>(authService.signUp(signUpRequest), HttpStatus.CREATED);
     }
 
     @PostMapping(path = "/login")
@@ -47,8 +48,6 @@ public class AuthController {
             @CookieValue(name = "refreshToken")
             String refreshToken
     ){
-        System.out.println(refreshToken);
-
         return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 

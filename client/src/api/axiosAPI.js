@@ -2,8 +2,10 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
 const instance = axios.create({
-    baseURL: "http://localhost:8080/api/v1/",
+    baseURL: BASE_URL,
     withCredentials: true
 });
 

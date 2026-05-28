@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,7 +60,6 @@ public class ReceptionistController {
 
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
-        System.out.println("getCustomerById - 62 : " + id);
         try {
             CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
             return new ResponseEntity<>(existCustomer, HttpStatus.OK);
@@ -92,11 +92,11 @@ public class ReceptionistController {
     }
 
     @PostMapping(path = "/loans")
-    public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto){
-        if(loanCreateDto.getEmployeeId() == null){
-            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto, Authentication authentication){
+        if(authentication.getName() == null){
+            return new ResponseEntity<>("Employee cannot be determined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(loanService.addLoan(loanCreateDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(loanService.addLoan(loanCreateDto, authentication.getName()), HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/loan/customers/{id}")

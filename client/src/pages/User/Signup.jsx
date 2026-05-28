@@ -3,8 +3,12 @@ import CommonNavbar from '../../component/Navbar/CommonNavbar'
 import CompanyLogo from '../../component/ComapnyLogo/CompanyLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../component/Footer/Footer'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios'
 
 const Signup = () => {
+    const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
     const navigate = useNavigate();
 
@@ -34,7 +38,7 @@ const Signup = () => {
         navigate('/');
     }
 
-    const signup = (e) => {
+    const signup = async (e) => {
         e.preventDefault();
         const newErrors = {
             fname: !fname || fname.trim() === "",
@@ -42,18 +46,39 @@ const Signup = () => {
             email: !email || email.trim() === "",
             phoneNumber: !phoneNumber || phoneNumber.trim() === "",
             empNo: !empNo || empNo.trim() === "",
-            password: !password || password.trim() === "",
-            confirmPassword: !confirmPassword || confirmPassword.trim() === ""
+            password: !password || password.trim() === "" || password != confirmPassword,
+            confirmPassword: !confirmPassword || confirmPassword.trim() === "" || confirmPassword != password
         };
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
-            console.log('Logging in with:', { email, password });
+            const payload = {
+                id: empNo,
+                firstName: fname,
+                lastName: lname,
+                email: email,
+                phoneNumber: phoneNumber,
+                password: password
+            };
+            try {
+                const response = await axios.post(`${BASE_URL}/auth/register`, payload);
+                if (response.status == 201) {
+                    toast.success("Registered successfully. Please Login");
+                    navigate('/login')
+                } else {
+                    toast.error("Something went wrong, Try again");
+                }
+            } catch (e) {
+                console.log(e);
+                toast.error(e.response?.data?.message || "Failed to register");
+            }
+            // console.log('Signing with:', payload);
         }
     }
 
     return (
         <>
             <CommonNavbar />
+            <ToastContainer position="top-right" autoClose={3000} />
             <div className='bg-gray-50 text-black flex flex-col items-center justify-center h-fit gap-8 pt-20 px-3 py-8'>
                 <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative'>
                     <svg className='absolute left-8 cursor-pointer' onClick={navigateHome} xmlns="http://www.w3.org/2000/svg" width="30" height="30"
