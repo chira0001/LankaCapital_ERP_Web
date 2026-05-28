@@ -5,9 +5,6 @@ import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
 
-    // const empId = 3 || localStorage.getItem("empId");
-
-
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
     const [isEmployee, setIsEmployee] = useState(false);
@@ -45,8 +42,24 @@ const ReceptionistLoan = () => {
         phoneNumber: ''
     });
 
+    const clearLoanForm = () => {
+        setLoanForm({
+            fileNumber: '',
+            loanAmount: '',
+            interestRate: '',
+            documentCharge: '',
+            numberOfInstallments: '',
+            name: '',
+            email: '',
+            address: '',
+            phoneNumber: ''
+        });
+        setSearchCustomer('');
+        setExistCustomer(null);
+        setIsEmployee(false);
+    };
+
     const checkCustomerExists = async () => {
-        // Add validation for empty search
         if (!searchCustomer.trim()) {
             toast.error('Please enter a customer NIC');
             return;
@@ -54,14 +67,11 @@ const ReceptionistLoan = () => {
 
         try {
             const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
-            console.log("57 : ", response.data);
-
             if (response.status === 200) {
                 setExistCustomer(response.data);
                 setLoanForm(prev => ({
                     ...prev,
                     customerId: response.data.nic,
-                    // Clear customer details fields when existing customer is found
                     name: '',
                     email: '',
                     address: '',
@@ -72,7 +82,6 @@ const ReceptionistLoan = () => {
             }
         } catch (e) {
             console.log(e);
-            // Handle 404 or customer not found
             if (e.response?.status === 404) {
                 setExistCustomer(null);
                 setIsEmployee(true);
@@ -100,25 +109,10 @@ const ReceptionistLoan = () => {
             phoneNumber: ''
         });
     };
-    const submitCustomer = async (e) => {
-        e.preventDefault();
-        console.log('Customer Data:', customerForm);
-        try {
-            const response = await axiosAPI.post('/recep/customers', customerForm);
-            if (response.status == 201) {
-                toast.success('Customer added successfully')
-            } else {
-                toast.error('Customer not added successfully!');
-                console.log(response.data)
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    };
+
     const handleLoanSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!loanForm.customerId) {
             toast.error('Please search and select a customer first');
             return;
@@ -159,23 +153,6 @@ const ReceptionistLoan = () => {
         }));
     };
 
-    const clearLoanForm = () => {
-        setLoanForm({
-            fileNumber: '',
-            loanAmount: '',
-            interestRate: '',
-            documentCharge: '',
-            numberOfInstallments: '',
-            // customerId: '',
-            name: '',
-            email: '',
-            address: '',
-            phoneNumber: ''
-        });
-        setSearchCustomer('');
-        setExistCustomer(null);
-        setIsEmployee(false);
-    };
     const fetchInstallments = async () => {
         try {
             const response = await axiosAPI.get('/recep/installments');
@@ -197,7 +174,6 @@ const ReceptionistLoan = () => {
 
 
     useEffect(() => {
-        // fetchEmployees();
         fetchInterestRates();
         fetchInstallments();
     }, [])

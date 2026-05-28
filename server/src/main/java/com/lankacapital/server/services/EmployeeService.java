@@ -14,8 +14,8 @@ public interface EmployeeService {
 
     Employee addNewEmployee(EmployeeAddDto dto);
     List<EmployeeResponseDto> getAllEmployees();
-    EmployeeResponseDto getEmployeeDetailById(Long id);
-    String updatePasswordById(Long id, PasswordRequestDto dto);
-    EmployeeResponseDto updateEmployeeInfo(Long id, EmployeeResponseDto dto);
+    EmployeeResponseDto getEmployeeDetailByUsername(String username);
+    String updatePasswordByUsername(String username, PasswordRequestDto dto);
+    EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
 }

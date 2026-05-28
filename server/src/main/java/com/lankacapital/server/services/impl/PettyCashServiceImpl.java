@@ -21,26 +21,30 @@ public class PettyCashServiceImpl implements PettyCashService {
     private EmployeeRepository employeeRepository;
 
     @Override
-    public PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto) {
+    public PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto, String username) {
         try {
             PettyCash pettyCash = PettyCashMapper.mapToPettyCash(pettyCashDto);
-            Employee requestEmployee = employeeRepository.findById(pettyCashDto.getRequestEmployeeId())
-                    .orElseThrow(()-> new ResourceNotFoundException("Employee not found with id : " + pettyCashDto.getRequestEmployeeId()));
+            Employee requestEmployee = employeeRepository.findByEmail(username);
+            if(requestEmployee == null){
+                throw new ResourceNotFoundException("Employee verification not found");
+            }
             pettyCash.setRequestEmployee(requestEmployee);
             pettyCashRepository.save(pettyCash);
 
             return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
 
         } catch (RuntimeException e) {
-            throw new RuntimeException("Petty cash not added successfully");
+            throw new RuntimeException("Petty cash submission failed");
         }
     }
 
     @Override
-    public List<PettyCashResponseDto> getPettyCashForEmployee(Long empId) {
+    public List<PettyCashResponseDto> getPettyCashForEmployee(String username) {
 
-        Employee requestEmployee = employeeRepository.findById(empId)
-                .orElseThrow(()-> new ResourceNotFoundException("Employee not found with id : " + empId));
+        Employee requestEmployee = employeeRepository.findByEmail(username);
+        if(requestEmployee == null){
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
         List<PettyCash> pettyCashList = pettyCashRepository.findByRequestEmployee(requestEmployee);
         return pettyCashList.stream().map(PettyCashMapper::mapToPettyCashResponseDto).toList();
     }

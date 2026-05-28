@@ -4,7 +4,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistView = () => {
-    const empId = localStorage.getItem("empId") || 1;
     const rowsPerPage = 5;
 
     const [currentPage, setCurrentPage] = useState(1);

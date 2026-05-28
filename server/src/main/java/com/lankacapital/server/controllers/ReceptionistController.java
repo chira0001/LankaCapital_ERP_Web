@@ -121,42 +121,27 @@ public class ReceptionistController {
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
     }
 
-    @GetMapping(path = "/employees/{id}")
-    public ResponseEntity<?> getProfileDetails(@PathVariable String id){
-        long empId;
-        try{
-            empId = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Invalid employee Id");
-        }
-        return new ResponseEntity<>(employeeService.getEmployeeDetailById(empId), HttpStatus.OK);
+    @GetMapping(path = "/employees/profile")
+    public ResponseEntity<?> getProfileDetails(Authentication authentication){
+        return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
     }
 
-    @PutMapping(path = "/employees/password/{id}")
-    public ResponseEntity<?> changePrfilePassword(@PathVariable String id, @RequestBody PasswordRequestDto passwordRequestDto){
-        long empId;
-        try{
-            empId = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Invalid employee Id");
-        }
-        return new ResponseEntity<>(employeeService.updatePasswordById(empId, passwordRequestDto), HttpStatus.OK);
+    @PutMapping(path = "/employees/profile/password")
+    public ResponseEntity<?> changeProfilePassword(Authentication authentication, @RequestBody PasswordRequestDto passwordRequestDto){
+        return new ResponseEntity<>(employeeService.updatePasswordByUsername(authentication.getName(), passwordRequestDto), HttpStatus.OK);
     }
 
-    @PutMapping(path = "/employees/{id}")
-    public ResponseEntity<?> updateProfileInfo(@PathVariable String id, @RequestBody EmployeeResponseDto dto){
-        long empId;
-        try{
-            empId = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Invalid employee Id");
-        }
-        return new ResponseEntity<>(employeeService.updateEmployeeInfo(empId,dto), HttpStatus.OK);
+    @PutMapping(path = "/employees/profile")
+    public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
     }
 
     @PostMapping(path = "/monthlyExpenses")
-    public ResponseEntity<?> addMonthlyExpenses(@RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto){
-        return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto), HttpStatus.CREATED);
+    public ResponseEntity<?> addMonthlyExpenses(
+            @RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto,
+            Authentication authentication
+    ){
+        return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto, authentication.getName()), HttpStatus.CREATED);
     }
 
     @GetMapping("/loan/collection/{fileNumber}")
@@ -175,18 +160,12 @@ public class ReceptionistController {
     }
 
     @PostMapping("/pettyCash")
-    public ResponseEntity<?> addPettyCashRequest(@RequestBody PettyCashDto pettyCashDto){
-        return new ResponseEntity<>(pettyCashService.addPettyCash(pettyCashDto), HttpStatus.CREATED);
+    public ResponseEntity<?> addPettyCashRequest(@RequestBody PettyCashDto pettyCashDto, Authentication authentication){
+        return new ResponseEntity<>(pettyCashService.addPettyCash(pettyCashDto, authentication.getName()), HttpStatus.CREATED);
     }
 
-    @GetMapping("/pettyCash/{id}")
-    public ResponseEntity<?> getEmployeeAddedPettyCash(@PathVariable String id){
-        long empId;
-        try{
-            empId = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Invalid employee Id");
-        }
-        return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(empId), HttpStatus.OK);
+    @GetMapping("/pettyCash")
+    public ResponseEntity<?> getEmployeeAddedPettyCash(Authentication authentication){
+        return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(authentication.getName()), HttpStatus.OK);
     }
 }

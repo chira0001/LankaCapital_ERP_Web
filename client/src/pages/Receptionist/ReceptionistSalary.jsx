@@ -200,7 +200,7 @@ const ReceptionistSalary = () => {
                                     {/* OT Hours */}
                                     <td className="px-4 py-3 text-center">
                                         <input
-                                            type="number"
+                                            type="text"
                                             step="0.5"
                                             min="0"
                                             value={employeeSalaries[employee.id]?.otHours || 0}
@@ -214,7 +214,7 @@ const ReceptionistSalary = () => {
                                     {/* Unpaid Leaves */}
                                     <td className="px-4 py-3 text-center">
                                         <input
-                                            type="number"
+                                            type="text"
                                             step="0.5"
                                             min="0"
                                             value={employeeSalaries[employee.id]?.unpaidLeaves || 0}
@@ -228,7 +228,7 @@ const ReceptionistSalary = () => {
                                     {/* Loans */}
                                     <td className="px-4 py-3 text-center">
                                         <input
-                                            type="number"
+                                            type="text"
                                             step="0.01"
                                             min="0"
                                             value={employeeSalaries[employee.id]?.loans || 0}
@@ -242,7 +242,7 @@ const ReceptionistSalary = () => {
                                     {/* Salary Advance */}
                                     <td className="px-4 py-3 text-center">
                                         <input
-                                            type="number"
+                                            type="text"
                                             step="0.01"
                                             min="0"
                                             value={employeeSalaries[employee.id]?.salaryAdvance || 0}

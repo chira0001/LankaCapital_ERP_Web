@@ -4,7 +4,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistPettyCash = () => {
-    const empId = 3 || localStorage.getItem("empId");
 
     const [pettyCashDetails, setPettyCashDetails] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -13,8 +12,7 @@ const ReceptionistPettyCash = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pettyCashForm, setPettyCashForm] = useState({
         narration: "",
-        amount: "",
-        requestEmployeeId: empId
+        amount: ""
     });
 
     const months = [
@@ -35,7 +33,7 @@ const ReceptionistPettyCash = () => {
     const fetchPettyCashDetails = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosAPI.get(`/recep/pettyCash/${empId}`);
+            const response = await axiosAPI.get("/recep/pettyCash");
             setPettyCashDetails(response.data);
         } catch (e) {
             console.log(e);
@@ -60,8 +58,7 @@ const ReceptionistPettyCash = () => {
     const handleReset = () => {
         setPettyCashForm({
             narration: "",
-            amount: "",
-            requestEmployeeId: empId
+            amount: ""
         });
     };
 

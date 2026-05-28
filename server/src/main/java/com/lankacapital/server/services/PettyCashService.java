@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface PettyCashService {
 
-    PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto);
-    List<PettyCashResponseDto> getPettyCashForEmployee(Long empId);
+    PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto, String username);
+    List<PettyCashResponseDto> getPettyCashForEmployee(String username);
 }
