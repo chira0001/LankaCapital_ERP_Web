@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         );
         var employee = employeeRepository.findByEmail(signInRequest.getUsername());
 
-        var jwt = jwtService.generateToken(employee);
+        var jwt = jwtService.generateToken(employee, employee.getRole().getRoleName());
         var refreshToken = jwtService.generateRefreshToken(new HashMap<>(), employee);
         JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
         jwtAuthenticationResponse.setToken(jwt);
@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
             if(jwtService.isTokenValid(refreshToken, employee)){
-                var jwt = jwtService.generateToken(employee);
+                var jwt = jwtService.generateToken(employee, employee.getRole().getRoleName());
                 JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
                 jwtAuthenticationResponse.setToken(jwt);
                 jwtAuthenticationResponse.setRefreshToken(refreshToken);

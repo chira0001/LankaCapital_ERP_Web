@@ -41,13 +41,14 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, String roleName) {
         return Jwts
                 .builder()
                 .setSubject(userDetails.getUsername())
+                .claim("role", roleName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
-//                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
+//                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 10))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -69,7 +70,8 @@ public class JWTServiceImpl implements JWTService {
                 .setClaims(extractClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 30))
+//                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

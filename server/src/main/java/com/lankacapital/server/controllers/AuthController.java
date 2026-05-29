@@ -48,7 +48,18 @@ public class AuthController {
             @CookieValue(name = "refreshToken")
             String refreshToken
     ){
+        System.out.println("refresh 51 : " + refreshToken);
         return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
+    @PostMapping(path = "/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // expire immediately
+        response.addCookie(cookie);
+        return ResponseEntity.ok().build();
+    }
 }
