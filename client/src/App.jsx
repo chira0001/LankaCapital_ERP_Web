@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 import CommonNavbar from './component/Navbar/CommonNavbar'
 import Footer from './component/Footer/Footer'
 import { Toaster } from "@/components/ui/sonner";//add sonner toaster for notifications
+import { jwtDecode } from 'jwt-decode'
 
 import Home from './pages/User/Home'
 import About from './pages/User/About'
@@ -35,19 +36,69 @@ import ReceptionistView from "./pages/Receptionist/ReceptionistView";
 import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
 import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
 import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
+import { useEffect, useState } from "react";
+
+const getUser = () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) return null;
+
+  try {
+    return jwtDecode(token);
+  } catch (error) {
+    console.log("Invalid token");
+    return null;
+  }
+};
+
+const ProtectedRoute = ({ children, role }) => {
+  const user = getUser();
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== role) {
+    if (user.role === "ADMIN") {
+      return <Navigate to="/ad/dashboard" replace />;
+    }
+
+    if (user.role === "RECEPTIONIST") {
+      return <Navigate to="/re/home" replace />;
+    }
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+const PublicRoute = ({ children }) => {
+  const user = getUser();
+  if (!user) {
+    return children;
+  }
+  if (user.role === "ADMIN") {
+    return <Navigate to="/ad/dashboard" replace />;
+  }
+  if (user.role === "RECEPTIONIST") {
+    return <Navigate to="/re/home" replace />;
+  }
+  return children;
+};
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />}></Route>
-        <Route path="/about" element={<About />}></Route>
-        <Route path="/contact" element={<Contact />}></Route>
-        <Route path="/login" element={<Login />}></Route>
-        <Route path="/signup" element={<Signup />}></Route>
+        <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
+        <Route path="/about" element={<PublicRoute><About /></PublicRoute>}></Route>
+        <Route path="/contact" element={<PublicRoute><Contact /></PublicRoute>}></Route>
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>}></Route>
+        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>}></Route>
 
-        <Route path="/" element={<Navigate to="/ad/dashboard" />} />
-        <Route path="/ad" element={<AdminLayout />}>
+        <Route path="/ad" element={
+          <ProtectedRoute role="ADMIN">
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="loan-applications" element={<LoanApplications />} />
@@ -66,7 +117,11 @@ const App = () => {
           <Route path="profile" element={<AdminProfile />} />
         </Route>
 
-        <Route path="/re" element={<ReceptionistDashboard />}>
+        <Route path="/re" element={
+          <ProtectedRoute role="RECEPTIONIST">
+            <ReceptionistDashboard />
+          </ProtectedRoute>
+        }>
           <Route index element={<ReceptionistHome />} />
           <Route path="home" element={<ReceptionistHome />} />
           <Route path="loan" element={<ReceptionistLoan />} />
@@ -76,6 +131,8 @@ const App = () => {
           <Route path="monthlyPetty" element={<ReceptionistPettyCash />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
       <Toaster position="top-right" />
