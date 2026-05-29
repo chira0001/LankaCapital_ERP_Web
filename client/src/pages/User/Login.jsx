@@ -54,20 +54,13 @@ const Login = () => {
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
             try {
-
-                console.log("58 : ", email)
-
                 const response = await loginFunc({
                     email,
                     password
                 });
-
-                console.log("65 : ", response)
-
                 if (response.status == 200) {
                     toast.success("Loggin Successfull. Redirecting...")
                     localStorage.setItem("token", response.data.token);
-
                     const role = response.data.role.slice(0, 2).toLowerCase()
                     navigate(`/${role}`)
                 } else {
