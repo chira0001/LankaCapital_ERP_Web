@@ -123,4 +123,22 @@ public class CustomerServiceImpl implements CustomerService {
                 .map(CustomerMapper::mapToCustomerAsyncDto)
                 .toList();
     }
+
+    public CustomerResDto getCustomerDataById(Long nic){
+        Customer customer = customerRepository.findByNicWithLoans(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not found with id : " + nic);
+        }
+        CustomerResDto dto = new CustomerResDto();
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        dto.setAddress(customer.getAddress());
+        dto.setLoans(customer
+                .getLoans()
+                .stream().map(LoanMapper::mapToLoanResDto)
+                .toList()
+        );
+        return dto;
+    }
 }

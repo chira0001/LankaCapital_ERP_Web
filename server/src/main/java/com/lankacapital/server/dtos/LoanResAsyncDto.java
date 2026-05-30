@@ -12,7 +12,6 @@ public class LoanResAsyncDto {
     private LocalDateTime created_at;
     private BigDecimal document_charge;
     private String rejection_note;
-    private String risk;
     private String status;
     private Long customer_id;
     private Long employee_id;

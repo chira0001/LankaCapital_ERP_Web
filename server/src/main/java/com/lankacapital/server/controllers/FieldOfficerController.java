@@ -91,4 +91,18 @@ public class FieldOfficerController {
         }
         return new ResponseEntity<>(loanList, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/customers/loans/{id}")
+    public ResponseEntity<?> getLoanDetailsByCustomerId(@PathVariable String id){
+        if(id == null){
+            return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        long nic;
+        try {
+            nic = Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter valid nic");
+        }
+        return new ResponseEntity<>(customerService.getCustomerDataById(nic), HttpStatus.OK);
+    }
 }

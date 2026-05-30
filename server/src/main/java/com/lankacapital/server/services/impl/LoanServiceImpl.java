@@ -105,7 +105,6 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Employee not found")
                 );
-
         Installment installment = installmentRepository
                 .findById(loanCreateDto.getInstallmentId())
                 .orElseThrow(() ->
@@ -113,7 +112,6 @@ public class LoanServiceImpl implements LoanService {
                                 "Installment not found"
                         )
                 );
-
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
