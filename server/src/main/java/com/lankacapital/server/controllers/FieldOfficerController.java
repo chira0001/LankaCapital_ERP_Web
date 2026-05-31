@@ -105,4 +105,22 @@ public class FieldOfficerController {
         }
         return new ResponseEntity<>(customerService.getCustomerDataById(nic), HttpStatus.OK);
     }
+
+    @PostMapping(path = "/customer/loan")
+    public ResponseEntity<?> addLoanByFieldOfficer(@RequestBody LoanRequestDto dto) {
+        if (dto.getEmployeeId() == null) {
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(loanService.addLoanByFieldOfficer(dto), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/installments")
+    public ResponseEntity<?> getInstallments(){
+        return new ResponseEntity<>(installmentService.getAllInstallments(), HttpStatus.OK);
+    }
+
+    @GetMapping("/interestRates")
+    public ResponseEntity<?> getInterestRates(){
+        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
+    }
 }

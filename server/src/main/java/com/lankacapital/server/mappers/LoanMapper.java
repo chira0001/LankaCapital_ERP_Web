@@ -170,4 +170,15 @@ public class LoanMapper {
         return dto;
     }
 
+    public static Customer mapToNewCustomer(LoanRequestDto loanRequestDto){
+        Customer customer = new Customer();
+
+        customer.setNic(loanRequestDto.getCustomerId());
+        customer.setName(loanRequestDto.getName());
+        customer.setEmail(loanRequestDto.getEmail());
+        customer.setAddress(loanRequestDto.getAddress());
+        customer.setPhoneNumber(loanRequestDto.getPhoneNumber());
+
+        return customer;
+    }
 }

@@ -42,6 +42,8 @@ public interface LoanService {
 
     List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page);
 
+    Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
+
 }
 
 

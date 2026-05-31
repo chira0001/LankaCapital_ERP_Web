@@ -240,4 +240,28 @@ public class LoanServiceImpl implements LoanService {
                 .map(LoanMapper::mapToCustomerAsyncDto)
                 .toList();
     }
+
+    public Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto){
+        Loan loan = new Loan();
+        loan.setAmount(loanRequestDto.getLoanAmount());
+        if (!customerRepository.existsById(loanRequestDto.getCustomerId())) {
+            Customer newCustomer = LoanMapper.mapToNewCustomer(loanRequestDto);
+            Role role = roleRepository.findByRoleName("Customer");
+            newCustomer.setRole(role);
+            customerRepository.save(newCustomer);
+        }
+        Customer customer;
+        customer = customerRepository.findByNic(loanRequestDto.getCustomerId());
+        loan.setCustomer(customer);
+
+        Installment installment = installmentRepository.findById(loanRequestDto.getInstallments())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(installment);
+
+        Employee employee = employeeRepository.findById(loanRequestDto.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanRequestDto.getEmployeeId()));
+        loan.setEmployee(employee);
+        loan.setStatus(LoanStatus.PENDING);
+        return loanRepository.save(loan);
+    }
 }
