@@ -3,13 +3,11 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
-import com.lankacapital.server.services.EmployeeService;
-import com.lankacapital.server.services.LoanService;
-import com.lankacapital.server.services.RoleService;
-import com.lankacapital.server.services.SalaryConditionService;
+import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*")
@@ -23,6 +21,7 @@ public class AdminController {
     private final SalaryConditionService salaryConditionService;
     private final EmployeeService employeeService;
     private final LoanService loanService;
+    private final PettyCashService pettyCashService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -108,6 +107,38 @@ public class AdminController {
     @DeleteMapping("/loans/interest/{fileNumber}")
     public ResponseEntity<?> resetInterest(@PathVariable String fileNumber){
         return ResponseEntity.ok(loanService.resetInterest(fileNumber));
+    }
+
+    //petty cash
+    @GetMapping("/pettyCash")
+    public ResponseEntity<?>getAllPettyCash(){
+        return ResponseEntity.ok(pettyCashService.getAllPettyCash());
+    }
+
+    @PutMapping("/pettyCash/approve/{id}")
+    public ResponseEntity<?>approvePettyCash(
+            @PathVariable Long id,
+            Authentication authentication
+    ){
+        return ResponseEntity.ok(
+                pettyCashService.approvePettyCash(id,authentication.getName())
+        );
+
+    }
+
+    @PutMapping("/pettyCash/reject/{id}")
+    public ResponseEntity<?>rejectPettyCash(
+            @PathVariable Long id,
+            Authentication authentication
+            ){
+        return ResponseEntity.ok(
+                pettyCashService.rejectPettyCash(id,authentication.getName())
+        );
+    }
+
+    @GetMapping("/pettyCash/pending")
+    public ResponseEntity<?>getPendingPettyCash(){
+        return ResponseEntity.ok(pettyCashService.getPendingRequests());
     }
 }
 
