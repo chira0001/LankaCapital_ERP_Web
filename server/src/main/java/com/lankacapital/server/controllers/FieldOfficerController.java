@@ -4,12 +4,15 @@ import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.InterestRate;
 import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.exceptions.ResourceExistException;
+import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -122,5 +125,42 @@ public class FieldOfficerController {
     @GetMapping("/interestRates")
     public ResponseEntity<?> getInterestRates(){
         return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
+    }
+
+    @PostMapping("/sync/customer")
+    public ResponseEntity<?> syncToFieldOfficers(@RequestBody List<CustomerRegisterDto> customerList) {
+        List<Long> successIds = new ArrayList<>();
+        for (CustomerRegisterDto customerDto : customerList) {
+            try {
+                CustomerResponseDto customer = customerService.registerCustomer(customerDto);
+                successIds.add(customer.getNic());
+            } catch (ResourceExistException e) {
+                successIds.add(customerDto.getNic());
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ResponseEntity.ok(successIds);
+    }
+
+    @PostMapping("/sync/loan")
+    public ResponseEntity<?> syncToLoan(@RequestBody List<FieldOfficerLoanCreateDto> loanList) {
+        List<Integer> successLoans = new ArrayList<>();
+        for (FieldOfficerLoanCreateDto loanDto : loanList) {
+            try {
+                Loan loan = loanService.addLoanToExistingCustomer(loanDto);
+                if (loan != null) {
+                    successLoans.add(loanDto.getId());
+                }
+            } catch (ResourceExistException e) {
+                successLoans.add(loanDto.getId());
+            } catch (ResourceNotFoundException e) {
+//                , loanDto.getCustomerNic(),loanDto.getCreatedAt()
+                System.err.println("Loan sync skipped. Customer not found: "+ loanDto.getCustomerNic());
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ResponseEntity.ok(successLoans);
     }
 }

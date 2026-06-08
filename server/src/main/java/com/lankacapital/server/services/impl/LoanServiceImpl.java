@@ -118,6 +118,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setAmount(loanCreateDto.getAmount());
         loan.setEmployee(employee);
         loan.setInstallment(installment);
+        loan.setCreatedAt(loanCreateDto.getCreatedAt());
 
         return loanRepository.save(loan);
     }
