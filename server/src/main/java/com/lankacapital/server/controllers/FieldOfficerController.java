@@ -155,12 +155,19 @@ public class FieldOfficerController {
             } catch (ResourceExistException e) {
                 successLoans.add(loanDto.getId());
             } catch (ResourceNotFoundException e) {
-//                , loanDto.getCustomerNic(),loanDto.getCreatedAt()
                 System.err.println("Loan sync skipped. Customer not found: "+ loanDto.getCustomerNic());
             }catch (Exception e) {
                 e.printStackTrace();
             }
         }
         return ResponseEntity.ok(successLoans);
+    }
+
+    @PostMapping("add/customer")
+    public ResponseEntity<?> addLoanToNewCustomer(@RequestBody CustomerAddDto customerAddDto) {
+        if(customerAddDto.getEmployeeId() == null ){
+            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
     }
 }

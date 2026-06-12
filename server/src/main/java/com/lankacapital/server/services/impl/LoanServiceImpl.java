@@ -265,4 +265,33 @@ public class LoanServiceImpl implements LoanService {
         loan.setStatus(LoanStatus.PENDING);
         return loanRepository.save(loan);
     }
+
+    public String addNewLoanByOfficer(CustomerAddDto customerAddDto){
+        if (customerRepository.existsById(customerAddDto.getCustomerId())) {
+            throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());
+        }
+        Loan loan = new Loan();
+
+        Installment installment = installmentRepository.findById(customerAddDto.getInstallmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(installment);
+
+        Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + customerAddDto.getEmployeeId()));
+        loan.setEmployee(employee);
+
+        loan.setAmount(customerAddDto.getLoanAmount());
+        Customer newCustomer = CustomerMapper.mapToNewCustomer(customerAddDto);
+        Role role = roleRepository.findByRoleName("Customer");
+        newCustomer.setRole(role);
+        customerRepository.save(newCustomer);
+
+        Customer customer = customerRepository.findByNic(customerAddDto.getCustomerId());
+        loan.setCustomer(customer);
+
+        loan.setStatus(LoanStatus.PENDING);
+        loanRepository.save(loan);
+
+        return "Loan created successfully.";
+    }
 }

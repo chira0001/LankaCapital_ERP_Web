@@ -128,5 +128,17 @@ public class CustomerMapper {
         dto.setPhone_number(customer.getPhoneNumber());
         return dto;
     }
+
+    public static Customer mapToNewCustomer(CustomerAddDto dto){
+        Customer customer = new Customer();
+
+        customer.setNic(dto.getCustomerId());
+        customer.setName(dto.getName());
+        customer.setEmail(dto.getEmail());
+        customer.setAddress(dto.getAddress());
+        customer.setPhoneNumber(dto.getPhoneNumber());
+
+        return customer;
+    }
 }
 

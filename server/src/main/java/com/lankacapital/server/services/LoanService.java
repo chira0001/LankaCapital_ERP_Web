@@ -44,6 +44,7 @@ public interface LoanService {
 
     Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
 
+    String addNewLoanByOfficer(CustomerAddDto customerAddDto);
 }
 
 
