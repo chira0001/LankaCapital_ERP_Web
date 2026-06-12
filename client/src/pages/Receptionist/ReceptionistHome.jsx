@@ -1,115 +1,177 @@
-import React from 'react'
+import React from "react";
+import { DateCalendar } from '@mui/material';
 
 const ReceptionistHome = () => {
+    /* ================= SAMPLE DATA ================= */
+
+    const stats = [
+        {
+            title: "Total Customers",
+            value: "1,240",
+            growth: "+8 this week",
+            bg: "bg-blue-50",
+        },
+        {
+            title: "Active Loans",
+            value: "860",
+            growth: "+12 this month",
+            bg: "bg-green-50",
+        },
+        {
+            title: "Pending Requests",
+            value: "12",
+            growth: "4 need review",
+            bg: "bg-yellow-50",
+        },
+        {
+            title: "Completed Today",
+            value: "24",
+            growth: "+3 vs yesterday",
+            bg: "bg-purple-50",
+        },
+    ];
+
+    const loanApplications = [
+        {
+            id: "LA-0091",
+            name: "Ravi Kumar",
+            type: "Personal Loan",
+            time: "9:14 AM",
+            amount: "₹2,50,000",
+            status: "Pending Review",
+        },
+        {
+            id: "LA-0092",
+            name: "Priya Sharma",
+            type: "Business Loan",
+            time: "10:02 AM",
+            amount: "₹75,000",
+            status: "Documents Due",
+        },
+        {
+            id: "LA-0093",
+            name: "Mohammed Ali",
+            type: "Gold Loan",
+            time: "10:45 AM",
+            amount: "₹1,00,000",
+            status: "Approved",
+        },
+        {
+            id: "LA-0094",
+            name: "Sunita Devi",
+            type: "Personal Loan",
+            time: "11:30 AM",
+            amount: "₹40,000",
+            status: "Pending Review",
+        },
+        {
+            id: "LA-0095",
+            name: "Arun Nair",
+            type: "Business Loan",
+            time: "12:10 PM",
+            amount: "₹3,00,000",
+            status: "Under Verification",
+        },
+        {
+            id: "LA-0096",
+            name: "Arun Nair",
+            type: "Business Loan",
+            time: "12:10 PM",
+            amount: "₹3,00,000",
+            status: "Under Verification",
+        },
+    ];
+
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case "Approved":
+                return "bg-green-100 text-green-700";
+            case "Pending Review":
+                return "bg-yellow-100 text-yellow-700";
+            case "Documents Due":
+                return "bg-red-100 text-red-600";
+            case "Under Verification":
+                return "bg-blue-100 text-blue-700";
+            default:
+                return "bg-gray-100 text-gray-600";
+        }
+    };
+
+    /* ================= UI ================= */
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Receptionist Dashboard</h1>
-                    <p className="text-gray-500">Manage customers, loans, and salary operations</p>
-                </div>
+        <div className="flex flex-col gap-6 p-6">
+            <h1 className='text-4xl font-bold text-center md:text-left'>Dashboard</h1>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setPanel('add')}
-                        className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            {/* ================= STATS ================= */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((item, index) => (
+                    <div
+                        key={index}
+                        className={`${item.bg} rounded-xl p-6 shadow-sm`}
                     >
-                        + Add Customer
-                    </button>
-                    <button
-                        onClick={() => setPanel('loan')}
-                        className="border px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                        Create Loan
-                    </button>
-                </div>
-            </div>
-
-            {/* STATS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { title: "Total Customers", value: "1,240", color: "bg-blue-50" },
-                    { title: "Active Loans", value: "860", color: "bg-green-50" },
-                    { title: "Pending Requests", value: "12", color: "bg-yellow-50" },
-                    { title: "Completed Today", value: "24", color: "bg-purple-50" }
-                ].map((item, i) => (
-                    <div key={i} className={`${item.color} shadow-md rounded-xl p-4`}>
                         <p className="text-gray-600 text-sm">{item.title}</p>
-                        <h2 className="text-2xl font-bold mt-1">{item.value}</h2>
+                        <h2 className="text-3xl font-bold mt-2">{item.value}</h2>
+                        <p className="text-sm text-gray-500 mt-2">{item.growth}</p>
                     </div>
                 ))}
             </div>
 
-            {/* QUICK ACTIONS */}
-            <div className="bg-white shadow-md rounded-xl p-6">
-                <h2 className="font-semibold text-lg mb-4">Quick Actions</h2>
+            {/* ================= MAIN GRID ================= */}
+            <div className="grid lg:grid-cols-3 gap-6">
+                {/* ================= LOAN APPLICATIONS ================= */}
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="font-semibold text-lg">
+                            Today's Loan Applications
+                        </h2>
+                        <button className="text-sm text-blue-600">View all</button>
+                    </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button
-                        onClick={() => setPanel('add')}
-                        className="border rounded-lg p-4 hover:bg-gray-100 transition-colors text-sm font-medium flex flex-col items-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={32} height={32} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M22 11h-3V8h-2v3h-3v2h3v3h2v-3h3z"></path><path d="M4 8c0 2.28 1.72 4 4 4s4-1.72 4-4-1.72-4-4-4-4 1.72-4 4m6 0c0 1.18-.82 2-2 2s-2-.82-2-2 .82-2 2-2 2 .82 2 2"></path></svg>
-                        Register Customer
-                    </button>
+                    <div className="flex flex-col gap-5">
+                        {loanApplications.map((loan, index) => (
+                            <div
+                                key={index}
+                                className="flex justify-between items-center border-b pb-4 last:border-0"
+                            >
+                                <div>
+                                    <p className="font-medium">
+                                        {loan.name}{" "}
+                                        <span className="text-gray-400 text-sm">
+                                            {loan.id}
+                                        </span>
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        {loan.type} • {loan.time}
+                                    </p>
+                                </div>
 
-                    <button
-                        onClick={() => setPanel('loan')}
-                        className="border rounded-lg p-4 hover:bg-gray-100 transition-colors text-sm font-medium flex flex-col items-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={32} height={32} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28"></path></svg>
-                        Create Loan
-                    </button>
+                                <div className="flex items-center gap-4">
+                                    <p className="font-medium">{loan.amount}</p>
+                                    <span
+                                        className={`text-xs px-3 py-1 rounded-full ${getStatusStyle(
+                                            loan.status
+                                        )}`}
+                                    >
+                                        {loan.status}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
-                    <button
-                        onClick={() => setPanel('salary')}
-                        className="border rounded-lg p-4 hover:bg-gray-100 transition-colors text-sm font-medium flex flex-col items-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={32} height={32} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10"></path></svg>
-                        Add Salary
-                    </button>
-
-                    <button
-                        onClick={() => setPanel('view')}
-                        className="border rounded-lg p-4 hover:bg-gray-100 transition-colors text-sm font-medium flex flex-col items-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width={32} height={32} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M21 11.5c0-2-1.5-3.5-3.5-3.5S14 9.5 14 11.5s1.5 3.5 3.5 3.5"></path></svg>
-                        Search Customer
-                    </button>
+                {/* ================= SCHEDULE ================= */}
+                <div className="bg-white rounded-xl shadow-sm p-6 h-fit">
+                    <h2 className="font-semibold text-lg mb-4">Schedule</h2>
+                    <DateCalendar />
+                    
                 </div>
             </div>
 
-            {/* RECENT ACTIVITY */}
-            <div className="bg-white shadow-md rounded-xl p-6 flex flex-col gap-4">
-                <h2 className="font-semibold text-lg">Recent Customers</h2>
 
-                {[
-                    { name: "ABC Trading Ltd", date: "Registered today", status: "Active" },
-                    { name: "XYZ Enterprises", date: "Registered yesterday", status: "Pending" },
-                    { name: "Global Solutions", date: "2 days ago", status: "Active" }
-                ].map((item, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-3 last:border-b-0">
-                        <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-gray-400">{item.date}</p>
-                        </div>
-
-                        <div className="flex gap-2 items-center">
-                            <span className={`text-xs px-3 py-1 rounded-full ${item.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {item.status}
-                            </span>
-                            <button
-                                onClick={() => setPanel('view')}
-                                className="text-sm border px-3 py-1 rounded hover:bg-gray-100 transition-colors"
-                            >
-                                View
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
         </div>
-    )
-}
+    );
+};
 
-export default ReceptionistHome
+export default ReceptionistHome;

@@ -253,7 +253,6 @@ const ReceptionistView = () => {
             const response = await axiosAPI.get(`/recep/loan/collection/${fileNumber}`);
             setLoanDetails(response.data);
             setShowLoanModal(true);
-
         } catch (error) {
             if (error.response?.status === 404) {
                 toast.error(error.response.data.message);
