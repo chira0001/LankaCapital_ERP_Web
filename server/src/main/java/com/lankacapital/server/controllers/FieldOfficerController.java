@@ -165,7 +165,7 @@ public class FieldOfficerController {
 
     @PostMapping("add/customer")
     public ResponseEntity<?> addLoanToNewCustomer(@RequestBody CustomerAddDto customerAddDto) {
-        if(customerAddDto.getEmployeeId() == null ){
+        if(customerAddDto.getEmployeeId() == null || customerAddDto.getCustomerId() == null){
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
