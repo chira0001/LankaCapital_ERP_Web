@@ -18,5 +18,7 @@ public class CustomerResponseDto {
     private String address;
     private Role role;
     private String phoneNumber;
+    private String bank;
+    private String bankAccount;
     private List<LoanResponseDto> loans;
 }

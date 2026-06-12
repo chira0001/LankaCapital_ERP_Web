@@ -25,6 +25,8 @@ const ReceptionistView = () => {
         businessAddress: '',
         businessEmail: '',
         contactNumber: '',
+        bank: '',
+        bankAccount: '',
         customerId: null // Add this to track customer ID
     });
 
@@ -102,7 +104,9 @@ const ReceptionistView = () => {
                 name: infoForm.businessName,
                 email: infoForm.businessEmail || '',
                 address: infoForm.businessAddress || '',
-                phoneNumber: infoForm.contactNumber
+                phoneNumber: infoForm.contactNumber,
+                bank: infoForm.bank || '',
+                bankAccount: infoForm.bankAccount || '',
             };
 
             console.log("Updating customer:", payload);
@@ -123,7 +127,9 @@ const ReceptionistView = () => {
                     businessAddress: response.data.address || prev.businessAddress,
                     businessEmail: response.data.email || prev.businessEmail,
                     contactNumber: response.data.phoneNumber || prev.contactNumber,
-                    customerId: response.data.customerId || prev.customerId
+                    customerId: response.data.customerId || prev.customerId,
+                    bank: response.data.bank || prev.bank,
+                    bankAccount: response.data.bankAccount || prev.bankAccount,
                 }));
 
                 // Update existCustomer state
@@ -155,7 +161,9 @@ const ReceptionistView = () => {
                 businessAddress: existCustomer.businessAddress || '',
                 businessEmail: existCustomer.businessEmail || '',
                 contactNumber: existCustomer.contactNumber || '',
-                customerId: existCustomer.customerId || null
+                customerId: existCustomer.customerId || null,
+                bank: existCustomer.bank || '',
+                bankAccount: existCustomer.bankAccount || ''
             });
         }
         setIsEdit(false);
@@ -183,7 +191,9 @@ const ReceptionistView = () => {
                     businessAddress: response.data.businessAddress || '',
                     businessEmail: response.data.businessEmail || '',
                     contactNumber: response.data.contactNumber || '',
-                    customerId: response.data.customerNIC || null
+                    customerId: response.data.customerNIC || null,
+                    bank: response.data.bank || '',
+                    bankAccount: response.data.bankAccount || ''
                 });
                 setInfoDetails(response.data.loans || []);
                 setIsEmployee(false);
@@ -201,6 +211,8 @@ const ReceptionistView = () => {
                     businessAddress: '',
                     businessEmail: '',
                     contactNumber: '',
+                    bank: '',
+                    bankAccount: '',
                     customerId: searchCustomer
                 });
                 setInfoDetails([]);
@@ -393,6 +405,30 @@ const ReceptionistView = () => {
                             required
                         />
                     </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Bank Name</label>
+                        <input
+                            type="text"
+                            name='bank'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.bank}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Bank Account Number</label>
+                        <input
+                            type="text"
+                            name='bankAccount'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.bankAccount}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -465,6 +501,12 @@ const ReceptionistView = () => {
                                                 <span className='text-base font-semibold text-gray-800'>{infoDetail.noOfInstallments}</span>
                                             </div>
                                             <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Installment Amount</span>
+                                                <span className='text-lg font-bold text-purple-600'>
+                                                    Rs. {formatCurrency(installmentAmount)}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>Interest Amount</span>
                                                 <span className='text-base font-semibold text-orange-600'>
                                                     Rs. {formatCurrency(interestAmount)}
@@ -476,12 +518,30 @@ const ReceptionistView = () => {
                                                     Rs. {formatCurrency(totalLoan)}
                                                 </span>
                                             </div>
-                                            <div className='flex flex-col md:col-span-2'>
-                                                <span className='text-xs text-gray-500 font-medium uppercase'>Installment Amount</span>
-                                                <span className='text-lg font-bold text-purple-600'>
-                                                    Rs. {formatCurrency(installmentAmount)}
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Status</span>
+                                                <span className={`text-base font-semibold 
+                                                    ${infoDetail.status === "PENDING"
+                                                        ? "text-yellow-600"
+                                                        : infoDetail.status === "REJECTED"
+                                                            ? "text-red-600"
+                                                            : infoDetail.status === "APPROVED"
+                                                                ? "text-green-600"
+                                                                : "text-gray-600"
+                                                    }
+                                                    `}>
+                                                    {infoDetail.status}
                                                 </span>
                                             </div>
+                                            {infoDetail.rejectionNote ?
+                                                <div className='flex flex-col col-span-4 border border-gray-300 p-3 rounded-lg'>
+                                                    <span className='text-xs text-gray-500 font-medium uppercase'>Rejection Note</span>
+                                                    <span className='text-md text-red-500'>
+                                                        {infoDetail.rejectionNote}
+                                                    </span>
+                                                </div> :
+                                                ""
+                                            }
                                         </div>
                                     </div>
                                 );

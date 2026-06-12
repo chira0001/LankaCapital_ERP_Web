@@ -13,13 +13,15 @@ import java.util.List;
 public class CustomerMapper {
 
     public static Customer mapToCustomer(CustomerRegisterDto customerRegisterDto){
-
         Customer customer = new Customer();
+
         customer.setNic(customerRegisterDto.getNic());
         customer.setName(customerRegisterDto.getName());
         customer.setEmail(customerRegisterDto.getEmail());
         customer.setAddress(customerRegisterDto.getAddress());
         customer.setPhoneNumber(customerRegisterDto.getPhoneNumber());
+        customer.setBank(customerRegisterDto.getBank());
+        customer.setBankAccount(customerRegisterDto.getBankAccount());
 
         return customer;
     }
@@ -118,6 +120,8 @@ public class CustomerMapper {
         dto.setPhoneNumber(customer.getPhoneNumber());
         dto.setLoans(loans);
         dto.setRole(customer.getRole());
+        dto.setBank(customer.getBank());
+        dto.setBankAccount(customer.getBankAccount());
 
         return dto;
     }}

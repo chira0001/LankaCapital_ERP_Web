@@ -11,5 +11,7 @@ public class CustomerInfoDto {
     private String businessAddress;
     private String businessEmail;
     private String contactNumber;
+    private String bank;
+    private String bankAccount;
     private List<LoanResponseDto> loans;
 }
