@@ -34,6 +34,9 @@ public class DailyCollection {
     private LocalDateTime paidAt;
 
     @ManyToOne
-    @JoinColumn(name = "employee_id")
+    @JoinColumn(name = "entered_by")
     private Employee employee;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal dueAmount = BigDecimal.valueOf(0);
 }

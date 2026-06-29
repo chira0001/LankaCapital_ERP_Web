@@ -80,6 +80,8 @@ public class CustomerServiceImpl implements CustomerService {
         dto.setBusinessAddress(customer.getAddress());
         dto.setBusinessEmail(customer.getEmail());
         dto.setContactNumber(customer.getPhoneNumber());
+        dto.setBank(customer.getBank());
+        dto.setBankAccount(customer.getBankAccount());
 
         dto.setLoans(
                 customer.getLoans()

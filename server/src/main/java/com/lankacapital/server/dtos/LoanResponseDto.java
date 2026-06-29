@@ -22,4 +22,5 @@ public class LoanResponseDto {
     private Double documentCharge;
     private Long employeeId;
     private LoanStatus status;
+    private String rejectionNote;
 }

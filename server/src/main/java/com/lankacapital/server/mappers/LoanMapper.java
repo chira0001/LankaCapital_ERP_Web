@@ -26,11 +26,7 @@ public class LoanMapper {
         LoanResponseDto responseDto = new LoanResponseDto();
 
         responseDto.setFileNumber(loan.getFileNumber());
-
-        responseDto.setAmount(
-                loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO
-        );
-
+        responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
 
         responseDto.setNoOfInstallments(
@@ -53,7 +49,7 @@ public class LoanMapper {
         responseDto.setInterestRate(loan.getInterestRate().getRate());
 
         responseDto.setStatus(loan.getStatus());
-
+        responseDto.setRejectionNote(loan.getRejectionNote());
         if (loan.getCustomer() != null) {
             CustomerInfoDto customerDto = new CustomerInfoDto();
 
@@ -110,6 +106,9 @@ public class LoanMapper {
         customer.setEmail(loanCreateDto.getEmail());
         customer.setAddress(loanCreateDto.getAddress());
         customer.setPhoneNumber(loanCreateDto.getPhoneNumber());
+
+        customer.setBank(loanCreateDto.getBank());
+        customer.setBankAccount(loanCreateDto.getBankAccount());
 
         return customer;
     }

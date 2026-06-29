@@ -7,7 +7,7 @@ const ReceptionistLoan = () => {
 
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
-    const [isEmployee, setIsEmployee] = useState(false);
+    const [isEmployee, setIsEmployee] = useState(false);                                 //------
     const [displayInstallments, setDisplayInstallments] = useState([]);
     const [displayInterestRates, setDisplayInterestRates] = useState([]);
 
@@ -16,6 +16,8 @@ const ReceptionistLoan = () => {
     const [email, setEmail] = useState();
     const [address, setAddress] = useState();
     const [phoneNumber, setPhoneNumber] = useState();
+    const [bank, setBank] = useState();
+    const [bankAccount, setBankAccount] = useState();
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -26,7 +28,9 @@ const ReceptionistLoan = () => {
         name: '',
         email: '',
         address: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        bank: '',
+        bankAccount: ''
     });
 
     const [loanForm, setLoanForm] = useState({
@@ -39,7 +43,9 @@ const ReceptionistLoan = () => {
         name: '',
         email: '',
         address: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        bank: '',
+        bankAccount: ''
     });
 
     const clearLoanForm = () => {
@@ -52,7 +58,9 @@ const ReceptionistLoan = () => {
             name: '',
             email: '',
             address: '',
-            phoneNumber: ''
+            phoneNumber: '',
+            bank: '',
+            bankAccount: ''
         });
         setSearchCustomer('');
         setExistCustomer(null);
@@ -75,7 +83,9 @@ const ReceptionistLoan = () => {
                     name: '',
                     email: '',
                     address: '',
-                    phoneNumber: ''
+                    phoneNumber: '',
+                    bank: '',
+                    bankAccount: ''
                 }));
                 setIsEmployee(false);
                 toast.success('Customer found!');
@@ -106,7 +116,9 @@ const ReceptionistLoan = () => {
             name: '',
             email: '',
             address: '',
-            phoneNumber: ''
+            phoneNumber: '',
+            bank: '',
+            bankAccount: ''
         });
     };
 
@@ -401,7 +413,7 @@ const ReceptionistLoan = () => {
                         <h3 className='text-lg font-semibold mb-4 text-yellow-800'>
                             New Customer Details
                         </h3>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='relative grid grid-cols-1 md:grid-cols-2 gap-4'>
                             <div className='flex flex-col'>
                                 <span className='mb-1 text-sm font-medium'>
                                     Customer Name <span className='text-red-500'>*</span>
@@ -456,6 +468,36 @@ const ReceptionistLoan = () => {
                                     className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
                                     placeholder="07XXXXXXXX"
                                     pattern="[0-9]{10}"
+                                    required
+                                />
+                            </div>
+                            <hr />
+                            <hr />
+                            <div className='flex flex-col'>
+                                <span className='mb-1 text-sm font-medium'>
+                                    Bank Account Number (Optional)
+                                </span>
+                                <input
+                                    type="text"
+                                    name="bankAccount"
+                                    value={loanForm.bankAccount}
+                                    onChange={handleLoanChange}
+                                    className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
+                                    placeholder="Enter bank account number"
+                                    required
+                                />
+                            </div>
+                            <div className='flex flex-col'>
+                                <span className='mb-1 text-sm font-medium'>
+                                    Bank Name (Optional)
+                                </span>
+                                <input
+                                    type="text"
+                                    name="bank"
+                                    value={loanForm.bank}
+                                    onChange={handleLoanChange}
+                                    className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
+                                    placeholder="Enter bank name"
                                     required
                                 />
                             </div>
