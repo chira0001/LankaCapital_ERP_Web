@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.InterestRateAsyncDto;
 import com.lankacapital.server.dtos.InterestRateDto;
 import com.lankacapital.server.entities.InterestRate;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
@@ -7,8 +8,11 @@ import com.lankacapital.server.mappers.InterestRateMapper;
 import com.lankacapital.server.repositories.InterestRateRepository;
 import com.lankacapital.server.services.InterestRateService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -60,5 +64,24 @@ public class InterestRateServiceImpl implements InterestRateService {
         }
         interestRateRepository.deleteById(id);
         return "Interest rate deleted successfully";
+    }
+
+    @Override
+    public List<InterestRate> findAllinterestRatesById(InterestRateAsyncDto interestRateList, int page){
+        List<Integer> allInterestRateIds =  interestRateRepository.findAllCustomerIds();
+        if(allInterestRateIds == null){
+            throw new ResourceNotFoundException("Server Error: Customer");
+        }
+        List<Integer> notSyncedIds = new ArrayList<>();
+        for (Integer id : allInterestRateIds) {
+            if (!interestRateList.getId().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        if(notSyncedIds.isEmpty()){
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(page, 5);
+        return interestRateRepository.findInterestRatesById(notSyncedIds, pageable);
     }
 }
