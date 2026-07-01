@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface LoanService {
 
-    Loan addLoan(LoanCreateDto loanCreateDto);
+    Loan addLoan(LoanCreateDto loanCreateDto, String username);
 
     CustomerResponseDto getLoansByCustomerId(String id);
     //List<LoanResponseDto> getLoansByCustomerId(String id);

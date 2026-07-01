@@ -5,12 +5,9 @@ import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
 
-    const empId = 3 || localStorage.getItem("empId");
-
-
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
-    const [isEmployee, setIsEmployee] = useState(false);
+    const [isEmployee, setIsEmployee] = useState(false);                                 //------
     const [displayInstallments, setDisplayInstallments] = useState([]);
     const [displayInterestRates, setDisplayInterestRates] = useState([]);
 
@@ -19,6 +16,8 @@ const ReceptionistLoan = () => {
     const [email, setEmail] = useState();
     const [address, setAddress] = useState();
     const [phoneNumber, setPhoneNumber] = useState();
+    const [bank, setBank] = useState();
+    const [bankAccount, setBankAccount] = useState();
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -29,7 +28,9 @@ const ReceptionistLoan = () => {
         name: '',
         email: '',
         address: '',
-        phoneNumber: ''
+        phoneNumber: '',
+        bank: '',
+        bankAccount: ''
     });
 
     const [loanForm, setLoanForm] = useState({
@@ -43,37 +44,54 @@ const ReceptionistLoan = () => {
         email: '',
         address: '',
         phoneNumber: '',
-        employeeId: empId
+        bank: '',
+        bankAccount: ''
     });
 
+    const clearLoanForm = () => {
+        setLoanForm({
+            fileNumber: '',
+            loanAmount: '',
+            interestRate: '',
+            documentCharge: '',
+            numberOfInstallments: '',
+            name: '',
+            email: '',
+            address: '',
+            phoneNumber: '',
+            bank: '',
+            bankAccount: ''
+        });
+        setSearchCustomer('');
+        setExistCustomer(null);
+        setIsEmployee(false);
+    };
+
     const checkCustomerExists = async () => {
-        // Add validation for empty search
         if (!searchCustomer.trim()) {
             toast.error('Please enter a customer NIC');
             return;
         }
 
         try {
-            const response = await axiosAPI.get(`/customers/${searchCustomer}`);
-            console.log("57 : ", response.data);
-
+            const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
             if (response.status === 200) {
                 setExistCustomer(response.data);
                 setLoanForm(prev => ({
                     ...prev,
                     customerId: response.data.nic,
-                    // Clear customer details fields when existing customer is found
                     name: '',
                     email: '',
                     address: '',
-                    phoneNumber: ''
+                    phoneNumber: '',
+                    bank: '',
+                    bankAccount: ''
                 }));
                 setIsEmployee(false);
                 toast.success('Customer found!');
             }
         } catch (e) {
             console.log(e);
-            // Handle 404 or customer not found
             if (e.response?.status === 404) {
                 setExistCustomer(null);
                 setIsEmployee(true);
@@ -98,28 +116,15 @@ const ReceptionistLoan = () => {
             name: '',
             email: '',
             address: '',
-            phoneNumber: ''
+            phoneNumber: '',
+            bank: '',
+            bankAccount: ''
         });
     };
-    const submitCustomer = async (e) => {
-        e.preventDefault();
-        console.log('Customer Data:', customerForm);
-        try {
-            const response = await axiosAPI.post('/customers', customerForm);
-            if (response.status == 201) {
-                toast.success('Customer added successfully')
-            } else {
-                toast.error('Customer not added successfully!');
-                console.log(response.data)
-            }
-        } catch (e) {
-            console.log(e);
-        }
-    };
+
     const handleLoanSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!loanForm.customerId) {
             toast.error('Please search and select a customer first');
             return;
@@ -133,7 +138,7 @@ const ReceptionistLoan = () => {
         }
 
         try {
-            const response = await axiosAPI.post('/loans', loanForm);
+            const response = await axiosAPI.post('/recep/loans', loanForm);
             toast.success('Loan created successfully!');
             clearLoanForm();
         } catch (error) {
@@ -160,27 +165,9 @@ const ReceptionistLoan = () => {
         }));
     };
 
-    const clearLoanForm = () => {
-        setLoanForm({
-            fileNumber: '',
-            loanAmount: '',
-            interestRate: '',
-            documentCharge: '',
-            numberOfInstallments: '',
-            // customerId: '',
-            name: '',
-            email: '',
-            address: '',
-            phoneNumber: '',
-            employeeId: empId
-        });
-        setSearchCustomer('');
-        setExistCustomer(null);
-        setIsEmployee(false);
-    };
     const fetchInstallments = async () => {
         try {
-            const response = await axiosAPI.get('/installments');
+            const response = await axiosAPI.get('/recep/installments');
             setDisplayInstallments(response.data);
         } catch (e) {
             console.log(e);
@@ -189,7 +176,7 @@ const ReceptionistLoan = () => {
     };
     const fetchInterestRates = async () => {
         try {
-            const response = await axiosAPI.get('/interestRates');
+            const response = await axiosAPI.get('/recep/interestRates');
             setDisplayInterestRates(response.data);
         } catch (e) {
             console.log(e);
@@ -199,7 +186,6 @@ const ReceptionistLoan = () => {
 
 
     useEffect(() => {
-        // fetchEmployees();
         fetchInterestRates();
         fetchInstallments();
     }, [])
@@ -427,7 +413,7 @@ const ReceptionistLoan = () => {
                         <h3 className='text-lg font-semibold mb-4 text-yellow-800'>
                             New Customer Details
                         </h3>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='relative grid grid-cols-1 md:grid-cols-2 gap-4'>
                             <div className='flex flex-col'>
                                 <span className='mb-1 text-sm font-medium'>
                                     Customer Name <span className='text-red-500'>*</span>
@@ -483,6 +469,34 @@ const ReceptionistLoan = () => {
                                     placeholder="07XXXXXXXX"
                                     pattern="[0-9]{10}"
                                     required
+                                />
+                            </div>
+                            <hr />
+                            <hr />
+                            <div className='flex flex-col'>
+                                <span className='mb-1 text-sm font-medium'>
+                                    Bank Account Number (Optional)
+                                </span>
+                                <input
+                                    type="text"
+                                    name="bankAccount"
+                                    value={loanForm.bankAccount}
+                                    onChange={handleLoanChange}
+                                    className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
+                                    placeholder="Enter bank account number"
+                                />
+                            </div>
+                            <div className='flex flex-col'>
+                                <span className='mb-1 text-sm font-medium'>
+                                    Bank Name (Optional)
+                                </span>
+                                <input
+                                    type="text"
+                                    name="bank"
+                                    value={loanForm.bank}
+                                    onChange={handleLoanChange}
+                                    className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
+                                    placeholder="Enter bank name"
                                 />
                             </div>
                         </div>

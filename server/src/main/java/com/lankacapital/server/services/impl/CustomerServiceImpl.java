@@ -80,6 +80,8 @@ public class CustomerServiceImpl implements CustomerService {
         dto.setBusinessAddress(customer.getAddress());
         dto.setBusinessEmail(customer.getEmail());
         dto.setContactNumber(customer.getPhoneNumber());
+        dto.setBank(customer.getBank());
+        dto.setBankAccount(customer.getBankAccount());
 
         dto.setLoans(
                 customer.getLoans()
@@ -95,10 +97,16 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
         Customer customer = customerRepository.findByNic(nic);
+        Long status = customer.getUpdateStatus();
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found with NIC : " + nic);
         }
+
+        System.out.println("104 : "+status);
         customer = CustomerMapper.mapToCustomer(customerRegisterDto);
+        customer.setUpdateStatus(status + 1);
+
+        System.out.println(customer);
         return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 

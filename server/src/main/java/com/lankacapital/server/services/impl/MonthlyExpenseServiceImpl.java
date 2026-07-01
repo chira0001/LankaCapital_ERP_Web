@@ -28,7 +28,7 @@ public class MonthlyExpenseServiceImpl implements MonthlyExpenseService {
 
     @Override
     @Transactional
-    public String addMonthlyExpenses(MonthlyExpenseRequestDto dto) {
+    public String addMonthlyExpenses(MonthlyExpenseRequestDto dto, String username) {
 
         MonthlyExpense monthlyExpense =
                 MonthlyExpenseMapper.mapToMonthlyExpense(dto);
@@ -39,13 +39,11 @@ public class MonthlyExpenseServiceImpl implements MonthlyExpenseService {
         if(!monthlyExpenseRepository.existsByMonth(currentMonth)){
             BigDecimal totalSalary =
                     salaryRepository.getTotalSalaryByMonth(currentMonth);
-            if (dto.getEmployeeId() == null){
-                throw new ResourceNotFoundException("Employee id not provided");
+
+            Employee employee = employeeRepository.findByEmail(username);
+            if(employee == null){
+                throw new ResourceNotFoundException("Employee username not defined");
             }
-            Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "Employee not found with id: " + dto.getEmployeeId()));
 
             monthlyExpense.setSalary(totalSalary);
             monthlyExpense.setEmployee(employee);

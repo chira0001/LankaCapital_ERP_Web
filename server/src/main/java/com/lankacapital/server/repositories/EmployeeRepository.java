@@ -14,7 +14,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Boolean existsByNic(Long nic);
     Employee findByEmail(String email);
     Boolean existsByEmail(String email);
-
+  
     @Query("SELECT s.id FROM Employee s")
     List<Long> findAllFieldOfficersIds();
 
@@ -24,4 +24,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
        AND s.role.id IN (3,4)
        """)
     List<Employee> findFieldOfficersByIds(@Param("ids") List<Long> ids, Pageable pageable);
+    List<Employee> findByRoleIsNotNull();
 }

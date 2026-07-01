@@ -6,20 +6,20 @@ import { UserCircle } from "lucide-react";
 
 
 const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
-  { name: "Loan Applications", icon: FileText, path: "/admin/loan-applications" },
-  { name: "Portfolio Overview", icon: BarChart2, path: "/admin/portfolio" },
-  { name: "Loan Performance", icon: TrendingUp, path: "/admin/performance" },
-  { name: "Revenue Tracking", icon: DollarSign, path: "/admin/revenue" },
-  { name: "Customer Management", icon: Users, path: "/admin/customers" },
-  { name: "Field Officer Performance", icon: UserCheck, path: "/admin/officers" },
-  { name: "Petty Cash", icon: CreditCard, path: "/admin/petty-cash" },
-  { name: "Financial Reports", icon: BarChart2, path: "/admin/reports" },
-  { name: "Performance & Targets", icon: Target, path: "/admin/targets" },
-  { name: "Loan Categories", icon: Layers, path: "/admin/categories" },
-  { name: "User Management", icon: UserPlus, path: "/admin/users" },
-  { name: "Audit Logs", icon: ClipboardList, path: "/admin/audit" },
-  { name: "System Configuration", icon: Settings, path: "/admin/settings" },
+  { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
+  { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
+  { name: "Portfolio Overview", icon: BarChart2, path: "/ad/portfolio" },
+  { name: "Loan Performance", icon: TrendingUp, path: "/ad/performance" },
+  { name: "Revenue Tracking", icon: DollarSign, path: "/ad/revenue" },
+  { name: "Customer Management", icon: Users, path: "/ad/customers" },
+  { name: "Field Officer Performance", icon: UserCheck, path: "/ad/officers" },
+  { name: "Petty Cash", icon: CreditCard, path: "/ad/petty-cash" },
+  { name: "Financial Reports", icon: BarChart2, path: "/ad/reports" },
+  { name: "Performance & Targets", icon: Target, path: "/ad/targets" },
+  { name: "Loan Categories", icon: Layers, path: "/ad/categories" },
+  { name: "User Management", icon: UserPlus, path: "/ad/users" },
+  { name: "Audit Logs", icon: ClipboardList, path: "/ad/audit" },
+  { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 //  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
 ];
 
@@ -57,7 +57,7 @@ const Sidebar = () => {
       <div className="p-3 border-t border-gray-800 bg-[#071428]">
 
         <NavLink
-          to="/admin/profile"
+          to="/ad/profile"
           className="block bg-[#0f1d35] border border-gray-700 rounded-2xl p-4 hover:bg-[#162544] transition-all duration-200"
         >
 

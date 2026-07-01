@@ -57,7 +57,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         newEmployee.setRole(role);
         return employeeRepository.save(newEmployee);
     }
-
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         List<Employee> employeeList = employeeRepository.findAll();
@@ -65,23 +64,31 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeResponseDto getEmployeeDetailById(Long id) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+    public List<EmployeeResponseDto> getAllEmployeesWithRole() {
+        List<Employee> employeeList = employeeRepository.findByRoleIsNotNull();
+        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+    }
+
+    @Override
+    public EmployeeResponseDto getEmployeeDetailByUsername(String username) {
+        Employee emp = employeeRepository.findByEmail(username);
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         EmployeeResponseDto empDto = EmployeeMapper.mapToEmployeeResponseDto(emp);
         empDto.setBasicSalary(BigDecimal.valueOf(0));
         return empDto;
     }
 
     @Override
-    public String updatePasswordById(Long id, PasswordRequestDto dto) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
+    public String updatePasswordByUsername(String username, PasswordRequestDto dto) {
+        Employee emp = employeeRepository.findByEmail(username);
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
         if (!passwordEncoder.matches(dto.getOldPassword(), emp.getPassword())) {
             throw new PasswordUpdateException("Old password is incorrect");
         }
-
         try {
             emp.setPassword(passwordEncoder.encode(dto.getNewPassword()));
             employeeRepository.save(emp);
@@ -92,10 +99,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeResponseDto updateEmployeeInfo(Long id, EmployeeResponseDto dto) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
+    public EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto) {
+        Employee emp = employeeRepository.findByEmail(username);
+        Long status = emp.getUpdateStatus();
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
         emp.setId(dto.getId());
         emp.setNic(dto.getNic());
         emp.setFirstName(dto.getFirstName());
@@ -103,6 +112,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setEmail(dto.getEmail());
         emp.setAddress(dto.getAddress());
         emp.setPhoneNumber(dto.getPhoneNumber());
+        emp.setUpdateStatus(status + 1);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(emp));
     }
