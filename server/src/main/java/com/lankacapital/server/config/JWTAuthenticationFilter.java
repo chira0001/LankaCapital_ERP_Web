@@ -29,6 +29,16 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+       // if (request.getServletPath().equals("/api/v1/auth/refresh")) {
+        //    filterChain.doFilter(request, response);
+        //    return;
+        //}
+
+        if (request.getServletPath().startsWith("/api/v1/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
@@ -43,7 +53,22 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         if(!userEmail.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = employeeService.userDetailsService().loadUserByUsername(userEmail);
+            /// ///////////////////////////////////////////////
+            System.out.println("==================================");
+            System.out.println("Authorization Header = " + authHeader);
+            System.out.println("Email = " + userEmail);
+            System.out.println("Authorities = " + userDetails.getAuthorities());
+            System.out.println("Token Valid = " + jwtService.isTokenValid(jwt, userDetails));
+            System.out.println("==================================");
+
+            /// ////////////////////////////////////
+
             if (jwtService.isTokenValid(jwt, userDetails)){
+///  /////////////////////////////
+                System.out.println("Email = " + userEmail);
+                System.out.println("Authorities = " + userDetails.getAuthorities());
+                System.out.println("Token valid = " + jwtService.isTokenValid(jwt, userDetails));
+
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                 UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()

@@ -54,7 +54,7 @@ public class Loan {
     private LoanStatus status=LoanStatus.PENDING;
 
     @Column(length = 1000)
-    private String rejectionNote;
+    private String decisionNote;
 
 
     @PrePersist

@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class LoanActionDto {
     private String fileNumber;
-    private String rejectionNote;
+    private String decisionNote;
     private Long employeeId;
 }

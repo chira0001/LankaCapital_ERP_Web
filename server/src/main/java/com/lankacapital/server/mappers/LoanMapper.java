@@ -46,10 +46,29 @@ public class LoanMapper {
                         ? loan.getEmployee().getId()
                         : null
         );
-        responseDto.setInterestRate(loan.getInterestRate().getRate());
 
+
+        //responseDto.setInterestRate(loan.getInterestRate().getRate());
+        if (loan.getInterestRate() == null) {
+            throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
+        }
+
+        responseDto.setInterestRate(loan.getInterestRate().getRate());
+        /// /
         responseDto.setStatus(loan.getStatus());
-        responseDto.setRejectionNote(loan.getRejectionNote());
+        responseDto.setRejectionNote(loan.getDecisionNote());
+        responseDto.setApplicantName(
+                loan.getCustomer() != null
+                        ? loan.getCustomer().getName()
+                        : null
+        );
+
+        responseDto.setCustomerId(
+                loan.getCustomer() != null
+                        ? loan.getCustomer().getNic()
+                        : null
+        );
+
         if (loan.getCustomer() != null) {
             CustomerInfoDto customerDto = new CustomerInfoDto();
 

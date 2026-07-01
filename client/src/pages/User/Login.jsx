@@ -45,8 +45,10 @@ const Login = () => {
     //     }
     // }
 
-    const login = async (e) => {
-        e.preventDefault();
+    const login = async (/*e*/) => {
+       ////////////////////////
+        console.log("LOGIN BUTTON CLICKED");
+      //  e.preventDefault();
         const newErrors = {
             email: !email || email.trim() === "",
             password: !password || password.trim() === ""
@@ -159,6 +161,10 @@ const Login = () => {
 
                     <button
                         className='border w-full px-4 py-4 bg-black text-white'
+                       // onClick={() => {
+                            //console.log("BUTTON CLICK WORKS");
+                           // login();
+                       // }}
                         onClick={login}
                         onKeyDown={(e) => e.key === 'Enter' && login()}
                     >

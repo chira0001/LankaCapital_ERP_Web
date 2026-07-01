@@ -61,11 +61,22 @@ public class AdminController {
     }
 
     //admin loan view
-    @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans(){
-        return ResponseEntity.ok(loanService.getAllLoans());
-    }
+    //@GetMapping("/loans")
+    //public ResponseEntity<?> getAllLoans(){
+     //   return ResponseEntity.ok(loanService.getAllLoans());
+    //}
 
+    ///  /////////new
+    @GetMapping("/loans")
+    public ResponseEntity<?> getAllLoans() {
+
+        try {
+            return ResponseEntity.ok(loanService.getAllLoans());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     @GetMapping("/loans/customer/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){

@@ -35,9 +35,12 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
 //                        .requestMatchers("/api/v1/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/auth/refresh").permitAll()
+
+                        .requestMatchers("/api/v1/loans/**").hasAnyAuthority("ADMIN", "RECEPTIONIST")
+
                         .requestMatchers("/api/v1/recep/**").hasAnyAuthority("RECEPTIONIST")
-                       // .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(
