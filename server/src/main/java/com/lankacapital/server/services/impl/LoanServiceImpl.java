@@ -11,10 +11,15 @@ import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import  java.util.Optional;
+@Slf4j
 @Service
 @AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
@@ -82,25 +87,35 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
-        Long nic;
-        try{
-            nic = Long.parseLong(loanCreateDto.getCustomerNic());
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
-        }
-        Customer customer = customerRepository.findByNic(nic);
+//        Long nic;
+//        try{
+//            nic = Long.parseLong(loanCreateDto.getCustomerNic());
+//        } catch (NumberFormatException e) {
+//            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
+//        }
+        Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
         }
-        Employee employee = employeeRepository.findByEmail(loanCreateDto.getEmployeeEmail());
-        if(employee == null){
-            throw new ResourceNotFoundException("Employee not found");
-        }
+        Employee employee = employeeRepository
+                .findById(loanCreateDto.getEmployeeId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found")
+                );
+        Installment installment = installmentRepository
+                .findById(loanCreateDto.getInstallmentId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Installment not found"
+                        )
+                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
         loan.setAmount(loanCreateDto.getAmount());
         loan.setEmployee(employee);
+        loan.setInstallment(installment);
+        loan.setCreatedAt(loanCreateDto.getCreatedAt());
 
         return loanRepository.save(loan);
     }
@@ -209,5 +224,76 @@ public class LoanServiceImpl implements LoanService {
 //        loan.setInterestRate(0.0);
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
+    }
+
+    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page){
+        List<String> allLoanIds = loanRepository.findAllLoanIds();
+        if(allLoanIds == null){
+            throw new ResourceNotFoundException("Server Error: Loan");
+        }
+        List<String> notSyncedIds = new ArrayList<>();
+        for (String id : allLoanIds) {
+            if (!fileNoLis.getFile_number().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, 3);
+        return loanRepository.findLoansByIds(notSyncedIds, pageable)
+                .stream()
+                .map(LoanMapper::mapToCustomerAsyncDto)
+                .toList();
+    }
+
+    public Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto){
+        Loan loan = new Loan();
+        loan.setAmount(loanRequestDto.getLoanAmount());
+        if (!customerRepository.existsById(loanRequestDto.getCustomerId())) {
+            Customer newCustomer = LoanMapper.mapToNewCustomer(loanRequestDto);
+            Role role = roleRepository.findByRoleName("Customer");
+            newCustomer.setRole(role);
+            customerRepository.save(newCustomer);
+        }
+        Customer customer;
+        customer = customerRepository.findByNic(loanRequestDto.getCustomerId());
+        loan.setCustomer(customer);
+
+        Installment installment = installmentRepository.findById(loanRequestDto.getInstallments())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(installment);
+
+        Employee employee = employeeRepository.findById(loanRequestDto.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanRequestDto.getEmployeeId()));
+        loan.setEmployee(employee);
+        loan.setStatus(LoanStatus.PENDING);
+        return loanRepository.save(loan);
+    }
+
+    public String addNewLoanByOfficer(CustomerAddDto customerAddDto){
+        if (customerRepository.existsById(customerAddDto.getCustomerId())) {
+            throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());
+        }
+        Loan loan = new Loan();
+
+        Installment installment = installmentRepository.findById(customerAddDto.getInstallmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(installment);
+
+        Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + customerAddDto.getEmployeeId()));
+        loan.setEmployee(employee);
+
+        loan.setAmount(customerAddDto.getLoanAmount());
+        Customer newCustomer = CustomerMapper.mapToNewCustomer(customerAddDto);
+        Role role = roleRepository.findByRoleName("Customer");
+        newCustomer.setRole(role);
+        customerRepository.save(newCustomer);
+
+        Customer customer = customerRepository.findByNic(customerAddDto.getCustomerId());
+        loan.setCustomer(customer);
+
+        loan.setStatus(LoanStatus.PENDING);
+        loanRepository.save(loan);
+
+        return "Loan created successfully.";
     }
 }
