@@ -100,6 +100,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto) {
         Employee emp = employeeRepository.findByEmail(username);
+        Long status = emp.getUpdateStatus();
         if(emp == null){
             throw new ResourceNotFoundException("Employee verification not found");
         }
@@ -110,6 +111,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setEmail(dto.getEmail());
         emp.setAddress(dto.getAddress());
         emp.setPhoneNumber(dto.getPhoneNumber());
+        emp.setUpdateStatus(status + 1);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(emp));
     }

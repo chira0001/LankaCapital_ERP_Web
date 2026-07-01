@@ -40,4 +40,6 @@ public class Customer {
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
     private List<Loan> loans;
+
+    private Long updateStatus = 0L;
 }

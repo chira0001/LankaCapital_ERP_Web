@@ -140,6 +140,7 @@ public class LoanServiceImpl implements LoanService {
 
         //clear rejection note
         loan.setRejectionNote(null);
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         //save and return
         return loanRepository.save(loan);
     }
@@ -154,6 +155,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setEmployee(employee);
         loan.setStatus(LoanStatus.REJECTED);
         loan.setRejectionNote(dto.getRejectionNote());
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         return loanRepository.save(loan);
     }
 
@@ -174,6 +176,7 @@ public class LoanServiceImpl implements LoanService {
 
         // clear rejection note
         loan.setRejectionNote(null);
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
 
         return loanRepository.save(loan);
     }
@@ -188,6 +191,7 @@ public class LoanServiceImpl implements LoanService {
                         .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
 
         loan.setInterestRate(rate);
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 
@@ -203,6 +207,7 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = loanRepository.findById(fileNumber)
                 .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
 //        loan.setInterestRate(0.0);
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 }

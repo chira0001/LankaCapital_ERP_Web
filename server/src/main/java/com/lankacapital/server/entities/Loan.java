@@ -56,6 +56,8 @@ public class Loan {
     @Column(length = 1000)
     private String rejectionNote;
 
+    private Long updateStatus = 0L;
+
 
     @PrePersist
     public void update(){

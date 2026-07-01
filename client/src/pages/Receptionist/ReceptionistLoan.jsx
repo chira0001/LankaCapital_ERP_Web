@@ -484,7 +484,6 @@ const ReceptionistLoan = () => {
                                     onChange={handleLoanChange}
                                     className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
                                     placeholder="Enter bank account number"
-                                    required
                                 />
                             </div>
                             <div className='flex flex-col'>
@@ -498,7 +497,6 @@ const ReceptionistLoan = () => {
                                     onChange={handleLoanChange}
                                     className='border border-gray-400 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black bg-white'
                                     placeholder="Enter bank name"
-                                    required
                                 />
                             </div>
                         </div>

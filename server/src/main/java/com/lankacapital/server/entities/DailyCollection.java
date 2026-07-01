@@ -39,4 +39,6 @@ public class DailyCollection {
 
     @Column(precision = 12, scale = 2)
     private BigDecimal dueAmount = BigDecimal.valueOf(0);
+
+    private Long updateStatus = 0L;
 }

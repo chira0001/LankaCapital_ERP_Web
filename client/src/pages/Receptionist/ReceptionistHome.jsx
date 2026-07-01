@@ -1,5 +1,5 @@
 import React from "react";
-import { DateCalendar } from '@mui/material';
+// import { DateCalendar } from '@mui/material';
 
 const ReceptionistHome = () => {
     /* ================= SAMPLE DATA ================= */
@@ -164,7 +164,7 @@ const ReceptionistHome = () => {
                 {/* ================= SCHEDULE ================= */}
                 <div className="bg-white rounded-xl shadow-sm p-6 h-fit">
                     <h2 className="font-semibold text-lg mb-4">Schedule</h2>
-                    <DateCalendar />
+                    {/* <DateCalendar /> */}
                     
                 </div>
             </div>

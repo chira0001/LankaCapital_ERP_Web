@@ -52,6 +52,8 @@ public class Employee implements UserDetails {
     @JsonIgnore
     private String password = "pass@123";
 
+    private Long updateStatus = 0L;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(this.getRole().getRoleName()));
