@@ -34,7 +34,8 @@ instance.interceptors.response.use(
             try {
                 const response =
                     await axios.post(
-                        "http://localhost:8080/api/v1/auth/refresh",
+                        // "http://localhost:8080/api/v1/auth/refresh",
+                        `${BASE_URL}/auth/refresh`,
                         {},
                         {
                             withCredentials: true
