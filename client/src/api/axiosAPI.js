@@ -32,11 +32,10 @@ instance.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                console.log("axiosAPI : ",BASE_URL);
                 const response =
                     await axios.post(
                         // "http://localhost:8080/api/v1/auth/refresh",
-                        "https://lankacapitalerpweb-production.up.railway.app/api/v1/auth/refresh",
+                        `${BASE_URL}/auth/refresh`,
                         {},
                         {
                             withCredentials: true
