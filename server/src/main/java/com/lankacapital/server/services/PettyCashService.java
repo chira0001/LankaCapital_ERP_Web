@@ -18,4 +18,6 @@ public interface PettyCashService {
     List<PettyCashResponseDto> getPendingRequests();
 
     List<PettyCashResponseDto> getAllPettyCash();
+
+    PettyCashResponseDto undoStatus(Long id, String adminUsername);
 }

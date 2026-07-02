@@ -151,5 +151,11 @@ public class AdminController {
     public ResponseEntity<?>getPendingPettyCash(){
         return ResponseEntity.ok(pettyCashService.getPendingRequests());
     }
+
+    @PutMapping("/undo/{id}/{adminUsername}")
+    public PettyCashResponseDto undo(@PathVariable Long id,
+                                     @PathVariable String adminUsername) {
+        return pettyCashService.undoStatus(id, adminUsername);
+    }
 }
 

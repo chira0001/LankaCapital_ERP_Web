@@ -208,6 +208,11 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Wallet, Download, Calendar } from 'lucide-react';
 import { Button } from '@/component/ui/button';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import axiosAPI from '@/api/axiosAPI';
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -227,60 +232,213 @@ const formatLKR = (amount) =>
   }).format(amount || 0);
 
 const PettyCashPage = () => {
+  const navigate = useNavigate();
   const [pettyCashData, setPettyCashData] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_URL =
-    'http://localhost:8080/api/v1/admin/pettyCash/pending';
+    'http://localhost:8080/api/v1/admin/pettyCash';
 
   const token = localStorage.getItem('token');
 
+  // useEffect(() => {
+  //   fetchPettyCash();
+  // }, []);
+
   useEffect(() => {
+    const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+    }
+
     fetchPettyCash();
-  }, []);
+}, []);
 
-  const fetchPettyCash = async () => {
-    try {
-      const response = await fetch(API_URL, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to load petty cash');
+  // const fetchPettyCash = async () => {
+  //   try {
+  //     const response = await fetch(API_URL, {
+  //       method: 'GET',
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to load petty cash');
+  //     }
+
+  //     const data = await response.json();
+
+  //     setPettyCashData(data);
+
+  //     const grouped = data.reduce((acc, curr) => {
+  //       const date = new Date(curr.dateTime).toLocaleDateString();
+
+  //       if (!acc[date]) {
+  //         acc[date] = {
+  //           date,
+  //           collected: 0
+  //         };
+  //       }
+
+  //       acc[date].collected += Number(curr.amount);
+
+  //       return acc;
+  //     }, {});
+
+  //     setChartData(Object.values(grouped));
+
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  
+
+const fetchPettyCash = async () => {
+  try {
+    const response = await axiosAPI.get("/admin/pettyCash");
+
+    console.log("PETTY CASH RAW:", response.data);
+
+    const data = response.data;
+
+    setPettyCashData(data);
+
+    const grouped = data.reduce((acc, curr) => {
+      const date = new Date(curr.dateTime).toLocaleDateString();
+
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          collected: 0
+        };
       }
 
-      const data = await response.json();
+      acc[date].collected += Number(curr.amount);
 
-      setPettyCashData(data);
+      return acc;
+    }, {});
 
-      const grouped = data.reduce((acc, curr) => {
-        const date = new Date(curr.dateTime).toLocaleDateString();
+    setChartData(Object.values(grouped));
 
-        if (!acc[date]) {
-          acc[date] = {
-            date,
-            collected: 0
-          };
-        }
+  } catch (error) {
+    console.error("Failed to load petty cash:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-        acc[date].collected += Number(curr.amount);
 
-        return acc;
-      }, {});
+// APPROVE FUNCTION
+// const approve = async (id) => {
+//   try {
+//     await fetch(
+//       `http://localhost:8080/api/v1/admin/petty-cash/approve/${id}/${localStorage.getItem('username')}`,
+//       {
+//         method: 'PUT',
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
 
-      setChartData(Object.values(grouped));
+//     fetchPettyCash();
+//   } catch (error) {
+//     console.error('Approve failed:', error);
+//   }
+// };
 
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+const approve = async (id) => {
+  try {
+    const username = localStorage.getItem("username");
+
+    await axiosAPI.put(
+      `/admin/pettyCash/approve/${id}`
+    );
+
+    fetchPettyCash();
+  } catch (error) {
+    console.error("Approve failed:", error);
+  }
+};
+
+//  REJECT FUNCTION
+// const reject = async (id) => {
+//   try {
+//     await fetch(
+//       `http://localhost:8080/api/v1/admin/petty-cash/reject/${id}/${localStorage.getItem('username')}`,
+//       {
+//         method: 'PUT',
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
+
+//     fetchPettyCash();
+//   } catch (error) {
+//     console.error('Reject failed:', error);
+//   }
+// };
+
+const reject = async (id) => {
+  try {
+    const username = localStorage.getItem("username");
+
+    await axiosAPI.put(
+     `/admin/pettyCash/reject/${id}`
+    );
+
+    fetchPettyCash();
+  } catch (error) {
+    console.error("Reject failed:", error);
+  }
+};
+
+
+//  UNDO FUNCTION
+// const undo = async (id) => {
+//   try {
+//     await fetch(
+//       `http://localhost:8080/api/v1/admin/petty-cash/undo/${id}/${localStorage.getItem('username')}`,
+//       {
+//         method: 'PUT',
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
+
+//     fetchPettyCash();
+//   } catch (error) {
+//     console.error('Undo failed:', error);
+//   }
+// };
+
+
+const undo = async (id) => {
+  try {
+    const username = localStorage.getItem("username");
+
+    await axiosAPI.put(
+      `/admin/undo/${id}/${username}`
+    );
+
+    fetchPettyCash();
+  } catch (error) {
+    console.error("Undo failed:", error);
+  }
+};
+
+
 
   const handleExportExcel = () => {
     const exportData = pettyCashData.map((item) => ({
@@ -391,6 +549,7 @@ const PettyCashPage = () => {
                 <th className="p-4">Amount</th>
                 <th className="p-4">Narration</th>
                 <th className="p-4">Status</th>
+                <th className="p-4">Actions</th>
 
               </tr>
 
@@ -398,7 +557,7 @@ const PettyCashPage = () => {
 
             <tbody>
 
-              {pettyCashData.map((record) => (
+              {/* {pettyCashData.map((record) => (
 
                 <tr
                   key={record.id}
@@ -437,7 +596,90 @@ const PettyCashPage = () => {
 
                 </tr>
 
-              ))}
+
+              ))} */}
+
+
+                {pettyCashData.map((record) => (
+              <tr key={record.id} className="border-b hover:bg-gray-50">
+
+                {/* DATE */}
+                <td className="p-4">
+                  <Calendar className="inline w-4 mr-2" />
+                  {new Date(record.dateTime).toLocaleDateString()}
+                </td>
+
+                {/* EMPLOYEE */}
+                <td className="p-4">
+                  {record.requestEmployee?.firstName ||
+                    record.requestEmployee?.email ||
+                    'N/A'}
+                </td>
+
+                {/* AMOUNT */}
+                <td className="p-4">
+                  {record.amount}
+                </td>
+
+                {/* NARRATION */}
+                <td className="p-4">
+                  {record.narration}
+                </td>
+
+                {/* STATUS */}
+                <td className="p-4">
+                  <span
+                    className={
+                      record.request === "APPROVED"
+                        ? "text-green-600 font-semibold"
+                        : record.request === "REJECTED"
+                        ? "text-red-600 font-semibold"
+                        : "text-yellow-600 font-semibold"
+                    }
+                  >
+                    {record.request}
+                  </span>
+                </td>
+
+                {/* ACTIONS */}
+                {/* <td className="p-4 flex gap-2"> */}
+                   <td className="p-4">
+                    <div className="flex gap-2">
+
+                      {record.request === "PENDING" ? (
+                        <>
+                          {/* APPROVE */}
+                          <button
+                            onClick={() => approve(record.id)}
+                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                          >
+                            Approve
+                          </button>
+
+                          {/* REJECT */}
+                          <button
+                            onClick={() => reject(record.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      ) : (
+                        /* UNDO / RESET */
+                        <button
+                          onClick={() => undo(record.id)}
+                          className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+                        >
+                          Undo
+                        </button>
+                      )}
+
+                    </div>
+                  </td>
+
+              </tr>
+             ))}
+
 
             </tbody>
 

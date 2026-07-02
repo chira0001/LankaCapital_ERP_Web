@@ -30,6 +30,7 @@ public class PettyCashServiceImpl implements PettyCashService {
                 throw new ResourceNotFoundException("Employee verification not found");
             }
             pettyCash.setRequestEmployee(requestEmployee);
+            pettyCash.setRequest(Request.PENDING);
             pettyCashRepository.save(pettyCash);
 
             return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
@@ -96,6 +97,35 @@ public class PettyCashServiceImpl implements PettyCashService {
 
         pettyCash.setRequest(Request.REJECTED);
         pettyCash.setApprovedEmployee(admin);
+
+        pettyCashRepository.save(pettyCash);
+
+        return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
+    }
+
+    //reset
+    @Override
+    public PettyCashResponseDto undoStatus(Long id, String adminUsername) {
+
+        PettyCash pettyCash = pettyCashRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Petty cash not found"));
+
+        Employee admin = employeeRepository.findByEmail(adminUsername);
+
+        if (admin == null) {
+            throw new ResourceNotFoundException("Admin not found");
+        }
+
+        // prevent undo if already pending
+        if (pettyCash.getRequest() == Request.PENDING) {
+            throw new RuntimeException("Nothing to undo");
+        }
+
+        // reset status
+        pettyCash.setRequest(Request.PENDING);
+
+        // clear previous approver/rejector
+        pettyCash.setApprovedEmployee(null);
 
         pettyCashRepository.save(pettyCash);
 

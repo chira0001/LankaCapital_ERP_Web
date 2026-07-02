@@ -12,4 +12,5 @@ import java.util.List;
 public interface PettyCashRepository extends JpaRepository<PettyCash,Long> {
     List<PettyCash> findByRequestEmployee(Employee requestEmployee);
     List<PettyCash>findByRequest(Request request);
+    List<PettyCash> findAllByRequestOrderByDateTimeDesc(Request request);
 }

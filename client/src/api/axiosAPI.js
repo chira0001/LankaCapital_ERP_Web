@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 
 ////////////////////////////////////////////////////
-const BASE_URL ="http://localhost:8080/api/v1";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080/api/v1";
 
 console.log("BASE URL =", import.meta.env.VITE_BACKEND_URL);
 /////////////////////////////////////////////////////////

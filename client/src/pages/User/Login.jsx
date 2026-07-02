@@ -60,12 +60,34 @@ const Login = () => {
                     email,
                     password
                 });
+
+                 console.log("LOGIN RESPONSE =", response.data);
+                // if (response.status == 200) {
+                //     toast.success("Loggin Successfull. Redirecting...")
+                //     localStorage.setItem("token", response.data.token);
+                //     const role = response.data.role.slice(0, 2).toLowerCase()
+                //     navigate(`/${role}`)
+                // } 
+                
                 if (response.status == 200) {
-                    toast.success("Loggin Successfull. Redirecting...")
-                    localStorage.setItem("token", response.data.token);
-                    const role = response.data.role.slice(0, 2).toLowerCase()
-                    navigate(`/${role}`)
-                } else {
+
+    toast.success("Loggin Successfull. Redirecting...");
+
+    localStorage.setItem("token", response.data.token);
+
+    // decode JWT payload to extract the email (sub claim)
+    const payload = JSON.parse(atob(response.data.token.split('.')[1]));
+    localStorage.setItem("username", payload.sub);
+
+    console.log("Saved Token:", localStorage.getItem("token"));
+    console.log("Saved Username:", localStorage.getItem("username"));
+
+    const role = response.data.role.slice(0, 2).toLowerCase();
+
+    navigate(`/${role}`);
+}
+                
+                else {
                     console.log(response);
                 }
             } catch (e) {
@@ -75,6 +97,7 @@ const Login = () => {
         }
     }
 
+   
     return (
         <>
             <CommonNavbar />
