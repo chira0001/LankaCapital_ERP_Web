@@ -1,10 +1,6 @@
-# 💰 Money Lending Management System
+# 💰 Money Lending Management System - NKRS Lanka Capital Pvt. Ltd.
 
 > A secure, modern, and efficient web-based ERP solution designed to streamline the operations of a money lending business by managing customers, loans, repayments, financial statements, and administrative activities.
-
-![License](https://img.shields.io/badge/License-Portfolio-blue)
-![Status](https://img.shields.io/badge/Status-Completed-success)
-![Version](https://img.shields.io/badge/Version-1.0-orange)
 
 ---
 
@@ -20,18 +16,9 @@ Developed using the **Agile Software Development Methodology**, this project emp
 
 ## 👥 Customer Management
 - Customer Registration
-- Customer Profile Management
 - Customer Search & Filtering
 - Customer Loan History
 - Customer Status Management
-
----
-
-## 🤝 Guarantor Management
-- Add Multiple Guarantors
-- Guarantor Information Management
-- Relationship Tracking
-- Contact Information
 
 ---
 
@@ -64,21 +51,7 @@ The system automatically generates:
 - Balance Sheet
 - Cash Flow Statement
 - Profit Summary
-- Outstanding Loan Report
-- Daily Collection Report
 - Monthly Financial Report
-
----
-
-## 📈 Reports
-
-- Customer Reports
-- Active Loans
-- Completed Loans
-- Overdue Loans
-- Payment Reports
-- Financial Reports
-- Business Performance Reports
 
 ---
 
@@ -126,13 +99,12 @@ The system automatically generates:
 - React.js
 - HTML5
 - CSS3
-- Bootstrap
+- Tailwind
 - JavaScript (ES6)
 
 ## Backend
 
-- Node.js
-- Express.js
+- Springboot
 
 ## Database
 
@@ -144,8 +116,7 @@ The system automatically generates:
 - GitHub
 - Postman
 - Visual Studio Code
-- XAMPP
-- VPS Hosting
+- CI/CD Automation
 
 ---
 
@@ -168,16 +139,6 @@ Money-Lending-Management-System/
 │   ├── services/
 │   ├── uploads/
 │   └── server.js
-│
-├── database/
-│   ├── schema.sql
-│   └── seed.sql
-│
-├── docs/
-│   ├── User Manual.pdf
-│   └── System Documentation.pdf
-│
-├── screenshots/
 │
 ├── .env.example
 ├── README.md
@@ -207,8 +168,7 @@ cd money-lending-management-system
 ## Install Backend Dependencies
 
 ```bash
-cd server
-npm install
+mvnw spring-boot:run
 ```
 
 ---
@@ -240,14 +200,6 @@ JWT_SECRET=your_secret_key
 
 ---
 
-## Start Backend
-
-```bash
-npm start
-```
-
----
-
 ## Start Frontend
 
 ```bash
@@ -271,18 +223,22 @@ Include screenshots of:
 
 ---
 
-# 📊 Database Modules
+## 📋 Database Tables
 
-- Customers
-- Guarantors
-- Loans
-- Loan Installments
-- Repayments
-- Users
-- Roles
-- Financial Reports
-- Audit Logs
-- System Settings
+| Table | Purpose |
+|--------|---------|
+| `customers` | Customer information |
+| `loans` | Loan records |
+| `installments` | Loan repayment installments |
+| `interest_rates` | Interest rate configurations |
+| `daily_collections` | Daily collection transactions |
+| `employees` | Employee information |
+| `roles` | User roles and permissions |
+| `salaries` | Employee salary records |
+| `salary_conditions` | Salary calculation rules |
+| `salary_meta_data` | Payroll metadata |
+| `monthly_expenses` | Monthly business expenses |
+| `petty_cash` | Petty cash transactions |
 
 ---
 
@@ -313,9 +269,7 @@ This project was developed using the **Agile Software Development Methodology**,
 - Mobile Application
 - Multi-Branch Support
 - QR Code Receipts
-- Automated Backups
 - Cloud Deployment
-- AI-Based Loan Risk Prediction
 
 ---
 
@@ -323,12 +277,6 @@ This project was developed using the **Agile Software Development Methodology**,
 
 The project documentation includes:
 
-- Software Requirements Specification (SRS)
-- Software Design Document (SDD)
-- Database Design
-- ER Diagram
-- User Manual
-- API Documentation
 - Deployment Guide
 
 ---
@@ -337,31 +285,26 @@ The project documentation includes:
 
 This repository is maintained as a portfolio project.
 
-If you have suggestions for improvements, feel free to fork the repository and submit a pull request.
+If you have suggestions for improvements, feel free to notify via chirathwijesinghe123@gmail.com
 
 ---
 
 # 📄 License
 
-Copyright © 2026 Malinda Chirath.
+Copyright © 2026.
 
 This repository is published **for portfolio and demonstration purposes only**.
 
-The deployed software and business implementation belong to the client under the signed Software Handover Agreement. This repository remains the intellectual work of the developer and must not be copied, redistributed, or commercially reused without written permission.
+The deployed software and business implementation belong to the client under the signed Software Handover Agreement. This repository remains the intellectual work of the developers and must not be copied, redistributed, or commercially reused without written permission.
 
 ---
 
 # 👨‍💻 Author
 
-## Malinda Chirath
-
-**Full Stack Software Developer**
-
-- 🌐 ERP System Development
-- 💻 Web Application Development
-- 🗄 Database Design
-- ⚙ Backend Development
-- 📊 Business Information Systems
+## Chirath Wijesinghe
+## Shanuka Gamlath
+## Vihaga Yasitha
+## Piumika Fernando
 
 ---
 
