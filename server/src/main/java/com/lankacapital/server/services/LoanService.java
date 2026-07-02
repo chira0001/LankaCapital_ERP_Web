@@ -1,10 +1,6 @@
 package com.lankacapital.server.services;
 
-import com.lankacapital.server.dtos.FieldOfficerLoanCreateDto;
-import com.lankacapital.server.dtos.InterestUpdateDTO;
-import com.lankacapital.server.dtos.LoanActionDto;
-import com.lankacapital.server.dtos.LoanCreateDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Loan;
 import jakarta.transaction.Transactional;
 
@@ -12,9 +8,11 @@ import java.util.List;
 
 public interface LoanService {
 
-    Loan addLoan(LoanCreateDto loanCreateDto);
+    Loan addLoan(LoanCreateDto loanCreateDto, String username);
 
-    List<LoanResponseDto> getLoansByCustomerId(String id);
+    CustomerResponseDto getLoansByCustomerId(String id);
+    //List<LoanResponseDto> getLoansByCustomerId(String id);
+
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
     List<LoanResponseDto> getAllLoans();
@@ -41,6 +39,12 @@ public interface LoanService {
 
     //reset interest
     LoanResponseDto resetInterest(String fileNumber);
+
+    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page);
+
+    Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
+
+    String addNewLoanByOfficer(CustomerAddDto customerAddDto);
 }
 
 

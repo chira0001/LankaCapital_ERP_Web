@@ -4,7 +4,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistMonthlyExpense = () => {
-    const empId = localStorage.getItem("empId") || 1;
 
     const [expenseForm, setExpenseForm] = useState({
         vehicleAllowanceAndTravel: "",
@@ -14,13 +13,11 @@ const ReceptionistMonthlyExpense = () => {
         electricityBill: "",
         routerBill: "",
         otherExpenses: "",
-        note: "",
-        employeeId: empId
+        note: ""
     });
 
     const [totalExpenses, setTotalExpenses] = useState(0);
 
-    // Calculate total expenses whenever form values change
     useEffect(() => {
         const total = [
             expenseForm.vehicleAllowanceAndTravel,
@@ -41,7 +38,6 @@ const ReceptionistMonthlyExpense = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
-        // Allow only numbers and decimal point for numeric fields
         if (name !== 'note') {
             if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
                 setExpenseForm({ ...expenseForm, [name]: value });
@@ -53,7 +49,6 @@ const ReceptionistMonthlyExpense = () => {
 
     const handleSubmit = async () => {
         try {
-            // Validate that at least one expense field has a value
             const hasExpense = [
                 expenseForm.vehicleAllowanceAndTravel,
                 expenseForm.fuelAllowance,
@@ -69,7 +64,6 @@ const ReceptionistMonthlyExpense = () => {
                 return;
             }
 
-            // Prepare payload with proper numeric values
             const payload = {
                 vehicleAllowanceAndTravel: parseFloat(expenseForm.vehicleAllowanceAndTravel) || 0,
                 fuelAllowance: parseFloat(expenseForm.fuelAllowance) || 0,
@@ -78,16 +72,12 @@ const ReceptionistMonthlyExpense = () => {
                 electricityBill: parseFloat(expenseForm.electricityBill) || 0,
                 routerBill: parseFloat(expenseForm.routerBill) || 0,
                 otherExpenses: parseFloat(expenseForm.otherExpenses) || 0,
-                note: expenseForm.note || "",
-                employeeId: empId
+                note: expenseForm.note || ""
             };
-
-            console.log("83 : ", payload)
-            const response = await axiosAPI.post("/monthlyExpenses", payload);
+            const response = await axiosAPI.post("/recep/monthlyExpenses", payload);
 
             if (response.status === 200 || response.status === 201) {
                 toast.success("Monthly expenses submitted successfully");
-                // Reset form
                 setExpenseForm({
                     vehicleAllowanceAndTravel: "",
                     fuelAllowance: "",

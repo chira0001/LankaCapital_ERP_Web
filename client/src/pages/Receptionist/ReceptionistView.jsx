@@ -4,7 +4,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistView = () => {
-    const empId = localStorage.getItem("empId") || 1;
+    const rowsPerPage = 5;
+
+    const [currentPage, setCurrentPage] = useState(1);
+
 
     const [searchCustomer, setSearchCustomer] = useState('');
     const [searchFileNumber, setSearchFileNumber] = useState('');
@@ -22,6 +25,8 @@ const ReceptionistView = () => {
         businessAddress: '',
         businessEmail: '',
         contactNumber: '',
+        bank: '',
+        bankAccount: '',
         customerId: null // Add this to track customer ID
     });
 
@@ -99,12 +104,14 @@ const ReceptionistView = () => {
                 name: infoForm.businessName,
                 email: infoForm.businessEmail || '',
                 address: infoForm.businessAddress || '',
-                phoneNumber: infoForm.contactNumber
+                phoneNumber: infoForm.contactNumber,
+                bank: infoForm.bank || '',
+                bankAccount: infoForm.bankAccount || '',
             };
 
             console.log("Updating customer:", payload);
             console.log("104 : ", infoForm.customerId || existCustomer?.customerId)
-            const response = await axiosAPI.put("/customers", payload, {
+            const response = await axiosAPI.put("/recep/customers", payload, {
                 params: {
                     customerId: infoForm.customerId || existCustomer?.customerId
                 }
@@ -120,7 +127,9 @@ const ReceptionistView = () => {
                     businessAddress: response.data.address || prev.businessAddress,
                     businessEmail: response.data.email || prev.businessEmail,
                     contactNumber: response.data.phoneNumber || prev.contactNumber,
-                    customerId: response.data.customerId || prev.customerId
+                    customerId: response.data.customerId || prev.customerId,
+                    bank: response.data.bank || prev.bank,
+                    bankAccount: response.data.bankAccount || prev.bankAccount,
                 }));
 
                 // Update existCustomer state
@@ -152,7 +161,9 @@ const ReceptionistView = () => {
                 businessAddress: existCustomer.businessAddress || '',
                 businessEmail: existCustomer.businessEmail || '',
                 contactNumber: existCustomer.contactNumber || '',
-                customerId: existCustomer.customerId || null
+                customerId: existCustomer.customerId || null,
+                bank: existCustomer.bank || '',
+                bankAccount: existCustomer.bankAccount || ''
             });
         }
         setIsEdit(false);
@@ -171,7 +182,7 @@ const ReceptionistView = () => {
         }
 
         try {
-            const response = await axiosAPI.get(`/customers/loans/${searchCustomer}`);
+            const response = await axiosAPI.get(`/recep/customers/loans/${searchCustomer}`);
 
             if (response.status === 200) {
                 setExistCustomer(response.data);
@@ -180,7 +191,9 @@ const ReceptionistView = () => {
                     businessAddress: response.data.businessAddress || '',
                     businessEmail: response.data.businessEmail || '',
                     contactNumber: response.data.contactNumber || '',
-                    customerId: response.data.customerNIC || null
+                    customerId: response.data.customerNIC || null,
+                    bank: response.data.bank || '',
+                    bankAccount: response.data.bankAccount || ''
                 });
                 setInfoDetails(response.data.loans || []);
                 setIsEmployee(false);
@@ -198,10 +211,12 @@ const ReceptionistView = () => {
                     businessAddress: '',
                     businessEmail: '',
                     contactNumber: '',
+                    bank: '',
+                    bankAccount: '',
                     customerId: searchCustomer
                 });
                 setInfoDetails([]);
-                toast.info('Customer not found. Please fill in customer details.');
+                toast.info('Customer not found.');
             } else if (error.response?.status === 400) {
                 setExistCustomer(null);
                 setIsEmployee(false);
@@ -235,23 +250,32 @@ const ReceptionistView = () => {
 
     const viewLoanDetails = async (fileNumber) => {
         try {
-            const response = await axiosAPI.get(`/loan/collection/${fileNumber}`);
-            setLoanDetails(response.data); // <-- correct data
-            setShowLoanModal(true);        // <-- trigger popup
+            const response = await axiosAPI.get(`/recep/loan/collection/${fileNumber}`);
+            setLoanDetails(response.data);
+            setShowLoanModal(true);
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to load loan details");
+            if (error.response?.status === 404) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error("Failed to load loan details");
+            }
         }
     };
 
+    const indexOfLastRow = currentPage * rowsPerPage;
+    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+    const currentRows = loanDetails.slice(indexOfFirstRow, indexOfLastRow);
+
+    const totalPages = Math.ceil(loanDetails.length / rowsPerPage);
+
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="p-3 bg-gray-50 min-h-screen">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8'>
-                <h1 className='text-3xl font-bold text-gray-800'>View Customer</h1>
-                <div className='w-full md:w-1/2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2'>
+                <h1 className='text-4xl font-bold text-gray-800'>View Customer</h1>
+                <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
                     <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
                     <input
                         type="text"
@@ -380,6 +404,30 @@ const ReceptionistView = () => {
                             required
                         />
                     </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Bank Name</label>
+                        <input
+                            type="text"
+                            name='bank'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.bank}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
+                    <div className='flex flex-col'>
+                        <label className='mb-1 text-sm font-medium text-gray-700'>Bank Account Number</label>
+                        <input
+                            type="text"
+                            name='bankAccount'
+                            className={`border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEdit ? 'bg-white' : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                                }`}
+                            value={infoForm.bankAccount}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -452,6 +500,12 @@ const ReceptionistView = () => {
                                                 <span className='text-base font-semibold text-gray-800'>{infoDetail.noOfInstallments}</span>
                                             </div>
                                             <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Installment Amount</span>
+                                                <span className='text-lg font-bold text-purple-600'>
+                                                    Rs. {formatCurrency(installmentAmount)}
+                                                </span>
+                                            </div>
+                                            <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>Interest Amount</span>
                                                 <span className='text-base font-semibold text-orange-600'>
                                                     Rs. {formatCurrency(interestAmount)}
@@ -463,12 +517,30 @@ const ReceptionistView = () => {
                                                     Rs. {formatCurrency(totalLoan)}
                                                 </span>
                                             </div>
-                                            <div className='flex flex-col md:col-span-2'>
-                                                <span className='text-xs text-gray-500 font-medium uppercase'>Installment Amount</span>
-                                                <span className='text-lg font-bold text-purple-600'>
-                                                    Rs. {formatCurrency(installmentAmount)}
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Status</span>
+                                                <span className={`text-base font-semibold 
+                                                    ${infoDetail.status === "PENDING"
+                                                        ? "text-yellow-600"
+                                                        : infoDetail.status === "REJECTED"
+                                                            ? "text-red-600"
+                                                            : infoDetail.status === "APPROVED"
+                                                                ? "text-green-600"
+                                                                : "text-gray-600"
+                                                    }
+                                                    `}>
+                                                    {infoDetail.status}
                                                 </span>
                                             </div>
+                                            {infoDetail.rejectionNote ?
+                                                <div className='flex flex-col col-span-4 border border-gray-300 p-3 rounded-lg'>
+                                                    <span className='text-xs text-gray-500 font-medium uppercase'>Rejection Note</span>
+                                                    <span className='text-md text-red-500'>
+                                                        {infoDetail.rejectionNote}
+                                                    </span>
+                                                </div> :
+                                                ""
+                                            }
                                         </div>
                                     </div>
                                 );
@@ -484,7 +556,8 @@ const ReceptionistView = () => {
                     )}
 
                     {showLoanModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                        <div className="fixed h-full inset-0 backdrop-blur-xs flex items-center justify-center z-50 border border-white/30 rounded-2xl shadow-2xl">
+                            {/* <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6 w-full max-w-2xl relative"> */}
                             <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl relative">
 
                                 {/* Close */}
@@ -497,17 +570,143 @@ const ReceptionistView = () => {
 
                                 <h2 className="text-xl font-bold mb-4">Loan Payment Details</h2>
 
-                                <div className="max-h-80 overflow-y-auto space-y-3">
-                                    {loanDetails.map((value) => (
-                                        <div key={value.id} className="border rounded-lg p-4 shadow-sm">
-                                            <p><strong>Entered by:</strong> {value.employeeId}</p>
-                                            <p><strong>Installment:</strong> {value.installmentNumber}</p>
-                                            <p><strong>Paid Amount:</strong> Rs. {formatCurrency(value.paidAmount)}</p>
-                                            <p>
-                                                <strong>Date:</strong> {new Date(value.paidAt).toLocaleDateString()}
-                                            </p>
+                                <div className="max-h-150 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                                    {currentRows.map((value) => (
+                                        <div
+                                            key={value.id}
+                                            className="group bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-0.5"
+                                        >
+                                            {/* Header Section */}
+                                            <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-gray-200 group-hover:to-gray-300 transition-all duration-300">
+                                                        <span className="text-xl font-bold text-gray-700">
+                                                            {value.installmentNumber}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                            Installment
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-600">
+                                                            Payment #{value.installmentNumber}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Badge/Status indicator (optional) */}
+                                                <div className="px-3 py-1 bg-green-50 rounded-full">
+                                                    <span className="text-xs font-semibold text-green-600">Paid</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Details Grid */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {/* Amount - Emphasized */}
+                                                <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100">
+                                                    <div className="flex items-baseline gap-2">
+                                                        <div className="flex-1">
+                                                            <p className="text-xs font-medium text-gray-500 mb-1">
+                                                                Amount Paid
+                                                            </p>
+                                                            <p className="text-2xl font-bold text-gray-800">
+                                                                Rs. {formatCurrency(value.paidAmount)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Date & Time */}
+                                                <div className="flex items-start gap-2">
+                                                    <svg className="w-4 h-4 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-500 mb-1">
+                                                            Payment Date & Time
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-700">
+                                                            {new Date(value.paidAt).toLocaleDateString('en-US', {
+                                                                day: 'numeric',
+                                                                month: 'short',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">
+                                                            {new Date(value.paidAt).toLocaleTimeString('en-US', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Entered By */}
+                                                <div className="flex items-start gap-2">
+                                                    <svg className="w-4 h-4 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-gray-500 mb-1">
+                                                            Processed By
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-gray-700">
+                                                            {value.employeeId}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
+                                    {/* Pagination */}
+                                    {totalPages > 1 && (
+                                        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
+
+                                            <button
+                                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                                disabled={currentPage === 1}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition 
+                ${currentPage === 1
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                    }`}
+                                            >
+                                                Previous
+                                            </button>
+
+                                            <div className="flex items-center gap-2">
+                                                {Array.from({ length: totalPages }, (_, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setCurrentPage(index + 1)}
+                                                        className={`flex items-center justify-center w-9 h-9 text-sm rounded-lg transition
+                                                            ${currentPage === index + 1
+                                                                ? "bg-gray-800 text-white"
+                                                                : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                            }`}
+                                                    >
+                                                        {index + 1}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <button
+                                                onClick={() =>
+                                                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                                                }
+                                                disabled={currentPage === totalPages}
+                                                className={`px-4 py-2 text-sm font-medium rounded-lg transition 
+                ${currentPage === totalPages
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                                                    }`}
+                                            >
+                                                Next
+                                            </button>
+
+                                        </div>
+                                    )}
                                 </div>
 
                             </div>
@@ -517,8 +716,7 @@ const ReceptionistView = () => {
                 </div>
             )}
 
-            {/* Add CSS for highlight animation */}
-            <style jsx>{`
+            {/* <style jsx>{`
                 .highlight-loan {
                     animation: highlight 2s ease-in-out;
                 }
@@ -536,7 +734,7 @@ const ReceptionistView = () => {
                 .loan-card {
                     transition: all 0.3s ease;
                 }
-            `}</style>
+            `}</style> */}
         </div>
     );
 };

@@ -13,4 +13,6 @@ public class CustomerRegisterDto {
     private String email;
     private String address;
     private String phoneNumber;
+    private String bank;
+    private String bankAccount;
 }

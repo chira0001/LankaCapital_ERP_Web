@@ -29,15 +29,16 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name="interest_rate")
-    private Double interestRate;
+    @ManyToOne
+    @JoinColumn(name = "interest_rate_id")
+    private InterestRate interestRate;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal documentCharge = BigDecimal.valueOf(0);
 
     @ManyToOne
-    @JoinColumn(name = "no_of_installments")
-    private Installment numberOfInstallments;
+    @JoinColumn(name = "installment_id")
+    private Installment installment;
 
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
     private LocalDateTime createdAt;
@@ -55,11 +56,15 @@ public class Loan {
     @Column(length = 1000)
     private String rejectionNote;
 
+    private Long updateStatus = 0L;
+
 
     @PrePersist
     public void update(){
         this.createdAt = LocalDateTime.now();
-        this.fileNumber = UUID.randomUUID().toString();
+        if(this.fileNumber == null){
+            this.fileNumber = UUID.randomUUID().toString();
+        }
         this.status = LoanStatus.PENDING;
     }
 }

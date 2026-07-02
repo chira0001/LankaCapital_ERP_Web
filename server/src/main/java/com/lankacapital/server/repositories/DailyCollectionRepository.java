@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface DailyCollectionRepository extends JpaRepository<DailyCollection, UUID> {
 
-    List<DailyCollection> findByLoanFileNumberOrderByPaidAtDesc(String fileNumber);
+    List<DailyCollection> findByLoanFileNumberOrderByInstallmentNumberDesc(String fileNumber);
 }

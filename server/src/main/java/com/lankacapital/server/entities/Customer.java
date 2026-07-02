@@ -34,7 +34,12 @@ public class Customer {
     @Column(nullable = false)
     private String phoneNumber;
 
+    private String bank;
+    private String bankAccount;
+
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
     private List<Loan> loans;
+
+    private Long updateStatus = 0L;
 }

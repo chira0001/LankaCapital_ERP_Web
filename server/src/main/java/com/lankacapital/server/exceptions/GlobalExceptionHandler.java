@@ -51,4 +51,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<Map<String, Object>> handleExpiredJwtException (ExpiredJwtException expiredJwtException){
+
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", HttpStatus.BAD_REQUEST.value());
+        error.put("message", expiredJwtException.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
 }

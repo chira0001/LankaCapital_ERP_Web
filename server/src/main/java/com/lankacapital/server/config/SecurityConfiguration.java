@@ -27,14 +27,16 @@ public class SecurityConfiguration {
     private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
 
-/*
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/v1/**").permitAll()
+//                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/recep/**").hasAnyAuthority("RECEPTIONIST")
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(
@@ -47,24 +49,24 @@ public class SecurityConfiguration {
 
 //for check the status in loan application
 
-*/
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
 
-                // TEMP FIX: allow EVERYTHING for testing
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/v1/**").permitAll()
-                        .anyRequest().permitAll()
-                )
-
-                .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider());
-
-        return http.build();
-    }
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .cors(cors -> {})
+//                .csrf(AbstractHttpConfigurer::disable)
+//
+//                // TEMP FIX: allow EVERYTHING for testing
+//                .authorizeHttpRequests(request -> request
+//                        .requestMatchers("/api/v1/**").permitAll()
+//                        .anyRequest().permitAll()
+//                )
+//
+//                .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authenticationProvider(authenticationProvider());
+//
+//        return http.build();
+//    }
 
 
 

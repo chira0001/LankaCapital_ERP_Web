@@ -1,9 +1,6 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.CustomerInfoDto;
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.entities.Role;
@@ -17,8 +14,11 @@ import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -80,6 +80,8 @@ public class CustomerServiceImpl implements CustomerService {
         dto.setBusinessAddress(customer.getAddress());
         dto.setBusinessEmail(customer.getEmail());
         dto.setContactNumber(customer.getPhoneNumber());
+        dto.setBank(customer.getBank());
+        dto.setBankAccount(customer.getBankAccount());
 
         dto.setLoans(
                 customer.getLoans()
@@ -93,13 +95,58 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     @Override
-    public CustomerRegisterDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
-        System.out.println("95 : " + nic);
+    public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
         Customer customer = customerRepository.findByNic(nic);
+        Long status = customer.getUpdateStatus();
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found with NIC : " + nic);
         }
+
+        System.out.println("104 : "+status);
         customer = CustomerMapper.mapToCustomer(customerRegisterDto);
-        return CustomerMapper.mapToCustomerRegisterDto(customerRepository.save(customer));
+        customer.setUpdateStatus(status + 1);
+
+        System.out.println(customer);
+        return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
+    }
+
+    @Override
+    public List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page){
+        List<Long> allCustomerIds =  customerRepository.findAllCustomerIds();
+        if(allCustomerIds == null){
+            throw new ResourceNotFoundException("Server Error: Customer");
+        }
+        List<Long> notSyncedIds = new ArrayList<>();
+        for (Long id : allCustomerIds) {
+            if (!nicList.getNic().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        if(notSyncedIds.isEmpty()){
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(page, 5);
+        return customerRepository.findCustomersByIds(notSyncedIds ,pageable)
+                .stream()
+                .map(CustomerMapper::mapToCustomerAsyncDto)
+                .toList();
+    }
+
+    public CustomerResDto getCustomerDataById(Long nic){
+        Customer customer = customerRepository.findByNicWithLoans(nic);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer not found with id : " + nic);
+        }
+        CustomerResDto dto = new CustomerResDto();
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        dto.setAddress(customer.getAddress());
+        dto.setLoans(customer
+                .getLoans()
+                .stream().map(LoanMapper::mapToLoanResDto)
+                .toList()
+        );
+        return dto;
     }
 }

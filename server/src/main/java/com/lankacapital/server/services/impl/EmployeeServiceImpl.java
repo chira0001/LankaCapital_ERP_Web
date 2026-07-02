@@ -1,8 +1,6 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.EmployeeAddDto;
-import com.lankacapital.server.dtos.EmployeeResponseDto;
-import com.lankacapital.server.dtos.PasswordRequestDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
@@ -13,6 +11,8 @@ import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -56,7 +57,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         newEmployee.setRole(role);
         return employeeRepository.save(newEmployee);
     }
-
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         List<Employee> employeeList = employeeRepository.findAll();
@@ -64,23 +64,31 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeResponseDto getEmployeeDetailById(Long id) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+    public List<EmployeeResponseDto> getAllEmployeesWithRole() {
+        List<Employee> employeeList = employeeRepository.findByRoleIsNotNull();
+        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+    }
+
+    @Override
+    public EmployeeResponseDto getEmployeeDetailByUsername(String username) {
+        Employee emp = employeeRepository.findByEmail(username);
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         EmployeeResponseDto empDto = EmployeeMapper.mapToEmployeeResponseDto(emp);
         empDto.setBasicSalary(BigDecimal.valueOf(0));
         return empDto;
     }
 
     @Override
-    public String updatePasswordById(Long id, PasswordRequestDto dto) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
+    public String updatePasswordByUsername(String username, PasswordRequestDto dto) {
+        Employee emp = employeeRepository.findByEmail(username);
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
         if (!passwordEncoder.matches(dto.getOldPassword(), emp.getPassword())) {
             throw new PasswordUpdateException("Old password is incorrect");
         }
-
         try {
             emp.setPassword(passwordEncoder.encode(dto.getNewPassword()));
             employeeRepository.save(emp);
@@ -91,10 +99,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeResponseDto updateEmployeeInfo(Long id, EmployeeResponseDto dto) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
+    public EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto) {
+        Employee emp = employeeRepository.findByEmail(username);
+        Long status = emp.getUpdateStatus();
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
         emp.setId(dto.getId());
         emp.setNic(dto.getNic());
         emp.setFirstName(dto.getFirstName());
@@ -102,7 +112,30 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setEmail(dto.getEmail());
         emp.setAddress(dto.getAddress());
         emp.setPhoneNumber(dto.getPhoneNumber());
+        emp.setUpdateStatus(status + 1);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(emp));
+    }
+
+    @Override
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page){
+        List<Long> allOfficerIds = employeeRepository.findAllFieldOfficersIds();
+        if(allOfficerIds == null){
+            throw new ResourceNotFoundException("FieldOfficer not found with NIC");
+        }
+        List<Long> notSyncedIds = new ArrayList<>();
+        for (Long id : allOfficerIds) {
+            if (!idList.getId().contains(id)) {
+                notSyncedIds.add(id);
+            }
+        }
+        if(notSyncedIds.isEmpty()){
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(page, 5);
+        return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
+                .stream()
+                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .toList();
     }
 }

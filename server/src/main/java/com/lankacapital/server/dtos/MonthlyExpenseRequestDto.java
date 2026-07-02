@@ -35,7 +35,4 @@ public class MonthlyExpenseRequestDto {
 
     @PositiveOrZero
     private BigDecimal vehicleAllowanceAndTravel;
-
-    @NotNull
-    private Long employeeId;
 }

@@ -2,6 +2,7 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.EmployeeAddDto;
 import com.lankacapital.server.dtos.EmployeeResponseDto;
+import com.lankacapital.server.dtos.FieldOfficerResAsyncDto;
 import com.lankacapital.server.entities.Employee;
 
 public class EmployeeMapper {
@@ -33,6 +34,20 @@ public class EmployeeMapper {
         dto.setAddress(employee.getAddress());
         dto.setPhoneNumber(employee.getPhoneNumber());
         dto.setBasicSalary(employee.getBasicSalary());
+
+        return dto;
+    }
+
+    public static FieldOfficerResAsyncDto mapToEmployeeAsyncDto(Employee employee) {
+        FieldOfficerResAsyncDto dto = new FieldOfficerResAsyncDto();
+
+        dto.setId(employee.getId());
+        dto.setNic(employee.getNic());
+        dto.setFirst_name(employee.getFirstName());
+        dto.setLast_name(employee.getLastName());
+        dto.setEmail(employee.getEmail());
+        dto.setAddress(employee.getAddress());
+        dto.setPhone_number(employee.getPhoneNumber());
 
         return dto;
     }

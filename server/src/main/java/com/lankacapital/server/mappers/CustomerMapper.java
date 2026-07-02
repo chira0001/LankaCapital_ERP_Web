@@ -1,9 +1,6 @@
 package com.lankacapital.server.mappers;
 
-import com.lankacapital.server.dtos.CustomerInfoDto;
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
-import com.lankacapital.server.dtos.LoanResponseDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
 import lombok.AllArgsConstructor;
 
@@ -13,13 +10,15 @@ import java.util.List;
 public class CustomerMapper {
 
     public static Customer mapToCustomer(CustomerRegisterDto customerRegisterDto){
-
         Customer customer = new Customer();
+
         customer.setNic(customerRegisterDto.getNic());
         customer.setName(customerRegisterDto.getName());
         customer.setEmail(customerRegisterDto.getEmail());
         customer.setAddress(customerRegisterDto.getAddress());
         customer.setPhoneNumber(customerRegisterDto.getPhoneNumber());
+        customer.setBank(customerRegisterDto.getBank());
+        customer.setBankAccount(customerRegisterDto.getBankAccount());
 
         return customer;
     }
@@ -89,12 +88,13 @@ public class CustomerMapper {
                             LoanResponseDto loanDto = new LoanResponseDto();
 
                             loanDto.setFileNumber(loan.getFileNumber());
-                            loanDto.setInterestRate(loan.getInterestRate());
-                           // loanDto.setAmount(loan.getAmount().toString());
+                            loanDto.setInterestRate(loan.getInterestRate().getRate());
+                            loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());
-                            loanDto.setNoOfInstallments(loan.getNumberOfInstallments().getValue());
+                            loanDto.setNoOfInstallments(loan.getInstallment().getValue());
                             loanDto.setDocumentCharge(loan.getDocumentCharge().doubleValue());
                             loanDto.setEmployeeId(loan.getEmployee().getId());
+                            loanDto.setStatus(loan.getStatus());
 
                             // CUSTOMER INFO INSIDE LOAN
                             CustomerInfoDto customerDto = new CustomerInfoDto();
@@ -104,7 +104,7 @@ public class CustomerMapper {
                             customerDto.setBusinessAddress(loan.getCustomer().getAddress());
                             customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
 
-                            loanDto.setCustomer(customerDto);
+                            //loanDto.setCustomer(customerDto);
 
                             return loanDto;
                         })
@@ -117,7 +117,32 @@ public class CustomerMapper {
         dto.setPhoneNumber(customer.getPhoneNumber());
         dto.setLoans(loans);
         dto.setRole(customer.getRole());
+        dto.setBank(customer.getBank());
+        dto.setBankAccount(customer.getBankAccount());
 
         return dto;
-    }}
+    }
+
+    public static CustomerResAsyncDto mapToCustomerAsyncDto(Customer customer) {
+        CustomerResAsyncDto dto = new CustomerResAsyncDto();
+        dto.setNic(customer.getNic());
+        dto.setName(customer.getName());
+        dto.setEmail(customer.getEmail());
+        dto.setAddress(customer.getAddress());
+        dto.setPhone_number(customer.getPhoneNumber());
+        return dto;
+    }
+
+    public static Customer mapToNewCustomer(CustomerAddDto dto){
+        Customer customer = new Customer();
+
+        customer.setNic(dto.getCustomerId());
+        customer.setName(dto.getName());
+        customer.setEmail(dto.getEmail());
+        customer.setAddress(dto.getAddress());
+        customer.setPhoneNumber(dto.getPhoneNumber());
+
+        return customer;
+    }
+}
 
