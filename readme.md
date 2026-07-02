@@ -208,21 +208,6 @@ npm run dev
 
 ---
 
-# 📸 Screenshots
-
-Include screenshots of:
-
-- Login Page
-- Dashboard
-- Customer Management
-- Loan Management
-- Repayment Module
-- Reports
-- Financial Statements
-- User Management
-
----
-
 ## 📋 Database Tables
 
 | Table | Purpose |
