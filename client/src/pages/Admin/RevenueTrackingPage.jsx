@@ -27,42 +27,106 @@ const RevenueTrackingPage = () => {
   }, [installments, filters]);
 
   const fetchRevenueData = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const weekAgoStr = weekAgo.toISOString().split('T')[0];
 
-      // Today's collection
-      const todayTrans = await pb.collection('transactions').getFullList({
-        filter: `payment_date >= "${today} 00:00:00" && status = "Paid"`,
-        $autoCancel: false
-      });
-      const todayTotal = todayTrans.reduce((sum, t) => sum + t.amount, 0);
-      setTodayCollection(todayTotal);
+   
+  try {
+   
+    const mockInstallments = [
+      {
+        id: '1',
+        loan_id: 'LN-10001',
+        amount: 5000,
+        payment_date: '2026-07-01T10:30:00',
+        status: 'Paid',
+        expand: {
+          borrower_id: { name: 'Kamal Perera' },
+          field_officer_id: { name: 'John Silva' }
+        }
+      },
+      {
+        id: '2',
+        loan_id: 'LN-10002',
+        amount: 12000,
+        payment_date: '2026-07-02T12:00:00',
+        status: 'Paid',
+        expand: {
+          borrower_id: { name: 'Nimal Fernando' },
+          field_officer_id: { name: 'Saman Kumara' }
+        }
+      },
+      {
+        id: '3',
+        loan_id: 'LN-10003',
+        amount: 3000,
+        payment_date: '2026-06-28T09:15:00',
+        status: 'Unpaid',
+        expand: {
+          borrower_id: { name: 'Sunil Rajapaksha' },
+          field_officer_id: { name: 'Kasun Perera' }
+        }
+      }
+    ];
 
-      // Weekly collection
-      const weekTrans = await pb.collection('transactions').getFullList({
-        filter: `payment_date >= "${weekAgoStr} 00:00:00" && status = "Paid"`,
-        $autoCancel: false
-      });
-      const weekTotal = weekTrans.reduce((sum, t) => sum + t.amount, 0);
-      setWeeklyCollection(weekTotal);
+    setInstallments(mockInstallments);
 
-      // Fetch all installments
-      const allInstallments = await pb.collection('transactions').getFullList({
-        expand: 'borrower_id,loan_id,field_officer_id',
-        sort: '-payment_date',
-        $autoCancel: false
-      });
-      setInstallments(allInstallments);
+    // TODAY COLLECTION (fake calc)
+    const todayTotal = mockInstallments
+      .filter(t => t.status === 'Paid')
+      .reduce((sum, t) => sum + t.amount, 0);
 
-    } catch (error) {
-      console.error('Failed to fetch revenue data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTodayCollection(todayTotal);
+
+    // WEEKLY COLLECTION (fake calc)
+    const weekTotal = mockInstallments
+      .filter(t => t.status === 'Paid')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    setWeeklyCollection(weekTotal);
+
+  } catch (error) {
+    console.error('Failed to fetch revenue data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+    // try {
+    //   const today = new Date().toISOString().split('T')[0];
+    //   const weekAgo = new Date();
+    //   weekAgo.setDate(weekAgo.getDate() - 7);
+    //   const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+    //   // Today's collection
+    //   const todayTrans = await pb.collection('transactions').getFullList({
+    //     filter: `payment_date >= "${today} 00:00:00" && status = "Paid"`,
+    //     $autoCancel: false
+    //   });
+    //   const todayTotal = todayTrans.reduce((sum, t) => sum + t.amount, 0);
+    //   setTodayCollection(todayTotal);
+
+    //   // Weekly collection
+    //   const weekTrans = await pb.collection('transactions').getFullList({
+    //     filter: `payment_date >= "${weekAgoStr} 00:00:00" && status = "Paid"`,
+    //     $autoCancel: false
+    //   });
+    //   const weekTotal = weekTrans.reduce((sum, t) => sum + t.amount, 0);
+    //   setWeeklyCollection(weekTotal);
+
+    //   // Fetch all installments
+    //   const allInstallments = await pb.collection('transactions').getFullList({
+    //     expand: 'borrower_id,loan_id,field_officer_id',
+    //     sort: '-payment_date',
+    //     $autoCancel: false
+    //   });
+    //   setInstallments(allInstallments);
+
+  //   } catch (error) {
+  //     console.error('Failed to fetch revenue data:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  
+  // };
 
   const applyFilters = () => {
     let filtered = [...installments];

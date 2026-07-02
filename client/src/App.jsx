@@ -103,17 +103,17 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="loan-applications" element={<LoanApplications />} />
           <Route path="portfolio" element={<PortfolioOverview />} />
-          <Route path="performance" element={<LoanPerformance />} />
+          {/* <Route path="performance" element={<LoanPerformance />} /> */}
           <Route path="revenue" element={<RevenueTracking />} />
           <Route path="customers" element={<CustomerManagementPage />} />
           <Route path="officers" element={<FieldOfficerPerformancePage />} />
           <Route path="petty-cash" element={<PettyCashPage />} />
           <Route path="reports" element={<FinancialReportsPage />} />
-          <Route path="targets" element={<PerformanceTargetsPages />} />
-          <Route path="categories" element={<LoanCategoryConfigPage />} />
+          {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
+          {/* <Route path="categories" element={<LoanCategoryConfigPage />} /> */}
           <Route path="users" element={<UserManagementPage />} />
-          <Route path="audit" element={<AuditLogsPage />} />
-          <Route path="settings" element={<SystemConfigurationPage />} />
+          {/* <Route path="audit" element={<AuditLogsPage />} /> */}
+          {/* <Route path="settings" element={<SystemConfigurationPage />} /> */}
           <Route path="profile" element={<AdminProfile />} />
         </Route>
 
