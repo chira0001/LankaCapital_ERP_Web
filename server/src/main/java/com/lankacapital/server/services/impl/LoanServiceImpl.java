@@ -87,15 +87,13 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
-//        Long nic;
-//        try{
-//            nic = Long.parseLong(loanCreateDto.getCustomerNic());
-//        } catch (NumberFormatException e) {
-//            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
-//        }
         Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
+        }
+        long loanCount = loanRepository.countActiveLoans(customer.getNic(), LoanStatus.REJECTED);
+        if (loanCount >= 2) {
+            throw new ResourceExistException("Customer already has 2 loans.");
         }
         Employee employee = employeeRepository
                 .findById(loanCreateDto.getEmployeeId())

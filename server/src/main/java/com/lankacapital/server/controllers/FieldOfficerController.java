@@ -26,12 +26,20 @@ public class FieldOfficerController {
     private final InterestRateService interestRateService;
 
     @PostMapping(path = "/customers/loans")
-    public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto){
-        Loan loan = loanService.addLoanToExistingCustomer(dto);
-        if(loan == null){
-            return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
+    public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto) {
+        try {
+            Loan loan = loanService.addLoanToExistingCustomer(dto);
+            if (loan == null) {
+                return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
+            }
+            return new ResponseEntity<>("Loan submitted successfully", HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (ResourceExistException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("Loan submitted successfully", HttpStatus.CREATED);
     }
 
     @PostMapping(path = "/async/customers")
@@ -137,7 +145,7 @@ public class FieldOfficerController {
             } catch (ResourceExistException e) {
                 successIds.add(customerDto.getNic());
             }catch (Exception e) {
-                e.printStackTrace();
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
         return ResponseEntity.ok(successIds);
@@ -145,22 +153,32 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/loan")
     public ResponseEntity<?> syncToLoan(@RequestBody List<FieldOfficerLoanCreateDto> loanList) {
-        List<Integer> successLoans = new ArrayList<>();
+        List<LoanResSyncDto> response = new ArrayList<>();
         for (FieldOfficerLoanCreateDto loanDto : loanList) {
             try {
                 Loan loan = loanService.addLoanToExistingCustomer(loanDto);
                 if (loan != null) {
-                    successLoans.add(loanDto.getId());
+                    response.add(
+                            new LoanResSyncDto(
+                                    loanDto.getId(),
+                                    loan.getFileNumber(),
+                                    "success"
+                            )
+                    );
                 }
-            } catch (ResourceExistException e) {
-                successLoans.add(loanDto.getId());
-            } catch (ResourceNotFoundException e) {
-                System.err.println("Loan sync skipped. Customer not found: "+ loanDto.getCustomerNic());
-            }catch (Exception e) {
-                e.printStackTrace();
+            } catch (ResourceExistException | ResourceNotFoundException e) {
+                response.add(
+                        new LoanResSyncDto(
+                                loanDto.getId(),
+                                "",
+                                "failure"
+                        )
+                );
+            } catch (Exception e) {
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        return ResponseEntity.ok(successLoans);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("add/customer")
