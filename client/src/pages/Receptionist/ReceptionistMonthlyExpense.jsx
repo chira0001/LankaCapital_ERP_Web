@@ -111,26 +111,34 @@ const ReceptionistMonthlyExpense = () => {
     };
 
     return (
-        <div className="flex flex-col">
+        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex flex-col gap-8">
+            <ToastContainer position="top-right" autoClose={3000} />
+
             {/* EXPENSE FORM */}
-            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
-                <ToastContainer position="top-right" autoClose={3000} />
-                <h1 className='text-2xl font-bold text-center md:text-left'>Monthly Expense Report</h1>
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
+
+                <h1 className="text-3xl font-bold text-gray-800">
+                    Monthly Expense Report
+                </h1>
+
                 <div className="text-right">
-                    <p className="text-sm text-gray-500">Total Expenses</p>
-                    <p className="text-2xl font-bold text-black">
+                    <p className="text-sm text-gray-500 font-medium">
+                        Total Expenses
+                    </p>
+                    <p className="text-2xl font-bold text-gray-800">
                         Rs. {totalExpenses.toFixed(2)}
                     </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
+
                     {/* Vehicle Allowance and Travel */}
                     <div className="flex flex-col">
                         <label className="text-gray-700 text-sm font-medium mb-2">
                             Vehicle Allowance & Travel
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -139,7 +147,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.vehicleAllowanceAndTravel}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -150,7 +160,7 @@ const ReceptionistMonthlyExpense = () => {
                             Fuel Allowance
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -159,7 +169,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.fuelAllowance}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -170,7 +182,7 @@ const ReceptionistMonthlyExpense = () => {
                             Building Rent
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -179,7 +191,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.buildingRent}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -190,7 +204,7 @@ const ReceptionistMonthlyExpense = () => {
                             Telephone Bill
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -199,7 +213,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.telephoneBill}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -210,7 +226,7 @@ const ReceptionistMonthlyExpense = () => {
                             Electricity Bill
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -219,7 +235,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.electricityBill}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -230,7 +248,7 @@ const ReceptionistMonthlyExpense = () => {
                             Router/Internet Bill
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -239,7 +257,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.routerBill}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -250,7 +270,7 @@ const ReceptionistMonthlyExpense = () => {
                             Other Expenses
                         </label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                                 Rs.
                             </span>
                             <input
@@ -259,7 +279,9 @@ const ReceptionistMonthlyExpense = () => {
                                 value={expenseForm.otherExpenses}
                                 onChange={handleInputChange}
                                 placeholder="0.00"
-                                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                       focus:border-transparent transition-all"
                             />
                         </div>
                     </div>
@@ -275,7 +297,9 @@ const ReceptionistMonthlyExpense = () => {
                             onChange={handleInputChange}
                             rows="4"
                             placeholder="Add any additional information about your expenses..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                   focus:border-transparent resize-none transition-all"
                         />
                     </div>
                 </div>
@@ -284,13 +308,18 @@ const ReceptionistMonthlyExpense = () => {
                 <div className="flex justify-end gap-3 pt-4 border-t">
                     <button
                         onClick={handleReset}
-                        className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                        className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg 
+                               text-sm font-medium hover:bg-gray-200 transition-all"
                     >
                         Reset
                     </button>
+
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 
+                               text-white rounded-lg text-sm font-medium
+                               hover:from-blue-700 hover:to-blue-800 
+                               transition-all shadow-md hover:shadow-lg"
                     >
                         Submit Expenses
                     </button>
@@ -298,14 +327,25 @@ const ReceptionistMonthlyExpense = () => {
             </div>
 
             {/* Info Card */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
+            <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
                 <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <svg
+                        className="w-5 h-5 text-blue-600 mt-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                    >
+                        <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                        />
                     </svg>
+
                     <div>
-                        <h3 className="text-sm font-semibold text-blue-900 mb-1">Important Information</h3>
-                        <p className="text-sm text-blue-800">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-1">
+                            Important Information
+                        </h3>
+                        <p className="text-sm text-gray-600">
                             Please ensure all amounts are accurate. You can only submit monthly expenses once per month.
                             All fields support up to 2 decimal places.
                         </p>
@@ -313,7 +353,7 @@ const ReceptionistMonthlyExpense = () => {
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 export default ReceptionistMonthlyExpense
