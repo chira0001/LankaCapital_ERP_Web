@@ -21,4 +21,5 @@ public interface EmployeeService {
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
     List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page);
+    List<FieldOfficerResAsyncDto> updateEmployees(int page);
 }

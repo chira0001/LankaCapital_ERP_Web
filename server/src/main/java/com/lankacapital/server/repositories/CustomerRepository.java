@@ -27,4 +27,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @Query("SELECT s FROM Customer s WHERE s.nic IN :nic")
     List<Customer> findCustomersByIds(@Param("nic") List<Long> nic, Pageable pageable);
+
+    @Query("SELECT c FROM Customer c WHERE c.updateStatus > 0")
+    List<Customer> findUpdatedCustomers(Pageable pageable);
 }

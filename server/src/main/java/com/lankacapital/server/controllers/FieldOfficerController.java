@@ -1,6 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.InterestRate;
 import com.lankacapital.server.entities.Loan;
@@ -24,6 +25,7 @@ public class FieldOfficerController {
     private final InstallmentService installmentService;
     private final EmployeeService employeeService;
     private final InterestRateService interestRateService;
+    private final DailyCollectionService dailyCollectionService;
 
     @PostMapping(path = "/customers/loans")
     public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto) {
@@ -181,11 +183,66 @@ public class FieldOfficerController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PostMapping("/sync/collection")
+    public ResponseEntity<?> syncToDailyCollections(@RequestBody List<CollectionSyncDto> collectionList) {
+        List<String> successIds = new ArrayList<>();
+        for (CollectionSyncDto collectionDto : collectionList) {
+            try {
+                successIds.add(dailyCollectionService.syncDailyCollection(collectionDto));
+            }catch (Exception e) {
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return ResponseEntity.ok(successIds);
+    }
+
     @PostMapping("add/customer")
     public ResponseEntity<?> addLoanToNewCustomer(@RequestBody CustomerAddDto customerAddDto) {
         if(customerAddDto.getEmployeeId() == null || customerAddDto.getCustomerId() == null){
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/update/customer")
+    public ResponseEntity<?> updateCustomers(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(customerService.updateCustomers(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/update/employee")
+    public ResponseEntity<?> updateEmployees(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(employeeService.updateEmployees(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/update/loan")
+    public ResponseEntity<?> updateLoans(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(customerService.updateCustomers(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/add/collection")
+    public ResponseEntity<?> addDailyCollection(@RequestBody CollectionRequestDto collectionDto){
+        try {
+            DailyCollection collection = dailyCollectionService.addDailyCollection(collectionDto);
+            if (collection == null) {
+                return new ResponseEntity<>("Failed to submit the daily collection", HttpStatus.NOT_IMPLEMENTED);
+            }
+            return new ResponseEntity<>("Daily Collection submitted successfully", HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

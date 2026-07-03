@@ -132,6 +132,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .toList();
     }
 
+    @Override
     public CustomerResDto getCustomerDataById(Long nic){
         Customer customer = customerRepository.findByNicWithLoans(nic);
         if(customer == null){
@@ -148,5 +149,15 @@ public class CustomerServiceImpl implements CustomerService {
                 .toList()
         );
         return dto;
+    }
+
+    @Override
+    public List<CustomerResAsyncDto> updateCustomers(int page){
+        Pageable pageable = PageRequest.of(page, 5);
+
+        return customerRepository.findUpdatedCustomers(pageable)
+                .stream()
+                .map(CustomerMapper::mapToCustomerAsyncDto)
+                .toList();
     }
 }

@@ -1,5 +1,6 @@
 package com.lankacapital.server.repositories;
 
+import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Employee;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
        """)
     List<Employee> findFieldOfficersByIds(@Param("ids") List<Long> ids, Pageable pageable);
     List<Employee> findByRoleIsNotNull();
+
+    @Query("SELECT e FROM Employee e WHERE e.updateStatus > 0")
+    List<Employee> findUpdatedEmployees(Pageable pageable);
 }

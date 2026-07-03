@@ -224,6 +224,7 @@ public class LoanServiceImpl implements LoanService {
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 
+    @Override
     public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page){
         List<String> allLoanIds = loanRepository.findAllLoanIds();
         if(allLoanIds == null){
@@ -242,6 +243,7 @@ public class LoanServiceImpl implements LoanService {
                 .toList();
     }
 
+    @Override
     public Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto){
         Loan loan = new Loan();
         loan.setAmount(loanRequestDto.getLoanAmount());
@@ -266,6 +268,7 @@ public class LoanServiceImpl implements LoanService {
         return loanRepository.save(loan);
     }
 
+    @Override
     public String addNewLoanByOfficer(CustomerAddDto customerAddDto){
         if (customerRepository.existsById(customerAddDto.getCustomerId())) {
             throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());

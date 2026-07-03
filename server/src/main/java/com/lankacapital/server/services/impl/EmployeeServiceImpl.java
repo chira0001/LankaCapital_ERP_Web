@@ -6,6 +6,7 @@ import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
@@ -134,6 +135,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         Pageable pageable = PageRequest.of(page, 5);
         return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
+                .stream()
+                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .toList();
+    }
+
+    @Override
+    public List<FieldOfficerResAsyncDto> updateEmployees(int page){
+        Pageable pageable = PageRequest.of(page, 5);
+
+        return employeeRepository.findUpdatedEmployees(pageable)
                 .stream()
                 .map(EmployeeMapper::mapToEmployeeAsyncDto)
                 .toList();
