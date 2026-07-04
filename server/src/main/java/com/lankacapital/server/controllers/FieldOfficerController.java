@@ -11,6 +11,7 @@ import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -245,4 +246,20 @@ public class FieldOfficerController {
             return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PutMapping(path = "/employees/profile")
+    public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
+
+    }
+
+    @GetMapping(path = "/employees/profile")
+    public ResponseEntity<?> getProfileDetails(Authentication authentication){
+        System.out.printf("----Username----- : " + authentication.getName());
+
+        return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
+    }
+
+
+
 }
