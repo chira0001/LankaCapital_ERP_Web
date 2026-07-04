@@ -107,9 +107,9 @@ const ReceptionistDashboard = () => {
         <>
             <ToastContainer position="top-right" autoClose={3000} />
 
-            <div className='bg-gray-100 w-full text-black flex gap-8 h-screen p-6 overflow-hidden'>
+            <div className='bg-gray-100 w-full text-black flex gap-1 md:gap-8 h-screen md:p-6 overflow-hidden'>
                 {/* Sidebar */}
-                <div className='bg-white md:w-[25%] px-3 py-6 rounded-2xl shadow-xl hidden md:flex md:flex-col  gap-6'>
+                <div className='bg-white w-fit px-1 md:px-3 py-6 rounded-2xl shadow-xl md:flex md:flex-col gap-6'>
                     {panelNames.map((value, key) => (
                         <button
                             key={key}
@@ -121,7 +121,7 @@ const ReceptionistDashboard = () => {
                             }}
                         >
                             {value.icon}
-                            <span>{value.name}</span>
+                            <span className='hidden md:flex'>{value.name}</span>
                         </button>
                     ))}
                 </div>
@@ -133,7 +133,7 @@ const ReceptionistDashboard = () => {
 
                 {/* Modal */}
                 {showLogoutModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                    <div className="fixed p-6 inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
 
                         <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-[fadeIn_.2s_ease-in-out]">
 
