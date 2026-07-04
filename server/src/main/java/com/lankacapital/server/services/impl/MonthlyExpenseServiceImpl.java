@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.MonthlyExpenseReportRow;
 import com.lankacapital.server.dtos.MonthlyExpenseRequestDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.MonthlyExpense;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -57,4 +59,31 @@ public class MonthlyExpenseServiceImpl implements MonthlyExpenseService {
             throw new ResourceExistException("Monthly expenses already exist for " + currentMonth);
         }
     }
+
+    @Override
+    public Optional<MonthlyExpenseReportRow> getMonthlyExpenseReport(String month) {
+        return monthlyExpenseRepository.findByMonth(month)
+                .map(this::toReportRow);
+    }
+
+    private MonthlyExpenseReportRow toReportRow(MonthlyExpense expense) {
+        Employee employee = expense.getEmployee();
+
+        return new MonthlyExpenseReportRow(
+                expense.getMonth(),
+                employee != null ? employee.getFirstName() + " " + employee.getLastName() : null,
+                expense.getSalary(),
+                expense.getVehicleAllowanceAndTravel(),
+                expense.getFuelAllowance(),
+                expense.getBuildingRent(),
+                expense.getTelephoneBill(),
+                expense.getElectricityBill(),
+                expense.getRouterBill(),
+                expense.getOtherExpenses(),
+                expense.getNote(),
+                expense.getTotalExpenses(),
+                expense.getRequest()
+        );
+    }
+
 }

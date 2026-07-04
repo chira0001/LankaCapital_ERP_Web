@@ -13,6 +13,7 @@ import com.lankacapital.server.services.PettyCashService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -142,5 +143,14 @@ public class PettyCashServiceImpl implements PettyCashService {
     }
 
 
+    @Override
+    public BigDecimal getApprovedPettyCashTotal() {
+
+        return pettyCashRepository.findAll()
+                .stream()
+                .filter(pc -> pc.getRequest() == Request.APPROVED)
+                .map(PettyCash::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
 

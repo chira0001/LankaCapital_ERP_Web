@@ -3,10 +3,12 @@ package com.lankacapital.server.services;
 import com.lankacapital.server.dtos.PettyCashDto;
 import com.lankacapital.server.dtos.PettyCashResponseDto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface PettyCashService {
 
+    BigDecimal getApprovedPettyCashTotal();
     PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto, String username);
     List<PettyCashResponseDto> getPettyCashForEmployee(String username);
 

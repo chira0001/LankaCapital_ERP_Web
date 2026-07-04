@@ -38,6 +38,10 @@ import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthly
 import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 import { useEffect, useState } from "react";
 
+
+
+
+
 const getUser = () => {
   const token = localStorage.getItem("token");
 
@@ -51,13 +55,36 @@ const getUser = () => {
   }
 };
 
+// const ProtectedRoute = ({ children, role }) => {
+//   const user = getUser();
+//   if (!user) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   if (user.role !== role) {
+//     if (user.role === "ADMIN") {
+//       return <Navigate to="/ad/dashboard" replace />;
+//     }
+
+//     if (user.role === "RECEPTIONIST") {
+//       return <Navigate to="/re/home" replace />;
+//     }
+//     return <Navigate to="/login" replace />;
+//   }
+//   return children;
+// };
+
 const ProtectedRoute = ({ children, role }) => {
   const user = getUser();
+
+  // User is not logged in
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  // User is logged in but has the wrong role
   if (user.role !== role) {
+
     if (user.role === "ADMIN") {
       return <Navigate to="/ad/dashboard" replace />;
     }
@@ -65,22 +92,46 @@ const ProtectedRoute = ({ children, role }) => {
     if (user.role === "RECEPTIONIST") {
       return <Navigate to="/re/home" replace />;
     }
+
     return <Navigate to="/login" replace />;
   }
+
+  // Correct role
   return children;
 };
 
+// const PublicRoute = ({ children }) => {
+//   const user = getUser();
+//   if (!user) {
+//     return children;
+//   }
+//   if (user.role === "ADMIN") {
+//     return <Navigate to="/ad/dashboard" replace />;
+//   }
+//   if (user.role === "RECEPTIONIST") {
+//     return <Navigate to="/re/home" replace />;
+//   }
+//   return children;
+// };
+
 const PublicRoute = ({ children }) => {
   const user = getUser();
+
+  // User not logged in
   if (!user) {
     return children;
   }
+
+  // Admin already logged in
   if (user.role === "ADMIN") {
     return <Navigate to="/ad/dashboard" replace />;
   }
+
+  // Receptionist already logged in
   if (user.role === "RECEPTIONIST") {
     return <Navigate to="/re/home" replace />;
   }
+
   return children;
 };
 

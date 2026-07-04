@@ -9,12 +9,18 @@ import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
+import com.lankacapital.server.enums.LoanStatus;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
-import  java.util.Optional;
+import java.util.stream.Collectors;
+
+
 @Service
 @AllArgsConstructor
 public class LoanServiceImpl implements LoanService {
@@ -205,4 +211,49 @@ public class LoanServiceImpl implements LoanService {
 //        loan.setInterestRate(0.0);
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
+
+    @Override
+    public List<LoanReportRow> getMonthlyLoanReport(YearMonth month) {
+        LocalDateTime start = month.atDay(1).atStartOfDay();
+        LocalDateTime end = month.plusMonths(1).atDay(1).atStartOfDay();
+
+        return loanRepository.findByCreatedAtBetween(start, end)
+                .stream()
+                .map(this::toReportRow)
+                .collect(Collectors.toList());
+    }
+
+    private LoanReportRow toReportRow(Loan loan) {
+        Customer customer = loan.getCustomer();
+        Employee employee = loan.getEmployee();
+        Installment installment = loan.getInstallment();
+        InterestRate interestRate = loan.getInterestRate();
+
+        return new LoanReportRow(
+                loan.getFileNumber(),
+                customer != null ? customer.getNic() : null,
+                customer != null ? customer.getName() : null,
+                loan.getAmount(),
+                interestRate != null ? interestRate.getRate() : null,
+                installment != null ? installment.getValue() : null,
+                loan.getStatus(),
+                employee != null ? employee.getId() : null,
+                employee != null ? employee.getFirstName() + " " + employee.getLastName() : null,
+                loan.getDocumentCharge(),
+                loan.getCreatedAt(),
+                loan.getDecisionNote()
+        );
+    }
+
+    @Override
+    public BigDecimal getApprovedLoanTotal() {
+
+        return loanRepository.findByStatus(LoanStatus.APPROVED)
+                .stream()
+                .map(Loan::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
 }
+
+
