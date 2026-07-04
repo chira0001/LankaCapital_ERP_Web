@@ -155,13 +155,13 @@ const ReceptionistSalary = () => {
     }, [])
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <div className="min-h-full">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                    Monthly Salary Processing
+                    Monthly Salary
                 </h1>
                 <p className="text-gray-600">
                     {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()} Payroll
@@ -169,7 +169,7 @@ const ReceptionistSalary = () => {
             </div>
 
             {/* Summary Card */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6 w-fit">
                 <p className="text-xs text-gray-500 font-medium">Total Employees</p>
                 <p className="text-2xl font-bold text-gray-800 mt-1">
                     {employees?.length || 0}
@@ -180,7 +180,7 @@ const ReceptionistSalary = () => {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
 
                 {/* Table Header Section */}
-                <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+                <div className="py-6 px-2">
                     <h2 className="text-xl font-semibold text-gray-800">
                         Employee Salary Details
                     </h2>
@@ -188,20 +188,20 @@ const ReceptionistSalary = () => {
 
                 <div className="overflow-x-auto">
                     <table className="w-full whitespace-nowrap">
-                        <thead>
+                        <thead className='text-center'>
                             <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Id</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Emp Id</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Employee</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Role</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Working Days</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">OT</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Working <br /> Days</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">OT <br /> Hours</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Unpaid</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Loans</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Advance</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Salary <br /> Advance</th>
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-200 text-center">
                             {employees.map((employee, index) => (
                                 <tr
                                     key={employee.id}
@@ -252,10 +252,10 @@ const ReceptionistSalary = () => {
 
                 {/* Footer */}
                 {employees.length > 0 && (
-                    <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t">
+                    <div className="flex justify-end gap-4 items-center px-6 py-4 bg-gray-50 border-t">
                         <button
                             onClick={clearAllSalaries}
-                            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-all"
+                            className="border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             Clear All
                         </button>

@@ -269,12 +269,19 @@ const ReceptionistView = () => {
     const totalPages = Math.ceil(loanDetails.length / rowsPerPage);
 
     return (
-        <div className="p-3 bg-gray-50 min-h-screen">
+        <div className="p-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8'>
-                <h1 className='text-4xl font-bold text-gray-800'>View Customer</h1>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                        View Customer
+                    </h1>
+                    <p className="text-gray-600">
+                        Access and review customer information
+                    </p>
+                </div>
                 <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
                     <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
                     <input
@@ -335,152 +342,152 @@ const ReceptionistView = () => {
             )}
 
             {/* Customer Information Form */}
-<div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
 
-    <h2 className="text-xl font-semibold text-gray-800 mb-6">
-        Customer Information
-    </h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                    Customer Information
+                </h2>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Customer NIC <span className="text-red-500">*</span>
-            </label>
-            <input
-                type="text"
-                name="customerNic"
-                value={infoForm.customerId || existCustomer?.customerId}
-                readOnly
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Customer NIC <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="customerNic"
+                            value={infoForm.customerId || existCustomer?.customerId}
+                            readOnly
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg 
                            bg-gray-100 text-gray-600 cursor-not-allowed"
-            />
-        </div>
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Business Name <span className="text-red-500">*</span>
-            </label>
-            <input
-                type="text"
-                name="businessName"
-                value={infoForm.businessName}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                required
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Business Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="businessName"
+                            value={infoForm.businessName}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            required
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Business Address
-            </label>
-            <input
-                type="text"
-                name="businessAddress"
-                value={infoForm.businessAddress}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Business Address
+                        </label>
+                        <input
+                            type="text"
+                            name="businessAddress"
+                            value={infoForm.businessAddress}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Business Email
-            </label>
-            <input
-                type="email"
-                name="businessEmail"
-                value={infoForm.businessEmail}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Business Email
+                        </label>
+                        <input
+                            type="email"
+                            name="businessEmail"
+                            value={infoForm.businessEmail}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Contact Number <span className="text-red-500">*</span>
-            </label>
-            <input
-                type="text"
-                name="contactNumber"
-                value={infoForm.contactNumber}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                required
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Contact Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="contactNumber"
+                            value={infoForm.contactNumber}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            required
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Bank Name
-            </label>
-            <input
-                type="text"
-                name="bank"
-                value={infoForm.bank}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Bank Name
+                        </label>
+                        <input
+                            type="text"
+                            name="bank"
+                            value={infoForm.bank}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-        <div className="flex flex-col">
-            <label className="mb-2 text-sm font-medium text-gray-700">
-                Bank Account Number
-            </label>
-            <input
-                type="text"
-                name="bankAccount"
-                value={infoForm.bankAccount}
-                onChange={handleInfoChange}
-                readOnly={!isEdit}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                    <div className="flex flex-col">
+                        <label className="mb-2 text-sm font-medium text-gray-700">
+                            Bank Account Number
+                        </label>
+                        <input
+                            type="text"
+                            name="bankAccount"
+                            value={infoForm.bankAccount}
+                            onChange={handleInfoChange}
+                            readOnly={!isEdit}
+                            className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
-                        ? "bg-white"
-                        : "bg-gray-100 text-gray-600 cursor-not-allowed"
-                    }`}
-            />
-        </div>
+                                    ? "bg-white"
+                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                }`}
+                        />
+                    </div>
 
-    </div>
-</div>
+                </div>
+            </div>
 
             {/* Loan Information Section */}
             {existCustomer && (
