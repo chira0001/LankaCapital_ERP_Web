@@ -14,51 +14,165 @@ const FieldOfficerPerformancePage = () => {
     fetchPerformanceData();
   }, []);
 
+  // const fetchPerformanceData = async () => {
+  //   try {
+  //     // Fetch all field officers
+  //     const officers = await pb.collection('users').getFullList({
+  //       filter: 'role = "Field Officer"',
+  //       $autoCancel: false
+  //     });
+
+  //     // Fetch all transactions
+  //     const transactions = await pb.collection('transactions').getFullList({
+  //       $autoCancel: false
+  //     });
+
+  //     const data = officers.map(officer => {
+  //       const officerTrans = transactions.filter(t => t.field_officer_id === officer.id);
+  //       const paidTrans = officerTrans.filter(t => t.status === 'Paid');
+        
+  //       const totalAssigned = officerTrans.length;
+  //       const totalCollected = paidTrans.reduce((sum, t) => sum + t.amount, 0);
+  //       const pendingAmount = officerTrans.filter(t => t.status !== 'Paid').reduce((sum, t) => sum + t.amount, 0);
+  //       const collectionRate = totalAssigned > 0 ? (paidTrans.length / totalAssigned) * 100 : 0;
+        
+  //       // Find last collection date
+  //       const dates = paidTrans.map(t => new Date(t.payment_date).getTime()).filter(d => !isNaN(d));
+  //       const lastCollectionDate = dates.length > 0 ? new Date(Math.max(...dates)).toLocaleDateString() : 'N/A';
+
+  //       return {
+  //         id: officer.id,
+  //         employee_id: officer.employee_id || 'N/A',
+  //         name: officer.name || officer.email,
+  //         totalAssigned,
+  //         totalCollected,
+  //         pendingAmount,
+  //         collectionRate,
+  //         lastCollectionDate
+  //       };
+  //     });
+
+  //     setPerformanceData(data);
+  //   } catch (error) {
+  //     console.error('Failed to fetch performance data:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchPerformanceData = async () => {
-    try {
-      // Fetch all field officers
-      const officers = await pb.collection('users').getFullList({
-        filter: 'role = "Field Officer"',
-        $autoCancel: false
-      });
+  try {
+    // MOCK FIELD OFFICERS
+    const mockOfficers = [
+      {
+        id: 'F001',
+        employee_id: 'EMP-001',
+        name: 'Saman Perera'
+      },
+      {
+        id: 'F002',
+        employee_id: 'EMP-002',
+        name: 'Kasun Silva'
+      },
+      {
+        id: 'F003',
+        employee_id: 'EMP-003',
+        name: 'Nimal Fernando'
+      }
+    ];
 
-      // Fetch all transactions
-      const transactions = await pb.collection('transactions').getFullList({
-        $autoCancel: false
-      });
+    // MOCK TRANSACTIONS
+    const mockTransactions = [
+      {
+        id: 'T1',
+        field_officer_id: 'F001',
+        amount: 5000,
+        status: 'Paid',
+        payment_date: '2026-07-01'
+      },
+      {
+        id: 'T2',
+        field_officer_id: 'F001',
+        amount: 3000,
+        status: 'Pending',
+        payment_date: '2026-07-02'
+      },
+      {
+        id: 'T3',
+        field_officer_id: 'F002',
+        amount: 10000,
+        status: 'Paid',
+        payment_date: '2026-07-01'
+      },
+      {
+        id: 'T4',
+        field_officer_id: 'F002',
+        amount: 2000,
+        status: 'Paid',
+        payment_date: '2026-07-02'
+      },
+      {
+        id: 'T5',
+        field_officer_id: 'F003',
+        amount: 7000,
+        status: 'Pending',
+        payment_date: '2026-06-30'
+      }
+    ];
 
-      const data = officers.map(officer => {
-        const officerTrans = transactions.filter(t => t.field_officer_id === officer.id);
-        const paidTrans = officerTrans.filter(t => t.status === 'Paid');
-        
-        const totalAssigned = officerTrans.length;
-        const totalCollected = paidTrans.reduce((sum, t) => sum + t.amount, 0);
-        const pendingAmount = officerTrans.filter(t => t.status !== 'Paid').reduce((sum, t) => sum + t.amount, 0);
-        const collectionRate = totalAssigned > 0 ? (paidTrans.length / totalAssigned) * 100 : 0;
-        
-        // Find last collection date
-        const dates = paidTrans.map(t => new Date(t.payment_date).getTime()).filter(d => !isNaN(d));
-        const lastCollectionDate = dates.length > 0 ? new Date(Math.max(...dates)).toLocaleDateString() : 'N/A';
+    const data = mockOfficers.map(officer => {
+      const officerTrans = mockTransactions.filter(
+        t => t.field_officer_id === officer.id
+      );
 
-        return {
-          id: officer.id,
-          employee_id: officer.employee_id || 'N/A',
-          name: officer.name || officer.email,
-          totalAssigned,
-          totalCollected,
-          pendingAmount,
-          collectionRate,
-          lastCollectionDate
-        };
-      });
+      const paidTrans = officerTrans.filter(t => t.status === 'Paid');
 
-      setPerformanceData(data);
-    } catch (error) {
-      console.error('Failed to fetch performance data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const totalAssigned = officerTrans.length;
+
+      const totalCollected = paidTrans.reduce(
+        (sum, t) => sum + t.amount,
+        0
+      );
+
+      const pendingAmount = officerTrans
+        .filter(t => t.status !== 'Paid')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const collectionRate =
+        totalAssigned > 0
+          ? (paidTrans.length / totalAssigned) * 100
+          : 0;
+
+      const dates = paidTrans
+        .map(t => new Date(t.payment_date).getTime())
+        .filter(d => !isNaN(d));
+
+      const lastCollectionDate =
+        dates.length > 0
+          ? new Date(Math.max(...dates)).toLocaleDateString()
+          : 'N/A';
+
+      return {
+        id: officer.id,
+        employee_id: officer.employee_id,
+        name: officer.name,
+        totalAssigned,
+        totalCollected,
+        pendingAmount,
+        collectionRate,
+        lastCollectionDate
+      };
+    });
+
+    setPerformanceData(data);
+  } catch (error) {
+    console.error('Failed to fetch performance data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   if (loading) {
     return (

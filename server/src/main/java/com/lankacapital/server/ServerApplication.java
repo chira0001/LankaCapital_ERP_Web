@@ -18,6 +18,7 @@ public class ServerApplication {
 		System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
 		System.setProperty("DB_DRIVER", dotenv.get("DB_DRIVER"));
 		System.setProperty("SECRET_STRING",dotenv.get("SECRET_STRING"));
+		System.setProperty("FRONTEND_URL",dotenv.get("FRONTEND_URL"));
 
 		SpringApplication.run(ServerApplication.class, args);
 	}

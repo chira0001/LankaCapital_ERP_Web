@@ -23,4 +23,6 @@ public class LoanResponseDto {
     private Long employeeId;
     private LoanStatus status;
     private String rejectionNote;
+    private String applicantName;
+    private Long customerId;
 }
