@@ -111,7 +111,7 @@ const ReceptionistMonthlyExpense = () => {
     };
 
     return (
-        <div className="min-h-full">
+        <div className="min-h-full flex flex-col gap-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* EXPENSE FORM */}

@@ -273,7 +273,7 @@ const ReceptionistView = () => {
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
-            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8'>
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
                         View Customer
@@ -302,51 +302,53 @@ const ReceptionistView = () => {
                 </div>
             </div>
 
-            {/* Edit Button */}
-            {existCustomer && (
-                <div className='w-full flex justify-end gap-4 mb-6'>
-                    {isEdit ? (
-                        <div className='flex gap-2'>
-                            <button
-                                onClick={handleCancelEdit}
-                                className='bg-gray-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition-colors shadow-md'
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                                </svg>
-                                Cancel
-                            </button>
-                            <button
-                                onClick={saveCustomer}
-                                className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-md'
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                                </svg>
-                                Save
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setIsEdit(true)}
-                            className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
-                                <path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path>
-                            </svg>
-                            Edit
-                        </button>
-                    )}
-                </div>
-            )}
-
             {/* Customer Information Form */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
 
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                    Customer Information
-                </h2>
+                <div className='flex justify-between'>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                        Customer Information
+                    </h2>
+                    {/* Edit Button */}
+                    {existCustomer && (
+                        <div className='w-1/2 flex justify-end gap-4 mb-6'>
+                            {isEdit ? (
+                                <div className='flex gap-2'>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className='bg-gray-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition-colors shadow-md'
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                                        </svg>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={saveCustomer}
+                                        className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-md'
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                        </svg>
+                                        Save
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsEdit(true)}
+                                    className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
+                                        <path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path>
+                                    </svg>
+                                    Edit
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -359,8 +361,9 @@ const ReceptionistView = () => {
                             name="customerNic"
                             value={infoForm.customerId || existCustomer?.customerId}
                             readOnly
+                            placeholder='Customer Nic'
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                           bg-gray-100 text-gray-600 cursor-not-allowed"
+                            text-gray-600 cursor-not-allowed"
                         />
                     </div>
 
@@ -375,12 +378,13 @@ const ReceptionistView = () => {
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
                             required
+                            placeholder='Business Name'
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>
@@ -395,12 +399,13 @@ const ReceptionistView = () => {
                             value={infoForm.businessAddress}
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
+                            placeholder='Business Address'
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>
@@ -415,12 +420,13 @@ const ReceptionistView = () => {
                             value={infoForm.businessEmail}
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
+                            placeholder='Business Email'
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>
@@ -435,13 +441,14 @@ const ReceptionistView = () => {
                             value={infoForm.contactNumber}
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
+                            placeholder='Contact Number'
                             required
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>
@@ -456,12 +463,13 @@ const ReceptionistView = () => {
                             value={infoForm.bank}
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
+                            placeholder='Bank Name'
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>
@@ -476,12 +484,13 @@ const ReceptionistView = () => {
                             value={infoForm.bankAccount}
                             onChange={handleInfoChange}
                             readOnly={!isEdit}
+                            placeholder='Bank Account Number'
                             className={`w-full px-4 py-3 border border-gray-300 rounded-lg
                     focus:outline-none focus:ring-2 focus:ring-blue-500
                     focus:border-transparent transition-all
                     ${isEdit
                                     ? "bg-white"
-                                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                    : "text-gray-600 cursor-not-allowed"
                                 }`}
                         />
                     </div>

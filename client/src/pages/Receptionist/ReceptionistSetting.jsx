@@ -118,7 +118,7 @@ const ReceptionistSetting = () => {
     }, [])
 
     return (
-        <div className="min-h-full">
+        <div className="min-h-full p-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             <div>

@@ -129,7 +129,7 @@ const ReceptionistPettyCash = () => {
     };
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <div className="min-h-full p-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header */}
