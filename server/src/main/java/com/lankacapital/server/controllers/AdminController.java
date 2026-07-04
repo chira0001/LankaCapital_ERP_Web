@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
+
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,10 @@ import com.lankacapital.server.services.ReportService;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -31,6 +35,7 @@ public class AdminController {
     private final FinancialStatementService financialStatementService;
     private final ReportService reportService;
     private final DailyCollectionService dailyCollectionService;
+    private final CustomerService customerService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -69,13 +74,7 @@ public class AdminController {
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
-    //admin loan view
-    //@GetMapping("/loans")
-    //public ResponseEntity<?> getAllLoans(){
-     //   return ResponseEntity.ok(loanService.getAllLoans());
-    //}
 
-    ///  /////////new
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans() {
 
@@ -333,6 +332,76 @@ public class AdminController {
             java.math.BigDecimal week
     ) {}
 
+    // ================= CUSTOMER MANAGEMENT =================
+
+    // Get all active customers
+    @GetMapping("/customers")
+    public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllActiveCustomers());
+    }
+
+
+    // Get one customer with loans
+    @GetMapping("/customers/{nic}")
+    public ResponseEntity<?> getCustomer(@PathVariable Long nic) {
+
+        return ResponseEntity.ok(
+                customerService.getActiveCustomerById(nic)
+        );
+    }
+
+    // Soft delete customer
+    @DeleteMapping("/customers/{nic}")
+    public ResponseEntity<?> deleteCustomer(@PathVariable Long nic) {
+
+        customerService.deleteCustomer(nic);
+
+        return ResponseEntity.ok("Customer deleted successfully");
+    }
+
+    // Undo delete
+    @PutMapping("/customers/{nic}/undo")
+    public ResponseEntity<?> undoDeleteCustomer(@PathVariable Long nic) {
+
+        customerService.undoDelete(nic);
+
+        return ResponseEntity.ok("Customer restored successfully");
+    }
+
+    //Add Customer to Customer Management
+    @PostMapping("/customers")
+    public ResponseEntity<?> createCustomer(
+            @RequestBody CustomerRegisterDto dto
+    ) {
+
+        return new ResponseEntity<>(
+                customerService.registerCustomer(dto),
+                HttpStatus.CREATED
+        );
+    }
+
+    //Update Customer
+    @PutMapping("/customers/{nic}")
+    public ResponseEntity<?> updateCustomer(
+            @PathVariable Long nic,
+            @RequestBody CustomerRegisterDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                customerService.updateCustomerById(nic, dto)
+        );
+    }
+
+
+    @PostMapping("/loans")
+    public ResponseEntity<Loan> addLoan(
+            @RequestBody LoanCreateDto dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.addLoan(dto, authentication.getName())
+        );
+    }
 }
 
 

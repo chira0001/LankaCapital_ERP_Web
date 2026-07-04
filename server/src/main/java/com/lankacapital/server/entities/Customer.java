@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -39,5 +40,12 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
-    private List<Loan> loans;
+   // private List<Loan> loans;
+    private List<Loan> loans = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    private Long updateStatus = 0L;
+
 }

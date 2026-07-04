@@ -1,9 +1,11 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.FinancialStatement;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.FinancialStatementMapper;
+import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.FinancialStatementRepository;
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
@@ -34,6 +36,8 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     private final MonthlyExpenseService monthlyExpenseService;
     private final PettyCashService pettyCashService;
     private final FinancialStatementRepository financialStatementRepository;
+    private final EmployeeRepository employeeRepository;
+
 
     private BigDecimal safe(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
@@ -671,6 +675,22 @@ public byte[] generateFinancialReportPdf(String month) {
         return dto;
     }
 
+    @Override
+    public String addFinancials(String username, FinancialRequestDto financialRequestDto) {
+        try{
+            Employee employee = employeeRepository.findByEmail(username);
+            if(employee == null){
+                throw new ResourceNotFoundException("Employee username not defined");
+            }
+
+            FinancialStatement financialStatement = FinancialStatementMapper.mapToFinancialStatement(financialRequestDto);
+
+            financialStatementRepository.save(financialStatement);
+            return "Successfully entered details";
+        }catch (Exception e){
+            return "Error entering details";
+        }
+    }
 
 
 }

@@ -1,8 +1,6 @@
 package com.lankacapital.server.services;
 
-import com.lankacapital.server.dtos.CustomerInfoDto;
-import com.lankacapital.server.dtos.CustomerRegisterDto;
-import com.lankacapital.server.dtos.CustomerResponseDto;
+import com.lankacapital.server.dtos.*;
 
 import java.util.List;
 
@@ -12,5 +10,25 @@ public interface CustomerService {
     CustomerResponseDto getCustomerById(Long nic);
     CustomerInfoDto getCustomerInfoById(Long nic);
     CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
-}
+    List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page);
+    CustomerResDto getCustomerDataById(Long nic);
 
+    // Get all active customers
+    List<CustomerResponseDto> getAllActiveCustomers();
+
+
+
+
+
+    /// ================= ACTIVE CUSTOMER =================
+
+   // List<CustomerResponseDto> getAllActiveCustomers();
+
+    CustomerResponseDto getActiveCustomerById(Long nic);
+
+    // ================= CUSTOMER MANAGEMENT =================
+
+    void deleteCustomer(Long nic);
+
+    void undoDelete(Long nic);
+}

@@ -33,6 +33,7 @@ public interface FinancialStatementService {
     FinancialReportDto getFinancialReport(String month);
     FinancialStatement getFinancialStatement(String month);
 
+    String addFinancials(String username, FinancialRequestDto financialRequestDto);
     List<FinancialStatement> importAssetsLiabilities(org.springframework.web.multipart.MultipartFile file);
 
     //annually
@@ -41,6 +42,7 @@ public interface FinancialStatementService {
     BalanceSheetDto getAnnualBalanceSheet(String year);
 
     CashFlowDto getAnnualCashFlow(String year);
+
 
 
 }
