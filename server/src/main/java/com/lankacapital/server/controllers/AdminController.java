@@ -36,6 +36,7 @@ public class AdminController {
     private final ReportService reportService;
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
+    private final DashboardService dashboardService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -433,6 +434,12 @@ public class AdminController {
         return ResponseEntity.ok("Employee deleted successfully");
     }
 
+    @GetMapping("/financial-dashboard/summary")
+    public ResponseEntity<FinancialDashboardDto> getFinancialDashboard() {
+        return ResponseEntity.ok(
+                dashboardService.getFinancialDashboard()
+        );
+    }
 }
 
 
