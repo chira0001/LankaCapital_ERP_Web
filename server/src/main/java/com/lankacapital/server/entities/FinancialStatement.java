@@ -21,7 +21,7 @@ public class FinancialStatement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "report_date", nullable = false , unique=true )
+    @Column(name = "report_date", unique=true )
     private LocalDate reportDate;
 
     // =========================

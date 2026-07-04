@@ -141,7 +141,7 @@ public class LoanMapper {
         dto.setEmployee_id(loan.getEmployee().getId());
         dto.setCreated_at(loan.getCreatedAt());
         dto.setDocument_charge(loan.getDocumentCharge());
-        dto.setRejection_note(loan.getRejectionNote());
+//        dto.setRejection_note(loan.getRejectionNote());
         dto.setStatus(loan.getStatus().toString());
         dto.setInstallment_id(loan.getInstallment().getId());
         dto.setInterest_rate_id(loan.getInterestRate() != null
@@ -176,10 +176,10 @@ public class LoanMapper {
                         : 0.0
         );
         dto.setStatus(loan.getStatus());
-        dto.setRejectionNote(loan.getRejectionNote() != null
-                ? loan.getRejectionNote()
-                : null
-        );
+//        dto.setRejectionNote(loan.getRejectionNote() != null
+//                ? loan.getRejectionNote()
+//                : null
+//        );
         dto.setInterestRate(interestRate);
         dto.setInstallments(installment);
         dto.setEmployee(employee);

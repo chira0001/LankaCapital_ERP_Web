@@ -37,6 +37,7 @@ import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
 import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
 import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 import { useEffect, useState } from "react";
+import ReceptionistFinancials from "./pages/Receptionist/ReceptionistFinancials";
 
 
 
@@ -180,6 +181,7 @@ const App = () => {
           <Route path="view" element={<ReceptionistView />} />
           <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
           <Route path="monthlyPetty" element={<ReceptionistPettyCash />} />
+          <Route path="financials" element={<ReceptionistFinancials />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
 

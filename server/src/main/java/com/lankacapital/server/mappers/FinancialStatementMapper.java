@@ -1,5 +1,6 @@
 package com.lankacapital.server.mappers;
 
+import com.lankacapital.server.dtos.FinancialRequestDto;
 import com.lankacapital.server.dtos.FinancialStatementDto;
 import com.lankacapital.server.entities.FinancialStatement;
 
@@ -63,4 +64,22 @@ public class FinancialStatementMapper {
                 .build();
     }
 
+    public static FinancialStatement mapToFinancialStatement(FinancialRequestDto dto){
+        FinancialStatement financialStatement = new FinancialStatement();
+
+        financialStatement.setLandBuilding(dto.getLandBuilding());
+        financialStatement.setEquipment(dto.getEquipment());
+        financialStatement.setFurniture(dto.getFurniture());
+        financialStatement.setVehicles(dto.getVehicles());
+        financialStatement.setAccumulatedDepreciation(dto.getAccumulatedDepreciation());
+        financialStatement.setDirectorCurrentAccount(dto.getDirectorCurrentAccount());
+        financialStatement.setOtherLiabilities(dto.getOtherLiabilities());
+        financialStatement.setTradePayables(dto.getTradePayables());
+        financialStatement.setInventory(dto.getInventory());
+        financialStatement.setPrepaidExpenses(dto.getPrepaidExpenses());
+        financialStatement.setBankLoan(dto.getBankLoan());
+        financialStatement.setNotes(dto.getNotes());
+
+        return financialStatement;
+    }
 }

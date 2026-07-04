@@ -163,7 +163,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setStatus(LoanStatus.APPROVED);
 
         //clear rejection note
-        loan.setRejectionNote(null);
+//        loan.setRejectionNote(null);
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         loan.setDecisionNote(dto.getDecisionNote());
         //save and return
@@ -179,7 +179,7 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
         loan.setEmployee(employee);
         loan.setStatus(LoanStatus.REJECTED);
-        loan.setRejectionNote(dto.getRejectionNote());
+//        loan.setRejectionNote(dto.getRejectionNote());
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         return loanRepository.save(loan);
     }
@@ -200,7 +200,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setStatus(LoanStatus.PENDING);
 
         // clear rejection note
-        loan.setRejectionNote(null);
+//        loan.setRejectionNote(null);
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
         loan.setDecisionNote(null);
 
