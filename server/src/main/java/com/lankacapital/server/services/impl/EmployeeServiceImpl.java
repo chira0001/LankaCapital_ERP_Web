@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,11 +36,26 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public UserDetailsService userDetailsService() {
-        return new UserDetailsService() {
-            @Override
-            public UserDetails loadUserByUsername(String username) {
-                return employeeRepository.findByEmail(username);
+//        return new UserDetailsService() {
+//            @Override
+//            public UserDetails loadUserByUsername(String username) {
+//                return employeeRepository.findByEmail(username);
+//            }
+//        };
+
+        /// /new
+        return username -> {
+            Employee employee = employeeRepository.findByEmail(username);
+
+            if (employee == null) {
+                throw new ResourceNotFoundException("User not found");
             }
+
+            return new org.springframework.security.core.userdetails.User(
+                    employee.getEmail(),
+                    employee.getPassword(),
+                    List.of(new SimpleGrantedAuthority(employee.getRole().getRoleName()))
+            );
         };
     }
 

@@ -24,19 +24,56 @@ const CustomerManagementPage = () => {
     applyFilters();
   }, [borrowers, searchTerm]);
 
+  // const fetchBorrowers = async () => {
+  //   try {
+  //     const data = await pb.collection('borrowers').getFullList({
+  //       sort: '-created_date',
+  //       $autoCancel: false
+  //     });
+  //     setBorrowers(data);
+  //   } catch (error) {
+  //     console.error('Failed to fetch borrowers:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchBorrowers = async () => {
-    try {
-      const data = await pb.collection('borrowers').getFullList({
-        sort: '-created_date',
-        $autoCancel: false
-      });
-      setBorrowers(data);
-    } catch (error) {
-      console.error('Failed to fetch borrowers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const mockBorrowers = [
+      {
+        id: 'B001',
+        name: 'Kamal Perera',
+        email: 'kamal@gmail.com',
+        phone: '0711234567',
+        address: 'Colombo 05',
+        aadhar_number: '123456789V'
+      },
+      {
+        id: 'B002',
+        name: 'Nimal Fernando',
+        email: 'nimal@gmail.com',
+        phone: '0729876543',
+        address: 'Kandy',
+        aadhar_number: '987654321V'
+      },
+      {
+        id: 'B003',
+        name: 'Sunil Rajapaksha',
+        email: '',
+        phone: '0771112233',
+        address: 'Galle',
+        aadhar_number: '456123789V'
+      }
+    ];
+
+    setBorrowers(mockBorrowers);
+  } catch (error) {
+    console.error('Failed to fetch borrowers:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const applyFilters = () => {
     let filtered = [...borrowers];
@@ -52,22 +89,64 @@ const CustomerManagementPage = () => {
     setFilteredBorrowers(filtered);
   };
 
+  // const viewBorrowerDetails = async (borrower) => {
+  //   setSelectedBorrower(borrower);
+    
+  //   try {
+  //     const loans = await pb.collection('loans').getFullList({
+  //       filter: `borrower_id = "${borrower.id}"`,
+  //       $autoCancel: false
+  //     });
+  //     setBorrowerLoans(loans);
+  //   } catch (error) {
+  //     console.error('Failed to fetch borrower loans:', error);
+  //     setBorrowerLoans([]);
+  //   }
+    
+  //   setShowDialog(true);
+  // };
+
   const viewBorrowerDetails = async (borrower) => {
-    setSelectedBorrower(borrower);
-    
-    try {
-      const loans = await pb.collection('loans').getFullList({
-        filter: `borrower_id = "${borrower.id}"`,
-        $autoCancel: false
-      });
-      setBorrowerLoans(loans);
-    } catch (error) {
-      console.error('Failed to fetch borrower loans:', error);
-      setBorrowerLoans([]);
-    }
-    
-    setShowDialog(true);
-  };
+  setSelectedBorrower(borrower);
+
+  try {
+    const mockLoans = {
+      B001: [
+        {
+          id: 'L001',
+          amount: 50000,
+          interest_rate: 12,
+          duration_months: 12,
+          status: 'Active'
+        },
+        {
+          id: 'L002',
+          amount: 20000,
+          interest_rate: 10,
+          duration_months: 6,
+          status: 'Closed'
+        }
+      ],
+      B002: [
+        {
+          id: 'L003',
+          amount: 100000,
+          interest_rate: 15,
+          duration_months: 24,
+          status: 'Overdue'
+        }
+      ],
+      B003: []
+    };
+
+    setBorrowerLoans(mockLoans[borrower.id] || []);
+  } catch (error) {
+    console.error('Failed to fetch borrower loans:', error);
+    setBorrowerLoans([]);
+  }
+
+  setShowDialog(true);
+};
 
   if (loading) {
     return (

@@ -1,5 +1,9 @@
 import React from "react";
-// import { DateCalendar } from '@mui/material';
+//import { DateCalendar } from '@mui/material';
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 
 const ReceptionistHome = () => {
     /* ================= SAMPLE DATA ================= */
@@ -164,7 +168,14 @@ const ReceptionistHome = () => {
                 {/* ================= SCHEDULE ================= */}
                 <div className="bg-white rounded-xl shadow-sm p-6 h-fit">
                     <h2 className="font-semibold text-lg mb-4">Schedule</h2>
-                    {/* <DateCalendar /> */}
+
+                    {/* <DateCalendar />*/ } 
+                 {/*change this to mui date picker*/}
+
+
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateCalendar />
+                    </LocalizationProvider>
                     
                 </div>
             </div>

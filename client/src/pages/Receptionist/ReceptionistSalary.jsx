@@ -25,21 +25,54 @@ const ReceptionistSalary = () => {
         loans: "",
         salaryAdvance: ""
     });
+    // const handleSalaryChange = (employeeId, field, value) => {
+    //     setEmployeeSalaries(prev => ({
+    //         ...prev,
+    //         [employeeId]: {
+    //             ...prev[employeeId],
+    //             [field]: value || 0
+    //         }
+    //     }));
+    // };
+
     const handleSalaryChange = (employeeId, field, value) => {
+
+        if (value === "") {
+            setEmployeeSalaries(prev => ({
+                ...prev,
+                [employeeId]: {
+                    ...prev[employeeId],
+                    [field]: ""
+                }
+            }));
+            return;
+        }
+
+        const regex = /^\d*\.?\d{0,2}$/;
+
+        if (!regex.test(value)) {
+            return;
+        }
+
+        if (!value.includes(".")) {
+            value = value.replace(/^0+(?=\d)/, "");
+        }
+
         setEmployeeSalaries(prev => ({
             ...prev,
             [employeeId]: {
                 ...prev[employeeId],
-                [field]: parseFloat(value) || 0
+                [field]: value
             }
         }));
     };
+
     const submitSalaries = async (e) => {
         try {
             e.preventDefault();
             const payload = employees.map(employee => ({
                 employeeId: employee.id,
-                workingDays: parseInt(employeeSalaries[employee.id]?.workingDays) || 0,
+                workingDays: parseFloat(employeeSalaries[employee.id]?.workingDays) || 0,
                 otHours: parseFloat(employeeSalaries[employee.id]?.otHours) || 0,
                 unpaidLeaves: parseFloat(employeeSalaries[employee.id]?.unpaidLeaves) || 0,
                 loans: parseFloat(employeeSalaries[employee.id]?.loans) || 0,
@@ -122,136 +155,95 @@ const ReceptionistSalary = () => {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 flex flex-col rounded-2xl items-start">
+        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl shadow">
-                    Rs.
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                        Monthly Salary Processing
-                    </h1>
-                    <p className="text-gray-500 text-sm">
-                        {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()} Payroll
-                    </p>
-                </div>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    Monthly Salary Processing
+                </h1>
+                <p className="text-gray-600">
+                    {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()} Payroll
+                </p>
             </div>
 
             {/* Summary Card */}
-            <div className="bg-white rounded-xl shadow border border-gray-200 px-5 py-4 mb-6">
-                <p className="text-gray-500 text-xs">Total Employees</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <p className="text-xs text-gray-500 font-medium">Total Employees</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">
                     {employees?.length || 0}
                 </p>
             </div>
 
             {/* Salary Table Card */}
-            <div className="bg-white rounded-xl shadow border border-gray-200 overflow-auto">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+
+                {/* Table Header Section */}
+                <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        Employee Salary Details
+                    </h2>
+                </div>
 
                 <div className="overflow-x-auto">
-                    <table className="table-auto  whitespace-nowrap">
+                    <table className="w-full whitespace-nowrap">
                         <thead>
-                            <tr className="bg-gray-900 text-white text-center text-lg">
-                                <th className="px-4 py-3">Id</th>
-                                <th className="px-4 py-3">Employee</th>
-                                <th className="px-4 py-3">Role</th>
-                                <th className="px-4 py-3 text-center">Working <br /> Days</th>
-                                <th className="px-4 py-3 text-center">OT</th>
-                                <th className="px-4 py-3 text-center">Unpaid</th>
-                                <th className="px-4 py-3 text-center">Loans</th>
-                                <th className="px-4 py-3 text-center">Advance</th>
+                            <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Id</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Employee</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Working Days</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">OT</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Unpaid</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Loans</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Advance</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y divide-gray-200">
                             {employees.map((employee, index) => (
-                                <tr key={employee.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-4 py-3 text-gray-500">
+                                <tr
+                                    key={employee.id}
+                                    className="hover:bg-blue-50 transition-colors"
+                                >
+                                    <td className="px-6 py-4 text-sm text-gray-500">
                                         {index + 1}
                                     </td>
 
-                                    <td className="px-4 py-3 font-medium text-gray-800">
+                                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">
                                         {employee.firstName} {employee.lastName}
                                     </td>
 
-                                    <td className="px-4 py-3 text-gray-500">
+                                    <td className="px-6 py-4 text-sm text-gray-600">
                                         {employee.role.roleName === "FO"
                                             ? "Field Officer"
                                             : toSentenceCase(employee.role.roleName)}
                                     </td>
 
-                                    {/* Working Days */}
-                                    <td className="px-4 py-3 text-center">
-                                        <input
-                                            type="text"
-                                            min="0"
-                                            max="31"
-                                            value={employeeSalaries[employee.id]?.workingDays || 0}
-                                            onChange={(e) =>
-                                                handleSalaryChange(employee.id, 'workingDays', e.target.value)
-                                            }
-                                            className="w-15 px-2 py-1 border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-gray-800 focus:outline-none"
-                                        />
-                                    </td>
-
-                                    {/* OT Hours */}
-                                    <td className="px-4 py-3 text-center">
-                                        <input
-                                            type="text"
-                                            step="0.5"
-                                            min="0"
-                                            value={employeeSalaries[employee.id]?.otHours || 0}
-                                            onChange={(e) =>
-                                                handleSalaryChange(employee.id, 'otHours', e.target.value)
-                                            }
-                                            className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center focus:ring-1 focus:ring-gray-800 focus:outline-none"
-                                        />
-                                    </td>
-
-                                    {/* Unpaid Leaves */}
-                                    <td className="px-4 py-3 text-center">
-                                        <input
-                                            type="text"
-                                            step="0.5"
-                                            min="0"
-                                            value={employeeSalaries[employee.id]?.unpaidLeaves || 0}
-                                            onChange={(e) =>
-                                                handleSalaryChange(employee.id, 'unpaidLeaves', e.target.value)
-                                            }
-                                            className="w-20 px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded-md text-center focus:ring-1 focus:ring-red-500 focus:outline-none"
-                                        />
-                                    </td>
-
-                                    {/* Loans */}
-                                    <td className="px-4 py-3 text-center">
-                                        <input
-                                            type="text"
-                                            step="0.01"
-                                            min="0"
-                                            value={employeeSalaries[employee.id]?.loans || 0}
-                                            onChange={(e) =>
-                                                handleSalaryChange(employee.id, 'loans', e.target.value)
-                                            }
-                                            className="w-24 px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded-md text-right focus:ring-1 focus:ring-red-500 focus:outline-none"
-                                        />
-                                    </td>
-
-                                    {/* Salary Advance */}
-                                    <td className="px-4 py-3 text-center">
-                                        <input
-                                            type="text"
-                                            step="0.01"
-                                            min="0"
-                                            value={employeeSalaries[employee.id]?.salaryAdvance || 0}
-                                            onChange={(e) =>
-                                                handleSalaryChange(employee.id, 'salaryAdvance', e.target.value)
-                                            }
-                                            className="w-24 px-2 py-1 border border-red-300 bg-red-50 text-red-700 rounded-md text-right focus:ring-1 focus:ring-red-500 focus:outline-none"
-                                        />
-                                    </td>
+                                    {/* Standardized Input Style */}
+                                    {[
+                                        { key: "workingDays", type: "number", min: 0, max: 31 },
+                                        { key: "otHours", type: "number", step: "0.5", min: 0, max: 24 },
+                                        { key: "unpaidLeaves", type: "number", step: "0.5", min: 0 },
+                                        { key: "loans", type: "number", step: "0.01", min: 0 },
+                                        { key: "salaryAdvance", type: "number", step: "0.01", min: 0 },
+                                    ].map((field) => (
+                                        <td key={field.key} className="px-6 py-4 text-center">
+                                            <input
+                                                type={field.type}
+                                                step={field.step}
+                                                min={field.min}
+                                                max={field.max}
+                                                value={employeeSalaries[employee.id]?.[field.key]}
+                                                onChange={(e) =>
+                                                    handleSalaryChange(employee.id, field.key, e.target.value)
+                                                }
+                                                placeholder="0"
+                                                className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            />
+                                        </td>
+                                    ))}
                                 </tr>
                             ))}
                         </tbody>
@@ -260,17 +252,17 @@ const ReceptionistSalary = () => {
 
                 {/* Footer */}
                 {employees.length > 0 && (
-                    <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t">
                         <button
                             onClick={clearAllSalaries}
-                            className="px-5 py-2 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition text-sm"
+                            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-all"
                         >
                             Clear All
                         </button>
 
                         <button
                             onClick={submitSalaries}
-                            className="px-6 py-2 rounded-lg bg-green-600 text-white font-medium shadow hover:bg-green-700 transition text-sm"
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
                         >
                             Submit All Salaries
                         </button>
@@ -278,7 +270,7 @@ const ReceptionistSalary = () => {
                 )}
             </div>
         </div>
-    )
+    );
 }
 
 export default ReceptionistSalary

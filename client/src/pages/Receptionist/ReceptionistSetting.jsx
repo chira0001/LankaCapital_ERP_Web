@@ -118,145 +118,145 @@ const ReceptionistSetting = () => {
     }, [])
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex flex-col gap-8">
             <ToastContainer position="top-right" autoClose={3000} />
 
-            <h1 className="text-2xl font-semibold">Settings</h1>
+            <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    Settings
+                </h1>
+                <p className="text-gray-600">
+                    Manage your personal information and security preferences
+                </p>
+            </div>
 
             {/* PERSONAL INFORMATION */}
-            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold">Personal Information</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        Personal Information
+                    </h2>
                     <button
                         onClick={updateProfileInfo}
-                        className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 
+                               text-white rounded-lg text-sm font-medium
+                               hover:from-blue-700 hover:to-blue-800
+                               transition-all shadow-md hover:shadow-lg"
                     >
                         Save Changes
                     </button>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
+                    {[
+                        { label: "First Name", name: "firstName" },
+                        { label: "Last Name", name: "lastName" },
+                        { label: "NIC", name: "nic", disabled: true },
+                        { label: "Email Address", name: "email", type: "email" },
+                        { label: "Phone Number", name: "phoneNumber" }
+                    ].map((field) => (
+                        <div key={field.name} className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-700 mb-2">
+                                {field.label}
+                            </span>
+                            <input
+                                type={field.type || "text"}
+                                name={field.name}
+                                value={profileForm[field.name]}
+                                onChange={(e) =>
+                                    setProfileForm({
+                                        ...profileForm,
+                                        [e.target.name]: e.target.value
+                                    })
+                                }
+                                disabled={field.disabled}
+                                className={`w-full px-4 py-3 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-blue-500
+                                focus:border-transparent transition-all
+                                ${field.disabled
+                                        ? "bg-gray-100 text-gray-600 cursor-not-allowed"
+                                        : "bg-white"
+                                    }`}
+                            />
+                        </div>
+                    ))}
+
                     <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">First Name</span>
-                        <input
-                            type="text"
-                            name="firstName"
-                            value={profileForm.firstName}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Last Name</span>
-                        <input
-                            type="text"
-                            name="lastName"
-                            value={profileForm.lastName}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">NIC</span>
-                        <input
-                            type="text"
-                            name="nic"
-                            value={profileForm.nic}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                            disabled
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Email Address</span>
-                        <input
-                            type="email"
-                            name="email"
-                            value={profileForm.email}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Phone Number</span>
-                        <input
-                            type="text"
-                            name="phoneNumber"
-                            value={profileForm.phoneNumber}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">User Role</span>
-                        <p className="font-medium px-3 py-2">{profileForm.role?.roleName === "fo" ? "Field Officer" : toSentenceCase(profileForm.role?.roleName)}</p>
+                        <span className="text-sm font-medium text-gray-700 mb-2">
+                            User Role
+                        </span>
+                        <p className="px-4 py-3 font-medium text-gray-800 bg-gray-50 rounded-lg border border-gray-200">
+                            {profileForm.role?.roleName === "fo"
+                                ? "Field Officer"
+                                : toSentenceCase(profileForm.role?.roleName)}
+                        </p>
                     </div>
                 </div>
             </div>
 
             {/* ADDRESS */}
-            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold">Address</h2>
-                </div>
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                    Address
+                </h2>
 
-                <div className="grid md:grid-cols-1 gap-6">
-                    <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm mb-1">Full Address</span>
-                        <textarea
-                            name="address"
-                            value={profileForm.address}
-                            onChange={(e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value })}
-                            rows="3"
-                            className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
-                        />
-                    </div>
+                <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700 mb-2">
+                        Full Address
+                    </span>
+                    <textarea
+                        name="address"
+                        value={profileForm.address}
+                        onChange={(e) =>
+                            setProfileForm({
+                                ...profileForm,
+                                [e.target.name]: e.target.value
+                            })
+                        }
+                        rows="3"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                               focus:outline-none focus:ring-2 focus:ring-blue-500
+                               focus:border-transparent resize-none transition-all"
+                    />
                 </div>
             </div>
 
             {/* SECURITY */}
-            <div className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold">Security</h2>
-                </div>
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                    Security
+                </h2>
 
-                {viewPasswordForm &&
+                {viewPasswordForm && (
                     <div className="grid md:grid-cols-3 gap-6">
-                        <div className="flex flex-col">
-                            <span className="text-gray-400 text-sm mb-1">Old Password</span>
-                            <input
-                                type="password"
-                                name="oldPassword"
-                                value={passwordForm.oldPassword}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
-                                placeholder="Enter old password"
-                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                            />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-gray-400 text-sm mb-1">New Password</span>
-                            <input
-                                type="password"
-                                name="newPassword"
-                                value={passwordForm.newPassword}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                                placeholder="Enter new password"
-                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                            />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-gray-400 text-sm mb-1">Confirm Password</span>
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                value={passwordForm.confirmPassword}
-                                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                                placeholder="Confirm new password"
-                                className="font-medium px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                            />
-                        </div>
+                        {[
+                            { label: "Old Password", name: "oldPassword" },
+                            { label: "New Password", name: "newPassword" },
+                            { label: "Confirm Password", name: "confirmPassword" }
+                        ].map((field) => (
+                            <div key={field.name} className="flex flex-col">
+                                <span className="text-sm font-medium text-gray-700 mb-2">
+                                    {field.label}
+                                </span>
+                                <input
+                                    type="password"
+                                    name={field.name}
+                                    value={passwordForm[field.name]}
+                                    onChange={(e) =>
+                                        setPasswordForm({
+                                            ...passwordForm,
+                                            [field.name]: e.target.value
+                                        })
+                                    }
+                                    placeholder={`Enter ${field.label.toLowerCase()}`}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                                           focus:outline-none focus:ring-2 focus:ring-blue-500
+                                           focus:border-transparent transition-all"
+                                />
+                            </div>
+                        ))}
                     </div>
-                }
+                )}
 
                 <div className="flex justify-end gap-3">
                     {viewPasswordForm && (
@@ -269,21 +269,26 @@ const ReceptionistSetting = () => {
                                     confirmPassword: ""
                                 });
                             }}
-                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg
+                                   text-sm font-medium hover:bg-gray-200 transition-all"
                         >
                             Cancel
                         </button>
                     )}
+
                     <button
                         onClick={handlePasswordButtonClick}
-                        className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700
+                               text-white rounded-lg text-sm font-medium
+                               hover:from-blue-700 hover:to-blue-800
+                               transition-all shadow-md hover:shadow-lg"
                     >
                         {viewPasswordForm ? "Update Password" : "Change Password"}
                     </button>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 export default ReceptionistSetting
