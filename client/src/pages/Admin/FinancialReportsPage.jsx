@@ -1,290 +1,361 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet";
-import { File, Download, CalendarDays } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
-import DatePicker from "@/components/DatePicker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/component/ui/select";
+import api from "@/lib/api";
 import * as XLSX from "xlsx";
 
-/* FORMAT CURRENCY */
-const formatLKR = (amount) =>
-  new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-  }).format(amount);
+import MonthPicker from "@/components/reports/MonthPicker";
+import YearPicker from "@/components/reports/YearPicker";
+import dayjs from "dayjs";
 
-/*  HARD CODE DATA */
-const dummyTransactions = [
-  {
-    loan_id: "LN001",
-    borrower_name: "Kamal Perera",
-    amount: 50000,
-    interest_rate: 12,
-    duration: 12,
-    status: "Paid",
-    officer: "Nimal",
-    payment_date: "2026-04-10",
-  },
-  {
-    loan_id: "LN002",
-    borrower_name: "Saman Silva",
-    amount: 75000,
-    interest_rate: 10,
-    duration: 10,
-    status: "Pending",
-    officer: "Kamal",
-    payment_date: "2026-04-12",
-  },
-  {
-    loan_id: "LN003",
-    borrower_name: "Nimal Perera",
-    amount: 100000,
-    interest_rate: 15,
-    duration: 18,
-    status: "Paid",
-    officer: "Sunil",
-    payment_date: "2026-04-15",
-  },
-];
-
-/*MAIN COMPONENT */
 const FinancialReportsPage = () => {
-  const [reportType, setReportType] = useState("collection");
-    // DatePicker uses Date objects
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [reportType, setReportType] = useState("dashboard");
 
+  const [month, setMonth] = useState(dayjs());
+  const [year, setYear] = useState(dayjs());
 
-  /* EDITABLE EXPORT DATA (ADMIN FEATURE)*/
-  const [exportData, setExportData] = useState([]);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  /*FILTER + EXPORT */
-  const handleGeneratePreview = () => {
-    // If no dates selected → show all data
-    if (!startDate || !endDate) {
-        setExportData(dummyTransactions);
-        return;
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+
+  // ============================
+  // FORMATTERS
+  // ============================
+  const formatMonth = (value) =>
+    value ? value.format("YYYY-MM") : "";
+
+  const formatYear = (value) =>
+    value ? value.format("YYYY") : "";
+
+  // ============================
+  // ENDPOINTS
+  // ============================
+  const getEndpoint = (type) => {
+    switch (type) {
+      case "loans":
+        return "/admin/reports/loans/monthly";
+      case "expenses":
+        return "/admin/reports/expenses/monthly";
+      case "dashboard":
+        return "/admin/financial-dashboard";
+      case "cashflow":
+        return "/admin/financial-cashflow";
+      case "balance":
+        return "/admin/financial-balance-sheet";
+      case "profitloss":
+        return "/admin/financial-profit-loss";
+      case "statement":
+        return "/admin/financial-report";
+      case "annual-report":
+        return "/admin/annual-report";
+      case "annual-balance":
+        return "/admin/annual-balance-sheet";
+      case "annual-cashflow":
+        return "/admin/annual-cash-flow";
+      default:
+        return "/admin/financial-dashboard";
     }
-
-    // Ensure correct date comparison
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    // optional safety: set time range full day
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-
-    // Filter data
-    const filtered = dummyTransactions.filter((t) => {
-        const transactionDate = new Date(t.payment_date);
-
-       const isAfterStart = startDate
-            ? transactionDate >= new Date(startDate)
-            : true;
-
-        const isBeforeEnd = endDate
-            ? transactionDate <= new Date(endDate)
-            : true;
-
-        return isAfterStart && isBeforeEnd;
-    });
-   //REPORT TYPE FILTER 
-   /* if (reportType === "collection") {
-        filtered = filtered.filter((t) => t.status === "Paid");
-    }
-
-    if (reportType === "income") {
-        filtered = filtered.filter((t) => t.status === "Paid");
-        // later add the profit calculation
-    }*/
-
-
-    //  Update table
-    setExportData(filtered);
-    };
-
-  const handleEdit = (index, field, value) => {
-    const updated = [...exportData];
-    updated[index][field] = value;
-    setExportData(updated);
   };
 
-  const handleExportExcel = () => {
-    if (exportData.length === 0) {
-      alert("No data to export. Please generate preview first.");
-      return;
+  // ============================
+  // GENERATE
+  // ============================
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let res;
+
+      const monthlyTypes = [
+        "dashboard",
+        "cashflow",
+        "balance",
+        "profitloss",
+        "statement",
+        "loans",
+        "expenses",
+      ];
+
+      if (monthlyTypes.includes(reportType)) {
+        res = await api.get(getEndpoint(reportType), {
+          params: { month: formatMonth(month) },
+        });
+      } else {
+        res = await api.get(getEndpoint(reportType), {
+          params: { year: formatYear(year) },
+        });
+      }
+
+      setData(res.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load report");
+      setData(null);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const exportSheet = exportData.map((t) => ({
-      "Loan ID": t.loan_id,
-      "Borrower Name": t.borrower_name,
-      Amount: t.amount,
-      "Interest Rate": t.interest_rate,
-      Duration: t.duration,
-      Status: t.status,
-      "Field Officer": t.officer,
-      "Payment Date": t.payment_date,
-    }));
+  // ============================
+  // EXPORT EXCEL
+  // ============================
+  const handleExportExcel = () => {
+    if (!data) return;
 
-    const ws = XLSX.utils.json_to_sheet(exportSheet);
+    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
     const wb = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(wb, ws, "Report");
 
     XLSX.writeFile(
       wb,
-      `Financial_Report_${startDate || "all"}_to_${endDate || "all"}.xlsx`
+      `${reportType}_${formatMonth(month)}.xlsx`
     );
   };
 
-  /*2. DATABASE VERSION
-      WHEN CONNECT TO BACKEND*/
+  // ============================
+  // PDF DOWNLOAD
+  // ============================
+  const handleDownloadPDF = async () => {
+    try {
+      const res = await api.get("/admin/financial-report/pdf", {
+        params: { month: formatMonth(month) },
+        responseType: "blob",
+      });
 
-  /*
-  const fetchFromDB = async () => {
-    import pb from "@/lib/pocketbaseClient.js";
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `financial-report_${formatMonth(month)}.pdf`
+      );
+      document.body.appendChild(link);
+      link.click();
+    } catch {
+      alert("PDF download failed");
+    }
+  };
 
-    const transactions = await pb.collection("transactions").getFullList({
-      expand: "loan_id,borrower_id,field_officer_id",
-    });
+  // ============================
+  // IMPORT EXCEL
+  // ============================
+  const handleImportExcel = async () => {
+    if (!importFile) return;
 
-    setExportData(
-      transactions.map(t => ({
-        loan_id: t.loan_id,
-        borrower_name: t.expand?.borrower_id?.name,
-        amount: t.amount,
-        interest_rate: t.expand?.loan_id?.interest_rate,
-        duration: t.expand?.loan_id?.duration_months,
-        status: t.status,
-        officer: t.expand?.field_officer_id?.name,
-        payment_date: t.payment_date
-      }))
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+
+      // const res = await api.post(
+      //   "/admin/financial-statement/import",
+      //   formData,
+      //   {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //     Authorization: `Bearer ${localStorage.getItem("token")}`,
+      //   },
+      // }
+      // );
+
+      api.interceptors.request.use((config) => {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+      });
+
+
+
+      setImportResult(`Imported ${res.data.length} month(s) successfully.`);
+    } catch (err) {
+      setImportResult(err.response?.data?.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // ============================
+  // TABLE RENDER
+  // ============================
+  const renderTable = () => {
+    if (!data) return null;
+
+    if (Array.isArray(data)) {
+      const allKeys = Array.from(
+        data.reduce((set, row) => {
+          Object.keys(row).forEach((k) => set.add(k));
+          return set;
+        }, new Set())
+      );
+
+      const renderCell = (val) => {
+        if (val === null || val === undefined) return "-";
+        if (typeof val === "object") return JSON.stringify(val);
+        return String(val);
+      };
+
+      return (
+        <table className="w-full border">
+          <thead>
+            <tr className="bg-gray-100">
+              {allKeys.map((key) => (
+                <th key={key} className="p-2 border text-left">
+                  {key}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i} className="border-t">
+                {allKeys.map((key) => (
+                  <td key={`${i}-${key}`} className="p-2 border">
+                    {renderCell(row[key])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    return (
+      <table className="w-full border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="p-2 border">Field</th>
+            <th className="p-2 border">Value</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {Object.entries(data).map(([key, value]) => (
+            <tr key={key}>
+              <td className="p-2 border font-medium">{key}</td>
+              <td className="p-2 border">{String(value)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     );
   };
-  */
 
+  // ============================
+  // UI
+  // ============================
   return (
     <>
       <Helmet>
         <title>Financial Reports</title>
       </Helmet>
 
-      <div className="flex min-h-screen bg-gray-50">
-       
+      <h1 className="text-2xl font-bold mb-6">
+        Financial Reports Dashboard
+      </h1>
 
-        <div className="flex-1 p-8">
-          <h1 className="text-2xl font-bold mb-6">Financial Reports</h1>
-
-          {/* FILTER SECTION*/}
-          <div className="bg-white p-6 rounded-xl shadow mb-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <Label>Report Type</Label>
-                <Select value={reportType} onValueChange={setReportType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="collection">Collection</SelectItem>
-                    <SelectItem value="income">Income</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-         {/* START DATE (NOW USING DATEPICKER)*/}
-              <div>
-                <Label>Start Date</Label>
-                <DatePicker date={startDate} setDate={setStartDate} />
-              </div>
-
-              {/*END DATE (NOW USING DATEPICKER)*/}
-              <div>
-                <Label>End Date</Label>
-                <DatePicker date={endDate} setDate={setEndDate} />
-              </div>
-
-            </div>
-
-            <div className="flex gap-3 mt-4">
-              <Button onClick={handleGeneratePreview} className="bg-gray-800 text-white">
-                Generate Preview
-              </Button>
-
-              <Button onClick={handleExportExcel} className="bg-black text-white">
-                <Download className="w-4 h-4 mr-2" />
-                Export Excel
-              </Button>
-            </div>
+      {/* FILTER */}
+      <div className="bg-white p-6 rounded-xl shadow mb-6">
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <Label>Report Type</Label>
+            <select
+              className="w-full border p-2 rounded"
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+            >
+              <option value="dashboard">Dashboard</option>
+              <option value="loans">Loans</option>
+              <option value="expenses">Expenses</option>
+              <option value="statement">Statement</option>
+              <option value="cashflow">Cash Flow</option>
+              <option value="balance">Balance Sheet</option>
+              <option value="profitloss">Profit & Loss</option>
+              <option value="annual-report">Annual Report</option>
+              <option value="annual-balance">Annual Balance Sheet</option>
+              <option value="annual-cashflow">Annual Cash Flow</option>
+            </select>
           </div>
 
-          {/* EDITABLE PREVIEW TABLE (ADMIN FEATURE) */}
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="font-bold mb-4">Preview & Edit (Admin Only)</h2>
+          {!reportType.includes("annual") && (
+            <div>
+              <Label>Month</Label>
+              <MonthPicker value={month} onChange={setMonth} />
+            </div>
+          )}
 
-            {exportData.length === 0 ? (
-              <p className="text-gray-500">Click "Generate Preview" to load data</p>
-            ) : (
-              <table className="w-full border">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th>Loan ID</th>
-                    <th>Borrower</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Officer</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {exportData.map((row, i) => (
-                    <tr key={i} className="text-center border-t">
-                      <td>{row.loan_id}</td>
-
-                      <td>
-                        <input
-                          value={row.borrower_name}
-                          onChange={(e) =>
-                            handleEdit(i, "borrower_name", e.target.value)
-                          }
-                        />
-                      </td>
-
-                      <td>
-                        <input
-                          value={row.amount}
-                          onChange={(e) =>
-                            handleEdit(i, "amount", e.target.value)
-                          }
-                        />
-                      </td>
-
-                      <td>
-                        <input
-                          value={row.status}
-                          onChange={(e) =>
-                            handleEdit(i, "status", e.target.value)
-                          }
-                        />
-                      </td>
-
-                      <td>
-                        <input
-                          value={row.officer}
-                          onChange={(e) =>
-                            handleEdit(i, "officer", e.target.value)
-                          }
-                        />
-                      </td>
-
-                      <td>{row.payment_date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {reportType.includes("annual") && (
+            <div>
+              <Label>Year</Label>
+              <YearPicker value={year} onChange={setYear} />
+            </div>
+          )}
         </div>
+
+        {error && (
+          <p className="text-red-600 mt-3 text-sm">{error}</p>
+        )}
+
+        {/* ACTION BUTTONS */}
+        <div className="flex flex-wrap gap-3 mt-4">
+          <Button onClick={handleGenerate} disabled={loading}>
+            {loading ? "Loading..." : "Generate"}
+          </Button>
+
+          <Button onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Button onClick={handleDownloadPDF} className="bg-red-600 text-white">
+            <Download className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+
+          {/* IMPORT */}
+          <input
+            type="file"
+            accept=".xlsx"
+            onChange={(e) => setImportFile(e.target.files[0])}
+          />
+
+          <Button
+            onClick={handleImportExcel}
+            disabled={!importFile || importing}
+          >
+            {importing ? "Importing..." : "Import Excel"}
+          </Button>
+
+          {importResult && (
+            <span className="text-sm text-gray-600">
+              {importResult}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* OUTPUT */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        {!data ? (
+          <p className="text-gray-500">
+            Select report type and generate
+          </p>
+        ) : (
+          renderTable()
+        )}
       </div>
     </>
   );

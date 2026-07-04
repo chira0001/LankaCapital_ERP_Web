@@ -26,6 +26,7 @@ public class ReceptionistController {
     private final DailyCollectionService dailyCollectionService;
     private final InterestRateService interestRateService;
     private final PettyCashService pettyCashService;
+    private final FinancialStatementService financialStatementService;
 
     @GetMapping(path = "/installments")
     public ResponseEntity<?> getAllInstallments(){
@@ -167,5 +168,13 @@ public class ReceptionistController {
     @GetMapping("/pettyCash")
     public ResponseEntity<?> getEmployeeAddedPettyCash(Authentication authentication){
         return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(authentication.getName()), HttpStatus.OK);
+    }
+
+    @PostMapping("/financials")
+    public ResponseEntity<?> addBusinessFinancials(
+            Authentication authentication,
+            @RequestBody FinancialRequestDto financialRequestDto
+    ){
+        return new ResponseEntity<>(financialStatementService.addFinancials(authentication.getName(),financialRequestDto), HttpStatus.CREATED);
     }
 }

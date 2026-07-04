@@ -4,6 +4,7 @@ import com.lankacapital.server.dtos.PettyCashDto;
 import com.lankacapital.server.dtos.PettyCashResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.PettyCash;
+import com.lankacapital.server.enums.Request;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.PettyCashMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
@@ -12,6 +13,7 @@ import com.lankacapital.server.services.PettyCashService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -29,6 +31,7 @@ public class PettyCashServiceImpl implements PettyCashService {
                 throw new ResourceNotFoundException("Employee verification not found");
             }
             pettyCash.setRequestEmployee(requestEmployee);
+            pettyCash.setRequest(Request.PENDING);
             pettyCashRepository.save(pettyCash);
 
             return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
@@ -48,4 +51,106 @@ public class PettyCashServiceImpl implements PettyCashService {
         List<PettyCash> pettyCashList = pettyCashRepository.findByRequestEmployee(requestEmployee);
         return pettyCashList.stream().map(PettyCashMapper::mapToPettyCashResponseDto).toList();
     }
+
+
+    //get pending
+    @Override
+    public List<PettyCashResponseDto> getPendingRequests() {
+        return pettyCashRepository.findByRequest(Request.PENDING)
+                .stream()
+                .map(PettyCashMapper::mapToPettyCashResponseDto)
+                .toList();
+    }
+
+    //approve
+    @Override
+    public PettyCashResponseDto approvePettyCash(Long id, String adminUsername) {
+
+        PettyCash pettyCash = pettyCashRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Petty cash not found"));
+
+        Employee admin = employeeRepository.findByEmail(adminUsername);
+
+        if (admin == null) {
+            throw new ResourceNotFoundException("Admin not found");
+        }
+
+        pettyCash.setRequest(Request.APPROVED);
+        pettyCash.setApprovedEmployee(admin);
+
+        pettyCashRepository.save(pettyCash);
+
+        return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
+    }
+
+    //reject
+    @Override
+    public PettyCashResponseDto rejectPettyCash(Long id, String adminUsername) {
+
+        PettyCash pettyCash = pettyCashRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Petty cash not found"));
+
+        Employee admin = employeeRepository.findByEmail(adminUsername);
+
+        if (admin == null) {
+            throw new ResourceNotFoundException("Admin not found");
+        }
+
+        pettyCash.setRequest(Request.REJECTED);
+        pettyCash.setApprovedEmployee(admin);
+
+        pettyCashRepository.save(pettyCash);
+
+        return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
+    }
+
+    //reset
+    @Override
+    public PettyCashResponseDto undoStatus(Long id, String adminUsername) {
+
+        PettyCash pettyCash = pettyCashRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Petty cash not found"));
+
+        Employee admin = employeeRepository.findByEmail(adminUsername);
+
+        if (admin == null) {
+            throw new ResourceNotFoundException("Admin not found");
+        }
+
+        // prevent undo if already pending
+        if (pettyCash.getRequest() == Request.PENDING) {
+            throw new RuntimeException("Nothing to undo");
+        }
+
+        // reset status
+        pettyCash.setRequest(Request.PENDING);
+
+        // clear previous approver/rejector
+        pettyCash.setApprovedEmployee(null);
+
+        pettyCashRepository.save(pettyCash);
+
+        return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
+    }
+
+    @Override
+    public List<PettyCashResponseDto> getAllPettyCash() {
+
+        return pettyCashRepository.findAll()
+                .stream()
+                .map(PettyCashMapper::mapToPettyCashResponseDto)
+                .toList();
+    }
+
+
+    @Override
+    public BigDecimal getApprovedPettyCashTotal() {
+
+        return pettyCashRepository.findAll()
+                .stream()
+                .filter(pc -> pc.getRequest() == Request.APPROVED)
+                .map(PettyCash::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
+
