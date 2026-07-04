@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -51,6 +52,13 @@ public class Employee implements UserDetails {
 
     @JsonIgnore
     private String password = "pass@123";
+
+    @Column(nullable = false)
+    private String accountStatus = "Active";
+
+//    @Column(nullable = false)
+//    private LocalDateTime createdAt = LocalDateTime.now();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

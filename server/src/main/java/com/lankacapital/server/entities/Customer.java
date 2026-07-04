@@ -40,8 +40,8 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
-   // private List<Loan> loans;
-    private List<Loan> loans = new ArrayList<>();
+   private List<Loan> loans;
+    //private List<Loan> loans = new ArrayList<>();
 
     @Column(nullable = false)
     private Boolean deleted = false;

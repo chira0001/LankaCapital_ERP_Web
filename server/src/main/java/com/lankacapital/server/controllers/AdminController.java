@@ -42,9 +42,9 @@ public class AdminController {
         return new ResponseEntity<>(roleService.addNewRole(dto), HttpStatus.CREATED);
     }
 
-    @GetMapping(path = "/role/{roleName}")
-    public ResponseEntity<?> getRoleByRoleName(@PathVariable RoleRegisterDto dto){
-        return new ResponseEntity<>(roleService.getRoleByRoleName(dto), HttpStatus.OK);
+    @PostMapping("/role/name")
+    public ResponseEntity<?> getRoleByName(@RequestBody RoleRegisterDto dto) {
+        return ResponseEntity.ok(roleService.getRoleByRoleName(dto));
     }
 
     @GetMapping(path = "/role")
@@ -72,6 +72,14 @@ public class AdminController {
     public ResponseEntity<?> addNewEmployee(@RequestBody EmployeeAddDto dto){
         Employee newEmployee = employeeService.addNewEmployee(dto);
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/employee")
+    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees() {
+
+        return ResponseEntity.ok(
+                employeeService.getAllEmployees()
+        );
     }
 
 
@@ -402,6 +410,29 @@ public class AdminController {
                 loanService.addLoan(dto, authentication.getName())
         );
     }
+
+
+    @PutMapping("/employee/{id}")
+    public ResponseEntity<?> updateEmployee(
+            @PathVariable Long id,
+            @RequestBody EmployeeResponseDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                employeeService.updateEmployee(id, dto)
+        );
+    }
+
+    @DeleteMapping("/employee/{id}")
+    public ResponseEntity<?> deleteEmployee(
+            @PathVariable Long id
+    ) {
+
+        employeeService.deleteEmployee(id);
+
+        return ResponseEntity.ok("Employee deleted successfully");
+    }
+
 }
 
 

@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.EmployeeAddDto;
+import com.lankacapital.server.dtos.EmployeeRequestDto;
 import com.lankacapital.server.dtos.EmployeeResponseDto;
 import com.lankacapital.server.dtos.PasswordRequestDto;
 import com.lankacapital.server.entities.Employee;
@@ -18,4 +19,9 @@ public interface EmployeeService {
     String updatePasswordByUsername(String username, PasswordRequestDto dto);
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
+
+    EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto);
+
+    void deleteEmployee(Long id);
+
 }
