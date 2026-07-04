@@ -5,6 +5,7 @@ import { Button } from '@/component/ui/button';
 import { Input } from '@/component/ui/input';
 import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
+import axiosAPI from '@/api/axiosAPI'; // Import the axios instance
 //import { useToast } from '@/hooks/use-toast';
 //import { useAuth } from '@/contexts/AuthContext.jsx';
 
@@ -43,7 +44,7 @@ const LoanApplication = () => {
     const[selectedApp, setSelectedApp] = useState(null);
     const [actionType,setActionType] = useState(null);
     const [showDialog, setShowDialog] = useState(false);
-    const [rejectionNote, setRejectionNote] = useState("");
+    const [decisionNote, setDecisionNote] = useState("");
     const[filters, setFilters] = useState({
         status: "ALL",
         search: "",
@@ -58,8 +59,14 @@ const LoanApplication = () => {
 
     
 
-   useEffect(() => {
-  applyFilters();
+//    useEffect(() => {
+//   applyFilters();
+// }, [filters, applicationData]);
+
+
+      useEffect(() => {
+  const filtered = applyFilters(applicationData, filters);
+  setFilteredApps(filtered);
 }, [filters, applicationData]);
 
     /*const fetchApplications = async () => {
@@ -87,7 +94,20 @@ const LoanApplication = () => {
     // FETCH LOANS FROM BACKEND 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/v1/admin/loans');
+
+      /////3 new code////////////
+      const res = await axiosAPI.get("/admin/loans");
+
+    const data = res.data;
+
+    console.log("RAW API DATA:", data);
+
+    setApplicationData(data);
+     const filtered = applyFilters(data, filters);
+    setFilteredApps(filtered);
+
+      ////////////////workin code after previous code 2////////////////////////
+     /* const res = await fetch('http://localhost:8080/api/v1/admin/loans');
       const data = await res.json();
 
       console.log("RAW API DATA:", data);
@@ -103,20 +123,31 @@ const LoanApplication = () => {
 
       const normalized = data.map(app => ({
         ...app,
-       // status: (app.status ?? '').toUpperCase() // can use after backend fixed as prnding all
-      // status: (app.status || 'PENDING').trim().toUpperCase()
-      status: (app.status && app.status.trim() !== '' 
+
+
+        status: (app.status && app.status.trim() !== '' 
             ? app.status 
             : 'PENDING').toUpperCase()
       }));
 
-      console.log("NORMALIZED DATA:", normalized);
+       console.log("NORMALIZED DATA:", normalized);
 
       setApplicationData(normalized);
       setFilteredApps(normalized);
+*/
+      ////////////////////////////////////////
+
+
+      ///////////previous code 1 //////////////
+       // status: (app.status ?? '').toUpperCase() // can use after backend fixed as prnding all
+      // status: (app.status || 'PENDING').trim().toUpperCase()
 
      // setApplicationData(data);
      // setFilteredApps(data); // IMPORTANT FIX
+      ////////////////////////////////////////////////
+
+
+
     } catch (error) {
       console.error("Error fetching applications:", error);
     } finally {
@@ -126,52 +157,93 @@ const LoanApplication = () => {
  
 
 
-  const applyFilters = () => {
-    let filtered = [...applicationData];
+  // const applyFilters = () => {
+  //   let filtered = [...applicationData];
 
-    if (filters.status !== 'ALL') {
-      filtered = filtered.filter(app =>
-        (app.status || '').toUpperCase() === filters.status
-      );
+  //   if (filters.status !== 'ALL') {
+  //     filtered = filtered.filter(app =>
+  //       (app.status || '').toUpperCase() === filters.status
+  //     );
+  //   }
+
+  //   if (filters.search) {
+  //     filtered = filtered.filter(app =>
+  //       app.customer?.businessName
+  //         ?.toLowerCase()
+  //         .includes(filters.search.toLowerCase())
+  //     );
+  //   }
+
+  //   if (filters.loanId) {
+  //     filtered = filtered.filter(app =>
+  //      app.fileNumber
+  //       ?.toLowerCase()
+  //       .includes(filters.loanId.toLowerCase())
+  //  );
+  //  }
+
+  //   if (filters.minAmount) {
+  //     filtered = filtered.filter(app =>
+  //       Number(app.amount) >= Number(filters.minAmount)
+  //     );
+  //   }
+
+  //   if (filters.maxAmount) {
+  //     filtered = filtered.filter(app =>
+  //       Number(app.amount) <= Number(filters.maxAmount)
+  //     );
+  //   }
+
+  //   setFilteredApps(filtered);
+  // };
+
+
+  const applyFilters = (data, filters) => {
+    let filtered = [...data];
+
+    if (filters.status !== "ALL") {
+        filtered = filtered.filter(
+            app => (app.status || "").toUpperCase() === filters.status
+        );
     }
 
     if (filters.search) {
-      filtered = filtered.filter(app =>
-        app.customer?.businessName
-          ?.toLowerCase()
-          .includes(filters.search.toLowerCase())
-      );
+    filtered = filtered.filter(app =>
+        (app.customerId ?? '')
+            .toString()
+            .toLowerCase()
+            .includes(filters.search.toLowerCase())
+     );
     }
 
     if (filters.loanId) {
-      filtered = filtered.filter(app =>
-       app.fileNumber
-        ?.toLowerCase()
-        .includes(filters.loanId.toLowerCase())
-  );
-  }
+        filtered = filtered.filter(app =>
+            app.fileNumber
+                ?.toLowerCase()
+                .includes(filters.loanId.toLowerCase())
+        );
+    }
 
     if (filters.minAmount) {
-      filtered = filtered.filter(app =>
-        Number(app.amount) >= Number(filters.minAmount)
-      );
+        filtered = filtered.filter(
+            app => Number(app.amount) >= Number(filters.minAmount)
+        );
     }
 
     if (filters.maxAmount) {
-      filtered = filtered.filter(app =>
-        Number(app.amount) <= Number(filters.maxAmount)
-      );
+        filtered = filtered.filter(
+            app => Number(app.amount) <= Number(filters.maxAmount)
+        );
     }
 
-    setFilteredApps(filtered);
-  };
-
+    return filtered;
+};
 
   const handleAction = (app, action) => {
     console.log("SELECTED APP FULL OBJECT:", app);
     setSelectedApp(app);
     setActionType(action);
-    setRejectionNote('');
+    setDecisionNote('');
     setShowDialog(true);
   };
 
@@ -186,65 +258,119 @@ const confirmAction = async () => {
     return;
   }
 
-  if (actionType === 'reject' && !rejectionNote.trim()) {
-    toast({
-      title: 'Error',
-      description: 'Rejection note is required',
-      variant: 'destructive'
-    });
-    return;
-  }
+  //  if (actionType === 'reject') {
+
+
+  //   toast({
+  //     title: 'Error',
+  //     description: 'Rejection note is required',
+  //     variant: 'destructive'
+  //   });
+  //   return;
+
+  //           response = await axiosAPI.put("/admin/approve", {
+  //         fileNumber: selectedApp.fileNumber,
+  //         employeeId: currentEmployeeId
+  //     });
+  //   }
+
+
+  //  }
 
   try {
+
+    setLoading(true);
     let response;
 
     if (actionType === 'approve') {
-        response = await fetch('http://localhost:8080/api/v1/admin/approve', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fileNumber: selectedApp.fileNumber,
-            employeeId: currentEmployeeId
-          })
+      if (!decisionNote.trim()) {
+        toast({
+          title: 'Error',
+          description: 'Decision note is required ',
+          variant: 'destructive'
         });
-      } 
+        return;
+      }
+
+
+       response = await axiosAPI.put("/admin/approve", {
+          fileNumber: selectedApp.fileNumber,
+          employeeId: currentEmployeeId,
+          decisionNote: decisionNote
+      });
+    }
+
+
+      //  response = await fetch('http://localhost:8080/api/v1/admin/approve', {
+         // method: 'PUT',
+        //  headers: {
+       //     'Content-Type': 'application/json'
+        //  },
+        //  body: JSON.stringify({
+           // fileNumber: selectedApp.fileNumber,
+        //    employeeId: currentEmployeeId
+         // })
+      //  });
+      //} 
+
+
+
+
+    //    toast({
+    //     title: 'Error',
+    //     description: 'Decision note is required for approval',
+    //     variant: 'destructive'
+    //   });
+    //   return;
+    // }
+
+
+
+           
+
       else if (actionType === 'reject') {
-        response = await fetch('http://localhost:8080/api/v1/admin/reject', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        response = await axiosAPI.put("/admin/reject",{ //fetch('http://localhost:8080/api/v1/admin/reject', {
+          // method: 'PUT',
+          // headers: {
+          //   'Content-Type': 'application/json'
+          // },
+          // body: JSON.stringify({
             fileNumber: selectedApp.fileNumber,
-            rejectionNote: rejectionNote,
+            decisionNote: decisionNote,
             employeeId: currentEmployeeId
-          })
+          // })
         });
       } 
       else if (actionType === 'reset') {
-        response = await fetch('http://localhost:8080/api/v1/admin/reset', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        response = await axiosAPI.put("/admin/reset", {
+        //fetch('http://localhost:8080/api/v1/admin/reset', {
+          // method: 'PUT',
+          // headers: {
+          //   'Content-Type': 'application/json'
+          // },
+          // body: JSON.stringify({
             fileNumber: selectedApp.fileNumber,
             employeeId: currentEmployeeId
           })
-        });
+        // });
       }
 
-    if (!response.ok) {
-      throw new Error('Failed to update application');
-    }
+    // if (!response.ok) {
+    //   throw new Error('Failed to update application');
+    // }
 
-    const updatedLoan = await response.json();
-    console.log("UPDATED LOAN:", updatedLoan);
+    // const updatedLoan = await response.json();
+   // console.log("UPDATED LOAN:", updatedLoan);
 
 
-await fetchApplications();
+//await fetchApplications();
+
+const res = await axiosAPI.get("/admin/loans");
+const data = res.data;
+
+setApplicationData(data);
+setFilteredApps(applyFilters(data, filters));
+
 
     toast({
       title: 'Success',
@@ -258,10 +384,13 @@ await fetchApplications();
       variant: 'destructive'
     });
   } finally {
+
+    setLoading(false);
+
     setShowDialog(false);
     setSelectedApp(null);
     setActionType(null);
-    setRejectionNote('');
+    setDecisionNote('');
   }
 };
 
@@ -356,9 +485,9 @@ await fetchApplications();
 
                 {/* CUSTOMER SEARCH */}
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Customer Name</Label>
+                  <Label className="text-gray-700">Applicant NIC</Label>
                   <Input
-                    placeholder="Search by name"
+                    placeholder="Search by NIC"
                     value={filters.search}
                     onChange={(e) =>
                       setFilters({ ...filters, search: e.target.value })
@@ -437,7 +566,7 @@ await fetchApplications();
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Loan ID</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Applicant</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Applicant NIC</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Duration</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Interest</th>
@@ -456,7 +585,7 @@ await fetchApplications();
                             <p className="font-mono text-sm text-gray-600">{app.fileNumber.slice(0, 8)}</p>
                           </td>
                           <td className="px-6 py-4">
-                          <p className="font-medium text-black truncate max-w-[140px]">{app.customer?.businessName}</p>
+                          <p className="font-medium text-black truncate max-w-[140px]">{app.customerId}</p>
                           <p className="text-sm text-gray-500">{app.customer?.contactNumber}</p>
                         </td>
                         <td className="px-6 py-4">
@@ -473,11 +602,21 @@ await fetchApplications();
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(app.status)}`}>
                             {(app.status || '').toUpperCase()}
                           </span>
-                          {app.status?.toUpperCase() === 'REJECTED' && app.rejectionNote && (
+                          {/* {app.status?.toUpperCase() === 'REJECTED' && app.rejectionNote && (
                             <p className="text-xs text-red-600 mt-1 max-w-[150px] truncate" title={app.rejectionNote}>
                               {app.rejectionNote}
                             </p>
-                          )}
+                          )} */}
+
+                            {app.status?.toUpperCase() === 'APPROVED' && app.decisionNote && (
+                              <p
+                                className="text-xs text-green-600 mt-1 max-w-[150px] truncate"
+                                title={app.decisionNote}
+                              >
+                                {app.decisionNote}
+                              </p>
+                            )}
+
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-gray-600">
@@ -518,7 +657,7 @@ await fetchApplications();
                           </td>
                       </tr>
                       );
-                    })}
+                    } )}
                   </tbody>
                 </table>
 
@@ -541,12 +680,12 @@ await fetchApplications();
               {actionType === 'approve' ? 'Approve Application' : 'Reject Application'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {actionType} the loan application for {selectedApp?.customer?.businessName}?
+              Are you sure you want to {actionType} the loan application for {selectedApp?.customerId}?
               {actionType === 'approve' && ` Amount: ${formatLKR(selectedApp?.amount || 0)}`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {actionType === 'reject' && (
+          {/* {actionType === 'reject' && (
             <div className="my-4">
               <Label htmlFor="reason" className="mb-2 block text-black">Rejection Reason</Label>
               <Textarea
@@ -554,6 +693,23 @@ await fetchApplications();
                 value={rejectionNote}
                 onChange={(e) => setRejectionNote(e.target.value)}
                 placeholder="Please provide a reason for rejection..."
+                className="w-full border-gray-300 text-black"
+                rows={3}
+              />
+            </div>
+          )} */}
+
+
+         
+
+          {actionType === 'approve' && (
+            <div className="my-4">
+              <Label htmlFor="reason" className="mb-2 block text-black">Decision Note</Label>
+              <Textarea
+                id="reason"
+                value={decisionNote}
+                onChange={(e) => setDecisionNote(e.target.value)}
+                placeholder="Please provide a reason for the decision..."
                 className="w-full border-gray-300 text-black"
                 rows={3}
               />
@@ -574,5 +730,7 @@ await fetchApplications();
     </>
   );
 };
+
+
 
 export default LoanApplication;

@@ -14,7 +14,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
-
+import java.nio.charset.StandardCharsets;
 @Service
 public class JWTServiceImpl implements JWTService {
 
@@ -45,9 +45,9 @@ public class JWTServiceImpl implements JWTService {
         return Jwts
                 .builder()
                 .setSubject(userDetails.getUsername())
-                .claim("role", roleName)
+                .claim("role",  roleName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
 //                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 10))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
@@ -76,8 +76,13 @@ public class JWTServiceImpl implements JWTService {
                 .compact();
     }
 
-    private Key getSignKey(){
-        byte[] key = Decoders.BASE64.decode(secretKey);
+//    private Key getSignKey(){
+//        byte[] key = Decoders.BASE64.decode(secretKey);
+//        return Keys.hmacShaKeyFor(key);
+//    }
+
+    private Key getSignKey() {
+        byte[] key = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(key);
     }
 }

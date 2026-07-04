@@ -4,10 +4,13 @@ import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Loan;
 import jakarta.transaction.Transactional;
 
+import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
 
 public interface LoanService {
 
+    BigDecimal getApprovedLoanTotal();
     Loan addLoan(LoanCreateDto loanCreateDto, String username);
 
     CustomerResponseDto getLoansByCustomerId(String id);
@@ -45,6 +48,8 @@ public interface LoanService {
     Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
 
     String addNewLoanByOfficer(CustomerAddDto customerAddDto);
+
+    List<LoanReportRow> getMonthlyLoanReport(YearMonth month);
 }
 
 
