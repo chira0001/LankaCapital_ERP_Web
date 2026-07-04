@@ -22,12 +22,15 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Boolean existsByNic(Long nic);
     Customer findByNic(Long nic);
 
-    @Query("SELECT s.nic FROM Customer s")
-    List<Long> findAllCustomerIds();
+    @Query("SELECT c FROM Customer c WHERE c.nic IN :nics")
+    List<Customer> findCustomersByNics(@Param("nics") List<Long> nics);
 
-    @Query("SELECT s FROM Customer s WHERE s.nic IN :nic")
-    List<Customer> findCustomersByIds(@Param("nic") List<Long> nic, Pageable pageable);
+//    @Query("SELECT s.nic FROM Customer s")
+//    List<Long> findAllCustomerIds();
+//
+//    @Query("SELECT s FROM Customer s WHERE s.nic IN :nic")
+//    List<Customer> findCustomersByIds(@Param("nic") List<Long> nic, Pageable pageable);
 
-    @Query("SELECT c FROM Customer c WHERE c.updateStatus > 0")
-    List<Customer> findUpdatedCustomers(Pageable pageable);
+//    @Query("SELECT c FROM Customer c WHERE c.updateStatus > 0")
+//    List<Customer> findUpdatedCustomers(Pageable pageable);
 }

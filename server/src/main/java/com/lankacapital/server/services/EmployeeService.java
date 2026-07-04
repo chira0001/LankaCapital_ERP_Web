@@ -20,6 +20,6 @@ public interface EmployeeService {
     String updatePasswordByUsername(String username, PasswordRequestDto dto);
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
-    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page);
-    List<FieldOfficerResAsyncDto> updateEmployees(int page);
+    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList);
+    List<EmployeeManageDto> manageEmployees(int page);
 }

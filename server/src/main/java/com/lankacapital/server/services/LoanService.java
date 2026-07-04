@@ -40,11 +40,13 @@ public interface LoanService {
     //reset interest
     LoanResponseDto resetInterest(String fileNumber);
 
-    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page);
+    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis);
 
     Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
 
     String addNewLoanByOfficer(CustomerAddDto customerAddDto);
+
+    List<LoanManageDto> manageLoans(int page);
 }
 
 

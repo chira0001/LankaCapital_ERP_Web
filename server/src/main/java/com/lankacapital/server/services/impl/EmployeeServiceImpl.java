@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
@@ -119,34 +120,25 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page){
-        List<Long> allOfficerIds = employeeRepository.findAllFieldOfficersIds();
-        if(allOfficerIds == null){
-            throw new ResourceNotFoundException("FieldOfficer not found with NIC");
-        }
-        List<Long> notSyncedIds = new ArrayList<>();
-        for (Long id : allOfficerIds) {
-            if (!idList.getId().contains(id)) {
-                notSyncedIds.add(id);
-            }
-        }
-        if(notSyncedIds.isEmpty()){
-            return List.of();
-        }
-        Pageable pageable = PageRequest.of(page, 5);
-        return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
-                .stream()
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList){
+        List<Employee> employees = employeeRepository.findCustomersByIds(idList.getId());
+
+        return employees.stream()
                 .map(EmployeeMapper::mapToEmployeeAsyncDto)
                 .toList();
     }
 
     @Override
-    public List<FieldOfficerResAsyncDto> updateEmployees(int page){
-        Pageable pageable = PageRequest.of(page, 5);
+    public List<EmployeeManageDto> manageEmployees(int page) {
+        Pageable pageable = PageRequest.of(page, 50);
 
-        return employeeRepository.findUpdatedEmployees(pageable)
+        return employeeRepository.findAllByRole(pageable)
+                .getContent()
                 .stream()
-                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .map(employee -> new EmployeeManageDto(
+                        employee.getId(),
+                        employee.getUpdateStatus()
+                ))
                 .toList();
     }
 }

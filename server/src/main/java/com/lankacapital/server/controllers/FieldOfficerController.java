@@ -46,11 +46,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping(path = "/async/customers")
-    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto){
         if(dto.getNic() == null){
             return new ResponseEntity<>("Nic cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto, page);
+        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto);
         if(customerList == null){
             return new ResponseEntity<>("No customers found", HttpStatus.BAD_REQUEST);
         }
@@ -83,11 +83,11 @@ public class FieldOfficerController {
 
 
     @PostMapping(path = "/async/fieldOfficers")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto){
         if(dto.getId() == null){
             return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto, page);
+        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto);
         if(employeeList == null){
             return new ResponseEntity<>("No Field Officer found", HttpStatus.BAD_REQUEST);
         }
@@ -95,11 +95,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping(path = "/async/loans")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getFile_number() == null){
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto){
+        if(dto.getId() == null){
             return new ResponseEntity<>("File Number cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto, page);
+        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto);
         if(loanList == null){
             return new ResponseEntity<>("No Loans found", HttpStatus.BAD_REQUEST);
         }
@@ -205,28 +205,28 @@ public class FieldOfficerController {
         return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
     }
 
-    @GetMapping("/update/customer")
+    @GetMapping("/manage/customer")
     public ResponseEntity<?> updateCustomers(@RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(customerService.updateCustomers(page));
+            return ResponseEntity.ok(customerService.manageCustomers(page));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
-    @GetMapping("/update/employee")
+    @GetMapping("/manage/employee")
     public ResponseEntity<?> updateEmployees(@RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(employeeService.updateEmployees(page));
+            return ResponseEntity.ok(employeeService.manageEmployees(page));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
-    @GetMapping("/update/loan")
+    @GetMapping("/manage/loan")
     public ResponseEntity<?> updateLoans(@RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(customerService.updateCustomers(page));
+            return ResponseEntity.ok(loanService.manageLoans(page));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }

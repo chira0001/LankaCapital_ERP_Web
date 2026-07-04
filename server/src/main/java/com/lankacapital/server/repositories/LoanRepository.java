@@ -18,11 +18,8 @@ public interface LoanRepository extends JpaRepository<Loan, String> {
     Boolean existsByFileNumber(String fileNumber);
     Optional<Loan> findByFileNumber(String fileNumber);
 
-    @Query("SELECT s.fileNumber FROM Loan s")
-    List<String> findAllLoanIds();
-
     @Query("SELECT s FROM Loan s WHERE s.fileNumber IN :fileNumber")
-    List<Loan> findLoansByIds(@Param("fileNumber") List<String> fileNumber, Pageable pageable);
+    List<Loan> findLoansByIds(@Param("fileNumber") List<String> fileNumber);
 
     @Query("""
     SELECT COUNT(l) FROM Loan l WHERE l.customer.nic = :nic AND (l.status IS NULL OR l.status <> :status)

@@ -225,20 +225,10 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page){
-        List<String> allLoanIds = loanRepository.findAllLoanIds();
-        if(allLoanIds == null){
-            throw new ResourceNotFoundException("Server Error: Loan");
-        }
-        List<String> notSyncedIds = new ArrayList<>();
-        for (String id : allLoanIds) {
-            if (!fileNoLis.getFile_number().contains(id)) {
-                notSyncedIds.add(id);
-            }
-        }
-        Pageable pageable = PageRequest.of(page, 3);
-        return loanRepository.findLoansByIds(notSyncedIds, pageable)
-                .stream()
+    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis){
+        List<Loan> loans = loanRepository.findLoansByIds(fileNoLis.getId());
+
+        return loans.stream()
                 .map(LoanMapper::mapToCustomerAsyncDto)
                 .toList();
     }
@@ -296,5 +286,18 @@ public class LoanServiceImpl implements LoanService {
         loanRepository.save(loan);
 
         return "Loan created successfully.";
+    }
+
+    public List<LoanManageDto> manageLoans(int page){
+        Pageable pageable = PageRequest.of(page, 50);
+
+        return loanRepository.findAll(pageable)
+                .getContent()
+                .stream()
+                .map(loan -> new LoanManageDto(
+                        loan.getFileNumber(),
+                        loan.getUpdateStatus()
+                ))
+                .toList();
     }
 }
