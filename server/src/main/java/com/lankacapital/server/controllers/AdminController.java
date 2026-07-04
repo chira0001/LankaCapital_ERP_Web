@@ -30,6 +30,7 @@ public class AdminController {
     private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
     private final ReportService reportService;
+    private final DailyCollectionService dailyCollectionService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -306,6 +307,32 @@ public class AdminController {
                 financialStatementService.importAssetsLiabilities(file)
         );
     }
+
+    //revenue tracking
+    @GetMapping("/revenue/summary")
+    public ResponseEntity<?> getRevenueSummary() {
+
+        var today = dailyCollectionService.getTodayCollection();
+        var week = dailyCollectionService.getWeeklyCollection();
+
+        return ResponseEntity.ok(
+                new RevenueSummary(today, week)
+        );
+    }
+
+    @GetMapping("/revenue/collections")
+    public ResponseEntity<?> getRevenueCollections() {
+
+        return ResponseEntity.ok(
+                dailyCollectionService.getAllCollections()
+        );
+    }
+
+    record RevenueSummary(
+            java.math.BigDecimal today,
+            java.math.BigDecimal week
+    ) {}
+
 }
 
 
