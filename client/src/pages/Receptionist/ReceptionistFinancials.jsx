@@ -137,7 +137,7 @@ const ReceptionistFinancials = () => {
     };
 
     return (
-        <div className="min-h-full ">
+        <div className="min-h-full flex flex-col gap-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* EXPENSE FORM */}
@@ -430,7 +430,7 @@ const ReceptionistFinancials = () => {
 
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 
+                        className="px-6 py-3 bg-linear-to-r from-blue-600 to-blue-700 
                                text-white rounded-lg text-sm font-medium
                                hover:from-blue-700 hover:to-blue-800 
                                transition-all shadow-md hover:shadow-lg"
@@ -460,7 +460,7 @@ const ReceptionistFinancials = () => {
                             Important Information
                         </h3>
                         <p className="text-sm text-gray-600">
-                            Please ensure all amounts are accurate. You can only submit monthly expenses once per month.
+                            Please ensure all amounts are accurate. You can only submit monthly financials once per month.
                             All fields support up to 2 decimal places.
                         </p>
                     </div>

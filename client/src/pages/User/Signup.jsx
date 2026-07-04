@@ -80,7 +80,7 @@ const Signup = () => {
             <CommonNavbar />
             <ToastContainer position="top-right" autoClose={3000} />
             <div className='bg-gray-50 text-black flex flex-col items-center justify-center h-fit gap-8 pt-20 px-3 py-8'>
-                <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative'>
+                <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative mt-10'>
                     <svg className='absolute left-8 cursor-pointer' onClick={navigateHome} xmlns="http://www.w3.org/2000/svg" width="30" height="30"
                         fill="grey" viewBox="0 0 24 24" >
                         <path d="M4 4h2v16H4zm10 3-6 5 6 5v-4h7v-2h-7z"></path>
@@ -316,7 +316,6 @@ const Signup = () => {
                             )}
                         </div>
                     </div>
-
                     <button className='border w-full px-4 py-4 bg-black text-white' onClick={signup}>Sign Up</button>
                 </div>
 

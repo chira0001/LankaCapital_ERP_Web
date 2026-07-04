@@ -29,12 +29,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-
-       // if (request.getServletPath().equals("/api/v1/auth/refresh")) {
-        //    filterChain.doFilter(request, response);
-        //    return;
-        //}
-
         if (request.getServletPath().startsWith("/api/v1/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -55,9 +49,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-//        jwt = authHeader.substring(7);
-//        userEmail = jwtService.extractUserName(jwt);
-
         jwt = authHeader.substring(7);
 
         try {
@@ -72,57 +63,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         if(!userEmail.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = employeeService.userDetailsService().loadUserByUsername(userEmail);
-            /// ///////////////////////////////////////////////
-            System.out.println("==================================");
-            System.out.println("Authorization Header = " + authHeader);
-            System.out.println("Email = " + userEmail);
-            System.out.println("Authorities = " + userDetails.getAuthorities());
-            System.out.println("Token Valid = " + jwtService.isTokenValid(jwt, userDetails));
-            System.out.println("==================================");
-
-            /// ////////////////////////////////////
-
-//            if (jwtService.isTokenValid(jwt, userDetails)){
-/////  /////////////////////////////
-//                System.out.println("Email = " + userEmail);
-//                System.out.println("Authorities = " + userDetails.getAuthorities());
-//                System.out.println("Token valid = " + jwtService.isTokenValid(jwt, userDetails));
-//
-//                SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-//                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-//                        userDetails, null, userDetails.getAuthorities()
-//                );
-//                token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-//                securityContext.setAuthentication(token);
-//                SecurityContextHolder.setContext(securityContext);
-//            }
-
-
-//            if (jwtService.isTokenValid(jwt, userDetails)) {
-//
-//                System.out.println("Token Valid = true");
-//                System.out.println("Authorities = " + userDetails.getAuthorities());
-//
-//                SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-//
-//                UsernamePasswordAuthenticationToken token =
-//                        new UsernamePasswordAuthenticationToken(
-//                                userDetails,
-//                                null,
-//                                userDetails.getAuthorities()
-//                        );
-//
-//                token.setDetails(
-//                        new WebAuthenticationDetailsSource().buildDetails(request)
-//                );
-//
-//                securityContext.setAuthentication(token);
-//                SecurityContextHolder.setContext(securityContext);
-//
-////            }
-//             else {
-//                System.out.println("Token Valid = false");
-//            }
 
             if (jwtService.isTokenValid(jwt, userDetails)) {
 
