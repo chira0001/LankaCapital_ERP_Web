@@ -111,15 +111,20 @@ const ReceptionistMonthlyExpense = () => {
     };
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex flex-col gap-8">
+        <div className="min-h-full flex flex-col gap-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* EXPENSE FORM */}
-            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-3">
 
-                <h1 className="text-3xl font-bold text-gray-800">
-                    Monthly Expense Report
-                </h1>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                        Monthly Business Expenses
+                    </h1>
+                    <p className="text-gray-600">
+                        Record, organize monthly business expenditures
+                    </p>
+                </div>
 
                 <div className="text-right">
                     <p className="text-sm text-gray-500 font-medium">
@@ -308,8 +313,7 @@ const ReceptionistMonthlyExpense = () => {
                 <div className="flex justify-end gap-3 pt-4 border-t">
                     <button
                         onClick={handleReset}
-                        className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg 
-                               text-sm font-medium hover:bg-gray-200 transition-all"
+                        className="border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                         Reset
                     </button>

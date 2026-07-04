@@ -137,15 +137,20 @@ const ReceptionistFinancials = () => {
     };
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex flex-col gap-8">
+        <div className="min-h-full ">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* EXPENSE FORM */}
-            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-3">
 
-                <h1 className="text-3xl font-bold text-gray-800">
-                    Monthly Business Financials
-                </h1>
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                        Monthly Business Financials
+                    </h1>
+                    <p className="text-gray-600">
+                        Submit and track your monthly business financial statements
+                    </p>
+                </div>
 
                 <div className="text-right">
                     <p className="text-sm text-gray-500 font-medium">
@@ -430,7 +435,7 @@ const ReceptionistFinancials = () => {
                                hover:from-blue-700 hover:to-blue-800 
                                transition-all shadow-md hover:shadow-lg"
                     >
-                        Submit Expenses
+                        Submit Financials
                     </button>
                 </div>
             </div>

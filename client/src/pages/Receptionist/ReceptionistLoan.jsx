@@ -190,386 +190,397 @@ const ReceptionistLoan = () => {
         fetchInstallments();
     }, [])
     return (
-        <div>
+        <div className='p-3'>
             <ToastContainer position="top-right" autoClose={3000} />
-
-            <div className='flex justify-between items-start mb-8'>
-                <h1 className='text-4xl font-bold text-center md:text-left'>Create New Loan</h1>
-                <div className='w-1/2 flex justify-between items-center gap-4'>
-                    <span className='text-sm font-medium whitespace-nowrap'>Search Customer</span>
-                    <input
-                        type="text"
-                        value={searchCustomer}
-                        className='border border-gray-400 rounded-lg px-3 py-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-black'
-                        placeholder="Enter NIC"
-                        onChange={(e) => setSearchCustomer(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && checkCustomerExists()}
-                    />
-                    <button
-                        onClick={checkCustomerExists}
-                        className='bg-black text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-gray-800 transition-colors'
-                    >
-                        Search
-                    </button>
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                        Create New Loan
+                    </h1>
+                    <p className="text-gray-600">
+                        Create new loan accounts and track their progress
+                    </p>
+                </div>
+                <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
+                    <div className='w-1/2 flex justify-between items-center gap-4'>
+                        <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
+                        <input
+                            type="text"
+                            value={searchCustomer}
+                            className='border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                            placeholder="Enter NIC"
+                            onChange={(e) => setSearchCustomer(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && checkCustomerExists()}
+                        />
+                        <button
+                            onClick={checkCustomerExists}
+                            className='bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed'
+                            disabled={!searchCustomer.trim()}
+                        >
+                            Search
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Existing Customer Loans Table */}
-            {existCustomer && existCustomer.loans?.length > 0 && (
-                <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className='shadow-2xl p-6 mt-6 rounded-2xl'>
+                {/* Existing Customer Loans Table */}
+                {existCustomer && existCustomer.loans?.length > 0 && (
+                    <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
 
-                    <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-                        <h2 className="text-xl font-semibold text-gray-800">
-                            {`${existCustomer.name}'s loan details`}
-                        </h2>
-                    </div>
+                        <div className="mb-6">
+                            <h2 className="text-xl font-semibold text-gray-800">
+                                {`${existCustomer.name}'s loan details`}
+                            </h2>
+                        </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
 
-                            <thead>
-                                <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        File Number
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Created At
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Amount
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Interest
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Installments
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Installment Amount
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Entered By (Emp. Id)
-                                    </th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                        Status
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody className="divide-y divide-gray-200">
-                                {existCustomer.loans.map((loan, key) => (
-                                    <tr
-                                        key={loan.fileNumber}
-                                        className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors`}
-                                    >
-                                        <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap text-center">
-                                            {loan.fileNumber}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            {new Date(loan.createdAt).toLocaleDateString('en-GB')}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            Rs. {parseFloat(loan.amount).toLocaleString()}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            {loan.interestRate}%
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            {loan.noOfInstallments}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
-                                        </td>
-
-                                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                            {loan.employeeId}
-                                        </td>
-
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border
-                                    ${loan.status === "PENDING"
-                                                        ? "bg-yellow-100 text-yellow-700 border-yellow-200"
-                                                        : loan.status === "REJECTED"
-                                                            ? "bg-red-100 text-red-700 border-red-200"
-                                                            : loan.status === "APPROVED"
-                                                                ? "bg-green-100 text-green-700 border-green-200"
-                                                                : "bg-gray-100 text-gray-600 border-gray-200"
-                                                    }`}
-                                            >
-                                                {loan.status}
-                                            </span>
-                                        </td>
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
+                                        <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            File <br /> Number
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Created <br /> At
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Amount
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Interest
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Installments
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Installment <br /> Amount
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Entered By <br /> (Emp. Id)
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
+                                            Status
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
+                                </thead>
 
-                        </table>
-                    </div>
-                </div>
-            )}
+                                <tbody className="divide-y divide-gray-200">
+                                    {existCustomer.loans.map((loan, key) => (
+                                        <tr
+                                            key={loan.fileNumber}
+                                            className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors text-center`}
+                                        >
+                                            <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap text-center">
+                                                {loan.fileNumber}
+                                            </td>
 
-            <form onSubmit={handleLoanSubmit}>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {new Date(loan.createdAt).toLocaleDateString('en-GB')}
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            Customer ID <span className='text-red-500'>*</span>
-                        </span>
-                        <input
-                            type="text"
-                            name="customerId"
-                            value={loanForm.customerId}
-                            onChange={handleLoanChange}
-                            placeholder="Customer NIC"
-                            readOnly
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       bg-gray-100 text-gray-600 cursor-not-allowed
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all'
-                        />
-                    </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                Rs. {parseFloat(loan.amount).toLocaleString()}
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            File Number <span className='text-red-500'>*</span>
-                        </span>
-                        <input
-                            type="text"
-                            name="fileNumber"
-                            value={loanForm.fileNumber}
-                            onChange={handleLoanChange}
-                            placeholder="D001"
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all'
-                        />
-                    </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {loan.interestRate}%
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            Loan Amount (LKR) <span className='text-red-500'>*</span>
-                        </span>
-                        <input
-                            type="number"
-                            name="loanAmount"
-                            value={loanForm.loanAmount}
-                            onChange={handleLoanChange}
-                            placeholder="Enter loan amount"
-                            min="0"
-                            step="0.01"
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all'
-                        />
-                    </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {loan.noOfInstallments}
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            Interest Rate (%) <span className='text-red-500'>*</span>
-                        </span>
-                        <select
-                            name="interestRate"
-                            value={loanForm.interestRate}
-                            onChange={handleLoanChange}
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                        >
-                            <option value="">Select Interest Rate</option>
-                            {displayInterestRates?.map((displayInterestRate) => (
-                                <option key={displayInterestRate.id} value={displayInterestRate.id}>
-                                    {displayInterestRate.rate}%
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            Document Charges <span className='text-red-500'>*</span>
-                        </span>
-                        <input
-                            type="number"
-                            name="documentCharge"
-                            value={loanForm.documentCharge}
-                            onChange={handleLoanChange}
-                            placeholder="100"
-                            min="0"
-                            step="1"
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all'
-                        />
-                    </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {loan.employeeId}
+                                            </td>
 
-                    <div className='flex flex-col'>
-                        <span className='mb-2 text-sm font-medium text-gray-700'>
-                            Number of Installments <span className='text-red-500'>*</span>
-                        </span>
-                        <select
-                            name="numberOfInstallments"
-                            value={loanForm.numberOfInstallments}
-                            onChange={handleLoanChange}
-                            required
-                            className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                        >
-                            <option value="">Select Installments</option>
-                            {displayInstallments?.map((displayInstallment) => (
-                                <option key={displayInstallment.id} value={displayInstallment.id}>
-                                    {displayInstallment.value} installments
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border
+                                    ${loan.status === "PENDING"
+                                                            ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                                                            : loan.status === "REJECTED"
+                                                                ? "bg-red-100 text-red-700 border-red-200"
+                                                                : loan.status === "APPROVED"
+                                                                    ? "bg-green-100 text-green-700 border-green-200"
+                                                                    : "bg-gray-100 text-gray-600 border-gray-200"
+                                                        }`}
+                                                >
+                                                    {loan.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
 
-                </div>
-
-                {/* New Customer Details Section */}
-                {isEmployee && (
-                    <div className="mt-6 bg-white rounded-xl shadow-lg p-6">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                            New Customer Details
-                        </h3>
-
-                        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Customer Name <span className="text-red-500">*</span>
-                                </span>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={loanForm.name}
-                                    onChange={handleLoanChange}
-                                    placeholder="Enter customer name"
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Customer Email <span className="text-red-500">*</span>
-                                </span>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={loanForm.email}
-                                    onChange={handleLoanChange}
-                                    placeholder="customer@example.com"
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Customer Address <span className="text-red-500">*</span>
-                                </span>
-                                <input
-                                    type="text"
-                                    name="address"
-                                    value={loanForm.address}
-                                    onChange={handleLoanChange}
-                                    placeholder="Enter customer address"
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Customer Phone Number <span className="text-red-500">*</span>
-                                </span>
-                                <input
-                                    type="tel"
-                                    name="phoneNumber"
-                                    value={loanForm.phoneNumber}
-                                    onChange={handleLoanChange}
-                                    placeholder="07XXXXXXXX"
-                                    pattern="[0-9]{10}"
-                                    required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
-
-                            {/* Divider */}
-                            <div className="md:col-span-2 border-t border-gray-200 my-2"></div>
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Bank Account Number (Optional)
-                                </span>
-                                <input
-                                    type="text"
-                                    name="bankAccount"
-                                    value={loanForm.bankAccount}
-                                    onChange={handleLoanChange}
-                                    placeholder="Enter bank account number"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
-
-                            <div className="flex flex-col">
-                                <span className="mb-2 text-sm font-medium text-gray-700">
-                                    Bank Name (Optional)
-                                </span>
-                                <input
-                                    type="text"
-                                    name="bank"
-                                    value={loanForm.bank}
-                                    onChange={handleLoanChange}
-                                    placeholder="Enter bank name"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 
-                               focus:border-transparent transition-all"
-                                />
-                            </div>
+                            </table>
                         </div>
                     </div>
                 )}
 
-                <div className='w-full flex justify-end gap-4 mt-6'>
-                    <button
-                        type="button"
-                        onClick={clearLoanForm}
-                        className='border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors'
-                    >
-                        Clear
-                    </button>
-                    <button
-                        type="submit"
-                        className='bg-black text-white px-6 py-2 rounded-lg w-full md:w-fit hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed'
-                        disabled={!loanForm.customerId}
-                    >
-                        Create Loan
-                    </button>
-                </div>
-            </form>
+                <form onSubmit={handleLoanSubmit}>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Customer ID <span className='text-red-500'>*</span>
+                            </span>
+                            <input
+                                type="text"
+                                name="customerId"
+                                value={loanForm.customerId}
+                                onChange={handleLoanChange}
+                                placeholder="Customer NIC"
+                                readOnly
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       bg-gray-100 text-gray-600 cursor-not-allowed
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                File Number <span className='text-red-500'>*</span>
+                            </span>
+                            <input
+                                type="text"
+                                name="fileNumber"
+                                value={loanForm.fileNumber}
+                                onChange={handleLoanChange}
+                                placeholder="D001"
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Loan Amount (LKR) <span className='text-red-500'>*</span>
+                            </span>
+                            <input
+                                type="number"
+                                name="loanAmount"
+                                value={loanForm.loanAmount}
+                                onChange={handleLoanChange}
+                                placeholder="Enter loan amount"
+                                min="0"
+                                step="0.01"
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Interest Rate (%) <span className='text-red-500'>*</span>
+                            </span>
+                            <select
+                                name="interestRate"
+                                value={loanForm.interestRate}
+                                onChange={handleLoanChange}
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all bg-white'
+                            >
+                                <option value="">Select Interest Rate</option>
+                                {displayInterestRates?.map((displayInterestRate) => (
+                                    <option key={displayInterestRate.id} value={displayInterestRate.id}>
+                                        {displayInterestRate.rate}%
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Document Charges <span className='text-red-500'>*</span>
+                            </span>
+                            <input
+                                type="number"
+                                name="documentCharge"
+                                value={loanForm.documentCharge}
+                                onChange={handleLoanChange}
+                                placeholder="100"
+                                min="0"
+                                step="1"
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Number of Installments <span className='text-red-500'>*</span>
+                            </span>
+                            <select
+                                name="numberOfInstallments"
+                                value={loanForm.numberOfInstallments}
+                                onChange={handleLoanChange}
+                                required
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all bg-white'
+                            >
+                                <option value="">Select Installments</option>
+                                {displayInstallments?.map((displayInstallment) => (
+                                    <option key={displayInstallment.id} value={displayInstallment.id}>
+                                        {displayInstallment.value} installments
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                    </div>
+
+                    {/* New Customer Details Section */}
+                    {isEmployee && (
+                        <div className="mt-6 bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                                New Customer Details
+                            </h3>
+
+                            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Customer Name <span className="text-red-500">*</span>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={loanForm.name}
+                                        onChange={handleLoanChange}
+                                        placeholder="Enter customer name"
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Customer Email <span className="text-red-500">*</span>
+                                    </span>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={loanForm.email}
+                                        onChange={handleLoanChange}
+                                        placeholder="customer@example.com"
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Customer Address <span className="text-red-500">*</span>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="address"
+                                        value={loanForm.address}
+                                        onChange={handleLoanChange}
+                                        placeholder="Enter customer address"
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Customer Phone Number <span className="text-red-500">*</span>
+                                    </span>
+                                    <input
+                                        type="tel"
+                                        name="phoneNumber"
+                                        value={loanForm.phoneNumber}
+                                        onChange={handleLoanChange}
+                                        placeholder="07XXXXXXXX"
+                                        pattern="[0-9]{10}"
+                                        required
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+
+                                {/* Divider */}
+                                <div className="md:col-span-2 border-t border-gray-200 my-2"></div>
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Bank Account Number (Optional)
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="bankAccount"
+                                        value={loanForm.bankAccount}
+                                        onChange={handleLoanChange}
+                                        placeholder="Enter bank account number"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="mb-2 text-sm font-medium text-gray-700">
+                                        Bank Name (Optional)
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="bank"
+                                        value={loanForm.bank}
+                                        onChange={handleLoanChange}
+                                        placeholder="Enter bank name"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-blue-500 
+                               focus:border-transparent transition-all"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className='w-full flex justify-end gap-4 mt-6'>
+                        <button
+                            type="button"
+                            onClick={clearLoanForm}
+                            className='border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors'
+                        >
+                            Clear
+                        </button>
+                        <button
+                            type="submit"
+                            className='bg-blue-600 text-white px-6 py-2 rounded-lg w-full md:w-fit hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed'
+                            disabled={!loanForm.customerId}
+                        >
+                            Create Loan
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     )
 }
