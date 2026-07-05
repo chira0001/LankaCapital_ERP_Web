@@ -147,6 +147,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         }
 
         return dto;
+    }
     public String syncDailyCollection(CollectionSyncDto collectionSyncDto){
         DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
 
