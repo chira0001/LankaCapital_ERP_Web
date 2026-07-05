@@ -72,6 +72,7 @@ public class CustomerMapper {
         dto.setEmail(customer.getEmail());
         dto.setAddress(customer.getAddress());
         dto.setPhone_number(customer.getPhoneNumber());
+        dto.setUpdate_status(customer.getUpdateStatus());
         return dto;
     }
 

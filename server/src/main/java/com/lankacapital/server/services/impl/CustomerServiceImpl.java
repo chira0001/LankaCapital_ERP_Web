@@ -120,27 +120,15 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page){
-        List<Long> allCustomerIds =  customerRepository.findAllCustomerIds();
-        if(allCustomerIds == null){
-            throw new ResourceNotFoundException("Server Error: Customer");
-        }
-        List<Long> notSyncedIds = new ArrayList<>();
-        for (Long id : allCustomerIds) {
-            if (!nicList.getNic().contains(id)) {
-                notSyncedIds.add(id);
-            }
-        }
-        if(notSyncedIds.isEmpty()){
-            return List.of();
-        }
-        Pageable pageable = PageRequest.of(page, 5);
-        return customerRepository.findCustomersByIds(notSyncedIds ,pageable)
-                .stream()
+    public List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto customerAsyncDto) {
+        List<Customer> customers = customerRepository.findCustomersByNics(customerAsyncDto.getNic());
+
+        return customers.stream()
                 .map(CustomerMapper::mapToCustomerAsyncDto)
                 .toList();
     }
 
+    @Override
     public CustomerResDto getCustomerDataById(Long nic){
         Customer customer = customerRepository.findByNicWithLoans(nic);
         if(customer == null){
@@ -205,4 +193,25 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setDeleted(false);
         customerRepository.save(customer);
     }
+
+    public List<CustomerManageDto> manageCustomers(int page) {
+        Pageable pageable = PageRequest.of(page, 50);
+
+        return customerRepository.findAll(pageable)
+                .getContent()
+                .stream()
+                .map(customer -> new CustomerManageDto(
+                        customer.getNic(),
+                        customer.getUpdateStatus()
+                ))
+                .toList();
+    }
+
+//        return getAllCustomer();
+
+//        return customerRepository.findUpdatedCustomers(pageable)
+//                .stream()
+//                .map(CustomerMapper::mapToCustomerAsyncDto)
+//                .toList();
+
 }

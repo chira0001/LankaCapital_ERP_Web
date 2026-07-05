@@ -54,6 +54,7 @@ public class EmployeeMapper {
         dto.setEmail(employee.getEmail());
         dto.setAddress(employee.getAddress());
         dto.setPhone_number(employee.getPhoneNumber());
+        dto.setUpdate_status(employee.getUpdateStatus());
 
         return dto;
     }

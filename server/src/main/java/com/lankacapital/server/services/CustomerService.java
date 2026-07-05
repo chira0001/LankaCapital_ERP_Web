@@ -10,8 +10,10 @@ public interface CustomerService {
     CustomerResponseDto getCustomerById(Long nic);
     CustomerInfoDto getCustomerInfoById(Long nic);
     CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
-    List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page);
+    List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList);
     CustomerResDto getCustomerDataById(Long nic);
+
+    List<CustomerManageDto> manageCustomers(int page);
 
     List<CustomerResponseDto> getAllActiveCustomers();
 
