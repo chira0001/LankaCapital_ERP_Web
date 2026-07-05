@@ -14,6 +14,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class RoleServiceImpl implements RoleService {
+
     private final RoleRepository roleRepository;
 
 
@@ -34,10 +35,30 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Role getRoleByRoleName(RoleRegisterDto dto) {
+
         Role role = roleRepository.findByRoleName(dto.getRoleName());
-        if(role == null){
-            throw new ResourceNotFoundException("Role not found with name : " + dto.getRoleName());
+
+        if (role == null) {
+            throw new ResourceNotFoundException(
+                    "Role not found with name: " + dto.getRoleName()
+            );
         }
+
         return role;
     }
+
+
+//    @Override
+//    public Role createRole(RoleRegisterDto dto) {
+//        Role role = new Role();
+//        role.setRoleName(dto.getRoleName());
+//        return roleRepository.save(role);
+//    }
+
+    @Override
+    public Role getRoleById(Integer id) {
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+    }
+
 }

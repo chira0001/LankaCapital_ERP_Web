@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
+
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,10 @@ import com.lankacapital.server.services.ReportService;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -30,15 +34,18 @@ public class AdminController {
     private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
     private final ReportService reportService;
+    private final DailyCollectionService dailyCollectionService;
+    private final CustomerService customerService;
+    private final DashboardService dashboardService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
         return new ResponseEntity<>(roleService.addNewRole(dto), HttpStatus.CREATED);
     }
 
-    @GetMapping(path = "/role/{roleName}")
-    public ResponseEntity<?> getRoleByRoleName(@PathVariable RoleRegisterDto dto){
-        return new ResponseEntity<>(roleService.getRoleByRoleName(dto), HttpStatus.OK);
+    @PostMapping("/role/name")
+    public ResponseEntity<?> getRoleByName(@RequestBody RoleRegisterDto dto) {
+        return ResponseEntity.ok(roleService.getRoleByRoleName(dto));
     }
 
     @GetMapping(path = "/role")
@@ -68,13 +75,15 @@ public class AdminController {
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
-    //admin loan view
-    //@GetMapping("/loans")
-    //public ResponseEntity<?> getAllLoans(){
-     //   return ResponseEntity.ok(loanService.getAllLoans());
-    //}
+    @GetMapping("/employee")
+    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees() {
 
-    ///  /////////new
+        return ResponseEntity.ok(
+                employeeService.getAllEmployees()
+        );
+    }
+
+
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans() {
 
@@ -304,6 +313,131 @@ public class AdminController {
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         return ResponseEntity.ok(
                 financialStatementService.importAssetsLiabilities(file)
+        );
+    }
+
+    //revenue tracking
+    @GetMapping("/revenue/summary")
+    public ResponseEntity<?> getRevenueSummary() {
+
+        var today = dailyCollectionService.getTodayCollection();
+        var week = dailyCollectionService.getWeeklyCollection();
+
+        return ResponseEntity.ok(
+                new RevenueSummary(today, week)
+        );
+    }
+
+    @GetMapping("/revenue/collections")
+    public ResponseEntity<?> getRevenueCollections() {
+
+        return ResponseEntity.ok(
+                dailyCollectionService.getAllCollections()
+        );
+    }
+
+    record RevenueSummary(
+            java.math.BigDecimal today,
+            java.math.BigDecimal week
+    ) {}
+
+    // ================= CUSTOMER MANAGEMENT =================
+
+    // Get all active customers
+    @GetMapping("/customers")
+    public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllActiveCustomers());
+    }
+
+
+    // Get one customer with loans
+    @GetMapping("/customers/{nic}")
+    public ResponseEntity<?> getCustomer(@PathVariable Long nic) {
+
+        return ResponseEntity.ok(
+                customerService.getActiveCustomerById(nic)
+        );
+    }
+
+    // Soft delete customer
+    @DeleteMapping("/customers/{nic}")
+    public ResponseEntity<?> deleteCustomer(@PathVariable Long nic) {
+
+        customerService.deleteCustomer(nic);
+
+        return ResponseEntity.ok("Customer deleted successfully");
+    }
+
+    // Undo delete
+    @PutMapping("/customers/{nic}/undo")
+    public ResponseEntity<?> undoDeleteCustomer(@PathVariable Long nic) {
+
+        customerService.undoDelete(nic);
+
+        return ResponseEntity.ok("Customer restored successfully");
+    }
+
+    //Add Customer to Customer Management
+    @PostMapping("/customers")
+    public ResponseEntity<?> createCustomer(
+            @RequestBody CustomerRegisterDto dto
+    ) {
+
+        return new ResponseEntity<>(
+                customerService.registerCustomer(dto),
+                HttpStatus.CREATED
+        );
+    }
+
+    //Update Customer
+    @PutMapping("/customers/{nic}")
+    public ResponseEntity<?> updateCustomer(
+            @PathVariable Long nic,
+            @RequestBody CustomerRegisterDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                customerService.updateCustomerById(nic, dto)
+        );
+    }
+
+
+    @PostMapping("/loans")
+    public ResponseEntity<Loan> addLoan(
+            @RequestBody LoanCreateDto dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.addLoan(dto, authentication.getName())
+        );
+    }
+
+
+    @PutMapping("/employee/{id}")
+    public ResponseEntity<?> updateEmployee(
+            @PathVariable Long id,
+            @RequestBody EmployeeResponseDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                employeeService.updateEmployee(id, dto)
+        );
+    }
+
+    @DeleteMapping("/employee/{id}")
+    public ResponseEntity<?> deleteEmployee(
+            @PathVariable Long id
+    ) {
+
+        employeeService.deleteEmployee(id);
+
+        return ResponseEntity.ok("Employee deleted successfully");
+    }
+
+    @GetMapping("/financial-dashboard/summary")
+    public ResponseEntity<FinancialDashboardDto> getFinancialDashboard() {
+        return ResponseEntity.ok(
+                dashboardService.getFinancialDashboard()
         );
     }
 }
