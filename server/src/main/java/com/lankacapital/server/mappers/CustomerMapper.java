@@ -33,7 +33,7 @@ public class CustomerMapper {
                             LoanResponseDto loanDto = new LoanResponseDto();
 
                             loanDto.setFileNumber(loan.getFileNumber());
-                            loanDto.setInterestRate(loan.getInterestRate().getRate());
+                            loanDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate().getRate());
                             loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());
                             loanDto.setNoOfInstallments(loan.getInstallment().getValue());

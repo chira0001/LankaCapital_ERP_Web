@@ -35,5 +35,5 @@ public interface FinancialStatementService {
 
     CashFlowDto getAnnualCashFlow(String year);
 
-    String addFinancials(String username, FinancialRequestDto financialRequestDto);
+//    String addFinancials(String username, FinancialRequestDto financialRequestDto);
 }
