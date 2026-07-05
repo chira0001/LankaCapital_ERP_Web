@@ -1,10 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
-import com.lankacapital.server.entities.DailyCollection;
-import com.lankacapital.server.entities.Installment;
-import com.lankacapital.server.entities.InterestRate;
-import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.entities.*;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.services.*;
@@ -139,11 +136,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping("/sync/customer")
-    public ResponseEntity<?> syncToFieldOfficers(@RequestBody List<CustomerRegisterDto> customerList) {
+    public ResponseEntity<?> syncToFieldOfficers(@RequestBody List<CustomerAddSyncDto> customerList) {
         List<Long> successIds = new ArrayList<>();
-        for (CustomerRegisterDto customerDto : customerList) {
+        for (CustomerAddSyncDto customerDto : customerList) {
             try {
-                CustomerResponseDto customer = customerService.registerCustomer(customerDto);
+                Customer customer = customerService.addNewCustomer(customerDto);
                 successIds.add(customer.getNic());
             } catch (ResourceExistException e) {
                 successIds.add(customerDto.getNic());
@@ -186,10 +183,11 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/collection")
     public ResponseEntity<?> syncToDailyCollections(@RequestBody List<CollectionSyncDto> collectionList) {
-        List<String> successIds = new ArrayList<>();
+        List<Integer> successIds = new ArrayList<>();
         for (CollectionSyncDto collectionDto : collectionList) {
             try {
-                successIds.add(dailyCollectionService.syncDailyCollection(collectionDto));
+                String value = dailyCollectionService.syncDailyCollection(collectionDto);
+                successIds.add(collectionDto.getId());
             }catch (Exception e) {
                 return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -259,7 +257,4 @@ public class FieldOfficerController {
 
         return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
     }
-
-
-
 }

@@ -44,7 +44,7 @@ const UserManagementPage = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        "http://localhost:8080/api/v1/admin/employee",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/employee`,
         getAuthConfig()
       );
       setUsers(res.data);
@@ -61,7 +61,7 @@ const UserManagementPage = () => {
   const fetchRoles = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:8080/api/v1/admin/role",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/role`,
         getAuthConfig()
       );
       setRoles(res.data);
@@ -82,7 +82,7 @@ const UserManagementPage = () => {
     try {
 
       await axios.post(
-        "http://localhost:8080/api/v1/admin/employee",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/employee`,
         newUser,
         getAuthConfig()
       );
@@ -113,7 +113,7 @@ const UserManagementPage = () => {
   const handleDeleteUser = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:8080/api/v1/admin/employee/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/admin/employee/${id}`,
         getAuthConfig()
       );
 
@@ -140,7 +140,7 @@ const UserManagementPage = () => {
     try {
 
       await axios.put(
-        `http://localhost:8080/api/v1/admin/employee/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/admin/employee/${id}`,
         editUser,
         getAuthConfig()
       );

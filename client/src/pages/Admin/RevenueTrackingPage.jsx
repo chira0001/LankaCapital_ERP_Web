@@ -40,12 +40,12 @@ const RevenueTrackingPage = () => {
       };
 
       const summaryRes = await axios.get(
-        "http://localhost:8080/api/v1/admin/revenue/summary",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/summary`,
         config
       );
 
       const tableRes = await axios.get(
-        "http://localhost:8080/api/v1/admin/revenue/collections",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/collections`,
         config
       );
 
