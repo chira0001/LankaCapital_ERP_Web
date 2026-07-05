@@ -238,7 +238,7 @@ const PettyCashPage = () => {
   const [loading, setLoading] = useState(true);
 
   const API_URL =
-    'http://localhost:8080/api/v1/admin/pettyCash';
+    `${import.meta.env.VITE_BACKEND_URL}/admin/pettyCash`;
 
   const token = localStorage.getItem('token');
 
