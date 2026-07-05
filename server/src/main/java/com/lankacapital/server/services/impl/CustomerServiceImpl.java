@@ -214,4 +214,32 @@ public class CustomerServiceImpl implements CustomerService {
 //                .map(CustomerMapper::mapToCustomerAsyncDto)
 //                .toList();
 
+    @Override
+    public Customer addNewCustomer(CustomerAddSyncDto customerAddSyncDto){
+        if (customerRepository.existsById(customerAddSyncDto.getNic())) {
+            throw new ResourceExistException(
+                    "Customer already registered with id : " + customerAddSyncDto.getNic()
+            );
+        }
+
+        Customer customer = new Customer();
+
+        customer.setNic(customerAddSyncDto.getNic());
+        customer.setName(customerAddSyncDto.getName());
+        customer.setEmail(customerAddSyncDto.getEmail());
+        customer.setPhoneNumber(customerAddSyncDto.getPhoneNumber());
+        customer.setAddress( customerAddSyncDto.getAddress() );
+        customer.setDeleted(false);
+
+        Role role = roleRepository.findByRoleName("Customer");
+        if (role == null) {
+            role = new Role();
+            role.setRoleName("Customer");
+            role = roleRepository.save(role);
+        }
+        customer.setRole(role);
+
+        Customer savedCustomer = customerRepository.save(customer);
+        return savedCustomer;
+    }
 }
