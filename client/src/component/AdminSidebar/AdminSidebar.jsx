@@ -3,28 +3,46 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings} from "lucide-react";
 import { UserCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
   { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
-  { name: "Portfolio Overview", icon: BarChart2, path: "/ad/portfolio" },
-  { name: "Loan Performance", icon: TrendingUp, path: "/ad/performance" },
   { name: "Revenue Tracking", icon: DollarSign, path: "/ad/revenue" },
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
-  { name: "Field Officer Performance", icon: UserCheck, path: "/ad/officers" },
   { name: "Petty Cash", icon: CreditCard, path: "/ad/petty-cash" },
   { name: "Financial Reports", icon: BarChart2, path: "/ad/reports" },
-  { name: "Performance & Targets", icon: Target, path: "/ad/targets" },
-  { name: "Loan Categories", icon: Layers, path: "/ad/categories" },
   { name: "User Management", icon: UserPlus, path: "/ad/users" },
-  { name: "Audit Logs", icon: ClipboardList, path: "/ad/audit" },
-  { name: "System Configuration", icon: Settings, path: "/ad/settings" },
-//  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
+  { name: "Profile", icon: UserCircle, path: "/ad/profile" },
+ // { name: "Portfolio Overview", icon: BarChart2, path: "/ad/portfolio" },
+ // { name: "Loan Performance", icon: TrendingUp, path: "/ad/performance" },
+ // { name: "Audit Logs", icon: ClipboardList, path: "/ad/audit" },
+  // { name: "System Configuration", icon: Settings, path: "/ad/settings" },
+  // { name: "Performance & Targets", icon: Target, path: "/ad/targets" },
+  // { name: "Loan Categories", icon: Layers, path: "/ad/categories" },
+  // { name: "Field Officer Performance", icon: UserCheck, path: "/ad/officers" },
 ];
 
 
 const Sidebar = () => {
+
+   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // 1. remove token
+    localStorage.removeItem("token");
+
+    // 2. optional: remove other stored data
+    localStorage.removeItem("refreshToken"); // if you stored it
+
+    // 3. redirect to login
+    navigate("/login");
+
+    // 4. optional: force reload to clear state
+    window.location.reload();
+  };
+
   return (
     <div className="h-full flex flex-col bg-[#071428] text-white overflow-hidden ">
 
@@ -65,13 +83,13 @@ const Sidebar = () => {
 
             {/* Avatar */}
             <div className="w-12 h-12 rounded-full bg-yellow-600 flex items-center justify-center text-black font-bold text-lg">
-              P
+              A
             </div>
 
             {/* User Info */}
             <div className="overflow-hidden">
               <h3 className="text-sm font-semibold truncate">
-                director@email.com
+                admin@email.com
               </h3>
 
               <p className="text-xs text-gray-400 mt-1">
@@ -81,7 +99,10 @@ const Sidebar = () => {
           </div>
 
           {/* Logout */}
-          <button className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200">
+          <button 
+            className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200"
+            onClick={handleLogout}
+          >
             Logout
           </button>
 

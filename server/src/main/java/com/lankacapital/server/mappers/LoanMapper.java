@@ -49,11 +49,11 @@ public class LoanMapper {
 
 
         //responseDto.setInterestRate(loan.getInterestRate().getRate());
-        if (loan.getInterestRate() == null) {
-            throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
-        }
-
-        responseDto.setInterestRate(loan.getInterestRate().getRate());
+        responseDto.setInterestRate(
+                loan.getInterestRate() != null
+                        ? loan.getInterestRate().getRate()
+                        : 0.0
+        );
         /// /
         responseDto.setStatus(loan.getStatus());
         responseDto.setRejectionNote(loan.getDecisionNote());

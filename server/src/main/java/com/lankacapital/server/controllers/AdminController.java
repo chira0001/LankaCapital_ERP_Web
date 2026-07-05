@@ -37,6 +37,7 @@ public class AdminController {
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
     private final DashboardService dashboardService;
+    private final EmployeeProfileService employeeProfileService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -438,6 +439,27 @@ public class AdminController {
     public ResponseEntity<FinancialDashboardDto> getFinancialDashboard() {
         return ResponseEntity.ok(
                 dashboardService.getFinancialDashboard()
+        );
+    }
+
+
+    //admin profile
+    @GetMapping("/profile")
+    public ResponseEntity<?> getMyProfile(Authentication authentication) {
+
+        return ResponseEntity.ok(
+                employeeProfileService.getMyProfile(authentication.getName())
+        );
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateMyProfile(
+            Authentication authentication,
+            @RequestBody EmployeeProfileDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                employeeProfileService.updateMyProfile(authentication.getName(), dto)
         );
     }
 }

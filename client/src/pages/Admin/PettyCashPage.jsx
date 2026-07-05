@@ -651,8 +651,8 @@ const undo = async (id) => {
                           {/* APPROVE */}
                           <button
                             onClick={() => approve(record.id)}
-                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                          >
+                            className="bg-blue-900 text-white px-3 py-1 rounded hover:bg-blue-600"
+                          > 
                             Approve
                           </button>
 

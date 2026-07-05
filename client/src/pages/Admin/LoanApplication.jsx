@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-
+import axios from 'axios';
 import { CheckCircle, XCircle, Filter } from 'lucide-react';
 import { Button } from '@/component/ui/button';
 import { Input } from '@/component/ui/input';
 import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
-import axiosAPI from '@/api/axiosAPI'; // Import the axios instance
-//import { useToast } from '@/hooks/use-toast';
-//import { useAuth } from '@/contexts/AuthContext.jsx';
 
 import {
   Select,
@@ -28,406 +25,204 @@ import {
   AlertDialogTitle,
 } from '@/component/ui/alert-dialog';
 
-
-
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
 
-const formatLKR=(amount) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
+const formatLKR = (amount) =>
+  new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
+
+// Same explicit-token pattern as RevenueTrackingPage.jsx
+const getAuthConfig = () => {
+  const token = localStorage.getItem("token");
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  };
+};
+
+const BASE_URL = "http://localhost:8080/api/v1";
+
 const LoanApplication = () => {
-    const toast = useToast();//temporary stub- replace with actual toast hook
-    const currentEmployeeId = 3;
-    const [applicationData, setApplicationData] = useState([]);
-    const[filteredApps, setFilteredApps] = useState([]);
-    const[loading, setLoading] = useState(true);
-    const[selectedApp, setSelectedApp] = useState(null);
-    const [actionType,setActionType] = useState(null);
-    const [showDialog, setShowDialog] = useState(false);
-    const [decisionNote, setDecisionNote] = useState("");
-    const[filters, setFilters] = useState({
-        status: "ALL",
-        search: "",
-        loanId: "",
-        minAmount: "",
-        maxAmount: "",
-    });
+  const toast = useToast();
+  const currentEmployeeId = 3;
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+  const [applicationData, setApplicationData] = useState([]);
+  const [filteredApps, setFilteredApps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [actionType, setActionType] = useState(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [decisionNote, setDecisionNote] = useState("");
+  const [filters, setFilters] = useState({
+    status: "ALL",
+    search: "",
+    loanId: "",
+    minAmount: "",
+    maxAmount: "",
+  });
 
-    
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-//    useEffect(() => {
-//   applyFilters();
-// }, [filters, applicationData]);
+  useEffect(() => {
+    const filtered = applyFilters(applicationData, filters);
+    setFilteredApps(filtered);
+  }, [filters, applicationData]);
 
-
-      useEffect(() => {
-  const filtered = applyFilters(applicationData, filters);
-  setFilteredApps(filtered);
-}, [filters, applicationData]);
-
-    /*const fetchApplications = async () => {
-        try {
-         const apps =await pb.collection('loan_applications').getFullList({
-            sort:'-request_date',
-            $autoCancel: false
-         });
-         setApplications(apps);
-        } catch (error) {
-            console.error("Error fetching applications:", error);
-        TransformStream({
-            title: "Error",
-            description :"Failed to load applications:",
-            variant: "destructive"
-        });
-        } finally {
-            setLoading(false);      
-
-        }
-    };
-
-    */
-
-    // FETCH LOANS FROM BACKEND 
+  // FETCH LOANS FROM BACKEND
   const fetchApplications = async () => {
     try {
-
-      /////3 new code////////////
-      const res = await axiosAPI.get("/admin/loans");
-
-    const data = res.data;
-
-    console.log("RAW API DATA:", data);
-
-    setApplicationData(data);
-     const filtered = applyFilters(data, filters);
-    setFilteredApps(filtered);
-
-      ////////////////workin code after previous code 2////////////////////////
-     /* const res = await fetch('http://localhost:8080/api/v1/admin/loans');
-      const data = await res.json();
+      const res = await axios.get(`${BASE_URL}/admin/loans`, getAuthConfig());
+      const data = res.data;
 
       console.log("RAW API DATA:", data);
 
-      if (!Array.isArray(data)) {
-        console.error("Backend did not return an array:", data);
-
-        setApplicationData([]);
-        setFilteredApps([]);
-        return;
-      }
-
-
-      const normalized = data.map(app => ({
-        ...app,
-
-
-        status: (app.status && app.status.trim() !== '' 
-            ? app.status 
-            : 'PENDING').toUpperCase()
-      }));
-
-       console.log("NORMALIZED DATA:", normalized);
-
-      setApplicationData(normalized);
-      setFilteredApps(normalized);
-*/
-      ////////////////////////////////////////
-
-
-      ///////////previous code 1 //////////////
-       // status: (app.status ?? '').toUpperCase() // can use after backend fixed as prnding all
-      // status: (app.status || 'PENDING').trim().toUpperCase()
-
-     // setApplicationData(data);
-     // setFilteredApps(data); // IMPORTANT FIX
-      ////////////////////////////////////////////////
-
-
-
+      setApplicationData(data);
+      const filtered = applyFilters(data, filters);
+      setFilteredApps(filtered);
     } catch (error) {
       console.error("Error fetching applications:", error);
+      if (error.response?.status === 403) {
+        toast({
+          title: 'Access Denied',
+          description: 'Your session may have expired. Please log in again.',
+          variant: 'destructive'
+        });
+      }
+      setApplicationData([]);
+      setFilteredApps([]);
     } finally {
       setLoading(false);
     }
   };
- 
-
-
-  // const applyFilters = () => {
-  //   let filtered = [...applicationData];
-
-  //   if (filters.status !== 'ALL') {
-  //     filtered = filtered.filter(app =>
-  //       (app.status || '').toUpperCase() === filters.status
-  //     );
-  //   }
-
-  //   if (filters.search) {
-  //     filtered = filtered.filter(app =>
-  //       app.customer?.businessName
-  //         ?.toLowerCase()
-  //         .includes(filters.search.toLowerCase())
-  //     );
-  //   }
-
-  //   if (filters.loanId) {
-  //     filtered = filtered.filter(app =>
-  //      app.fileNumber
-  //       ?.toLowerCase()
-  //       .includes(filters.loanId.toLowerCase())
-  //  );
-  //  }
-
-  //   if (filters.minAmount) {
-  //     filtered = filtered.filter(app =>
-  //       Number(app.amount) >= Number(filters.minAmount)
-  //     );
-  //   }
-
-  //   if (filters.maxAmount) {
-  //     filtered = filtered.filter(app =>
-  //       Number(app.amount) <= Number(filters.maxAmount)
-  //     );
-  //   }
-
-  //   setFilteredApps(filtered);
-  // };
-
 
   const applyFilters = (data, filters) => {
     let filtered = [...data];
 
     if (filters.status !== "ALL") {
-        filtered = filtered.filter(
-            app => (app.status || "").toUpperCase() === filters.status
-        );
+      filtered = filtered.filter(
+        app => (app.status || "").toUpperCase() === filters.status
+      );
     }
 
     if (filters.search) {
-    filtered = filtered.filter(app =>
+      filtered = filtered.filter(app =>
         (app.customerId ?? '')
-            .toString()
-            .toLowerCase()
-            .includes(filters.search.toLowerCase())
-     );
+          .toString()
+          .toLowerCase()
+          .includes(filters.search.toLowerCase())
+      );
     }
 
     if (filters.loanId) {
-        filtered = filtered.filter(app =>
-            app.fileNumber
-                ?.toLowerCase()
-                .includes(filters.loanId.toLowerCase())
-        );
+      filtered = filtered.filter(app =>
+        app.fileNumber
+          ?.toLowerCase()
+          .includes(filters.loanId.toLowerCase())
+      );
     }
 
     if (filters.minAmount) {
-        filtered = filtered.filter(
-            app => Number(app.amount) >= Number(filters.minAmount)
-        );
+      filtered = filtered.filter(
+        app => Number(app.amount) >= Number(filters.minAmount)
+      );
     }
 
     if (filters.maxAmount) {
-        filtered = filtered.filter(
-            app => Number(app.amount) <= Number(filters.maxAmount)
-        );
+      filtered = filtered.filter(
+        app => Number(app.amount) <= Number(filters.maxAmount)
+      );
     }
 
     return filtered;
-};
+  };
 
   const handleAction = (app, action) => {
-    console.log("SELECTED APP FULL OBJECT:", app);
     setSelectedApp(app);
     setActionType(action);
     setDecisionNote('');
     setShowDialog(true);
   };
 
-const confirmAction = async () => {
+  const confirmAction = async () => {
+    if (!selectedApp) return;
 
-  console.log("SELECTED APP:", selectedApp);
-  console.log("FILE NUMBER:", selectedApp?.fileNumber);
-  console.log("ACTION TYPE:", actionType);
+    if (actionType === 'approve' && !decisionNote.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Decision note is required',
+        variant: 'destructive'
+      });
+      return; // dialog stays open, nothing sent yet
+    }
 
+    try {
+      setLoading(true);
+      const config = getAuthConfig();
 
-  if (!selectedApp) {
-    return;
-  }
-
-  //  if (actionType === 'reject') {
-
-
-  //   toast({
-  //     title: 'Error',
-  //     description: 'Rejection note is required',
-  //     variant: 'destructive'
-  //   });
-  //   return;
-
-  //           response = await axiosAPI.put("/admin/approve", {
-  //         fileNumber: selectedApp.fileNumber,
-  //         employeeId: currentEmployeeId
-  //     });
-  //   }
-
-
-  //  }
-
-  try {
-
-    setLoading(true);
-    let response;
-
-    if (actionType === 'approve') {
-      if (!decisionNote.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Decision note is required ',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-
-       response = await axiosAPI.put("/admin/approve", {
+      if (actionType === 'approve') {
+        await axios.put(`${BASE_URL}/admin/approve`, {
           fileNumber: selectedApp.fileNumber,
           employeeId: currentEmployeeId,
           decisionNote: decisionNote
-      });
-    }
-
-
-      //  response = await fetch('http://localhost:8080/api/v1/admin/approve', {
-         // method: 'PUT',
-        //  headers: {
-       //     'Content-Type': 'application/json'
-        //  },
-        //  body: JSON.stringify({
-           // fileNumber: selectedApp.fileNumber,
-        //    employeeId: currentEmployeeId
-         // })
-      //  });
-      //} 
-
-
-
-
-    //    toast({
-    //     title: 'Error',
-    //     description: 'Decision note is required for approval',
-    //     variant: 'destructive'
-    //   });
-    //   return;
-    // }
-
-
-
-           
-
-      else if (actionType === 'reject') {
-        response = await axiosAPI.put("/admin/reject",{ //fetch('http://localhost:8080/api/v1/admin/reject', {
-          // method: 'PUT',
-          // headers: {
-          //   'Content-Type': 'application/json'
-          // },
-          // body: JSON.stringify({
-            fileNumber: selectedApp.fileNumber,
-            decisionNote: decisionNote,
-            employeeId: currentEmployeeId
-          // })
-        });
-      } 
-      else if (actionType === 'reset') {
-        response = await axiosAPI.put("/admin/reset", {
-        //fetch('http://localhost:8080/api/v1/admin/reset', {
-          // method: 'PUT',
-          // headers: {
-          //   'Content-Type': 'application/json'
-          // },
-          // body: JSON.stringify({
-            fileNumber: selectedApp.fileNumber,
-            employeeId: currentEmployeeId
-          })
-        // });
+        }, config);
+      } else if (actionType === 'reject') {
+        await axios.put(`${BASE_URL}/admin/reject`, {
+          fileNumber: selectedApp.fileNumber,
+          decisionNote: decisionNote,
+          employeeId: currentEmployeeId
+        }, config);
+      } else if (actionType === 'reset') {
+        await axios.put(`${BASE_URL}/admin/reset`, {
+          fileNumber: selectedApp.fileNumber,
+          employeeId: currentEmployeeId
+        }, config);
       }
 
-    // if (!response.ok) {
-    //   throw new Error('Failed to update application');
-    // }
+      const res = await axios.get(`${BASE_URL}/admin/loans`, config);
+      setApplicationData(res.data);
+      setFilteredApps(applyFilters(res.data, filters));
 
-    // const updatedLoan = await response.json();
-   // console.log("UPDATED LOAN:", updatedLoan);
-
-
-//await fetchApplications();
-
-const res = await axiosAPI.get("/admin/loans");
-const data = res.data;
-
-setApplicationData(data);
-setFilteredApps(applyFilters(data, filters));
-
-
-    toast({
-      title: 'Success',
-      description: `Application ${actionType === 'approve' ? 'approved' : 'rejected'} successfully`
-    });
-  } catch (error) {
-    console.error('Failed to update application:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to update application',
-      variant: 'destructive'
-    });
-  } finally {
-
-    setLoading(false);
-
-    setShowDialog(false);
-    setSelectedApp(null);
-    setActionType(null);
-    setDecisionNote('');
-  }
-};
-
-  const getRiskBadge = (risk) => {
-    const styles = {
-      Low: 'bg-gray-100 text-gray-700 border-gray-200',
-      Medium: 'bg-gray-200 text-gray-800 border-gray-300',
-      High: 'bg-red-100 text-red-700 border-red-200'
-    };
-    return styles[risk] || styles.Medium;
+      toast({
+        title: 'Success',
+        description: `Application ${actionType === 'approve' ? 'approved' : actionType === 'reject' ? 'rejected' : 'reset'} successfully`
+      });
+    } catch (error) {
+      console.error('Failed to update application:', error);
+      const status = error.response?.status;
+      toast({
+        title: 'Error',
+        description:
+          status === 403
+            ? 'Access denied — check your login session or permissions.'
+            : 'Failed to update application',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+      setShowDialog(false);
+      setSelectedApp(null);
+      setActionType(null);
+      setDecisionNote('');
+    }
   };
 
- /* const getStatusBadge = (status) => {
-    const styles = {
-      PENDING: 'bg-gray-100 text-gray-700 border-gray-200',
-      APPROVED: 'bg-black text-white border-black',
-      REJECTED: 'bg-red-100 text-red-700 border-red-200'
-    };
-    return styles[status] || styles.PENDING;
-  };
-*/
   const getStatusBadge = (status) => {
     const normalized = (status ?? '').toUpperCase();
-
     const styles = {
       PENDING: 'bg-gray-100 text-gray-700 border-gray-200',
       APPROVED: 'bg-black text-white border-black',
       REJECTED: 'bg-red-100 text-red-700 border-red-200'
     };
-
     return styles[normalized] || styles.PENDING;
   };
 
   if (loading) {
     return (
       <div className="flex">
-      {/*  <Sidebar /> */}
         <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -440,11 +235,7 @@ setFilteredApps(applyFilters(data, filters));
 
   return (
     <>
-      
-
       <div className="flex min-h-screen bg-gray-50 w-full overflow-x-hidde">
-        {/*  <Sidebar /> */}
-        
         <div className="flex-1 overflow-x-hidden">
           <div className="p-4 sm:p-6 lg:p-8">
             <div className="mb-6 sm:mb-8">
@@ -452,19 +243,14 @@ setFilteredApps(applyFilters(data, filters));
               <p className="text-gray-600">Review and approve pending loan applications</p>
             </div>
 
-                      {/* Filters */}
+            {/* Filters */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              
-              {/* Header */}
               <div className="flex items-center gap-2 mb-4">
                 <Filter className="w-5 h-5 text-gray-600" />
                 <h3 className="font-bold text-black">Filters</h3>
               </div>
 
-              {/* Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-
-                {/* STATUS FILTER */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">Status</Label>
                   <Select
@@ -483,75 +269,54 @@ setFilteredApps(applyFilters(data, filters));
                   </Select>
                 </div>
 
-                {/* CUSTOMER SEARCH */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">Applicant NIC</Label>
                   <Input
                     placeholder="Search by NIC"
                     value={filters.search}
-                    onChange={(e) =>
-                      setFilters({ ...filters, search: e.target.value })
-                    }
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                     className="w-full bg-gray-50 border-gray-300 text-black"
                   />
                 </div>
 
-                    {/* LOAN ID SEARCH */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Loan ID</Label>
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Loan ID</Label>
+                  <Input
+                    placeholder="Search by Loan ID"
+                    value={filters.loanId}
+                    onChange={(e) => setFilters({ ...filters, loanId: e.target.value })}
+                    className="w-full bg-gray-50 border-gray-300 text-black"
+                  />
+                </div>
 
-                    <Input
-                      placeholder="Search by Loan ID"
-                      value={filters.loanId}
-                      onChange={(e) =>
-                        setFilters({ ...filters, loanId: e.target.value })
-                      }
-                      className="w-full bg-gray-50 border-gray-300 text-black"
-                    />
-                  </div>
-
-                {/* MIN AMOUNT */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">Min Amount</Label>
                   <Input
                     type="number"
                     placeholder="0"
                     value={filters.minAmount}
-                    onChange={(e) =>
-                      setFilters({ ...filters, minAmount: e.target.value })
-                    }
+                    onChange={(e) => setFilters({ ...filters, minAmount: e.target.value })}
                     className="w-full bg-gray-50 border-gray-300 text-black"
                   />
                 </div>
 
-                {/* MAX AMOUNT */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">Max Amount</Label>
                   <Input
                     type="number"
                     placeholder="1000000"
                     value={filters.maxAmount}
-                    onChange={(e) =>
-                      setFilters({ ...filters, maxAmount: e.target.value })
-                    }
+                    onChange={(e) => setFilters({ ...filters, maxAmount: e.target.value })}
                     className="w-full bg-gray-50 border-gray-300 text-black"
                   />
                 </div>
-
               </div>
 
-              {/* Optional Reset Button */}
               <div className="flex justify-end mt-4">
                 <Button
                   variant="outline"
                   onClick={() =>
-                    setFilters({
-                      status: "ALL",
-                      search: "",
-                      loanId: "",
-                      minAmount: "",
-                      maxAmount: ""
-                    })
+                    setFilters({ status: "ALL", search: "", loanId: "", minAmount: "", maxAmount: "" })
                   }
                 >
                   Reset Filters
@@ -560,7 +325,7 @@ setFilteredApps(applyFilters(data, filters));
             </div>
 
             {/* Applications Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto scrollbar-hide" >
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto scrollbar-hide">
               <div className="overflow-x-auto scrollbar-hide">
                 <table className="w-full min-w-[900px]">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -570,21 +335,18 @@ setFilteredApps(applyFilters(data, filters));
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Amount</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Duration</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Interest</th>
-                       
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Status</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee Id</th>
                       <th className="px-6 py-4 text-left text-sm font-bold text-black">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredApps.map((app) => {
-                      console.log("APP DATA:", app);
-                      return (
-                        <tr key={app.fileNumber} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="font-mono text-sm text-gray-600">{app.fileNumber.slice(0, 8)}</p>
-                          </td>
-                          <td className="px-6 py-4">
+                    {filteredApps.map((app) => (
+                      <tr key={app.fileNumber} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="font-mono text-sm text-gray-600">{app.fileNumber?.slice(0, 8)}</p>
+                        </td>
+                        <td className="px-6 py-4">
                           <p className="font-medium text-black truncate max-w-[140px]">{app.customerId}</p>
                           <p className="text-sm text-gray-500">{app.customer?.contactNumber}</p>
                         </td>
@@ -597,67 +359,52 @@ setFilteredApps(applyFilters(data, filters));
                         <td className="px-6 py-4">
                           <p className="text-gray-700">{app.interestRate}</p>
                         </td>
-                       
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(app.status)}`}>
                             {(app.status || '').toUpperCase()}
                           </span>
-                          {/* {app.status?.toUpperCase() === 'REJECTED' && app.rejectionNote && (
-                            <p className="text-xs text-red-600 mt-1 max-w-[150px] truncate" title={app.rejectionNote}>
-                              {app.rejectionNote}
+                          {app.status?.toUpperCase() === 'APPROVED' && app.decisionNote && (
+                            <p className="text-xs text-green-600 mt-1 max-w-[150px] truncate" title={app.decisionNote}>
+                              {app.decisionNote}
                             </p>
-                          )} */}
-
-                            {app.status?.toUpperCase() === 'APPROVED' && app.decisionNote && (
-                              <p
-                                className="text-xs text-green-600 mt-1 max-w-[150px] truncate"
-                                title={app.decisionNote}
-                              >
-                                {app.decisionNote}
-                              </p>
-                            )}
-
+                          )}
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm text-gray-600">
-                            {app.employeeId || '1'}
-                          </p>
+                          <p className="text-sm text-gray-600">{app.employeeId || '1'}</p>
                         </td>
-                          <td className="px-6 py-4">
-                            {(app.status || '').toUpperCase() === 'PENDING' ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleAction(app, 'approve')}
-                                  className="bg-black hover:bg-gray-800 text-white"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                  Approve
-                                </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleAction(app, 'reject')}
-                                >
-                                  <XCircle className="w-4 h-4 mr-1" />
-                                  Reject
-                                </Button>
-                              </div>
-                            ) : (
+                        <td className="px-6 py-4">
+                          {(app.status || '').toUpperCase() === 'PENDING' ? (
+                            <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleAction(app, 'reset')}
-                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                onClick={() => handleAction(app, 'approve')}
+                                className="bg-black hover:bg-gray-800 text-white"
                               >
-                                Reset
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
                               </Button>
-                            )}
-                          </td>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleAction(app, 'reject')}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAction(app, 'reset')}
+                              className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </td>
                       </tr>
-                      );
-                    } )}
+                    ))}
                   </tbody>
                 </table>
 
@@ -672,35 +419,17 @@ setFilteredApps(applyFilters(data, filters));
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === 'approve' ? 'Approve Application' : 'Reject Application'}
+              {actionType === 'approve' ? 'Approve Application' : actionType === 'reject' ? 'Reject Application' : 'Reset Application'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to {actionType} the loan application for {selectedApp?.customerId}?
               {actionType === 'approve' && ` Amount: ${formatLKR(selectedApp?.amount || 0)}`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
-          {/* {actionType === 'reject' && (
-            <div className="my-4">
-              <Label htmlFor="reason" className="mb-2 block text-black">Rejection Reason</Label>
-              <Textarea
-                id="reason"
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-                placeholder="Please provide a reason for rejection..."
-                className="w-full border-gray-300 text-black"
-                rows={3}
-              />
-            </div>
-          )} */}
-
-
-         
 
           {actionType === 'approve' && (
             <div className="my-4">
@@ -718,7 +447,7 @@ setFilteredApps(applyFilters(data, filters));
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmAction}
               className={actionType === 'reject' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-black hover:bg-gray-800 text-white'}
             >
@@ -730,7 +459,5 @@ setFilteredApps(applyFilters(data, filters));
     </>
   );
 };
-
-
 
 export default LoanApplication;
