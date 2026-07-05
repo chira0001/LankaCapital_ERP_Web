@@ -102,16 +102,16 @@ const DashboardPage = () => {
         }
       );
 
-      // const data = res.data;
+      const data = res.data;
 
-      // setMetrics({
-      //   totalIncome: data.totalIncome ?? dummyMetrics.totalIncome,
-      //   totalExpense: data.totalExpense ?? dummyMetrics.totalExpense,
-      //   netProfit: data.netProfit ?? dummyMetrics.netProfit,
-      //   totalAssets: data.totalAssets ?? dummyMetrics.totalAssets,
-      //   totalLiabilities: data.totalLiabilities ?? dummyMetrics.totalLiabilities,
-      //   netWorth: data.netWorth ?? dummyMetrics.netWorth,
-      // });
+      setMetrics({
+        totalIncome: data.totalIncome ?? dummyMetrics.totalIncome,
+        totalExpense: data.totalExpense ?? dummyMetrics.totalExpense,
+        netProfit: data.netProfit ?? dummyMetrics.netProfit,
+        totalAssets: data.totalAssets ?? dummyMetrics.totalAssets,
+        totalLiabilities: data.totalLiabilities ?? dummyMetrics.totalLiabilities,
+        netWorth: data.netWorth ?? dummyMetrics.netWorth,
+      });
 
       const isValid = (val) => val !== null && val !== undefined && val > 0;
 
