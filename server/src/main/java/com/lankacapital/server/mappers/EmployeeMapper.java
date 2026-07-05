@@ -30,7 +30,13 @@ public class EmployeeMapper {
         dto.setFirstName(employee.getFirstName());
         dto.setLastName(employee.getLastName());
         dto.setEmail(employee.getEmail());
-        dto.setRole(employee.getRole());
+
+        dto.setRole(
+                employee.getRole() != null
+                        ? employee.getRole().getRoleName()
+                        : null
+        );
+        //dto.setRole(employee.getRole());
         dto.setAddress(employee.getAddress());
         dto.setPhoneNumber(employee.getPhoneNumber());
         dto.setBasicSalary(employee.getBasicSalary());
@@ -48,6 +54,7 @@ public class EmployeeMapper {
         dto.setEmail(employee.getEmail());
         dto.setAddress(employee.getAddress());
         dto.setPhone_number(employee.getPhoneNumber());
+        dto.setUpdate_status(employee.getUpdateStatus());
 
         return dto;
     }

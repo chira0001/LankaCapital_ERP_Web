@@ -3,8 +3,7 @@ package com.lankacapital.server.dtos;
 import lombok.Data;
 
 @Data
-public class InterestRateResDto {
-
+public class RoleResponseDto {
     private Integer id;
-    private Double rate;
+    private String roleName;
 }

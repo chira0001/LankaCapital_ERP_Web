@@ -39,7 +39,7 @@ public class ReceptionistController {
         if (registeredCustomer == null){
             return new ResponseEntity<>("Customer not registered", HttpStatus.EXPECTATION_FAILED);
         }
-         return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
+        return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
     }
 
     @PutMapping(path = "/customers")

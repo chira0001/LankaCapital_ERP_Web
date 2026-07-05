@@ -14,7 +14,6 @@ public interface LoanService {
     Loan addLoan(LoanCreateDto loanCreateDto, String username);
 
     CustomerResponseDto getLoansByCustomerId(String id);
-    //List<LoanResponseDto> getLoansByCustomerId(String id);
 
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
@@ -43,13 +42,18 @@ public interface LoanService {
     //reset interest
     LoanResponseDto resetInterest(String fileNumber);
 
-    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page);
+    List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis);
 
     Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto);
 
     String addNewLoanByOfficer(CustomerAddDto customerAddDto);
 
     List<LoanReportRow> getMonthlyLoanReport(YearMonth month);
+
+    CustomerResponseDto getCustomerWithLoans(String id);
+
+    List<LoanManageDto> manageLoans(int page);
+
 }
 
 

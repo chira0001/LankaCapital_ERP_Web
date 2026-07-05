@@ -1,23 +1,31 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.EmployeeAddDto;
+import com.lankacapital.server.dtos.EmployeeRequestDto;
+import com.lankacapital.server.dtos.EmployeeResponseDto;
+import com.lankacapital.server.dtos.PasswordRequestDto;
+
+import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
 import lombok.AllArgsConstructor;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,14 +44,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public UserDetailsService userDetailsService() {
-//        return new UserDetailsService() {
-//            @Override
-//            public UserDetails loadUserByUsername(String username) {
-//                return employeeRepository.findByEmail(username);
-//            }
-//        };
 
-        /// /new
         return username -> {
             Employee employee = employeeRepository.findByEmail(username);
 
@@ -62,17 +63,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Employee addNewEmployee(EmployeeAddDto dto) {
 
-        if (employeeRepository.existsByNic(dto.getNic())){
+        if (employeeRepository.existsByNic(dto.getNic())) {
             throw new ResourceExistException("Employee already registered with id : " + dto.getNic());
         }
 
         Employee newEmployee = EmployeeMapper.mapToEmployee(dto);
+
         Role role = roleRepository.findById(dto.getRoleId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found with id " + dto.getRoleId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id " + dto.getRoleId()));
 
         newEmployee.setRole(role);
+        newEmployee.setPassword(passwordEncoder.encode("1234567"));
+
         return employeeRepository.save(newEmployee);
     }
+
     @Override
     public List<EmployeeResponseDto> getAllEmployees() {
         List<Employee> employeeList = employeeRepository.findAll();
@@ -121,7 +126,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         if(emp == null){
             throw new ResourceNotFoundException("Employee verification not found");
         }
-        emp.setId(dto.getId());
         emp.setNic(dto.getNic());
         emp.setFirstName(dto.getFirstName());
         emp.setLastName(dto.getLastName());
@@ -134,24 +138,62 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page){
-        List<Long> allOfficerIds = employeeRepository.findAllFieldOfficersIds();
-        if(allOfficerIds == null){
-            throw new ResourceNotFoundException("FieldOfficer not found with NIC");
-        }
-        List<Long> notSyncedIds = new ArrayList<>();
-        for (Long id : allOfficerIds) {
-            if (!idList.getId().contains(id)) {
-                notSyncedIds.add(id);
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList){
+        List<Employee> employees = employeeRepository.findCustomersByIds(idList.getId());
+
+        return employees.stream()
+                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .toList();
+    }
+
+    public EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto) {
+
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found"));
+
+        employee.setNic(dto.getNic());
+        employee.setFirstName(dto.getFirstName());
+        employee.setLastName(dto.getLastName());
+        employee.setEmail(dto.getEmail());
+        employee.setAddress(dto.getAddress());
+        employee.setPhoneNumber(dto.getPhoneNumber());
+
+        if (dto.getRole() != null) {
+
+            Role role = roleRepository.findByRoleName(dto.getRole());
+
+            if (role != null) {
+                employee.setRole(role);
             }
         }
-        if(notSyncedIds.isEmpty()){
-            return List.of();
-        }
-        Pageable pageable = PageRequest.of(page, 5);
-        return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
+
+        return EmployeeMapper.mapToEmployeeResponseDto(
+                employeeRepository.save(employee)
+        );
+    }
+
+    @Override
+    public void deleteEmployee(Long id) {
+
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found"));
+
+        employeeRepository.delete(employee);
+    }
+
+    @Override
+    public List<EmployeeManageDto> manageEmployees(int page) {
+        Pageable pageable = PageRequest.of(page, 50);
+
+        return employeeRepository.findAllByRole(pageable)
+                .getContent()
                 .stream()
-                .map(EmployeeMapper::mapToEmployeeAsyncDto)
+                .map(employee -> new EmployeeManageDto(
+                        employee.getId(),
+                        employee.getUpdateStatus()
+                ))
                 .toList();
     }
 }

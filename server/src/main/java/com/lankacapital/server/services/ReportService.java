@@ -8,7 +8,7 @@ import java.util.List;
 public interface ReportService {
     List<DailyCollectionResponseDto> getDailyCollectionDetails(LocalDate date);
 
-    DailyCollectionDto getDailyCollectionSummary(LocalDate date);
+    DailyCollectionSummaryDto getDailyCollectionSummary(LocalDate date);
 
 
 }
