@@ -96,7 +96,7 @@ const DashboardPage = () => {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://localhost:8080/api/v1/admin/financial-dashboard/summary",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/financial-dashboard/summary`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
