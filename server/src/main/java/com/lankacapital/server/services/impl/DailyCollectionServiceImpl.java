@@ -148,6 +148,8 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
 
         return dto;
     }
+
+    @Override
     public String syncDailyCollection(CollectionSyncDto collectionSyncDto){
         DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
 
