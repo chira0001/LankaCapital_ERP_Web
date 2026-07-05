@@ -105,6 +105,7 @@ public class LoanMapper {
         dto.setDocument_charge(loan.getDocumentCharge());
         dto.setStatus(loan.getStatus().toString());
         dto.setInstallment_id(loan.getInstallment().getId());
+        dto.setUpdate_status(loan.getUpdateStatus());
         dto.setInterest_rate_id(loan.getInterestRate() != null
                 ? loan.getInterestRate().getId()
                 : new InterestRate().getId()

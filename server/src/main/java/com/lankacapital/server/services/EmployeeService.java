@@ -21,9 +21,12 @@ public interface EmployeeService {
     String updatePasswordByUsername(String username, PasswordRequestDto dto);
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
-    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page);
+
+    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList);
 
     EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto);
 
     void deleteEmployee(Long id);
+    
+    List<EmployeeManageDto> manageEmployees(int page);
 }

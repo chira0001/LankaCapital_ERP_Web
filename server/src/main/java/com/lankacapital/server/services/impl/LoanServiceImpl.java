@@ -166,15 +166,13 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
-//        Long nic;
-//        try{
-//            nic = Long.parseLong(loanCreateDto.getCustomerNic());
-//        } catch (NumberFormatException e) {
-//            throw new NumberFormatException("Enter valid NIC Number : " + loanCreateDto.getCustomerNic());
-//        }
         Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
+        }
+        long loanCount = loanRepository.countActiveLoans(customer.getNic(), LoanStatus.REJECTED);
+        if (loanCount >= 2) {
+            throw new ResourceExistException("Customer already has 2 loans.");
         }
         Employee employee = employeeRepository
                 .findById(loanCreateDto.getEmployeeId())
@@ -307,24 +305,16 @@ public class LoanServiceImpl implements LoanService {
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 
-    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis, int page){
-        List<String> allLoanIds = loanRepository.findAllLoanIds();
-        if(allLoanIds == null){
-            throw new ResourceNotFoundException("Server Error: Loan");
-        }
-        List<String> notSyncedIds = new ArrayList<>();
-        for (String id : allLoanIds) {
-            if (!fileNoLis.getFile_number().contains(id)) {
-                notSyncedIds.add(id);
-            }
-        }
-        Pageable pageable = PageRequest.of(page, 3);
-        return loanRepository.findLoansByIds(notSyncedIds, pageable)
-                .stream()
+    @Override
+    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis){
+        List<Loan> loans = loanRepository.findLoansByIds(fileNoLis.getId());
+
+        return loans.stream()
                 .map(LoanMapper::mapToCustomerAsyncDto)
                 .toList();
     }
 
+    @Override
     public Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto){
         Loan loan = new Loan();
         loan.setAmount(loanRequestDto.getLoanAmount());
@@ -349,6 +339,7 @@ public class LoanServiceImpl implements LoanService {
         return loanRepository.save(loan);
     }
 
+    @Override
     public String addNewLoanByOfficer(CustomerAddDto customerAddDto){
         if (customerRepository.existsById(customerAddDto.getCustomerId())) {
             throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());
@@ -432,50 +423,18 @@ public class LoanServiceImpl implements LoanService {
         return CustomerMapper.mapToCustomerResponseDto(customer);
     }
 
-//    @Override
-//    public LoanResponseDto registerLoanForCustomer(Long customerId, LoanCreateDto dto) {
-//
-//        Customer customer = customerRepository.findById(customerId)
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Customer not found"));
-//
-//        Loan loan = new Loan();
-//
-//        // link customer
-//        loan.setCustomer(customer);
-//
-//        // loan values
-//        loan.setAmount(dto.getLoanAmount());
-//        loan.setDocumentCharge(dto.getDocumentCharge());
-//
-//        // interest mapping (Integer → entity)
-//        if (dto.getInterestRate() != null) {
-//            InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-//                    .orElseThrow(() ->
-//                            new ResourceNotFoundException("Interest rate not found"));
-//
-//            loan.setInterestRate(rate);
-//        }
-//
-//        // installment mapping
-//        if (dto.getNumberOfInstallments() != null) {
-//
-//            Long installmentId = dto.getNumberOfInstallments().longValue();
-//
-//            Installment installment = installmentRepository.findById(
-//                            dto.getNumberOfInstallments()
-//                    )
-//                    .orElseThrow(() ->
-//                            new ResourceNotFoundException("Installment not found"));
-//            loan.setInstallment(installment);
-//        }
-//
-//        loan.setStatus(LoanStatus.PENDING);
-//
-//        Loan saved = loanRepository.save(loan);
-//
-//        return LoanMapper.mapToLoanResponseDto(saved);
-//    }
+    public List<LoanManageDto> manageLoans(int page){
+        Pageable pageable = PageRequest.of(page, 50);
+
+        return loanRepository.findAll(pageable)
+                .getContent()
+                .stream()
+                .map(loan -> new LoanManageDto(
+                        loan.getFileNumber(),
+                        loan.getUpdateStatus()
+                ))
+                .toList();
+    }
 }
 
 

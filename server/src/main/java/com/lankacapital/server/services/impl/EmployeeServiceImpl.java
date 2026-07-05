@@ -6,11 +6,13 @@ import com.lankacapital.server.dtos.EmployeeRequestDto;
 import com.lankacapital.server.dtos.EmployeeResponseDto;
 import com.lankacapital.server.dtos.PasswordRequestDto;
 
+import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.PasswordUpdateException;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
@@ -136,23 +138,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList, int page){
-        List<Long> allOfficerIds = employeeRepository.findAllFieldOfficersIds();
-        if(allOfficerIds == null){
-            throw new ResourceNotFoundException("FieldOfficer not found with NIC");
-        }
-        List<Long> notSyncedIds = new ArrayList<>();
-        for (Long id : allOfficerIds) {
-            if (!idList.getId().contains(id)) {
-                notSyncedIds.add(id);
-            }
-        }
-        if(notSyncedIds.isEmpty()){
-            return List.of();
-        }
-        Pageable pageable = PageRequest.of(page, 5);
-        return  employeeRepository.findFieldOfficersByIds(notSyncedIds, pageable)
-                .stream()
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList){
+        List<Employee> employees = employeeRepository.findCustomersByIds(idList.getId());
+
+        return employees.stream()
                 .map(EmployeeMapper::mapToEmployeeAsyncDto)
                 .toList();
     }
@@ -192,5 +181,19 @@ public class EmployeeServiceImpl implements EmployeeService {
                         new ResourceNotFoundException("Employee not found"));
 
         employeeRepository.delete(employee);
+    }
+
+    @Override
+    public List<EmployeeManageDto> manageEmployees(int page) {
+        Pageable pageable = PageRequest.of(page, 50);
+
+        return employeeRepository.findAllByRole(pageable)
+                .getContent()
+                .stream()
+                .map(employee -> new EmployeeManageDto(
+                        employee.getId(),
+                        employee.getUpdateStatus()
+                ))
+                .toList();
     }
 }
