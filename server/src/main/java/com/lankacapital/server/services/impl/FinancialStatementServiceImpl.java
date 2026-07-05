@@ -110,11 +110,6 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return financialStatementRepository.save(fs);
     }
 
-//    @Override
-//    public List<FinancialStatement> getFinancialStatement(String month) {
-//        return List.of();
-//    }
-
     @Override
     public FinancialStatement getFinancialStatement(String month) {
 
@@ -134,7 +129,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         List<FinancialStatement> results = new ArrayList<>();
 
         try (InputStream is = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(is)) {
+            Workbook workbook = new XSSFWorkbook(is)) {
 
             Sheet sheet = workbook.getSheetAt(0); // "Assets & Liabilities" sheet
             DataFormatter formatter = new DataFormatter();
@@ -158,8 +153,6 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                         .orElseGet(() -> {
                             FinancialStatement newFs = new FinancialStatement();
                             newFs.setReportDate(reportDate);
-                            // leave receivables / cash at zero until the normal
-                            // generateFinancialStatement() run fills them in
                             return newFs;
                         });
 
@@ -256,9 +249,6 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
 
     private void calculateFinancialSummary(FinancialStatement fs) {
 
-        // =========================
-        // TOTAL ASSETS
-        // =========================
         BigDecimal totalAssets =
                 safe(fs.getReceivables())
                         .add(safe(fs.getCashAndCashEquivalent()))
@@ -369,7 +359,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
 
         return dto;
     }
-///////////////////////////////////////////////////////
+
 public byte[] generateFinancialReportPdf(String month) {
 
     LocalDate reportDate = LocalDate.parse(month + "-01");
@@ -435,8 +425,6 @@ public byte[] generateFinancialReportPdf(String month) {
     return out.toByteArray();
 }
 
-
-
     public CashFlowDto getCashFlow(String month) {
 
         FinancialStatement fs = financialStatementRepository
@@ -479,25 +467,6 @@ public byte[] generateFinancialReportPdf(String month) {
 
         return dto;
     }
-
-//    public FinancialReportDto getFinancialReport(String month) {
-//
-//        LocalDate reportDate = LocalDate.parse(month + "-01");
-//
-//        FinancialStatement fs = financialStatementRepository
-//                .findByReportDate(reportDate)
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Financial statement not found for month: " + month));
-//
-//        FinancialStatementDto dto =
-//                FinancialStatementMapper.toDto(fs);
-//
-//        return FinancialReportDto.builder()
-//                .period(month)
-//                .totalAssets(dto.getCapital()) // adjust if needed
-//                .build();
-//    }
-
 
     public FinancialReportDto getFinancialReport(String month) {
 
@@ -592,7 +561,6 @@ public byte[] generateFinancialReportPdf(String month) {
         dto.setTotalAssets(assets);
         dto.setTotalLiabilities(liabilities);
         dto.setEquity(assets.subtract(liabilities));
-     //   dto.setNetWorth(assets.subtract(liabilities));
 
         dto.setCashIn(cashIn);
         dto.setCashOut(cashOut);

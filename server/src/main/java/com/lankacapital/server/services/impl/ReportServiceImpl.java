@@ -49,9 +49,37 @@ public class ReportServiceImpl implements ReportService {
 
         }).toList();
     }
+//
+//    @Override
+//    public DailyCollectionDto getDailyCollectionSummary(LocalDate date) {
+//
+//        LocalDateTime start = date.atStartOfDay();
+//        LocalDateTime end = date.plusDays(1).atStartOfDay();
+//
+//        List<DailyCollection> list =
+//                dailyCollectionRepository.findByPaidAtBetween(start, end);
+//
+//        BigDecimal total = list.stream()
+//                .map(DailyCollection::getPaidAmount)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//        DailyCollectionDto dto = new DailyCollectionDto();
+//
+//        dto.setDate(date.toString());
+//        dto.setTotalCollected(total);
+//        dto.setTotalTransactions(list.size());
+//
+//        // optional: first officer name
+//        if (!list.isEmpty() && list.get(0).getEmployee() != null) {
+//            dto.setOfficerName(list.get(0).getEmployee().getFirstName());
+//        }
+//
+//        return dto;
+//    }
+
 
     @Override
-    public DailyCollectionDto getDailyCollectionSummary(LocalDate date) {
+    public DailyCollectionSummaryDto getDailyCollectionSummary(LocalDate date) {
 
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
@@ -63,13 +91,12 @@ public class ReportServiceImpl implements ReportService {
                 .map(DailyCollection::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        DailyCollectionDto dto = new DailyCollectionDto();
+        DailyCollectionSummaryDto dto = new DailyCollectionSummaryDto();
 
         dto.setDate(date.toString());
         dto.setTotalCollected(total);
         dto.setTotalTransactions(list.size());
 
-        // optional: first officer name
         if (!list.isEmpty() && list.get(0).getEmployee() != null) {
             dto.setOfficerName(list.get(0).getEmployee().getFirstName());
         }

@@ -41,7 +41,7 @@ const ReceptionistHome = () => {
             name: "Ravi Kumar",
             type: "Personal Loan",
             time: "9:14 AM",
-            amount: "₹2,50,000",
+            amount: "Rs. 2,50,000",
             status: "Pending Review",
         },
         {
@@ -49,7 +49,7 @@ const ReceptionistHome = () => {
             name: "Priya Sharma",
             type: "Business Loan",
             time: "10:02 AM",
-            amount: "₹75,000",
+            amount: "Rs. 75,000",
             status: "Documents Due",
         },
         {
@@ -57,7 +57,7 @@ const ReceptionistHome = () => {
             name: "Mohammed Ali",
             type: "Gold Loan",
             time: "10:45 AM",
-            amount: "₹1,00,000",
+            amount: "Rs. 1,00,000",
             status: "Approved",
         },
         {
@@ -65,7 +65,7 @@ const ReceptionistHome = () => {
             name: "Sunita Devi",
             type: "Personal Loan",
             time: "11:30 AM",
-            amount: "₹40,000",
+            amount: "Rs. 40,000",
             status: "Pending Review",
         },
         {
@@ -73,7 +73,7 @@ const ReceptionistHome = () => {
             name: "Arun Nair",
             type: "Business Loan",
             time: "12:10 PM",
-            amount: "₹3,00,000",
+            amount: "Rs. 3,00,000",
             status: "Under Verification",
         },
         {
@@ -81,7 +81,7 @@ const ReceptionistHome = () => {
             name: "Arun Nair",
             type: "Business Loan",
             time: "12:10 PM",
-            amount: "₹3,00,000",
+            amount: "Rs. 3,00,000",
             status: "Under Verification",
         },
     ];
@@ -105,7 +105,7 @@ const ReceptionistHome = () => {
 
     return (
         <div className="flex flex-col gap-6 p-6">
-            <h1 className='text-4xl font-bold text-center md:text-left'>Dashboard</h1>
+            <h1 className='text-2xl md:text-4xl font-bold text-center md:text-left'>Home</h1>
 
             {/* ================= STATS ================= */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -126,7 +126,7 @@ const ReceptionistHome = () => {
                 {/* ================= LOAN APPLICATIONS ================= */}
                 <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-semibold text-lg">
+                        <h2 className="font-semibold md:text-lg">
                             Today's Loan Applications
                         </h2>
                         <button className="text-sm text-blue-600">View all</button>
@@ -136,7 +136,7 @@ const ReceptionistHome = () => {
                         {loanApplications.map((loan, index) => (
                             <div
                                 key={index}
-                                className="flex justify-between items-center border-b pb-4 last:border-0"
+                                className="md:flex justify-between items-center border-b pb-4 last:border-0"
                             >
                                 <div>
                                     <p className="font-medium">
