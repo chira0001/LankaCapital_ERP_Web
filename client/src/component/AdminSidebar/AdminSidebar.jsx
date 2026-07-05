@@ -1,7 +1,7 @@
 import { LayoutDashboard } from "lucide-react";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings} from "lucide-react";
+import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings } from "lucide-react";
 import { UserCircle } from "lucide-react";
 
 
@@ -20,9 +20,14 @@ const menuItems = [
   { name: "User Management", icon: UserPlus, path: "/ad/users" },
   { name: "Audit Logs", icon: ClipboardList, path: "/ad/audit" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
-//  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
+  //  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
 ];
 
+const logout = () => {
+  localStorage.clear();
+  window.location.href = "/login";
+  window.location.reload();
+};
 
 const Sidebar = () => {
   return (
@@ -81,7 +86,9 @@ const Sidebar = () => {
           </div>
 
           {/* Logout */}
-          <button className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200">
+          <button
+            onClick={logout}
+            className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200">
             Logout
           </button>
 
