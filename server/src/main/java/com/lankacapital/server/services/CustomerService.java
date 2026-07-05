@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.Customer;
 
 import java.util.List;
 
@@ -22,4 +23,5 @@ public interface CustomerService {
     void deleteCustomer(Long nic);
 
     void undoDelete(Long nic);
+    Customer addNewCustomer(CustomerAddSyncDto customerAddSyncDto);
 }
