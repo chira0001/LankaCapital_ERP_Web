@@ -1,6 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.InterestRate;
 import com.lankacapital.server.entities.Loan;
@@ -10,6 +11,7 @@ import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -24,22 +26,31 @@ public class FieldOfficerController {
     private final InstallmentService installmentService;
     private final EmployeeService employeeService;
     private final InterestRateService interestRateService;
+    private final DailyCollectionService dailyCollectionService;
 
     @PostMapping(path = "/customers/loans")
-    public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto){
-        Loan loan = loanService.addLoanToExistingCustomer(dto);
-        if(loan == null){
-            return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
+    public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto) {
+        try {
+            Loan loan = loanService.addLoanToExistingCustomer(dto);
+            if (loan == null) {
+                return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
+            }
+            return new ResponseEntity<>("Loan submitted successfully", HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (ResourceExistException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("Loan submitted successfully", HttpStatus.CREATED);
     }
 
     @PostMapping(path = "/async/customers")
-    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto){
         if(dto.getNic() == null){
             return new ResponseEntity<>("Nic cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto, page);
+        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto);
         if(customerList == null){
             return new ResponseEntity<>("No customers found", HttpStatus.BAD_REQUEST);
         }
@@ -72,11 +83,11 @@ public class FieldOfficerController {
 
 
     @PostMapping(path = "/async/fieldOfficers")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto, @RequestParam(defaultValue = "0") int page){
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto){
         if(dto.getId() == null){
             return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto, page);
+        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto);
         if(employeeList == null){
             return new ResponseEntity<>("No Field Officer found", HttpStatus.BAD_REQUEST);
         }
@@ -84,11 +95,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping(path = "/async/loans")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getFile_number() == null){
+    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto){
+        if(dto.getId() == null){
             return new ResponseEntity<>("File Number cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto, page);
+        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto);
         if(loanList == null){
             return new ResponseEntity<>("No Loans found", HttpStatus.BAD_REQUEST);
         }
@@ -137,7 +148,7 @@ public class FieldOfficerController {
             } catch (ResourceExistException e) {
                 successIds.add(customerDto.getNic());
             }catch (Exception e) {
-                e.printStackTrace();
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
         return ResponseEntity.ok(successIds);
@@ -145,22 +156,45 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/loan")
     public ResponseEntity<?> syncToLoan(@RequestBody List<FieldOfficerLoanCreateDto> loanList) {
-        List<Integer> successLoans = new ArrayList<>();
+        List<LoanResSyncDto> response = new ArrayList<>();
         for (FieldOfficerLoanCreateDto loanDto : loanList) {
             try {
                 Loan loan = loanService.addLoanToExistingCustomer(loanDto);
                 if (loan != null) {
-                    successLoans.add(loanDto.getId());
+                    response.add(
+                            new LoanResSyncDto(
+                                    loanDto.getId(),
+                                    loan.getFileNumber(),
+                                    "success"
+                            )
+                    );
                 }
-            } catch (ResourceExistException e) {
-                successLoans.add(loanDto.getId());
-            } catch (ResourceNotFoundException e) {
-                System.err.println("Loan sync skipped. Customer not found: "+ loanDto.getCustomerNic());
-            }catch (Exception e) {
-                e.printStackTrace();
+            } catch (ResourceExistException | ResourceNotFoundException e) {
+                response.add(
+                        new LoanResSyncDto(
+                                loanDto.getId(),
+                                "",
+                                "failure"
+                        )
+                );
+            } catch (Exception e) {
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        return ResponseEntity.ok(successLoans);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/sync/collection")
+    public ResponseEntity<?> syncToDailyCollections(@RequestBody List<CollectionSyncDto> collectionList) {
+        List<String> successIds = new ArrayList<>();
+        for (CollectionSyncDto collectionDto : collectionList) {
+            try {
+                successIds.add(dailyCollectionService.syncDailyCollection(collectionDto));
+            }catch (Exception e) {
+                return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return ResponseEntity.ok(successIds);
     }
 
     @PostMapping("add/customer")
@@ -170,4 +204,62 @@ public class FieldOfficerController {
         }
         return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
     }
+
+    @GetMapping("/manage/customer")
+    public ResponseEntity<?> updateCustomers(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(customerService.manageCustomers(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/manage/employee")
+    public ResponseEntity<?> updateEmployees(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(employeeService.manageEmployees(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/manage/loan")
+    public ResponseEntity<?> updateLoans(@RequestParam(defaultValue = "0") int page) {
+        try {
+            return ResponseEntity.ok(loanService.manageLoans(page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/add/collection")
+    public ResponseEntity<?> addDailyCollection(@RequestBody CollectionRequestDto collectionDto){
+        try {
+            DailyCollection collection = dailyCollectionService.addDailyCollection(collectionDto);
+            if (collection == null) {
+                return new ResponseEntity<>("Failed to submit the daily collection", HttpStatus.NOT_IMPLEMENTED);
+            }
+            return new ResponseEntity<>("Daily Collection submitted successfully", HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(path = "/employees/profile")
+    public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
+
+    }
+
+    @GetMapping(path = "/employees/profile")
+    public ResponseEntity<?> getProfileDetails(Authentication authentication){
+        System.out.printf("----Username----- : " + authentication.getName());
+
+        return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
+    }
+
+
+
 }

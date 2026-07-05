@@ -1,5 +1,6 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.InstallmentUpdateDto;
 import com.lankacapital.server.dtos.InstallmentsAsyncDto;
 import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
@@ -42,4 +43,9 @@ public class InstallmentServiceImpl implements InstallmentService {
         Pageable pageable = PageRequest.of(page, 10);
         return installmentRepository.findInstallmentsByIdIn(notSyncedIds, pageable);
     }
+
+//    @Override
+//    public List<InstallmentUpdateDto> updateInstallments(int page){
+//
+//    }
 }

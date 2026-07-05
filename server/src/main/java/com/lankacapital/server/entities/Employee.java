@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,6 +54,9 @@ public class Employee implements UserDetails {
     private String password = "pass@123";
 
     private Long updateStatus = 0L;
+
+    @Column(nullable = false)
+    private String accountStatus = "Active";
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
