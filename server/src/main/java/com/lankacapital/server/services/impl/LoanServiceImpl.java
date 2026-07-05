@@ -39,39 +39,109 @@ public class LoanServiceImpl implements LoanService {
     private final RoleRepository roleRepository;
     private final InterestRateRepository interestRateRepository;
 
+//    @Transactional
+//    @Override
+//    public Loan addLoan(LoanCreateDto loanCreateDto, String username) {
+//        Loan loan = LoanMapper.mapToLoan(loanCreateDto);
+//        Customer customer;
+//        //customer not exists => create new customer
+//        if (!customerRepository.existsById(loanCreateDto.getCustomerId())) {
+//            Customer newCustomer = LoanMapper.mapToCustomer(loanCreateDto);
+//            Role role = roleRepository.findByRoleName("Customer");
+//            newCustomer.setRole(role);
+//            customerRepository.save(newCustomer);
+//        }
+//
+//        if (loanRepository.existsByFileNumber(loan.getFileNumber())) {
+//            throw new ResourceExistException("Loan exists with file number : " + loan.getFileNumber());
+//        }
+//
+//        customer = customerRepository.findByNic(loanCreateDto.getCustomerId());
+//        loan.setCustomer(customer);
+//
+//        Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
+//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+//        loan.setInstallment(installment);
+//
+//        Employee employee = employeeRepository.findByEmail(username);
+//        loan.setEmployee(employee);
+//
+//        InterestRate rate = interestRateRepository.findById(loanCreateDto.getInterestRate())
+//                .orElseThrow(() -> new ResourceNotFoundException("Interest rate not found with id : " + loanCreateDto.getInterestRate()));
+//        loan.setInterestRate(rate);
+//        loan.setStatus(LoanStatus.PENDING);
+//
+//        loan.setFileNumber(loanCreateDto.getFileNumber());
+//        return loanRepository.save(loan);
+//    }
+
+
     @Transactional
     @Override
-    public Loan addLoan(LoanCreateDto loanCreateDto, String username) {
-        Loan loan = LoanMapper.mapToLoan(loanCreateDto);
+    public Loan addLoan(LoanCreateDto dto, String username) {
+
+        // 1. CREATE OR FETCH CUSTOMER
         Customer customer;
-        //customer not exists => create new customer
-        if (!customerRepository.existsById(loanCreateDto.getCustomerId())) {
-            Customer newCustomer = LoanMapper.mapToCustomer(loanCreateDto);
+
+        if (!customerRepository.existsById(dto.getCustomerId())) {
+
+            Customer newCustomer = new Customer();
+
+            newCustomer.setNic(dto.getCustomerId());
+            newCustomer.setName(dto.getName());
+            newCustomer.setEmail(dto.getEmail());
+            newCustomer.setAddress(dto.getAddress());
+            newCustomer.setPhoneNumber(dto.getPhoneNumber());
+            newCustomer.setBank(dto.getBank());
+            newCustomer.setBankAccount(dto.getBankAccount());
+
             Role role = roleRepository.findByRoleName("Customer");
             newCustomer.setRole(role);
-            customerRepository.save(newCustomer);
+
+            customer = customerRepository.save(newCustomer);
+
+        } else {
+            customer = customerRepository.findById(dto.getCustomerId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Customer not found"));
         }
 
-        if (loanRepository.existsByFileNumber(loan.getFileNumber())) {
-            throw new ResourceExistException("Loan exists with file number : " + loan.getFileNumber());
+        // 2. CREATE LOAN
+        Loan loan = LoanMapper.mapToLoan(dto);
+
+        // 3. DUPLICATE CHECK
+        if (loanRepository.existsByFileNumber(dto.getFileNumber())) {
+            throw new ResourceExistException(
+                    "Loan exists with file number: " + dto.getFileNumber()
+            );
         }
 
-        customer = customerRepository.findByNic(loanCreateDto.getCustomerId());
         loan.setCustomer(customer);
 
-        Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        // 4. INSTALLMENT
+        Installment installment = installmentRepository.findById(dto.getNumberOfInstallments())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Invalid installment value"));
+
         loan.setInstallment(installment);
 
+        // 5. EMPLOYEE (logged-in user)
         Employee employee = employeeRepository.findByEmail(username);
         loan.setEmployee(employee);
 
-        InterestRate rate = interestRateRepository.findById(loanCreateDto.getInterestRate())
-                .orElseThrow(() -> new ResourceNotFoundException("Interest rate not found with id : " + loanCreateDto.getInterestRate()));
+        // 6. INTEREST
+        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Interest rate not found"));
+
         loan.setInterestRate(rate);
+
+        // 7. STATUS
         loan.setStatus(LoanStatus.PENDING);
 
-        loan.setFileNumber(loanCreateDto.getFileNumber());
+        loan.setFileNumber(dto.getFileNumber());
+
+        // 8. SAVE
         return loanRepository.save(loan);
     }
 
@@ -350,6 +420,62 @@ public class LoanServiceImpl implements LoanService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @Override
+    public CustomerResponseDto getCustomerWithLoans(String id) {
+
+        Long customerId = Long.parseLong(id);
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Customer not found with id " + id));
+
+        return CustomerMapper.mapToCustomerResponseDto(customer);
+    }
+
+//    @Override
+//    public LoanResponseDto registerLoanForCustomer(Long customerId, LoanCreateDto dto) {
+//
+//        Customer customer = customerRepository.findById(customerId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Customer not found"));
+//
+//        Loan loan = new Loan();
+//
+//        // link customer
+//        loan.setCustomer(customer);
+//
+//        // loan values
+//        loan.setAmount(dto.getLoanAmount());
+//        loan.setDocumentCharge(dto.getDocumentCharge());
+//
+//        // interest mapping (Integer → entity)
+//        if (dto.getInterestRate() != null) {
+//            InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
+//                    .orElseThrow(() ->
+//                            new ResourceNotFoundException("Interest rate not found"));
+//
+//            loan.setInterestRate(rate);
+//        }
+//
+//        // installment mapping
+//        if (dto.getNumberOfInstallments() != null) {
+//
+//            Long installmentId = dto.getNumberOfInstallments().longValue();
+//
+//            Installment installment = installmentRepository.findById(
+//                            dto.getNumberOfInstallments()
+//                    )
+//                    .orElseThrow(() ->
+//                            new ResourceNotFoundException("Installment not found"));
+//            loan.setInstallment(installment);
+//        }
+//
+//        loan.setStatus(LoanStatus.PENDING);
+//
+//        Loan saved = loanRepository.save(loan);
+//
+//        return LoanMapper.mapToLoanResponseDto(saved);
+//    }
 }
 
 

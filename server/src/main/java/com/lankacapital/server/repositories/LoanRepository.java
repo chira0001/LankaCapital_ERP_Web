@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +27,10 @@ public interface LoanRepository extends JpaRepository<Loan, String> {
     List<Loan> findLoansByIds(@Param("fileNumber") List<String> fileNumber, Pageable pageable);
     List<Loan> findByStatus(LoanStatus status);
     List<Loan> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM Loan l")
+    BigDecimal sumTotalLoanAmount();
+
+    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM Loan l WHERE l.status = 'ACTIVE'")
+    BigDecimal sumOutstandingAmount();
 }

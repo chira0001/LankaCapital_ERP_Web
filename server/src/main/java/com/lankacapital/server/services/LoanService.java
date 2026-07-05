@@ -50,6 +50,13 @@ public interface LoanService {
     String addNewLoanByOfficer(CustomerAddDto customerAddDto);
 
     List<LoanReportRow> getMonthlyLoanReport(YearMonth month);
+
+    CustomerResponseDto getCustomerWithLoans(String id);
+
+   //customer management
+  // LoanResponseDto registerLoanForCustomer(Long customerId, LoanCreateDto dto);
+
+
 }
 
 

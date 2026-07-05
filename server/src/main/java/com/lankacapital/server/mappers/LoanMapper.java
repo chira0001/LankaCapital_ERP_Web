@@ -47,14 +47,11 @@ public class LoanMapper {
                         : null
         );
 
-
-        //responseDto.setInterestRate(loan.getInterestRate().getRate());
         if (loan.getInterestRate() == null) {
             throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
         }
 
         responseDto.setInterestRate(loan.getInterestRate().getRate());
-        /// /
         responseDto.setStatus(loan.getStatus());
         responseDto.setRejectionNote(loan.getDecisionNote());
         responseDto.setApplicantName(
@@ -77,45 +74,10 @@ public class LoanMapper {
             customerDto.setBusinessEmail(loan.getCustomer().getEmail());
             customerDto.setBusinessAddress(loan.getCustomer().getAddress());
             customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
-
-            //responseDto.setCustomer(customerDto);
         }
 
         return responseDto;
     }
-    /*
-    public static LoanResponseDto mapToLoanResponseDto(Loan loan){
-        LoanResponseDto responseDto = new LoanResponseDto();
-
-        responseDto.setFileNumber(loan.getFileNumber());
-        responseDto.setInterestRate(loan.getInterestRate());
-        responseDto.setAmount(loan.getAmount().toString());
-        responseDto.setCreatedAt(loan.getCreatedAt());
-        responseDto.setNoOfInstallments(loan.getNumberOfInstallments().getValue());
-        responseDto.setDocumentCharge(loan.getDocumentCharge().toBigInteger().doubleValue());
-        responseDto.setEmployeeId(loan.getEmployee().getId());
-        responseDto.setCustomerId(loan.getCustomer().getNic());
-        responseDto.setStatus(loan.getStatus());
-       // responseDto.setCustomerId(loan.getCustomer().getNic());
-
-        if (loan.getCustomer() != null) {
-
-            CustomerInfoDto customerDto = new CustomerInfoDto();
-
-            customerDto.setCustomerNIC(loan.getCustomer().getNic());
-            customerDto.setBusinessName(loan.getCustomer().getName());
-            customerDto.setBusinessEmail(loan.getCustomer().getEmail());
-            customerDto.setBusinessAddress(loan.getCustomer().getAddress());
-            customerDto.setContactNumber(loan.getCustomer().getPhoneNumber());
-
-            responseDto.setCustomer(customerDto);
-        }
-
-
-
-        return responseDto;
-    }
-    */
 
     public static Customer mapToCustomer(LoanCreateDto loanCreateDto){
         Customer customer = new Customer();
@@ -141,7 +103,6 @@ public class LoanMapper {
         dto.setEmployee_id(loan.getEmployee().getId());
         dto.setCreated_at(loan.getCreatedAt());
         dto.setDocument_charge(loan.getDocumentCharge());
-//        dto.setRejection_note(loan.getRejectionNote());
         dto.setStatus(loan.getStatus().toString());
         dto.setInstallment_id(loan.getInstallment().getId());
         dto.setInterest_rate_id(loan.getInterestRate() != null
@@ -172,14 +133,10 @@ public class LoanMapper {
         dto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         dto.setCreatedAt(loan.getCreatedAt());
         dto.setDocumentCharge(loan.getDocumentCharge() != null
-                        ? loan.getDocumentCharge().doubleValue()
-                        : 0.0
+                ? loan.getDocumentCharge().doubleValue()
+                : 0.0
         );
         dto.setStatus(loan.getStatus());
-//        dto.setRejectionNote(loan.getRejectionNote() != null
-//                ? loan.getRejectionNote()
-//                : null
-//        );
         dto.setInterestRate(interestRate);
         dto.setInstallments(installment);
         dto.setEmployee(employee);
@@ -200,3 +157,4 @@ public class LoanMapper {
         return customer;
     }
 }
+

@@ -12,5 +12,12 @@ public interface CustomerService {
     CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
     List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList, int page);
     CustomerResDto getCustomerDataById(Long nic);
-}
 
+    List<CustomerResponseDto> getAllActiveCustomers();
+
+    CustomerResponseDto getActiveCustomerById(Long nic);
+
+    void deleteCustomer(Long nic);
+
+    void undoDelete(Long nic);
+}

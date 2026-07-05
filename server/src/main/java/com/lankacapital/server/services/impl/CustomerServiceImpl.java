@@ -2,7 +2,6 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
-import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -40,10 +40,16 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         Customer customer = CustomerMapper.mapToCustomer(dto);
-        Role role = roleRepository.findByRoleName("Customer");
-        customer.setRole(role);
-        Customer savedCustomer = customerRepository.save(customer);
 
+        Role role = roleRepository.findByRoleName("Customer");
+        if (role == null) {
+            role = new Role();
+            role.setRoleName("Customer");
+            role = roleRepository.save(role);
+        }
+        customer.setRole(role);
+
+        Customer savedCustomer = customerRepository.save(customer);
         return CustomerMapper.mapToCustomerResponseDto(savedCustomer);
     }
 
@@ -95,18 +101,21 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     @Override
-    public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto) {
+    public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto dto) {
         Customer customer = customerRepository.findByNic(nic);
-        Long status = customer.getUpdateStatus();
-        if(customer == null){
+
+        if (customer == null) {
             throw new ResourceNotFoundException("Customer not found with NIC : " + nic);
         }
 
-        System.out.println("104 : "+status);
-        customer = CustomerMapper.mapToCustomer(customerRegisterDto);
-        customer.setUpdateStatus(status + 1);
+        Long status = customer.getUpdateStatus();
 
-        System.out.println(customer);
+        customer.setName(dto.getName());
+        customer.setEmail(dto.getEmail());
+        customer.setPhoneNumber(dto.getPhoneNumber());
+        customer.setAddress(dto.getAddress());
+        customer.setUpdateStatus((status == null ? 0 : status) + 1);
+
         return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 
@@ -148,5 +157,52 @@ public class CustomerServiceImpl implements CustomerService {
                 .toList()
         );
         return dto;
+    }
+
+    @Override
+    public List<CustomerResponseDto> getAllActiveCustomers() {
+        return customerRepository.findAll()
+                .stream()
+                .filter(c -> !c.getDeleted())
+                .map(CustomerMapper::mapToCustomerResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CustomerResponseDto getActiveCustomerById(Long nic) {
+        Customer customer = customerRepository.findByNic(nic);
+        if (customer == null) {
+            throw new ResourceNotFoundException("Customer not found");
+        }
+        if (Boolean.TRUE.equals(customer.getDeleted())) {
+            throw new ResourceNotFoundException("Customer is deleted");
+        }
+        return CustomerMapper.mapToCustomerResponseDto(customer);
+    }
+
+    @Override
+    public void deleteCustomer(Long nic) {
+
+        Customer customer = customerRepository.findByNic(nic);
+
+        if (customer == null) {
+            throw new ResourceNotFoundException("Customer not found");
+        }
+
+        customer.setDeleted(true);
+        customerRepository.save(customer);
+    }
+
+    @Override
+    public void undoDelete(Long nic) {
+
+        Customer customer = customerRepository.findByNic(nic);
+
+        if (customer == null) {
+            throw new ResourceNotFoundException("Customer not found");
+        }
+
+        customer.setDeleted(false);
+        customerRepository.save(customer);
     }
 }

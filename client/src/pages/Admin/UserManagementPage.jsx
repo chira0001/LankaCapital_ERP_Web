@@ -1,69 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
-// import pb from '@/lib/pocketbaseClient.js'; 
-import { UserPlus, Shield } from 'lucide-react';
+import axios from 'axios';
+import { UserPlus, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/component/ui/button';
-import { toast } from "sonner"; // SONNER TOAST
+import { toast } from "sonner";
 
 const UserManagementPage = () => {
 
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ADD USER + EDIT STATES 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
 
   const [newUser, setNewUser] = useState({
-    employee_id: "",
-    name: "",
+    nic: "",
+    firstName: "",
+    lastName: "",
     email: "",
-    role: ""
+    roleId: "",
+    address: "",
+    phoneNumber: ""
   });
 
   const [editUser, setEditUser] = useState({});
 
-  // ==========================================================
+  // ===============================
+  // AUTH HEADER
+  // ===============================
+  const getAuthConfig = () => {
+    const token = localStorage.getItem("token");
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    };
+  };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  // ===============================
+  // FETCH USERS
+  // ===============================
   const fetchUsers = async () => {
     try {
-
-      const data = [
-        {
-          id: "u1",
-          employee_id: "EMP001",
-          name: "Kamal Perera",
-          email: "kamal@gmail.com",
-          role: "Director",
-          account_status: "Active",
-          created: "2026-04-18"
-        },
-        {
-          id: "u2",
-          employee_id: "EMP002",
-          name: "Saman Silva",
-          email: "saman@gmail.com",
-          role: "Receptionist",
-          account_status: "Inactive",
-          created: "2026-04-17"
-        },
-        {
-          id: "u3",
-          employee_id: "EMP003",
-          name: "Nimal Perera",
-          email: "nimal@gmail.com",
-          role: "Field Officer",
-          account_status: "Active",
-          created: "2026-04-16"
-        }
-      ];
-
-      setUsers(data);
-
+      setLoading(true);
+      const res = await axios.get(
+        "http://localhost:8080/api/v1/admin/employee",
+        getAuthConfig()
+      );
+      setUsers(res.data);
     } catch (error) {
       toast.error("Failed to load users");
     } finally {
@@ -71,267 +55,259 @@ const UserManagementPage = () => {
     }
   };
 
-  // ADD USER 
-  const handleCreateUser = () => {
-    if (!newUser.employee_id || !newUser.name || !newUser.email || !newUser.role) {
-      toast.error("Fill all fields");
-      return;
+  // ===============================
+  // FETCH ROLES
+  // ===============================
+  const fetchRoles = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:8080/api/v1/admin/role",
+        getAuthConfig()
+      );
+      setRoles(res.data);
+    } catch (error) {
+      toast.error("Failed to load roles");
     }
-
-    const created = {
-      id: "u" + (users.length + 1),
-      ...newUser,
-      account_status: "Active",
-      created: new Date().toISOString(),
-      password: "1234567" // DEFAULT PASSWORD
-    };
-
-    setUsers([...users, created]);
-
-    // DB (COMMENTED)
-    /*
-    pb.collection('users').create({
-      ...newUser,
-      password: "1234567"
-    });
-    */
-
-    toast.success("User created with default password 1234567");
-
-    setShowAddForm(false);
-    setNewUser({ employee_id: "", name: "", email: "", role: "" });
   };
 
-  // RESET PASSWORD 
-  const handleResetPassword = (id) => {
+  useEffect(() => {
+    fetchUsers();
+    fetchRoles();
+  }, []);
 
-    /*
-    pb.collection('users').update(id, {
-      password: "1234567"
-    });
-    */
+  // ===============================
+  // CREATE USER
+  // ===============================
+  const handleCreateUser = async () => {
+    try {
 
-    toast.success("Password reset to 1234567");
+      await axios.post(
+        "http://localhost:8080/api/v1/admin/employee",
+        newUser,
+        getAuthConfig()
+      );
+
+      toast.success("User created successfully");
+
+      setNewUser({
+        nic: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        roleId: "",
+        address: "",
+        phoneNumber: ""
+      });
+
+      setShowAddForm(false);
+      fetchUsers();
+
+    } catch (error) {
+      toast.error("Create failed");
+    }
   };
 
-  // EDIT USER 
+  // ===============================
+  // DELETE USER
+  // ===============================
+  const handleDeleteUser = async (id) => {
+    try {
+      await axios.delete(
+        `http://localhost:8080/api/v1/admin/employee/${id}`,
+        getAuthConfig()
+      );
+
+      toast.success("User deleted");
+      fetchUsers();
+
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+  };
+
+  // ===============================
+  // START EDIT
+  // ===============================
   const handleEdit = (user) => {
     setEditingUserId(user.id);
     setEditUser(user);
   };
 
-  const handleSaveEdit = (id) => {
+  // ===============================
+  // SAVE EDIT
+  // ===============================
+  const handleSaveEdit = async (id) => {
+    try {
 
-    setUsers(users.map(u =>
-      u.id === id ? editUser : u
-    ));
+      await axios.put(
+        `http://localhost:8080/api/v1/admin/employee/${id}`,
+        editUser,
+        getAuthConfig()
+      );
 
-    /*
-    pb.collection('users').update(id, editUser);
-    */
+      toast.success("User updated");
 
-    toast.success("User updated");
-    setEditingUserId(null);
+      setEditingUserId(null);
+      fetchUsers();
+
+    } catch (error) {
+      toast.error("Update failed");
+    }
   };
 
-  // ==========================================================
-
-  const handleAddUser = () => setShowAddForm(true);
-
-  const getRoleBadge = (role) => {
-    const styles = {
-      Director: 'bg-black text-white border-black',
-      Receptionist: 'bg-gray-200 text-gray-800 border-gray-300',
-      'Field Officer': 'bg-gray-100 text-gray-700 border-gray-200'
-    };
-    return styles[role] || 'bg-gray-100 text-gray-700 border-gray-200';
-  };
-
-  const getStatusBadge = (status) => {
-    return status === 'Active'
-      ? 'bg-gray-200 text-black border-gray-300'
-      : 'bg-red-100 text-red-700 border-red-200';
-  };
-
+  // ===============================
+  // LOADING
+  // ===============================
   if (loading) {
-    return (
-      <div className="flex">
-        <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading users...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="p-8">Loading users...</div>;
   }
 
   return (
-    <>
-      <Helmet>
-        <title>User Management - LendPro</title>
-      </Helmet>
+    <div className="p-8">
 
-      <div className="flex min-h-screen bg-gray-50">
+      {/* HEADER */}
+      <div className="flex justify-between mb-6">
+        <h1 className="text-2xl font-bold">User Management</h1>
 
-        <div className="flex-1 overflow-auto">
-          <div className="p-8">
-
-            {/* HEADER */}
-            <div className="mb-8 flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-black mb-2">User Management</h1>
-                <p className="text-gray-600">Manage system users and permissions</p>
-              </div>
-
-              <Button
-                onClick={handleAddUser}
-                className="bg-black text-white"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
-            </div>
-
-            {/* ADD USER FORM */}
-            {showAddForm && (
-            <div className="bg-white p-4 mb-4 border">
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <input
-                    className="border p-2"
-                    placeholder="Employee ID"
-                    value={newUser.employee_id}
-                    onChange={(e) => setNewUser({ ...newUser, employee_id: e.target.value })}
-                />
-
-                <input
-                    className="border p-2"
-                    placeholder="Name"
-                    value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                />
-
-                <input
-                    className="border p-2"
-                    placeholder="Email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                />
-
-                <input
-                    className="border p-2"
-                    placeholder="Role (any position allowed)"
-                    value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                />
-
-                </div>
-
-                <div className="mt-4">
-                <Button onClick={handleCreateUser}>
-                    Create (PW: 1234567)
-                </Button>
-                </div>
-
-            </div>
-            )}
-            {/* TABLE */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee ID</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">User</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Email</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Role</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Status</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Created</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Actions</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-gray-200">
-                    {users.map((user) => (
-                      <tr key={user.id}>
-
-                        <td className="px-6 py-4">{user.employee_id}</td>
-
-                        <td className="px-6 py-4">
-                          {editingUserId === user.id ? (
-                            <input
-                              value={editUser.name}
-                              onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
-                            />
-                          ) : user.name}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {editingUserId === user.id ? (
-                            <input
-                              value={editUser.email}
-                              onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
-                            />
-                          ) : user.email}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {editingUserId === user.id ? (
-                            <input
-                              value={editUser.role}
-                              onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
-                            />
-                          ) : (
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadge(user.role)}`}>
-                              {user.role}
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(user.account_status)}`}>
-                            {user.account_status}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4">
-                          {new Date(user.created).toLocaleDateString()}
-                        </td>
-
-                        <td className="px-6 py-4 flex gap-2">
-
-                          <Button onClick={() => handleResetPassword(user.id)}>
-                            Reset PW
-                          </Button>
-
-                          {editingUserId === user.id ? (
-                            <Button onClick={() => handleSaveEdit(user.id)}>
-                              Save
-                            </Button>
-                          ) : (
-                            <Button onClick={() => handleEdit(user)}>
-                              Edit
-                            </Button>
-                          )}
-
-                        </td>
-
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
-              </div>
-            </div>
-
-          </div>
-        </div>
+        <Button onClick={() => setShowAddForm(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Add User
+        </Button>
       </div>
-    </>
+
+      {/* ADD FORM */}
+      {showAddForm && (
+        <div className="grid grid-cols-2 gap-3 bg-white p-4 border mb-4">
+
+          <input placeholder="NIC"
+            value={newUser.nic}
+            onChange={(e) => setNewUser({ ...newUser, nic: e.target.value })}
+          />
+
+          <input placeholder="First Name"
+            value={newUser.firstName}
+            onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+          />
+
+          <input placeholder="Last Name"
+            value={newUser.lastName}
+            onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+          />
+
+          <input placeholder="Email"
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+          />
+
+          <input placeholder="Address"
+            value={newUser.address}
+            onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+          />
+
+          <input placeholder="Phone"
+            value={newUser.phoneNumber}
+            onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+          />
+
+          <select
+            value={newUser.roleId}
+            onChange={(e) => setNewUser({ ...newUser, roleId: e.target.value })}
+          >
+            <option value="">Select Role</option>
+            {roles.map(r => (
+              <option key={r.id} value={r.id}>
+                {r.roleName}
+              </option>
+            ))}
+          </select>
+
+          <Button onClick={handleCreateUser}>
+            Create User
+          </Button>
+
+        </div>
+      )}
+
+      {/* TABLE */}
+      <div className="bg-white border rounded">
+
+        <table className="w-full">
+
+          <thead className="bg-gray-100">
+            <tr>
+              <th>NIC</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id} className="border-t">
+
+                <td>{user.nic}</td>
+
+                <td>
+                  {editingUserId === user.id ? (
+                    <input
+                      value={editUser.firstName}
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, firstName: e.target.value })
+                      }
+                    />
+                  ) : (
+                    `${user.firstName} ${user.lastName}`
+                  )}
+                </td>
+
+                <td>
+                  {editingUserId === user.id ? (
+                    <input
+                      value={editUser.email}
+                      onChange={(e) =>
+                        setEditUser({ ...editUser, email: e.target.value })
+                      }
+                    />
+                  ) : (
+                    user.email
+                  )}
+                </td>
+
+                <td>{user.role}</td>
+
+                <td className="flex gap-2">
+
+                  {editingUserId === user.id ? (
+                    <Button onClick={() => handleSaveEdit(user.id)}>
+                      Save
+                    </Button>
+                  ) : (
+                    <Button onClick={() => handleEdit(user)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  <Button
+                    onClick={() => handleDeleteUser(user.id)}
+                    className="bg-red-500 text-white"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+
+                </td>
+
+              </tr>
+            ))}
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
   );
 };
 
-export default UserManagementPage;
+export default UserManagementPage; 
