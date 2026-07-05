@@ -5,6 +5,9 @@ import com.lankacapital.server.dtos.CollectionSyncDto;
 import com.lankacapital.server.dtos.DailyCollectionResponseDto;
 import com.lankacapital.server.entities.DailyCollection;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 public class DailyCollectionMapper {
     public static DailyCollectionResponseDto mapToDailyCollectionResponseDto(DailyCollection collection) {
 
@@ -37,6 +40,7 @@ public class DailyCollectionMapper {
         collection.setInstallmentNumber(dto.getInstallmentNumber());
         collection.setPaidAmount(dto.getPaidAmount());
         collection.setDueAmount(dto.getDueAmount());
+        collection.setPaidAt(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime());
 
         return collection;
     }

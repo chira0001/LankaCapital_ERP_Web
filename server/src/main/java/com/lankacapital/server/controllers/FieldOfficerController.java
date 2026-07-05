@@ -183,10 +183,11 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/collection")
     public ResponseEntity<?> syncToDailyCollections(@RequestBody List<CollectionSyncDto> collectionList) {
-        List<String> successIds = new ArrayList<>();
+        List<Integer> successIds = new ArrayList<>();
         for (CollectionSyncDto collectionDto : collectionList) {
             try {
-                successIds.add(dailyCollectionService.syncDailyCollection(collectionDto));
+                String value = dailyCollectionService.syncDailyCollection(collectionDto);
+                successIds.add(collectionDto.getId());
             }catch (Exception e) {
                 return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -256,7 +257,4 @@ public class FieldOfficerController {
 
         return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
     }
-
-
-
 }
