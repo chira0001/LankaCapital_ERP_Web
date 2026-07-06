@@ -37,10 +37,10 @@ public class SecurityConfiguration {
 //                        .requestMatchers("/api/v1/**").permitAll()
                         .requestMatchers("/api/v1/auth/**", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/loans/**").permitAll()
-//                        .requestMatchers("/api/v1/loans/**").hasAnyAuthority("ADMIN", "RECEPTIONIST")
+                       .requestMatchers("/api/v1/loans/**").hasAnyAuthority("ADMIN", "RECEPTIONIST")
                         .requestMatchers("/api/v1/recep/**").hasAnyAuthority("RECEPTIONIST")
                         .requestMatchers("/api/v1/admin/**").permitAll()
-//                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
                         .requestMatchers("/api/v1/field/**").permitAll()
 
                         .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
