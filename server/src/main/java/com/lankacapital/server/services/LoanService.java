@@ -32,6 +32,9 @@ public interface LoanService {
     @Transactional
     Loan resetLoan(LoanActionDto dto);
 
+//    @Transactional
+//    Loan completeLoan(LoanActionDto dto);
+
 
     //interest update
     LoanResponseDto updateInterest(InterestUpdateDTO dto);

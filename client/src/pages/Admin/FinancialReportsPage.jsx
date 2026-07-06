@@ -42,8 +42,8 @@ const FinancialReportsPage = () => {
         return "/admin/reports/loans/monthly";
       case "expenses":
         return "/admin/reports/expenses/monthly";
-      case "dashboard":
-        return "/admin/financial-dashboard";
+      //case "dashboard":
+        //return "/admin/financial-dashboard";
       case "cashflow":
         return "/admin/financial-cashflow";
       case "balance":
@@ -59,7 +59,7 @@ const FinancialReportsPage = () => {
       case "annual-cashflow":
         return "/admin/annual-cash-flow";
       default:
-        return "/admin/financial-dashboard";
+        return "/admin/reports/loans/monthly";
     }
   };
 
@@ -74,7 +74,7 @@ const FinancialReportsPage = () => {
       let res;
 
       const monthlyTypes = [
-        "dashboard",
+       // "dashboard",
         "cashflow",
         "balance",
         "profitloss",
@@ -92,6 +92,9 @@ const FinancialReportsPage = () => {
           params: { year: formatYear(year) },
         });
       }
+      console.log("REPORT TYPE:", reportType);
+     console.log("RAW RESPONSE:", res?.data);
+     console.log("TYPE:", typeof res?.data);
 
       setData(res.data);
     } catch (err) {
@@ -143,49 +146,49 @@ const FinancialReportsPage = () => {
     }
   };
 
-  // ============================
-  // IMPORT EXCEL
-  // ============================
-  const handleImportExcel = async () => {
-    if (!importFile) return;
+  // // ============================
+  // // IMPORT EXCEL
+  // // ============================
+  // const handleImportExcel = async () => {
+  //   if (!importFile) return;
 
-    setImporting(true);
-    setImportResult(null);
+  //   setImporting(true);
+  //   setImportResult(null);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", importFile);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("file", importFile);
 
-      // const res = await api.post(
-      //   "/admin/financial-statement/import",
-      //   formData,
-      //   {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //     Authorization: `Bearer ${localStorage.getItem("token")}`,
-      //   },
-      // }
-      // );
+  //     // const res = await api.post(
+  //     //   "/admin/financial-statement/import",
+  //     //   formData,
+  //     //   {
+  //     //   headers: {
+  //     //     "Content-Type": "multipart/form-data",
+  //     //     Authorization: `Bearer ${localStorage.getItem("token")}`,
+  //     //   },
+  //     // }
+  //     // );
 
-      api.interceptors.request.use((config) => {
-        const token = localStorage.getItem("token");
+  //     api.interceptors.request.use((config) => {
+  //       const token = localStorage.getItem("token");
 
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+  //       if (token) {
+  //         config.headers.Authorization = `Bearer ${token}`;
+  //       }
 
-        return config;
-      });
+  //       return config;
+  //     });
 
 
 
-      setImportResult(`Imported ${res.data.length} month(s) successfully.`);
-    } catch (err) {
-      setImportResult(err.response?.data?.message || "Import failed");
-    } finally {
-      setImporting(false);
-    }
-  };
+  //     setImportResult(`Imported ${res.data.length} month(s) successfully.`);
+  //   } catch (err) {
+  //     setImportResult(err.response?.data?.message || "Import failed");
+  //   } finally {
+  //     setImporting(false);
+  //   }
+  // };
 
   // ============================
   // TABLE RENDER
@@ -278,7 +281,7 @@ const FinancialReportsPage = () => {
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
-              <option value="dashboard">Dashboard</option>
+              {/* <option value="dashboard">Dashboard</option> */}
               <option value="loans">Loans</option>
               <option value="expenses">Expenses</option>
               <option value="statement">Statement</option>
@@ -326,7 +329,7 @@ const FinancialReportsPage = () => {
           </Button>
 
           {/* IMPORT */}
-          <input
+          {/* <input
             type="file"
             accept=".xlsx"
             onChange={(e) => setImportFile(e.target.files[0])}
@@ -343,7 +346,7 @@ const FinancialReportsPage = () => {
             <span className="text-sm text-gray-600">
               {importResult}
             </span>
-          )}
+          )} */}
         </div>
       </div>
 
