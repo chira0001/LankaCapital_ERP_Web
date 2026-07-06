@@ -94,8 +94,8 @@ const FinancialReportsPage = () => {
         });
       }
 
-      console.log("REPORT TYPE:", reportType);
-      console.log("RAW RESPONSE:", res?.data);
+      // console.log("REPORT TYPE:", reportType);
+      // console.log("RAW RESPONSE:", res?.data);
       // console.log("TYPE:", typeof res?.data);
 
       setData(res.data);
