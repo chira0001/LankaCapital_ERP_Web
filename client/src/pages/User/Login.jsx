@@ -47,7 +47,7 @@ const Login = () => {
 
     const login = async (/*e*/) => {
        ////////////////////////
-        console.log("LOGIN BUTTON CLICKED");
+        // console.log("LOGIN BUTTON CLICKED");
       //  e.preventDefault();
         const newErrors = {
             email: !email || email.trim() === "",
@@ -61,7 +61,7 @@ const Login = () => {
                     password
                 });
 
-                 console.log("LOGIN RESPONSE =", response.data);
+                //  console.log("LOGIN RESPONSE =", response.data);
                 // if (response.status == 200) {
                 //     toast.success("Loggin Successfull. Redirecting...")
                 //     localStorage.setItem("token", response.data.token);
@@ -79,8 +79,8 @@ const Login = () => {
     const payload = JSON.parse(atob(response.data.token.split('.')[1]));
     localStorage.setItem("username", payload.sub);
 
-    console.log("Saved Token:", localStorage.getItem("token"));
-    console.log("Saved Username:", localStorage.getItem("username"));
+    // console.log("Saved Token:", localStorage.getItem("token"));
+    // console.log("Saved Username:", localStorage.getItem("username"));
 
     const role = response.data.role.slice(0, 2).toLowerCase();
 
