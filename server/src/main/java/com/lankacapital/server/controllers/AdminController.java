@@ -179,8 +179,10 @@ public class AdminController {
     //reports
     @GetMapping("/reports/loans/monthly")
     public ResponseEntity<?> getMonthlyLoanReport(@RequestParam String month) {
+//        public ResponseEntity<?> getMonthlyLoanReport(@RequestParam String month) {
         try {
             YearMonth ym = YearMonth.parse(month);
+            System.out.println("184 : "+ym);
             return ResponseEntity.ok(loanService.getMonthlyLoanReport(ym));
         } catch (Exception e) {
             e.printStackTrace();
@@ -440,6 +442,15 @@ public class AdminController {
                 dashboardService.getFinancialDashboard()
         );
     }
+
+//    @PutMapping("/complete")
+//    public ResponseEntity<?> complete(
+//            @RequestBody LoanActionDto dto
+//    ){
+//        return ResponseEntity.ok(
+//                loanService.completeLoan(dto)
+//        );
+//    }
 }
 
 
