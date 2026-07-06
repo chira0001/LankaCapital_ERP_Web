@@ -601,8 +601,8 @@ const ReceptionistView = () => {
                                             </div>
                                             {infoDetail.rejectionNote ?
                                                 <div className='flex flex-col col-span-4 border border-gray-300 p-3 rounded-lg'>
-                                                    <span className='text-xs text-gray-500 font-medium uppercase'>Rejection Note</span>
-                                                    <span className='text-md text-red-500'>
+                                                    <span className='text-xs text-gray-500 font-medium uppercase'>Approved Note</span>
+                                                    <span className='text-md text-green-500'>
                                                         {infoDetail.rejectionNote}
                                                     </span>
                                                 </div> :
