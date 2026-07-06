@@ -19,7 +19,7 @@ instance.interceptors.request.use(
         const token =
             localStorage.getItem("token");
 
-         console.log("TOKEN SENT TO BACKEND:", token);
+        //  console.log("TOKEN SENT TO BACKEND:", token);
 
         if (token) {
             config.headers.Authorization =
