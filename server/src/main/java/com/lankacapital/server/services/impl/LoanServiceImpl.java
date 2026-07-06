@@ -435,6 +435,29 @@ public class LoanServiceImpl implements LoanService {
                 ))
                 .toList();
     }
+
+//    @Transactional
+//    @Override
+//    public Loan completeLoan(LoanActionDto dto) {
+//
+//        Loan loan = loanRepository.findById(dto.getFileNumber())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException(
+//                                "Loan not found : " + dto.getFileNumber()));
+//
+//        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException(
+//                                "Employee not found : " + dto.getEmployeeId()));
+//
+//        loan.setEmployee(employee);
+//
+//        loan.setStatus(LoanStatus.COMPLETED);
+//
+//        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+//
+//        return loanRepository.save(loan);
+//    }
 }
 
 

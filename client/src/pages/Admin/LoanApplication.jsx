@@ -355,6 +355,13 @@ const confirmAction = async () => {
         // });
       }
 
+          else if (actionType === 'complete') {
+          response = await axiosAPI.put("/admin/complete", {
+            fileNumber: selectedApp.fileNumber,
+            employeeId: currentEmployeeId
+          });
+        }
+
     // if (!response.ok) {
     //   throw new Error('Failed to update application');
     // }
@@ -418,6 +425,7 @@ setFilteredApps(applyFilters(data, filters));
     const styles = {
       PENDING: 'bg-gray-100 text-gray-700 border-gray-200',
       APPROVED: 'bg-black text-white border-black',
+      COMPLETED: 'bg-green-100 text-green-700 border-green-200',
       REJECTED: 'bg-red-100 text-red-700 border-red-200'
     };
 
@@ -478,6 +486,7 @@ setFilteredApps(applyFilters(data, filters));
                       <SelectItem value="ALL">All</SelectItem>
                       <SelectItem value="PENDING">Pending</SelectItem>
                       <SelectItem value="APPROVED">Approved</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
                       <SelectItem value="REJECTED">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
@@ -618,12 +627,12 @@ setFilteredApps(applyFilters(data, filters));
                             )}
 
                         </td>
-                        <td className="px-6 py-4">
+                         <td className="px-6 py-4">
                           <p className="text-sm text-gray-600">
                             {app.employeeId || '1'}
                           </p>
-                        </td>
-                          <td className="px-6 py-4">
+                         </td>
+                          {/* <td className="px-6 py-4">
                             {(app.status || '').toUpperCase() === 'PENDING' ? (
                               <div className="flex gap-2">
                                 <Button
@@ -654,8 +663,74 @@ setFilteredApps(applyFilters(data, filters));
                                 Reset
                               </Button>
                             )}
-                          </td>
-                      </tr>
+                          </td> */}
+                          {/*  */}
+                        
+                            <td className="px-6 py-4">
+
+                              {(() => {
+                                const status = (app.status || '').toUpperCase();
+
+                                // BEFORE ACTION → show all buttons
+                                if (status === 'PENDING') {
+                                  return (
+                                    <div className="flex gap-2">
+                                      
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleAction(app, 'approve')}
+                                        className="bg-black hover:bg-gray-800 text-white"
+                                      >
+                                        {/* <CheckCircle className="w-4 h-4 mr-1" /> */}
+                                        Resubmit
+                                      </Button>
+
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleAction(app, 'reject')}
+                                      >
+                                        <XCircle className="w-4 h-4 mr-1" />
+                                        Reject
+                                      </Button>
+
+                                      <Button
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        onClick={() => handleAction(app, 'complete')}
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        Complete
+                                      </Button>
+
+                                    </div>
+                                  );
+                                }
+
+                                // AFTER ANY ACTION
+                                if (
+                                  status === 'APPROVED' ||
+                                  status === 'REJECTED' ||
+                                  status === 'COMPLETED'
+                                ) {
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleAction(app, 'reset')}
+                                      className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                    >
+                                      Reset
+                                    </Button>
+                                  );
+                                }
+
+                                return null;
+                              })()}
+
+                            </td>
+                            {/*  */}
+                       </tr>
                       );
                     } )}
                   </tbody>
@@ -677,7 +752,13 @@ setFilteredApps(applyFilters(data, filters));
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === 'approve' ? 'Approve Application' : 'Reject Application'}
+              {/* {actionType === 'approve' ? 'Approve Application' : 'Reject Application'} */}
+                          {/* <AlertDialogTitle> */}
+              {actionType === 'approve' && 'Approve Loan'}
+              {actionType === 'reject' && 'Reject Loan'}
+              {actionType === 'complete' && 'Complete Loan'}
+              {actionType === 'reset' && 'Reset Loan'}
+            {/* </AlertDialogTitle> */}
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to {actionType} the loan application for {selectedApp?.customerId}?
@@ -699,6 +780,11 @@ setFilteredApps(applyFilters(data, filters));
             </div>
           )} */}
 
+          {actionType === 'complete' && (
+            <p className="text-sm text-gray-500 mt-2">
+              This will mark the loan as COMPLETED permanently.
+            </p>
+          )}
 
          
 
@@ -720,7 +806,14 @@ setFilteredApps(applyFilters(data, filters));
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmAction}
-              className={actionType === 'reject' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-black hover:bg-gray-800 text-white'}
+              // className={actionType === 'reject' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-black hover:bg-gray-800 text-white'}
+                 className={
+                  actionType === 'reject'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : actionType === 'complete'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-black hover:bg-gray-800 text-white'
+                }
             >
               Confirm
             </AlertDialogAction>

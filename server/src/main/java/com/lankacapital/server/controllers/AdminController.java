@@ -440,6 +440,15 @@ public class AdminController {
                 dashboardService.getFinancialDashboard()
         );
     }
+
+//    @PutMapping("/complete")
+//    public ResponseEntity<?> complete(
+//            @RequestBody LoanActionDto dto
+//    ){
+//        return ResponseEntity.ok(
+//                loanService.completeLoan(dto)
+//        );
+//    }
 }
 
 
