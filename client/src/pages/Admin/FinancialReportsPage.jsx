@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
 import api from "@/lib/api";
+import axiosApi from "../../api/axiosAPI.js"
 import * as XLSX from "xlsx";
 
 import MonthPicker from "@/components/reports/MonthPicker";
@@ -11,7 +12,7 @@ import YearPicker from "@/components/reports/YearPicker";
 import dayjs from "dayjs";
 
 const FinancialReportsPage = () => {
-  const [reportType, setReportType] = useState("dashboard");
+  const [reportType, setReportType] = useState("loans");
 
   const [month, setMonth] = useState(dayjs());
   const [year, setYear] = useState(dayjs());
@@ -43,7 +44,7 @@ const FinancialReportsPage = () => {
       case "expenses":
         return "/admin/reports/expenses/monthly";
       //case "dashboard":
-        //return "/admin/financial-dashboard";
+      //return "/admin/financial-dashboard";
       case "cashflow":
         return "/admin/financial-cashflow";
       case "balance":
@@ -74,7 +75,7 @@ const FinancialReportsPage = () => {
       let res;
 
       const monthlyTypes = [
-       // "dashboard",
+        // "dashboard",
         "cashflow",
         "balance",
         "profitloss",
@@ -84,17 +85,18 @@ const FinancialReportsPage = () => {
       ];
 
       if (monthlyTypes.includes(reportType)) {
-        res = await api.get(getEndpoint(reportType), {
+        res = await axiosApi.get(getEndpoint(reportType), {
           params: { month: formatMonth(month) },
         });
       } else {
-        res = await api.get(getEndpoint(reportType), {
+        res = await axiosApi.get(getEndpoint(reportType), {
           params: { year: formatYear(year) },
         });
       }
+
       console.log("REPORT TYPE:", reportType);
-     console.log("RAW RESPONSE:", res?.data);
-     console.log("TYPE:", typeof res?.data);
+      console.log("RAW RESPONSE:", res?.data);
+      // console.log("TYPE:", typeof res?.data);
 
       setData(res.data);
     } catch (err) {
@@ -127,7 +129,7 @@ const FinancialReportsPage = () => {
   // ============================
   const handleDownloadPDF = async () => {
     try {
-      const res = await api.get("/admin/financial-report/pdf", {
+      const res = await axiosApi.get("/admin/financial-report/pdf", {
         params: { month: formatMonth(month) },
         responseType: "blob",
       });
