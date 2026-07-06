@@ -604,7 +604,7 @@ setFilteredApps(applyFilters(data, filters));
                           <p className="text-gray-700">{app.noOfInstallments ?? app.numberOfInstallments?.value}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-gray-700">{app.interestRate}</p>
+                          <p className="text-gray-700">{app.interestRate == 0 ? "N/A" : app.interestRate}</p>
                         </td>
                        
                         <td className="px-6 py-4">
