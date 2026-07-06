@@ -42,6 +42,10 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/admin/**").permitAll()
 //                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
                         .requestMatchers("/api/v1/field/**").permitAll()
+
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ADMIN")
+                        .requestMatchers("/api/v1/loans/**").hasAnyAuthority("ADMIN", "RECEPTIONIST")
+
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(
