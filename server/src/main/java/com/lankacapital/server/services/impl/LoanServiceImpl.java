@@ -226,7 +226,7 @@ public class LoanServiceImpl implements LoanService {
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
 
-        loan.setEmployee(employee);
+//        loan.setEmployee(employee);
         //update status
         loan.setStatus(LoanStatus.APPROVED);
 
