@@ -17,7 +17,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Employee findByEmail(String email);
     Boolean existsByEmail(String email);
 
-    @Query("SELECT e FROM Employee e WHERE e.id IN :ids AND e.role.id IN (3, 4)")
+    @Query("SELECT e FROM Employee e WHERE e.id IN :ids AND e.role.id IN (3, 1, 2)")
     List<Employee> findCustomersByIds(@Param("ids") List<Long> ids);
 
     @Query("""
