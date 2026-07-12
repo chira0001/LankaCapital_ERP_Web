@@ -87,4 +87,8 @@ public class CustomerMapper {
 
         return customer;
     }
+
+    public static String mapToCustomerId(Customer customer){
+        return customer.getNic();
+    }
 }

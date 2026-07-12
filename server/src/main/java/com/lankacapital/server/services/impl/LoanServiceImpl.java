@@ -150,7 +150,7 @@ public class LoanServiceImpl implements LoanService {
     //public List<LoanResponseDto> getLoansByCustomerId(String id) {
 
         try {
-            Customer customer = customerRepository.findById(Long.parseLong(id))
+            Customer customer = customerRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id " + id));
 
             CustomerResponseDto dto = CustomerMapper.mapToCustomerResponseDto(customer);
@@ -414,9 +414,9 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public CustomerResponseDto getCustomerWithLoans(String id) {
 
-        Long customerId = Long.parseLong(id);
+//        Long customerId = Long.parseLong(id);
 
-        Customer customer = customerRepository.findById(customerId)
+        Customer customer = customerRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Customer not found with id " + id));
 

@@ -58,6 +58,10 @@ public class Loan {
 
     private Long updateStatus = 0L;
 
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private Employee approvedEmployee;
+
 
     @PrePersist
     public void update(){

@@ -7,7 +7,7 @@ const ReceptionistLoan = () => {
 
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
-    const [isEmployee, setIsEmployee] = useState(false);                                 //------
+    const [isEmployee, setIsEmployee] = useState(false);
     const [displayInstallments, setDisplayInstallments] = useState([]);
     const [displayInterestRates, setDisplayInterestRates] = useState([]);
 
@@ -18,6 +18,10 @@ const ReceptionistLoan = () => {
     const [phoneNumber, setPhoneNumber] = useState();
     const [bank, setBank] = useState();
     const [bankAccount, setBankAccount] = useState();
+
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -184,11 +188,40 @@ const ReceptionistLoan = () => {
         }
     }
 
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (searchCustomer.trim().length >= 3) {
+                fetchSuggestions();
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(delayDebounce);
+    }, [searchCustomer]);
+
+    const fetchSuggestions = async () => {
+        try {
+            setLoading(true);
+            const res = await axiosAPI.get(
+                `/recep/customers/search?nic=${searchCustomer}`
+            );
+            setSuggestions(res.data);
+            setShowSuggestions(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     useEffect(() => {
         fetchInterestRates();
         fetchInstallments();
     }, [])
+    
     return (
         <div className='p-3'>
             <ToastContainer position="top-right" autoClose={3000} />
@@ -202,23 +235,69 @@ const ReceptionistLoan = () => {
                     </p>
                 </div>
                 <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
-                    <div className='w-1/2 flex justify-between items-center gap-4'>
-                        <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
-                        <input
-                            type="text"
-                            value={searchCustomer}
-                            className='border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                            placeholder="Enter NIC"
-                            onChange={(e) => setSearchCustomer(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && checkCustomerExists()}
-                        />
-                        <button
-                            onClick={checkCustomerExists}
-                            className='bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed'
-                            disabled={!searchCustomer.trim()}
-                        >
-                            Search
-                        </button>
+                    <div className='w-1/2 flex flex-col relative'>
+                        <div className='flex justify-between items-center gap-4'>
+                            <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
+                                Search Customer
+                            </span>
+
+                            <input
+                                type="text"
+                                value={searchCustomer}
+                                className='border border-gray-300 rounded-lg px-4 py-2 flex-1 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent'
+                                placeholder="Enter NIC"
+                                onChange={(e) => setSearchCustomer(e.target.value)}
+                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                            />
+
+                            <button
+                                onClick={checkCustomerExists}
+                                className='bg-blue-600 text-white px-6 py-2 rounded-lg 
+                       whitespace-nowrap hover:bg-blue-700 
+                       transition-colors shadow-md 
+                       disabled:bg-gray-400 disabled:cursor-not-allowed'
+                                disabled={!searchCustomer.trim()}
+                            >
+                                Search
+                            </button>
+                        </div>
+
+                        {/* Suggestions Dropdown */}
+                        {showSuggestions && (
+                            <div className="absolute top-full mt-2 w-full bg-white border 
+                        border-gray-200 rounded-lg shadow-lg z-50 
+                        max-h-60 overflow-y-auto">
+
+                                {loading && (
+                                    <div className="px-4 py-2 text-sm text-gray-500">
+                                        Searching...
+                                    </div>
+                                )}
+
+                                {!loading && suggestions.length === 0 && (
+                                    <div className="px-4 py-2 text-sm text-gray-500">
+                                        No customers found
+                                    </div>
+                                )}
+
+                                {!loading && suggestions.map((nic, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            setSearchCustomer(nic);
+                                            setShowSuggestions(false);
+                                        }}
+                                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                                    >
+                                        <div className="font-medium text-gray-800">
+                                            {nic}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -325,27 +404,17 @@ const ReceptionistLoan = () => {
                 )}
 
                 <form onSubmit={handleLoanSubmit}>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-
-                        <div className='flex flex-col'>
-                            <span className='mb-2 text-sm font-medium text-gray-700'>
-                                Customer ID <span className='text-red-500'>*</span>
+                    {loanForm.customerId ?
+                        <div className="mb-6 flex items-center gap-3">
+                            <span className="text-md text-gray-500">Customer ID:</span>
+                            <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
+                                {loanForm.customerId}
                             </span>
-                            <input
-                                type="text"
-                                name="customerId"
-                                value={loanForm.customerId}
-                                onChange={handleLoanChange}
-                                placeholder="Customer NIC"
-                                readOnly
-                                required
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       bg-gray-100 text-gray-600 cursor-not-allowed
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all'
-                            />
                         </div>
-
+                        :
+                        ""
+                    }
+                    <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
                         <div className='flex flex-col'>
                             <span className='mb-2 text-sm font-medium text-gray-700'>
                                 File Number <span className='text-red-500'>*</span>

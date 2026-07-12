@@ -25,4 +25,6 @@ public class SalaryMetaData {
     private Role role;
 
     private Double value;
+
+    private Long updateStatus = 0L;
 }

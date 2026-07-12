@@ -9,7 +9,7 @@ public class LoanRequestDto {
     private BigDecimal loanAmount;
     private Integer installments;
     private Long employeeId;
-    private Long customerId;
+    private String customerId;
 
     private String name;
     private String email;
