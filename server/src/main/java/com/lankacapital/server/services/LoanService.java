@@ -37,7 +37,7 @@ public interface LoanService {
 
 
     //interest update
-    LoanResponseDto updateInterest(InterestUpdateDTO dto);
+    LoanResponseDto updateInterest(InterestUpdateDTO dto, String username);
 
     //get interest
     LoanResponseDto getInterest(String fileNumber);

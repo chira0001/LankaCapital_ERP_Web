@@ -119,23 +119,23 @@ public class LoanServiceImpl implements LoanService {
         loan.setCustomer(customer);
 
         // 4. INSTALLMENT
-        Installment installment = installmentRepository.findById(dto.getNumberOfInstallments())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Invalid installment value"));
-
-        loan.setInstallment(installment);
-
+//        Installment installment = installmentRepository.findById(dto.getNumberOfInstallments())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Invalid installment value"));
+//
+//        loan.setInstallment(installment);
+        loan.setInstallment(dto.getNumberOfInstallments());
         // 5. EMPLOYEE (logged-in user)
         Employee employee = employeeRepository.findByEmail(username);
-        loan.setEmployee(employee);
+        loan.setCreatedEmployee(employee);
 
         // 6. INTEREST
-        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Interest rate not found"));
-
-        loan.setInterestRate(rate);
-
+//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Interest rate not found"));
+//
+//        loan.setInterestRate(rate);
+        loan.setInterestRate(dto.getInterestRate());
         // 7. STATUS
         loan.setStatus(LoanStatus.PENDING);
 
@@ -190,8 +190,8 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = new Loan();
         loan.setCustomer(customer);
         loan.setAmount(loanCreateDto.getAmount());
-        loan.setEmployee(employee);
-        loan.setInstallment(installment);
+        loan.setCreatedEmployee(employee);
+        loan.setInstallment(loanCreateDto.getInstallmentId());
         loan.setCreatedAt(loanCreateDto.getCreatedAt());
 
         return loanRepository.save(loan);
@@ -245,7 +245,7 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found:" + dto.getFileNumber()));
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
-        loan.setEmployee(employee);
+        loan.setUpdatedEmployee(employee);
         loan.setStatus(LoanStatus.REJECTED);
 //        loan.setRejectionNote(dto.getRejectionNote());
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
@@ -262,7 +262,7 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Employee not found: " + dto.getEmployeeId()));
 
-        loan.setEmployee(employee);
+        loan.setUpdatedEmployee(employee);
 
         // RESET BACK TO PENDING
         loan.setStatus(LoanStatus.PENDING);
@@ -277,15 +277,16 @@ public class LoanServiceImpl implements LoanService {
 
 
     @Override
-    public LoanResponseDto updateInterest(InterestUpdateDTO dto) {
+    public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
         Loan loan=loanRepository.findById(dto.getFileNumber())
                 .orElseThrow(()->new ResourceNotFoundException("Loan not Found"+dto.getFileNumber()));
 
-        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-                        .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
+//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
+//                        .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
 
-        loan.setInterestRate(rate);
+        loan.setInterestRate(dto.getInterestRate());
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+        loan.setUpdatedEmployee(employeeRepository.findByEmail(username));
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
 
@@ -328,13 +329,13 @@ public class LoanServiceImpl implements LoanService {
         customer = customerRepository.findByNic(loanRequestDto.getCustomerId());
         loan.setCustomer(customer);
 
-        Installment installment = installmentRepository.findById(loanRequestDto.getInstallments())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
-        loan.setInstallment(installment);
+//        Installment installment = installmentRepository.findById(loanRequestDto.getInstallments())
+//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(loanRequestDto.getInstallments());
 
         Employee employee = employeeRepository.findById(loanRequestDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanRequestDto.getEmployeeId()));
-        loan.setEmployee(employee);
+        loan.setCreatedEmployee(employee);
         loan.setStatus(LoanStatus.PENDING);
         return loanRepository.save(loan);
     }
@@ -346,13 +347,13 @@ public class LoanServiceImpl implements LoanService {
         }
         Loan loan = new Loan();
 
-        Installment installment = installmentRepository.findById(customerAddDto.getInstallmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
-        loan.setInstallment(installment);
+//        Installment installment = installmentRepository.findById(customerAddDto.getInstallmentId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
+        loan.setInstallment(customerAddDto.getInstallmentId());
 
         Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + customerAddDto.getEmployeeId()));
-        loan.setEmployee(employee);
+        loan.setCreatedEmployee(employee);
 
         loan.setAmount(customerAddDto.getLoanAmount());
         Customer newCustomer = CustomerMapper.mapToNewCustomer(customerAddDto);
@@ -382,17 +383,19 @@ public class LoanServiceImpl implements LoanService {
 
     private LoanReportRow toReportRow(Loan loan) {
         Customer customer = loan.getCustomer();
-        Employee employee = loan.getEmployee();
-        Installment installment = loan.getInstallment();
-        InterestRate interestRate = loan.getInterestRate();
+        Employee employee = loan.getCreatedEmployee();
+//        Installment installment = loan.getInstallment();
+//        InterestRate interestRate = loan.getInterestRate();
 
         return new LoanReportRow(
                 loan.getFileNumber(),
                 customer != null ? customer.getNic() : null,
                 customer != null ? customer.getName() : null,
                 loan.getAmount(),
-                interestRate != null ? interestRate.getRate() : null,
-                installment != null ? installment.getValue() : null,
+                loan.getInterestRate(),
+                loan.getInstallment(),
+//                interestRate != null ? interestRate.getRate() : null,
+//                noOfInstallments != null ? noOfInstallments.getValue() : null,
                 loan.getStatus(),
                 employee != null ? employee.getId() : null,
                 employee != null ? employee.getFirstName() + " " + employee.getLastName() : null,

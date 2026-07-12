@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class InterestUpdateDTO {
     private String fileNumber;
-    private Integer interestRate;
+    private Double interestRate;
 }

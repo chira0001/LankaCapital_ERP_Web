@@ -123,8 +123,8 @@ public class AdminController {
 
     //admin interest management
     @PutMapping("/loans/interest")
-    public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto){
-        return ResponseEntity.ok(loanService.updateInterest(dto));
+    public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto, Authentication authentication){
+        return ResponseEntity.ok(loanService.updateInterest(dto, authentication.getName()));
     }
 
     @GetMapping("/loans/interest/{fileNumber}")

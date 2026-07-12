@@ -31,7 +31,7 @@ public class LoanMapper {
 
         responseDto.setNoOfInstallments(
                 loan.getInstallment() != null
-                        ? loan.getInstallment().getValue()
+                        ? loan.getInstallment()
                         : 0
         );
 
@@ -42,8 +42,8 @@ public class LoanMapper {
         );
 
         responseDto.setEmployeeId(
-                loan.getEmployee() != null
-                        ? loan.getEmployee().getId()
+                loan.getCreatedEmployee() != null
+                        ? loan.getCreatedEmployee().getId()
                         : null
         );
 
@@ -51,7 +51,7 @@ public class LoanMapper {
 //            throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
 //        }
 
-        responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate().getRate());
+        responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
 
 //        responseDto.setInterestRate(loan.getInterestRate().getRate());
         responseDto.setStatus(loan.getStatus());
@@ -102,16 +102,13 @@ public class LoanMapper {
         dto.setFile_number(loan.getFileNumber());
         dto.setAmount(loan.getAmount());
         dto.setCustomer_id(loan.getCustomer().getNic());
-        dto.setEmployee_id(loan.getEmployee().getId());
+        dto.setEmployee_id(loan.getCreatedEmployee().getId());
         dto.setCreated_at(loan.getCreatedAt());
         dto.setDocument_charge(loan.getDocumentCharge());
         dto.setStatus(loan.getStatus().toString());
-        dto.setInstallment_id(loan.getInstallment().getId());
+        dto.setInstallment_id(loan.getInstallment());
         dto.setUpdate_status(loan.getUpdateStatus());
-        dto.setInterest_rate_id(loan.getInterestRate() != null
-                ? loan.getInterestRate().getId()
-                : new InterestRate().getId()
-        );
+        dto.setInterest_rate_id(loan.getInterestRate());
 
         return dto;
     }
@@ -122,13 +119,13 @@ public class LoanMapper {
         InstallmentResDto installment = new InstallmentResDto();
         InterestRateResDto interestRate = new InterestRateResDto();
 
-        employee.setFirstName(loan.getEmployee().getFirstName());
-        employee.setLastName(loan.getEmployee().getLastName());
-        employee.setPhoneNumber(loan.getEmployee().getPhoneNumber());
+        employee.setFirstName(loan.getCreatedEmployee().getFirstName());
+        employee.setLastName(loan.getCreatedEmployee().getLastName());
+        employee.setPhoneNumber(loan.getCreatedEmployee().getPhoneNumber());
 
-        installment.setValue(loan.getInstallment().getValue());
+        installment.setValue(loan.getInstallment());
         interestRate.setRate(loan.getInterestRate() != null
-                ? loan.getInterestRate().getRate()
+                ? loan.getInterestRate()
                 : 0.0
         );
 
