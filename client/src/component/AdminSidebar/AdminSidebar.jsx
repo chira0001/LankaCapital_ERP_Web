@@ -1,6 +1,6 @@
 import { LayoutDashboard } from "lucide-react";
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings } from "lucide-react";
 import { UserCircle } from "lucide-react";
 
@@ -23,13 +23,15 @@ const menuItems = [
   //  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
 ];
 
-const logout = () => {
+const logoutFunc = () => {
   localStorage.clear();
-  window.location.href = "/login";
-  window.location.reload();
+  navigate("/");
 };
 
 const Sidebar = () => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const location = useLocation();
+
   return (
     <div className="h-full flex flex-col bg-[#071428] text-white overflow-hidden ">
 
@@ -87,10 +89,64 @@ const Sidebar = () => {
 
           {/* Logout */}
           <button
-            onClick={logout}
+            onClick={() => { setShowLogoutModal(true) }}
             className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200">
             Logout
           </button>
+
+          {showLogoutModal && (
+            <div className="fixed p-6 inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+
+              <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-[fadeIn_.2s_ease-in-out]">
+
+                {/* Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="bg-red-100 p-4 rounded-full">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      className="text-red-600"
+                    >
+                      <path d="M15 11H8v2h7v4l6-5-6-5z"></path>
+                      <path d="M5 21h7v-2H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl font-bold text-center text-gray-800">
+                  Confirm Logout
+                </h2>
+
+                {/* Description */}
+                <p className="text-gray-500 text-center mt-2">
+                  Are you sure you want to logout from your account?
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-3 mt-6">
+
+                  <button
+                    onClick={() => setShowLogoutModal(false)}
+                    className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={logoutFunc}
+                    className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all duration-300 shadow-lg shadow-red-200"
+                  >
+                    Logout
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          )}
 
         </NavLink>
       </div>

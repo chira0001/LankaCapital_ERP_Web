@@ -17,12 +17,12 @@ import java.util.List;
 public class Customer {
 
     @Id
-    private Long nic;
+    private String nic;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true)
     private String email;
 
     @Column(nullable = false)

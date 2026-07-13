@@ -96,22 +96,22 @@ const DashboardPage = () => {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        "http://localhost:8080/api/v1/admin/financial-dashboard/summary",
+        `${import.meta.env.VITE_BACKEND_URL}/admin/financial-dashboard/summary`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      // const data = res.data;
+      const data = res.data;
 
-      // setMetrics({
-      //   totalIncome: data.totalIncome ?? dummyMetrics.totalIncome,
-      //   totalExpense: data.totalExpense ?? dummyMetrics.totalExpense,
-      //   netProfit: data.netProfit ?? dummyMetrics.netProfit,
-      //   totalAssets: data.totalAssets ?? dummyMetrics.totalAssets,
-      //   totalLiabilities: data.totalLiabilities ?? dummyMetrics.totalLiabilities,
-      //   netWorth: data.netWorth ?? dummyMetrics.netWorth,
-      // });
+      setMetrics({
+        totalIncome: data.totalIncome ?? dummyMetrics.totalIncome,
+        totalExpense: data.totalExpense ?? dummyMetrics.totalExpense,
+        netProfit: data.netProfit ?? dummyMetrics.netProfit,
+        totalAssets: data.totalAssets ?? dummyMetrics.totalAssets,
+        totalLiabilities: data.totalLiabilities ?? dummyMetrics.totalLiabilities,
+        netWorth: data.netWorth ?? dummyMetrics.netWorth,
+      });
 
       const isValid = (val) => val !== null && val !== undefined && val > 0;
 

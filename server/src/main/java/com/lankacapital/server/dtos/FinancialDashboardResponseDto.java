@@ -12,9 +12,7 @@ import java.util.List;
 @Builder
 public class FinancialDashboardResponseDto {
 
-    // =========================
-    // SUMMARY NUMBERS
-    // =========================
+
     private double totalIncome;
     private double totalExpense;
     private double netProfit;
@@ -27,9 +25,9 @@ public class FinancialDashboardResponseDto {
     private double monthlyCollection;
     private double monthlyProfit;
 
-    // =========================
+
     // CHART DATA
-    // =========================
+
     private List<MonthlyIncomeRequestDto> monthlyIncome;
     private List<MonthlyExpenseReportRow> monthlyExpense;
 

@@ -108,13 +108,7 @@ public class FieldOfficerController {
         if(id == null){
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        long nic;
-        try {
-            nic = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid nic");
-        }
-        return new ResponseEntity<>(customerService.getCustomerDataById(nic), HttpStatus.OK);
+        return new ResponseEntity<>(customerService.getCustomerDataById(id), HttpStatus.OK);
     }
 
     @PostMapping(path = "/customer/loan")
@@ -137,7 +131,7 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/customer")
     public ResponseEntity<?> syncToFieldOfficers(@RequestBody List<CustomerAddSyncDto> customerList) {
-        List<Long> successIds = new ArrayList<>();
+        List<String> successIds = new ArrayList<>();
         for (CustomerAddSyncDto customerDto : customerList) {
             try {
                 Customer customer = customerService.addNewCustomer(customerDto);

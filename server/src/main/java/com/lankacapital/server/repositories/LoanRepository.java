@@ -35,5 +35,5 @@ public interface LoanRepository extends JpaRepository<Loan, String> {
     @Query("""
     SELECT COUNT(l) FROM Loan l WHERE l.customer.nic = :nic AND (l.status IS NULL OR l.status <> :status)
     """)
-        long countActiveLoans(@Param("nic") Long nic, @Param("status") LoanStatus status);
+        long countActiveLoans(@Param("nic") String nic, @Param("status") LoanStatus status);
 }

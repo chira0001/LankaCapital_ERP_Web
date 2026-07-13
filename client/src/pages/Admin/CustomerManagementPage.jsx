@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/component/ui/dialog";
 
-const API_BASE = "http://localhost:8080/api/v1/admin";
+const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/admin`;
 
 // nic is the customer's unique identifier used everywhere in the backend
 // (CustomerController uses @PathVariable Long nic on every customer endpoint).

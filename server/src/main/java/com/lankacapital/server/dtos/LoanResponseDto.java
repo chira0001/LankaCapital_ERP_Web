@@ -1,5 +1,6 @@
 package com.lankacapital.server.dtos;
 
+import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.RiskLevel;
 import lombok.AllArgsConstructor;
@@ -20,9 +21,10 @@ public class LoanResponseDto {
     private LocalDateTime createdAt;
     private Integer noOfInstallments;
     private Double documentCharge;
-    private Long employeeId;
+    private EmployeeResponseDto enteredBy;
+    private EmployeeResponseDto updatedBy;
+    private EmployeeResponseDto approvedBy;
     private LoanStatus status;
-    private String rejectionNote;
-    private String applicantName;
-    private Long customerId;
+    private String decisionNote;
+    private CustomerResponseDto customer;
 }

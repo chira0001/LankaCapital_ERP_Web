@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerResponseDto getCustomerById(Long nic) {
+    public CustomerResponseDto getCustomerById(String nic) {
         Customer customer = customerRepository.findByNic(nic);
         if(customer == null){
             throw new ResourceNotFoundException("Customer not exists with id : " + nic);
@@ -72,7 +73,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional(Transactional.TxType.SUPPORTS)
     @Override
-    public CustomerInfoDto getCustomerInfoById(Long nic) {
+    public CustomerInfoDto getCustomerInfoById(String nic) {
 
         Customer customer = customerRepository.findByNicWithLoans(nic);
         if(customer == null){
@@ -101,7 +102,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     @Override
-    public CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto dto) {
+    public CustomerResponseDto updateCustomerById(String nic, CustomerRegisterDto dto) {
         Customer customer = customerRepository.findByNic(nic);
 
         if (customer == null) {
@@ -129,7 +130,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerResDto getCustomerDataById(Long nic){
+    public CustomerResDto getCustomerDataById(String nic){
         Customer customer = customerRepository.findByNicWithLoans(nic);
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found with id : " + nic);
@@ -157,7 +158,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerResponseDto getActiveCustomerById(Long nic) {
+    public CustomerResponseDto getActiveCustomerById(String nic) {
         Customer customer = customerRepository.findByNic(nic);
         if (customer == null) {
             throw new ResourceNotFoundException("Customer not found");
@@ -169,7 +170,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void deleteCustomer(Long nic) {
+    public void deleteCustomer(String nic) {
 
         Customer customer = customerRepository.findByNic(nic);
 
@@ -182,7 +183,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void undoDelete(Long nic) {
+    public void undoDelete(String nic) {
 
         Customer customer = customerRepository.findByNic(nic);
 
@@ -241,5 +242,14 @@ public class CustomerServiceImpl implements CustomerService {
 
         Customer savedCustomer = customerRepository.save(customer);
         return savedCustomer;
+    }
+
+    @Override
+    public List<String> searchCustomersByNic(String nic) {
+        if (nic.length() < 3) {
+            return Collections.emptyList();
+        }
+        List<Customer> customerList = customerRepository.findTop10ByNicStartingWith(nic);
+        return customerList.stream().map(CustomerMapper::mapToCustomerId).toList();
     }
 }

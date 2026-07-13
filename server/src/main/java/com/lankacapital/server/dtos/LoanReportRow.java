@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class LoanReportRow {
     private String fileNumber;
-    private Long customerId;
+    private String customerId;
     private String applicantName;
     private BigDecimal amount;
     private Double interestRate;

@@ -8,20 +8,21 @@ import java.util.List;
 public interface CustomerService {
     CustomerResponseDto registerCustomer(CustomerRegisterDto customerRegisterDto);
     List<CustomerResponseDto> getAllCustomer();
-    CustomerResponseDto getCustomerById(Long nic);
-    CustomerInfoDto getCustomerInfoById(Long nic);
-    CustomerResponseDto updateCustomerById(Long nic, CustomerRegisterDto customerRegisterDto);
+    CustomerResponseDto getCustomerById(String nic);
+    CustomerInfoDto getCustomerInfoById(String nic);
+    CustomerResponseDto updateCustomerById(String nic, CustomerRegisterDto customerRegisterDto);
     List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList);
-    CustomerResDto getCustomerDataById(Long nic);
+    CustomerResDto getCustomerDataById(String nic);
 
     List<CustomerManageDto> manageCustomers(int page);
 
     List<CustomerResponseDto> getAllActiveCustomers();
 
-    CustomerResponseDto getActiveCustomerById(Long nic);
+    CustomerResponseDto getActiveCustomerById(String nic);
 
-    void deleteCustomer(Long nic);
+    void deleteCustomer(String nic);
 
-    void undoDelete(Long nic);
+    void undoDelete(String nic);
     Customer addNewCustomer(CustomerAddSyncDto customerAddSyncDto);
+    public List<String> searchCustomersByNic(String nic);
 }

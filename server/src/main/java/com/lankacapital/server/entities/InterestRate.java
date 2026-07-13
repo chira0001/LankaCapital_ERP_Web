@@ -18,4 +18,6 @@ public class InterestRate {
 
     @Column(nullable = false, unique = true)
     private Double rate;
+
+    private Long updateStatus = 0L;
 }
