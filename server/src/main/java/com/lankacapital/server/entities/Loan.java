@@ -29,13 +29,13 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "interest_rate_id")
+    @Column(name = "interest_rate")
     private Double interestRate = (double) 0;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal documentCharge = BigDecimal.valueOf(0);
 
-    @Column(name = "installment_id")
+    @Column(name = "installment")
     private Integer installment = 0;
 
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")

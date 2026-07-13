@@ -78,12 +78,6 @@ public class ReceptionistController {
         if(id == null){
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
-//        long nic;
-//        try {
-//            nic = Long.parseLong(id);
-//        } catch (NumberFormatException e) {
-//            throw new NumberFormatException("Enter valid id");
-//        }
         return new ResponseEntity<>(customerService.getCustomerInfoById(id), HttpStatus.OK);
     }
 
@@ -98,8 +92,6 @@ public class ReceptionistController {
     @GetMapping(path = "/loan/customers/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
         CustomerResponseDto dto = loanService.getLoansByCustomerId(id);
-        //List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
-
         if (dto == null){
             return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
         }

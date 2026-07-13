@@ -17,9 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import  java.util.Optional;
+import java.util.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -275,6 +273,27 @@ public class LoanServiceImpl implements LoanService {
         return loanRepository.save(loan);
     }
 
+    @Override
+    public LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber) {
+        Loan loan = loanRepository.findById(fileNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not Found "+fileNumber));
+
+        loan.setAmount(loanUpdateDto.getAmount());
+        loan.setDecisionNote(loanUpdateDto.getDecisionNote());
+        loan.setDocumentCharge(loanUpdateDto.getDocumentCharge());
+        loan.setInterestRate(loanUpdateDto.getInterestRate());
+        loan.setInstallment(loanUpdateDto.getInstallment());
+        loan.setStatus(LoanStatus.valueOf(loanUpdateDto.getStatus()));
+
+        if(Objects.equals(loanUpdateDto.getStatus(), LoanStatus.APPROVED.name())){
+            loan.setApprovedEmployee(employeeRepository.findByEmail(username));
+        }
+
+        loan.setUpdatedEmployee(employeeRepository.findByEmail(username));
+        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+
+        return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
+    }
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
