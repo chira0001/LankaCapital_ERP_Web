@@ -1,10 +1,7 @@
 package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.*;
-import com.lankacapital.server.entities.Customer;
-import com.lankacapital.server.entities.Installment;
-import com.lankacapital.server.entities.InterestRate;
-import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.entities.*;
 
 import java.math.BigDecimal;
 
@@ -44,12 +41,20 @@ public class LoanMapper {
         responseDto.setEnteredBy(
                 loan.getCreatedEmployee() != null
                         ? EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee())
-                        : null
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
         );
 
-//        if (loan.getInterestRate() == null) {
-//            throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
-//        }
+        responseDto.setUpdatedBy(
+                loan.getCreatedEmployee() != null
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getUpdatedEmployee())
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
+        );
+
+        responseDto.setApprovedBy(
+                loan.getCreatedEmployee() != null
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
+        );
 
         responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
 

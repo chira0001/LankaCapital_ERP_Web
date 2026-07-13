@@ -363,6 +363,18 @@ const LoanApplication = () => {
                     <label className="font-semibold">Interest Rate:</label>
                     <p>{selectedApp.interestRate}%</p>
                   </div>
+                  {selectedApp.decisionNote ?
+                    <div>
+                      <label className="font-semibold">Decision Note:</label>
+                      <p>{selectedApp.decisionNote}</p>
+                    </div>
+                    :
+                    <div>
+                      <label className="font-semibold">Decision Note:</label>
+                      <p>Not available</p>
+                    </div>
+                  }
+
 
                   <div>
                     <label className="font-semibold">Entered By:</label>
@@ -370,6 +382,34 @@ const LoanApplication = () => {
                       Id: {selectedApp.enteredBy.id} <br />
                       {selectedApp.enteredBy.firstName} {selectedApp.enteredBy.lastName}</p>
                   </div>
+
+                  {selectedApp.approvedBy.id ?
+                    <div>
+                      <label className="font-semibold">Approved By:</label>
+                      <p>
+                        Id: {selectedApp.approvedBy.id} <br />
+                        {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}</p>
+                    </div>
+                    :
+                    <div>
+                      <label className="font-semibold">Approved By:</label>
+                      <p>
+                        Approval Pending
+                      </p>
+                    </div>
+                  }
+
+                  {selectedApp.updatedBy.id ?
+                    <div>
+                      <label className="font-semibold">Updated By:</label>
+                      <p>
+                        Id: {selectedApp.updatedBy.id} <br />
+                        {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}</p>
+                    </div>
+                    :
+                    ""
+                  }
+
                   {
                     selectedApp.rejectionNote ?
                       <div>

@@ -22,6 +22,8 @@ public class LoanResponseDto {
     private Integer noOfInstallments;
     private Double documentCharge;
     private EmployeeResponseDto enteredBy;
+    private EmployeeResponseDto updatedBy;
+    private EmployeeResponseDto approvedBy;
     private LoanStatus status;
     private String decisionNote;
     private CustomerResponseDto customer;
