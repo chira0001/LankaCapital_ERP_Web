@@ -86,13 +86,7 @@ public class AdminController {
 
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans() {
-
-        try {
-            return ResponseEntity.ok(loanService.getAllLoans());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return ResponseEntity.ok(loanService.getAllLoans());
     }
 
     @GetMapping("/loans/customer/{id}")

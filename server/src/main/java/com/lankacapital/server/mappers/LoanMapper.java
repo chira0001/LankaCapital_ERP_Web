@@ -41,9 +41,9 @@ public class LoanMapper {
                         : 0.0
         );
 
-        responseDto.setEmployeeId(
+        responseDto.setEnteredBy(
                 loan.getCreatedEmployee() != null
-                        ? loan.getCreatedEmployee().getId()
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee())
                         : null
         );
 
@@ -55,16 +55,10 @@ public class LoanMapper {
 
 //        responseDto.setInterestRate(loan.getInterestRate().getRate());
         responseDto.setStatus(loan.getStatus());
-        responseDto.setRejectionNote(loan.getDecisionNote());
-        responseDto.setApplicantName(
+        responseDto.setDecisionNote(loan.getDecisionNote());
+        responseDto.setCustomer(
                 loan.getCustomer() != null
-                        ? loan.getCustomer().getName()
-                        : null
-        );
-
-        responseDto.setCustomerId(
-                loan.getCustomer() != null
-                        ? loan.getCustomer().getNic()
+                        ? CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
                         : null
         );
 

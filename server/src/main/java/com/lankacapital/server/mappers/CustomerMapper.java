@@ -38,7 +38,7 @@ public class CustomerMapper {
                             loanDto.setCreatedAt(loan.getCreatedAt());
                             loanDto.setNoOfInstallments(loan.getInstallment());
                             loanDto.setDocumentCharge(loan.getDocumentCharge().doubleValue());
-                            loanDto.setEmployeeId(loan.getCreatedEmployee().getId());
+                            loanDto.setEnteredBy(EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee()));
                             loanDto.setStatus(loan.getStatus());
 
                             CustomerInfoDto customerDto = new CustomerInfoDto();
