@@ -275,6 +275,9 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber) {
+
+        System.out.println("279 : " + loanUpdateDto);
+
         Loan loan = loanRepository.findById(fileNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not Found "+fileNumber));
 

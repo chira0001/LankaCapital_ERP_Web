@@ -86,7 +86,7 @@ const LoanApplication = () => {
     try {
       const res = await axiosAPI.get("/admin/loans");
       const data = res.data;
-
+      console.log("Loans : ", data)
       setApplicationData(data);
       setFilteredApps(applyFilters(data, filters));
     } catch (error) {
@@ -390,6 +390,7 @@ const LoanApplication = () => {
                         <h3 className="text-lg font-semibold text-gray-800 mb-6">
                           Loan Information
                         </h3>
+                        {console.log("selectedApp : ", selectedApp)}
                         <button
                           onClick={() => {
                             setLoanUpdatePayload({
@@ -541,7 +542,7 @@ const LoanApplication = () => {
                   </h2>
 
                   <div className="space-y-4">
-
+                    {console.log("Payload : ", loanUpdatePayload)}
                     <div>
                       <Label>Loan Amount</Label>
                       <Input
@@ -654,7 +655,7 @@ const LoanApplication = () => {
         </div>
       </div>
 
-      {/* ALERT DIALOG */}
+      {/* ALERT DIALOG
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -683,7 +684,7 @@ const LoanApplication = () => {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog> */}
     </>
   );
 };
