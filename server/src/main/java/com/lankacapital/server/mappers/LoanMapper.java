@@ -1,10 +1,7 @@
 package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.*;
-import com.lankacapital.server.entities.Customer;
-import com.lankacapital.server.entities.Installment;
-import com.lankacapital.server.entities.InterestRate;
-import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.entities.*;
 
 import java.math.BigDecimal;
 
@@ -31,7 +28,7 @@ public class LoanMapper {
 
         responseDto.setNoOfInstallments(
                 loan.getInstallment() != null
-                        ? loan.getInstallment().getValue()
+                        ? loan.getInstallment()
                         : 0
         );
 
@@ -41,30 +38,32 @@ public class LoanMapper {
                         : 0.0
         );
 
-        responseDto.setEmployeeId(
-                loan.getEmployee() != null
-                        ? loan.getEmployee().getId()
-                        : null
+        responseDto.setEnteredBy(
+                loan.getCreatedEmployee() != null
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee())
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
         );
 
-//        if (loan.getInterestRate() == null) {
-//            throw new RuntimeException("Interest rate missing for loan: " + loan.getFileNumber());
-//        }
+        responseDto.setUpdatedBy(
+                loan.getCreatedEmployee() != null
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getUpdatedEmployee())
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
+        );
 
-        responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate().getRate());
+        responseDto.setApprovedBy(
+                loan.getCreatedEmployee() != null
+                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
+                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
+        );
+
+        responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
 
 //        responseDto.setInterestRate(loan.getInterestRate().getRate());
         responseDto.setStatus(loan.getStatus());
-        responseDto.setRejectionNote(loan.getDecisionNote());
-        responseDto.setApplicantName(
+        responseDto.setDecisionNote(loan.getDecisionNote());
+        responseDto.setCustomer(
                 loan.getCustomer() != null
-                        ? loan.getCustomer().getName()
-                        : null
-        );
-
-        responseDto.setCustomerId(
-                loan.getCustomer() != null
-                        ? loan.getCustomer().getNic()
+                        ? CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
                         : null
         );
 
@@ -102,16 +101,13 @@ public class LoanMapper {
         dto.setFile_number(loan.getFileNumber());
         dto.setAmount(loan.getAmount());
         dto.setCustomer_id(loan.getCustomer().getNic());
-        dto.setEmployee_id(loan.getEmployee().getId());
+        dto.setEmployee_id(loan.getCreatedEmployee().getId());
         dto.setCreated_at(loan.getCreatedAt());
         dto.setDocument_charge(loan.getDocumentCharge());
         dto.setStatus(loan.getStatus().toString());
-        dto.setInstallment_id(loan.getInstallment().getId());
+        dto.setInstallment_id(loan.getInstallment());
         dto.setUpdate_status(loan.getUpdateStatus());
-        dto.setInterest_rate_id(loan.getInterestRate() != null
-                ? loan.getInterestRate().getId()
-                : new InterestRate().getId()
-        );
+        dto.setInterest_rate_id(loan.getInterestRate());
 
         return dto;
     }
@@ -122,13 +118,13 @@ public class LoanMapper {
         InstallmentResDto installment = new InstallmentResDto();
         InterestRateResDto interestRate = new InterestRateResDto();
 
-        employee.setFirstName(loan.getEmployee().getFirstName());
-        employee.setLastName(loan.getEmployee().getLastName());
-        employee.setPhoneNumber(loan.getEmployee().getPhoneNumber());
+        employee.setFirstName(loan.getCreatedEmployee().getFirstName());
+        employee.setLastName(loan.getCreatedEmployee().getLastName());
+        employee.setPhoneNumber(loan.getCreatedEmployee().getPhoneNumber());
 
-        installment.setValue(loan.getInstallment().getValue());
+        installment.setValue(loan.getInstallment());
         interestRate.setRate(loan.getInterestRate() != null
-                ? loan.getInterestRate().getRate()
+                ? loan.getInterestRate()
                 : 0.0
         );
 

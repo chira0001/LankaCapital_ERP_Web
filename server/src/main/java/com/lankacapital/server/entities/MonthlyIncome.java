@@ -27,4 +27,6 @@ public class MonthlyIncome {
     @ManyToOne
     @JoinColumn(name = "employee_id")
     private Employee employee;
+
+    private Long updateStatus = 0L;
 }

@@ -58,6 +58,12 @@ public class MonthlyExpense {
     @Enumerated(EnumType.STRING)
     private Request request = Request.PENDING;
 
+    private Long updateStatus = 0L;
+
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private Employee approvedEmployee;
+
     @PrePersist
     @PreUpdate
     public void calculateTotal() {

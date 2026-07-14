@@ -33,12 +33,12 @@ public class CustomerMapper {
                             LoanResponseDto loanDto = new LoanResponseDto();
 
                             loanDto.setFileNumber(loan.getFileNumber());
-                            loanDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate().getRate());
+                            loanDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
                             loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());
-                            loanDto.setNoOfInstallments(loan.getInstallment().getValue());
+                            loanDto.setNoOfInstallments(loan.getInstallment());
                             loanDto.setDocumentCharge(loan.getDocumentCharge().doubleValue());
-                            loanDto.setEmployeeId(loan.getEmployee().getId());
+                            loanDto.setEnteredBy(EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee()));
                             loanDto.setStatus(loan.getStatus());
 
                             CustomerInfoDto customerDto = new CustomerInfoDto();
@@ -86,5 +86,9 @@ public class CustomerMapper {
         customer.setPhoneNumber(dto.getPhoneNumber());
 
         return customer;
+    }
+
+    public static String mapToCustomerId(Customer customer){
+        return customer.getNic();
     }
 }

@@ -18,4 +18,6 @@ public class Installment {
 
     @Column(nullable = false, unique = true)
     private Integer value;
+
+    private Long updateStatus = 0L;
 }

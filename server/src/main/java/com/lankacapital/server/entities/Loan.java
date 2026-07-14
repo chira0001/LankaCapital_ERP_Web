@@ -29,23 +29,17 @@ public class Loan {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @ManyToOne
-    @JoinColumn(name = "interest_rate_id")
-    private InterestRate interestRate;
+    @Column(name = "interest_rate")
+    private Double interestRate = (double) 0;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal documentCharge = BigDecimal.valueOf(0);
 
-    @ManyToOne
-    @JoinColumn(name = "installment_id")
-    private Installment installment;
+    @Column(name = "installment")
+    private Integer installment = 0;
 
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
     private LocalDateTime createdAt;
-
-    @ManyToOne
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
 
     @Enumerated(EnumType.STRING)
     private RiskLevel risk;
@@ -57,6 +51,18 @@ public class Loan {
     private String decisionNote;
 
     private Long updateStatus = 0L;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private Employee createdEmployee;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private Employee updatedEmployee;
+
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private Employee approvedEmployee;
 
 
     @PrePersist

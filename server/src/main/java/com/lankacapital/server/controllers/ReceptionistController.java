@@ -50,19 +50,14 @@ public class ReceptionistController {
         if(customerId == null){
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        long nic;
-        try {
-            nic = Long.parseLong(customerId);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid id");
-        }
-        return new ResponseEntity<>(customerService.updateCustomerById(nic,customerRegisterDto), HttpStatus.OK);
+
+        return new ResponseEntity<>(customerService.updateCustomerById(customerId,customerRegisterDto), HttpStatus.OK);
     }
 
     @GetMapping(path = "/customers/{id}")
     public ResponseEntity<?> getCustomerById(@PathVariable String id){
         try {
-            CustomerResponseDto existCustomer = customerService.getCustomerById(Long.parseLong(id));
+            CustomerResponseDto existCustomer = customerService.getCustomerById(id);
             return new ResponseEntity<>(existCustomer, HttpStatus.OK);
         }catch (NumberFormatException e){
             return new ResponseEntity<>("Enter valid NIC", HttpStatus.BAD_REQUEST);
@@ -83,13 +78,7 @@ public class ReceptionistController {
         if(id == null){
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        long nic;
-        try {
-            nic = Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new NumberFormatException("Enter valid id");
-        }
-        return new ResponseEntity<>(customerService.getCustomerInfoById(nic), HttpStatus.OK);
+        return new ResponseEntity<>(customerService.getCustomerInfoById(id), HttpStatus.OK);
     }
 
     @PostMapping(path = "/loans")
@@ -103,8 +92,6 @@ public class ReceptionistController {
     @GetMapping(path = "/loan/customers/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
         CustomerResponseDto dto = loanService.getLoansByCustomerId(id);
-        //List<LoanResponseDto> responseDtoList = loanService.getLoansByCustomerId(id);
-
         if (dto == null){
             return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
         }
@@ -176,5 +163,12 @@ public class ReceptionistController {
             @RequestBody FinancialRequestDto financialRequestDto
     ){
         return new ResponseEntity<>(financialStatementService.addFinancials(authentication.getName(),financialRequestDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/customers/search")
+    public ResponseEntity<List<?>> searchCustomers(
+            @RequestParam String nic) {
+
+        return ResponseEntity.ok(customerService.searchCustomersByNic(nic));
     }
 }

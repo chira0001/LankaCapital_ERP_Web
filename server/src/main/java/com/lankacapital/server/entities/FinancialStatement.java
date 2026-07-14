@@ -95,4 +95,6 @@ public class FinancialStatement {
     private BigDecimal totalAssets;
     private BigDecimal totalLiabilities;
     private BigDecimal netWorth;
+
+    private Long updateStatus = 0L;
 }

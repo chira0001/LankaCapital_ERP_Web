@@ -72,4 +72,9 @@ public class Salary {
     @Column(precision = 12, scale = 2)
     private BigDecimal netSalary;
 
+    private Long updateStatus = 0L;
+
+    @ManyToOne
+    @JoinColumn(name = "approved_by")
+    private Employee approvedEmployee;
 }

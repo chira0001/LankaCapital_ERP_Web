@@ -85,14 +85,8 @@ public class AdminController {
 
 
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans() {
-
-        try {
-            return ResponseEntity.ok(loanService.getAllLoans());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+    public ResponseEntity<?> getAllLoans(Authentication authentication) {
+        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
     }
 
     @GetMapping("/loans/customer/{id}")
@@ -103,6 +97,15 @@ public class AdminController {
     @GetMapping("/loans/{fileNumber}")
     public ResponseEntity<?> getLoanById(@PathVariable String fileNumber) {
         return ResponseEntity.ok(loanService.getLoan(fileNumber));
+    }
+
+    @PutMapping("/loans/{fileNumber}")
+    public ResponseEntity<?> updateLoan(
+            @PathVariable String fileNumber,
+            @RequestBody LoanUpdateDto loanUpdateDto,
+            Authentication authentication)
+    {
+        return new ResponseEntity<>(loanService.updateLoan(authentication.getName(),loanUpdateDto,fileNumber), HttpStatus.OK);
     }
 
     //loan actions
@@ -123,8 +126,8 @@ public class AdminController {
 
     //admin interest management
     @PutMapping("/loans/interest")
-    public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto){
-        return ResponseEntity.ok(loanService.updateInterest(dto));
+    public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto, Authentication authentication){
+        return ResponseEntity.ok(loanService.updateInterest(dto, authentication.getName()));
     }
 
     @GetMapping("/loans/interest/{fileNumber}")
@@ -354,7 +357,7 @@ public class AdminController {
 
     // Get one customer with loans
     @GetMapping("/customers/{nic}")
-    public ResponseEntity<?> getCustomer(@PathVariable Long nic) {
+    public ResponseEntity<?> getCustomer(@PathVariable String nic) {
 
         return ResponseEntity.ok(
                 customerService.getActiveCustomerById(nic)
@@ -363,7 +366,7 @@ public class AdminController {
 
     // Soft delete customer
     @DeleteMapping("/customers/{nic}")
-    public ResponseEntity<?> deleteCustomer(@PathVariable Long nic) {
+    public ResponseEntity<?> deleteCustomer(@PathVariable String nic) {
 
         customerService.deleteCustomer(nic);
 
@@ -372,7 +375,7 @@ public class AdminController {
 
     // Undo delete
     @PutMapping("/customers/{nic}/undo")
-    public ResponseEntity<?> undoDeleteCustomer(@PathVariable Long nic) {
+    public ResponseEntity<?> undoDeleteCustomer(@PathVariable String nic) {
 
         customerService.undoDelete(nic);
 
@@ -394,7 +397,7 @@ public class AdminController {
     //Update Customer
     @PutMapping("/customers/{nic}")
     public ResponseEntity<?> updateCustomer(
-            @PathVariable Long nic,
+            @PathVariable String nic,
             @RequestBody CustomerRegisterDto dto
     ) {
 

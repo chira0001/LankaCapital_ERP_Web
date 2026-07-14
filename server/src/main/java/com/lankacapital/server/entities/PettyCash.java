@@ -40,6 +40,8 @@ public class PettyCash {
     @Enumerated(EnumType.STRING)
     private Request request = Request.PENDING;
 
+    private Long updateStatus = 0L;
+
     @PrePersist
     public void update(){
         this.dateTime = LocalDateTime.now();
