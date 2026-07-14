@@ -5,25 +5,6 @@ import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
 import axiosAPI from '@/api/axiosAPI';
 
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue
-// } from '@/component/ui/select';
-
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-// } from '@/component/ui/alert-dialog';
-
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
@@ -36,7 +17,6 @@ const formatLKR = (amount) =>
 
 const LoanApplication = () => {
   const toast = useToast();
-  // const currentEmployeeId = 3;
 
   const [applicationData, setApplicationData] = useState([]);
   const [filteredApps, setFilteredApps] = useState([]);
@@ -187,20 +167,6 @@ const LoanApplication = () => {
           employeeId: currentEmployeeId
         });
       }
-
-      // else if (actionType === 'reset') {
-      //   await axiosAPI.put("/admin/reset", {
-      //     fileNumber: selectedApp.fileNumber,
-      //     employeeId: currentEmployeeId
-      //   });
-      // }
-
-      // else if (actionType === 'complete') {
-      //   await axiosAPI.put("/admin/complete", {
-      //     fileNumber: selectedApp.fileNumber,
-      //     employeeId: currentEmployeeId
-      //   });
-      // }
 
       await fetchApplications();
 
@@ -454,31 +420,31 @@ const LoanApplication = () => {
                           {selectedApp.interestRate}%
                         </Info>
 
-                        <Info label="Decision Note">
-                          {selectedApp.decisionNote || "Not available"}
+                        <Info label="Status">
+                          {selectedApp.status || "Not available"}
                         </Info>
 
                         <Info label="Entered By">
-                          Id: {selectedApp.enteredBy?.id} <br />
+                          Id: {selectedApp.enteredBy?.nic} <br />
                           {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
+                        </Info>
+                        {console.log("NIC : ", selectedApp)}
+                        <Info label="Updated By">
+                          {selectedApp.updatedBy?.id
+                            ? <>
+                              Id: {selectedApp.updatedBy.nic} <br />
+                              {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
+                            </>
+                            : "No updates made"}
                         </Info>
 
                         <Info label="Approved By">
                           {selectedApp.approvedBy?.id
                             ? <>
-                              Id: {selectedApp.approvedBy.id} <br />
+                              Id: {selectedApp.approvedBy.nic} <br />
                               {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
                             </>
                             : "Approval Pending"}
-                        </Info>
-
-                        <Info label="Updated By">
-                          {selectedApp.updatedBy?.id
-                            ? <>
-                              Id: {selectedApp.updatedBy.id} <br />
-                              {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
-                            </>
-                            : "No updates made"}
                         </Info>
 
                         {selectedApp.rejectionNote && (
@@ -486,6 +452,12 @@ const LoanApplication = () => {
                             {selectedApp.rejectionNote}
                           </Info>
                         )}
+
+                        <div className="col-span-3">
+                          <Info label="Decision Note">
+                            {selectedApp.decisionNote || "Not available"}
+                          </Info>
+                        </div>
 
                       </div>
                     </div>

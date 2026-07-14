@@ -20,6 +20,10 @@ import java.util.UUID;
 public class Loan {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
     private String fileNumber;
 
     @ManyToOne

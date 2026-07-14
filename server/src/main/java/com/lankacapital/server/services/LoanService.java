@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.entities.Loan;
 import jakarta.transaction.Transactional;
 
@@ -33,6 +34,7 @@ public interface LoanService {
     Loan resetLoan(LoanActionDto dto);
 
     LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber);
+    LoanResponseDto recepUpdateLoan(String username, RecepLoanUpdateDto recepLoanUpdateDto, String fileNumber);
 
     //interest update
     LoanResponseDto updateInterest(InterestUpdateDTO dto, String username);

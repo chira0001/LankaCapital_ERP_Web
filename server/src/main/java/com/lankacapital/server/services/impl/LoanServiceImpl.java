@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.exceptions.ResourceExistException;
@@ -207,11 +208,19 @@ public class LoanServiceImpl implements LoanService {
     public List<LoanResponseDto> getAllLoans(String username) {
 
         Employee employee = employeeRepository.findByEmail(username);
-        boolean isAdmin = "ADMIN".equals(employee.getRole().getRoleName());
+        String role = employee.getRole().getRoleName();
 
         return loanRepository.findAll()
                 .stream()
-                .filter(loan -> !isAdmin || !isValidUUID(loan.getFileNumber()))
+                .filter(loan -> {
+                    if ("ADMIN".equals(role)) {
+                        return !isValidUUID(loan.getFileNumber());
+                    }
+                    if ("RECEPTIONIST".equals(role)) {
+                        return isValidUUID(loan.getFileNumber());
+                    }
+                    return false; // other roles see nothing
+                })
                 .map(LoanMapper::mapToLoanResponseDto)
                 .toList();
     }
@@ -315,6 +324,35 @@ public class LoanServiceImpl implements LoanService {
 
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
+
+    @Override
+    public LoanResponseDto recepUpdateLoan(String username,
+                                           RecepLoanUpdateDto dto,
+                                           String fileNumber) {
+
+        Loan loan = loanRepository.findById(fileNumber)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Loan not Found " + fileNumber)
+                );
+
+        Employee employee = employeeRepository.findByEmail(username);
+
+        // ⚠️ Changing ID - only safe if intentional
+        loan.setFileNumber(dto.getFileNumber());
+
+        loan.setDocumentCharge(dto.getDocumentCharge());
+        loan.setInterestRate(dto.getInterestRate());
+        loan.setUpdatedEmployee(employee);
+        loan.setUpdateStatus(
+                loan.getUpdateStatus() == null ? 1 : loan.getUpdateStatus() + 1
+        );
+
+        Loan savedLoan = loanRepository.save(loan);
+
+        return LoanMapper.mapToLoanResponseDto(savedLoan);
+    }
+
+//    Lookup at this ---------------------------------------------------------------------------
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
