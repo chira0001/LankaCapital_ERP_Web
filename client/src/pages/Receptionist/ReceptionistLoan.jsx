@@ -342,7 +342,7 @@ const ReceptionistLoan = () => {
                                             Installment <br /> Amount
                                         </th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
-                                            Entered By <br /> (Emp. Id)
+                                            Entered By
                                         </th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap">
                                             Status
@@ -379,9 +379,10 @@ const ReceptionistLoan = () => {
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
                                             </td>
-
+                                            {console.log("Loan : ", loan)}
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                                {loan.employeeId}
+                                                {loan.enteredBy.firstName} {loan.enteredBy.lastName}
+                                                <br /> Id : {loan.enteredBy.id}
                                             </td>
 
                                             <td className="px-6 py-4 whitespace-nowrap">

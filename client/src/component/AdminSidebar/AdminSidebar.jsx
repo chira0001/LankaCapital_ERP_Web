@@ -1,9 +1,21 @@
-import { LayoutDashboard } from "lucide-react";
 import React, { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { FileText, BarChart2, TrendingUp, DollarSign, Users, UserCheck, CreditCard, Target, Layers, UserPlus, ClipboardList, Settings } from "lucide-react";
-import { UserCircle } from "lucide-react";
-
+import {
+  LayoutDashboard,
+  FileText,
+  BarChart2,
+  TrendingUp,
+  DollarSign,
+  Users,
+  UserCheck,
+  CreditCard,
+  Target,
+  Layers,
+  UserPlus,
+  ClipboardList,
+  Settings,
+  X
+} from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
@@ -20,24 +32,22 @@ const menuItems = [
   { name: "User Management", icon: UserPlus, path: "/ad/users" },
   { name: "Audit Logs", icon: ClipboardList, path: "/ad/audit" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
-  //  { name: "Profile", icon: UserCircle, path: "/admin/profile" },
 ];
-
-const logoutFunc = () => {
-  localStorage.clear();
-  navigate("/");
-};
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const location = useLocation();
+  const navigate = useNavigate();
+
+  const logoutFunc = () => {
+    localStorage.clear();
+    navigate("/");
+  };
 
   return (
-    <div className="h-full flex flex-col bg-[#071428] text-white overflow-hidden ">
+    <div className="h-full flex flex-col bg-[#071428] text-white overflow-hidden">
 
       {/* Menu Section */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-5">
-
+      <div className="flex-1 overflow-y-auto px-3 py-5">
         <ul className="space-y-1">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
@@ -61,253 +71,88 @@ const Sidebar = () => {
       </div>
 
       {/* Bottom Profile Box */}
-      <div className="p-3 border-t border-gray-800 bg-[#071428]">
+      <div className="p-3 border-t border-gray-800">
 
-        <NavLink
-          to="/ad/profile"
-          className="block bg-[#0f1d35] border border-gray-700 rounded-2xl p-4 hover:bg-[#162544] transition-all duration-200"
-        >
+        <div className="bg-[#0f1d35] border border-gray-700 rounded-2xl p-4">
 
-          <div className="flex items-center gap-3">
-
-            {/* Avatar */}
+          <div
+            onClick={() => navigate("/ad/profile")}
+            className="flex items-center gap-3 cursor-pointer hover:bg-[#162544] rounded-xl p-2 transition"
+          >
             <div className="w-12 h-12 rounded-full bg-yellow-600 flex items-center justify-center text-black font-bold text-lg">
               P
             </div>
 
-            {/* User Info */}
             <div className="overflow-hidden">
               <h3 className="text-sm font-semibold truncate">
                 director@email.com
               </h3>
-
               <p className="text-xs text-gray-400 mt-1">
                 Director
               </p>
             </div>
           </div>
 
-          {/* Logout */}
+          {/* Logout Button */}
           <button
-            onClick={() => { setShowLogoutModal(true) }}
-            className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200">
+            onClick={() => setShowLogoutModal(true)}
+            className="mt-4 w-full bg-[#243557] hover:bg-red-600 rounded-xl py-2.5 text-sm font-medium transition-all duration-200"
+          >
             Logout
           </button>
 
-          {showLogoutModal && (
-            <div className="fixed p-6 inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        </div>
+      </div>
 
-              <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-[fadeIn_.2s_ease-in-out]">
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
 
-                {/* Icon */}
-                <div className="flex justify-center mb-4">
-                  <div className="bg-red-100 p-4 rounded-full">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                      className="text-red-600"
-                    >
-                      <path d="M15 11H8v2h7v4l6-5-6-5z"></path>
-                      <path d="M5 21h7v-2H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
-                    </svg>
-                  </div>
-                </div>
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
 
-                {/* Title */}
-                <h2 className="text-2xl font-bold text-center text-gray-800">
-                  Confirm Logout
-                </h2>
+            {/* Close Icon */}
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-black"
+            >
+              <X size={20} />
+            </button>
 
-                {/* Description */}
-                <p className="text-gray-500 text-center mt-2">
-                  Are you sure you want to logout from your account?
-                </p>
-
-                {/* Buttons */}
-                <div className="flex gap-3 mt-6">
-
-                  <button
-                    onClick={() => setShowLogoutModal(false)}
-                    className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={logoutFunc}
-                    className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all duration-300 shadow-lg shadow-red-200"
-                  >
-                    Logout
-                  </button>
-
-                </div>
+            <div className="flex justify-center mb-4">
+              <div className="bg-red-100 p-4 rounded-full">
+                <X className="text-red-600" size={28} />
               </div>
             </div>
-          )}
 
-        </NavLink>
-      </div>
-    </div>
-  );
-};
+            <h2 className="text-2xl font-bold text-center text-gray-800">
+              Confirm Logout
+            </h2>
 
-export default Sidebar;
-
-
-
-
-
-
-
-//uncomment this not latter part
-/*
-const Sidebar = () => {
-  return (
-    <div className="w-64 h-full bg-[#071428] text-white flex flex-col border-r border-gray-800 ">
-
-\* Menu Items *\/
-      <div className="flex-1 overflow-y-auto  px-3 py-24">
-        <ul className="space-y-1">
-          {menuItems.map((item, index) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink 
-                to={item.path}
-                key={index}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium
-                   text-gray-300
-                   hover:bg-gray-800 hover:!text-yellow-500
-                  ${
-                    isActive
-                     ? "bg-yellow-600 !text-black font-semibold shadow"
-                     : ""
-                  }`
-                }
-              >
-                <Icon size={20} />
-                <span className="text-sm font-medium">{item.name}</span>
-              </NavLink>
-            );
-          }
-          )}
-        </ul>
-
-      </div>
-
-\* User Profile & Logout *\/
-      <NavLink
-        to="/admin/profile"
-        className="mx-3 mb-3 bg-[#0f1d35] border border-gray-700 rounded-xl p-3 hover:bg-[#162544] transition-all duration-200"
-      >
-
-        <div className="flex items-center gap-3">
-
-          \* User Avatar *\/
-          <div className="w-10 h-10 rounded-full bg-yellow-600 flex items-center justify-center text-black font-bold">
-            P
-          </div>
-
-          \* User Info *\/
-          <div className="flex-1 overflow-hidden">
-            <h3 className="text-sm font-semibold truncate">
-              director@email.com
-            </h3>
-
-            <p className="text-xs text-gray-400">
-              Director
+            <p className="text-gray-500 text-center mt-2">
+              Are you sure you want to logout from your account?
             </p>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={logoutFunc}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white transition shadow-lg shadow-red-200"
+              >
+                Logout
+              </button>
+            </div>
+
           </div>
         </div>
-
-        \* Logout Button *\/
-        <button className="mt-3 w-full bg-[#1f2d4a] hover:bg-red-600 transition-all duration-200 rounded-lg py-2 text-sm font-medium">
-          Logout
-        </button>
-
-      </NavLink>
-
-      
-
-</div>
-
-  );
-};
-
-export default Sidebar;
-
-*/
-
-
-/*{
-const Sidebar = () => {
-  return (
-    <div style={styles.sidebar}>
-      
-      <ul style={styles.menu}>
-        {menuItems.map((item, index) => (
-          <li key={index}>
-            <item.icon />
-            <span>{item.name}</span>
-          </li>
-        ))}
-      </ul>
+      )}
     </div>
   );
 };
 
-const styles = {
-  sidebar: {
-    width: "220px",
-    height: "100vh",
-    backgroundColor: "#000", // dark gray
-    color: "white",
-    padding: "20px",
-    boxSizing: "border-box",
-  },
-  menu: {
-    listStyle: "none",
-    padding: 0,
-    marginTop: "20px",
-  },
-};
-
 export default Sidebar;
-        <li>Performance & Targets</li>
-        <li>Revenue Tracking</li>
-        <li>Customer Management</li>
-        <li>Field Officer Performance</li>
-        <li>Petty Cash</li>
-        <li>Loan Categories</li>
-        <li>User Management</li>
-        <li>Audit Logs</li>
-        <li>System Configuration</li>
-        <li>Profile</li>
-      </ul>
-    </div>
-  );
-};
-
-const styles = {
-  sidebar: {
-    width: "220px",
-    height: "100vh",
-    backgroundColor: "#000", // dark gray
-    color: "white",
-    padding: "20px",
-    boxSizing: "border-box",
-  },
-  menu: {
-    listStyle: "none",
-    padding: 0,
-    marginTop: "20px",
-  },
-};
-
-export default Sidebar;
-
-}*/

@@ -99,6 +99,15 @@ public class AdminController {
         return ResponseEntity.ok(loanService.getLoan(fileNumber));
     }
 
+    @PutMapping("/loans/{fileNumber}")
+    public ResponseEntity<?> updateLoan(
+            @PathVariable String fileNumber,
+            @RequestBody LoanUpdateDto loanUpdateDto,
+            Authentication authentication)
+    {
+        return new ResponseEntity<>(loanService.updateLoan(authentication.getName(),loanUpdateDto,fileNumber), HttpStatus.OK);
+    }
+
     //loan actions
     @PutMapping("/approve")
     public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){

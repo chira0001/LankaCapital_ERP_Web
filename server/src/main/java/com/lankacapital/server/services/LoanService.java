@@ -32,9 +32,7 @@ public interface LoanService {
     @Transactional
     Loan resetLoan(LoanActionDto dto);
 
-//    @Transactional
-//    Loan completeLoan(LoanActionDto dto);
-
+    LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber);
 
     //interest update
     LoanResponseDto updateInterest(InterestUpdateDTO dto, String username);

@@ -5,24 +5,24 @@ import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
 import axiosAPI from '@/api/axiosAPI';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/component/ui/select';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue
+// } from '@/component/ui/select';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/component/ui/alert-dialog';
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+// } from '@/component/ui/alert-dialog';
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
@@ -36,7 +36,7 @@ const formatLKR = (amount) =>
 
 const LoanApplication = () => {
   const toast = useToast();
-  const currentEmployeeId = 3;
+  // const currentEmployeeId = 3;
 
   const [applicationData, setApplicationData] = useState([]);
   const [filteredApps, setFilteredApps] = useState([]);
@@ -46,6 +46,7 @@ const LoanApplication = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showLoan, setShowLoan] = useState(false);
   const [decisionNote, setDecisionNote] = useState("");
+  const [isEdit, setIsEdit] = useState(false);
 
   const [filters, setFilters] = useState({
     status: "ALL",
@@ -53,6 +54,15 @@ const LoanApplication = () => {
     loanId: "",
     minAmount: "",
     maxAmount: "",
+  });
+
+  const [loanUpdatePayload, setLoanUpdatePayload] = useState({
+    amount: "",
+    decisionNote: "",
+    documentCharge: "",
+    interestRate: "",
+    installment: "",
+    status: ""
   });
 
   useEffect(() => {
@@ -64,11 +74,19 @@ const LoanApplication = () => {
     setFilteredApps(filtered);
   }, [filters, applicationData]);
 
+  useEffect(() => {
+    if (showLoan || isEdit) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showLoan, isEdit]);
+
   const fetchApplications = async () => {
     try {
       const res = await axiosAPI.get("/admin/loans");
       const data = res.data;
-
+      console.log("Loans : ", data)
       setApplicationData(data);
       setFilteredApps(applyFilters(data, filters));
     } catch (error) {
@@ -163,12 +181,26 @@ const LoanApplication = () => {
         });
       }
 
-      else if (actionType === 'complete') {
-        await axiosAPI.put("/admin/complete", {
+      else if (actionType === 'incomplete') {
+        await axiosAPI.put("/admin/incomplete", {
           fileNumber: selectedApp.fileNumber,
           employeeId: currentEmployeeId
         });
       }
+
+      // else if (actionType === 'reset') {
+      //   await axiosAPI.put("/admin/reset", {
+      //     fileNumber: selectedApp.fileNumber,
+      //     employeeId: currentEmployeeId
+      //   });
+      // }
+
+      // else if (actionType === 'complete') {
+      //   await axiosAPI.put("/admin/complete", {
+      //     fileNumber: selectedApp.fileNumber,
+      //     employeeId: currentEmployeeId
+      //   });
+      // }
 
       await fetchApplications();
 
@@ -206,6 +238,15 @@ const LoanApplication = () => {
     return styles[normalized] || styles.PENDING;
   };
 
+  const Info = ({ label, children }) => (
+    <div className="flex flex-col">
+      <span className="text-xs text-gray-500 mb-1">{label}</span>
+      <span className="text-sm font-medium text-gray-800 break-words">
+        {children}
+      </span>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
@@ -216,6 +257,32 @@ const LoanApplication = () => {
       </div>
     );
   }
+
+  const handleUpdateLoan = async () => {
+    try {
+      console.log("Update Loan : ", loanUpdatePayload)
+      await axiosAPI.put(
+        `/admin/loans/${selectedApp.fileNumber}`,
+        loanUpdatePayload
+      );
+
+      toast({
+        title: "Success",
+        description: "Loan updated successfully"
+      });
+
+      setIsEdit(false);
+      await fetchApplications();
+
+    } catch (error) {
+      console.error("Update failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update loan",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <>
@@ -287,182 +354,299 @@ const LoanApplication = () => {
             </div>
 
             {/* LOAN DETAIL SECTION */}
-
-            {console.log("selected : ", selectedApp)}
             {showLoan && selectedApp && (
-              <div className="mt-6 p-6 bg-white rounded-xl shadow border">
-                <div className="grid grid-cols-4 gap-4">
-                  <div>
-                    <label className="font-semibold">File Number:</label>
-                    <p>{selectedApp.fileNumber.slice(0, 8)}</p>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+                {/* Modal Container */}
+                <div className="relative w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_.2s_ease-in-out]">
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setShowLoan(false);
+                      setSelectedApp(null);
+                      setIsEdit(false);
+                    }}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-black transition"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+
+                  {/* Header */}
+                  <div className="px-8 py-6 border-b bg-gray-50 rounded-t-2xl">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Loan Details
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      File #{selectedApp.fileNumber.slice(0, 8)}
+                    </p>
                   </div>
 
-                  <div>
-                    <label className="font-semibold">Loan Date:</label>
-                    <p>{new Date(selectedApp.createdAt).toLocaleString("en-LK", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit"
-                    })}</p>
-                  </div>
+                  <div className="p-8 space-y-10">
 
-                  <div>
-                    <label className="font-semibold">Customer NIC:</label>
-                    <p>{selectedApp.customer.nic}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Customer Name:</label>
-                    <p>{selectedApp.customer.name}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Customer Address:</label>
-                    <p>{selectedApp.customer.address}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Customer Phone Number:</label>
-                    <p>{selectedApp.customer.phoneNumber}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Bank Name:</label>
-                    <p>{selectedApp.customer.bank ? selectedApp.customer.bank : "N/A"}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Bank Account Number:</label>
-                    <p>{selectedApp.customer.bankAccount ? selectedApp.customer.bankAccount : "N/A"}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Customer Email:</label>
-                    <p>{selectedApp.customer.email ? selectedApp.customer.email : "N/A"}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Amount:</label>
-                    <p>Rs. {selectedApp.amount}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Document Charge:</label>
-                    <p>Rs. {selectedApp.documentCharge}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Number of Installments:</label>
-                    <p>{selectedApp.noOfInstallments}</p>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold">Interest Rate:</label>
-                    <p>{selectedApp.interestRate}%</p>
-                  </div>
-                  {selectedApp.decisionNote ?
+                    {/* ================= LOAN INFORMATION ================= */}
                     <div>
-                      <label className="font-semibold">Decision Note:</label>
-                      <p>{selectedApp.decisionNote}</p>
-                    </div>
-                    :
-                    <div>
-                      <label className="font-semibold">Decision Note:</label>
-                      <p>Not available</p>
-                    </div>
-                  }
-
-
-                  <div>
-                    <label className="font-semibold">Entered By:</label>
-                    <p>
-                      Id: {selectedApp.enteredBy.id} <br />
-                      {selectedApp.enteredBy.firstName} {selectedApp.enteredBy.lastName}</p>
-                  </div>
-
-                  {selectedApp.approvedBy.id ?
-                    <div>
-                      <label className="font-semibold">Approved By:</label>
-                      <p>
-                        Id: {selectedApp.approvedBy.id} <br />
-                        {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}</p>
-                    </div>
-                    :
-                    <div>
-                      <label className="font-semibold">Approved By:</label>
-                      <p>
-                        Approval Pending
-                      </p>
-                    </div>
-                  }
-
-                  {selectedApp.updatedBy.id ?
-                    <div>
-                      <label className="font-semibold">Updated By:</label>
-                      <p>
-                        Id: {selectedApp.updatedBy.id} <br />
-                        {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}</p>
-                    </div>
-                    :
-                    ""
-                  }
-
-                  {
-                    selectedApp.rejectionNote ?
-                      <div>
-                        <label className="font-semibold">Decision Note:</label>
-                        <p>{selectedApp.rejectionNote}%</p>
+                      <div className='flex justify-between items-center'>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                          Loan Information
+                        </h3>
+                        {console.log("selectedApp : ", selectedApp)}
+                        <button
+                          onClick={() => {
+                            setLoanUpdatePayload({
+                              amount: selectedApp.amount || "",
+                              decisionNote: selectedApp.decisionNote || "",
+                              documentCharge: selectedApp.documentCharge || "",
+                              interestRate: selectedApp.interestRate || "",
+                              installment: selectedApp.noOfInstallments || "",
+                              status: selectedApp.status || "PENDING"
+                            });
+                            setIsEdit(true);
+                          }}
+                          className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
+                            <path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path>
+                          </svg>
+                          Edit
+                        </button>
                       </div>
-                      :
-                      ""
-                  }
-                  <div>
-                    <label className="font-semibold">Status:</label>
-                    <p>{selectedApp.status}</p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+
+                        <Info label="Loan Date">
+                          {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit"
+                          })}
+                        </Info>
+
+                        <Info label="Amount">
+                          Rs. {selectedApp.amount}
+                        </Info>
+
+                        <Info label="Document Charge">
+                          Rs. {selectedApp.documentCharge}
+                        </Info>
+
+                        <Info label="Installments">
+                          {selectedApp.noOfInstallments}
+                        </Info>
+
+                        <Info label="Interest Rate">
+                          {selectedApp.interestRate}%
+                        </Info>
+
+                        <Info label="Decision Note">
+                          {selectedApp.decisionNote || "Not available"}
+                        </Info>
+
+                        <Info label="Entered By">
+                          Id: {selectedApp.enteredBy?.id} <br />
+                          {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
+                        </Info>
+
+                        <Info label="Approved By">
+                          {selectedApp.approvedBy?.id
+                            ? <>
+                              Id: {selectedApp.approvedBy.id} <br />
+                              {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
+                            </>
+                            : "Approval Pending"}
+                        </Info>
+
+                        <Info label="Updated By">
+                          {selectedApp.updatedBy?.id
+                            ? <>
+                              Id: {selectedApp.updatedBy.id} <br />
+                              {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
+                            </>
+                            : "No updates made"}
+                        </Info>
+
+                        {selectedApp.rejectionNote && (
+                          <Info label="Rejection Note">
+                            {selectedApp.rejectionNote}
+                          </Info>
+                        )}
+
+                      </div>
+                    </div>
+
+                    {/* ================= CUSTOMER INFORMATION ================= */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                        Customer Information
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+
+                        <Info label="NIC">
+                          {selectedApp.customer?.nic}
+                        </Info>
+
+                        <Info label="Name">
+                          {selectedApp.customer?.name}
+                        </Info>
+
+                        <Info label="Address">
+                          {selectedApp.customer?.address}
+                        </Info>
+
+                        <Info label="Phone">
+                          {selectedApp.customer?.phoneNumber}
+                        </Info>
+
+                        <Info label="Email">
+                          {selectedApp.customer?.email || "N/A"}
+                        </Info>
+
+                        <Info label="Bank">
+                          {selectedApp.customer?.bank || "N/A"} <br />
+                          {selectedApp.customer?.bankAccount || "N/A"}
+                        </Info>
+
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-4">
-                  {(() => {
-                    const status = (selectedApp.status || '').toUpperCase();
+            )}
+            {isEdit && (
+              <div
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                onClick={() => setIsEdit(false)}
+              >
 
-                    if (status === 'PENDING') {
-                      return (
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleAction(selectedApp, 'approve')}
-                            className="bg-black text-white px-4 py-2 rounded"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleAction(selectedApp, 'incomplete')}
-                            className="bg-black text-white px-4 py-2 rounded"
-                          >
-                            Incomplete
-                          </button>
-                          <button
-                            onClick={() => handleAction(selectedApp, 'reject')}
-                            className="border border-red-600 text-red-600 px-4 py-2 rounded"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      );
-                    }
+                <div
+                  className="relative w-[95%] max-w-xl bg-white rounded-2xl shadow-2xl p-8"
+                  onClick={(e) => e.stopPropagation()}
+                >
 
-                    return (
-                      <button
-                        onClick={() => handleAction(selectedApp, 'reset')}
-                        className="border border-yellow-500 text-yellow-600 px-4 py-2 rounded"
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setIsEdit(false)}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-black"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+
+                  <h2 className="text-xl font-bold mb-6">
+                    Update Loan Information
+                  </h2>
+
+                  <div className="space-y-4">
+                    {console.log("Payload : ", loanUpdatePayload)}
+                    <div>
+                      <Label>Loan Amount</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.amount}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            amount: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Document Charge</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.documentCharge}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            documentCharge: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Interest Rate (%)</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.interestRate}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            interestRate: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Installments</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.installment}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            installment: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Status</Label>
+                      <select
+                        value={loanUpdatePayload.status}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            status: e.target.value
+                          })
+                        }
                       >
-                        Reset
+                        <option value="PENDING">PENDING</option>
+                        <option value="APPROVED">APPROVED</option>
+                        <option value="REJECTED">REJECTED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label>Decision Note (Optional)</Label>
+                      <Textarea
+                        value={loanUpdatePayload.decisionNote}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            decisionNote: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        onClick={() => setIsEdit(false)}
+                        className="px-4 py-2 rounded-lg border"
+                      >
+                        Cancel
                       </button>
-                    );
-                  })()}
+
+                      <button
+                        onClick={handleUpdateLoan}
+                        className="px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                      >
+                        Update Loan
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             )}
@@ -471,7 +655,7 @@ const LoanApplication = () => {
         </div>
       </div>
 
-      {/* ALERT DIALOG */}
+      {/* ALERT DIALOG
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -500,7 +684,7 @@ const LoanApplication = () => {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog> */}
     </>
   );
 };
