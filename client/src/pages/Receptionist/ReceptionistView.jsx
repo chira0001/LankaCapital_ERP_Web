@@ -20,6 +20,10 @@ const ReceptionistView = () => {
     const [loanDetails, setLoanDetails] = useState([]);
     const [showLoanModal, setShowLoanModal] = useState(false);
 
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [loading, setLoading] = useState(false);
+
     const [infoForm, setInfoForm] = useState({
         businessName: '',
         businessAddress: '',
@@ -38,6 +42,34 @@ const ReceptionistView = () => {
             }
         };
     }, [highlightTimeout]);
+
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (searchCustomer.trim().length >= 3) {
+                fetchSuggestions();
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(delayDebounce);
+    }, [searchCustomer]);
+
+    const fetchSuggestions = async () => {
+        try {
+            setLoading(true);
+            const res = await axiosAPI.get(
+                `/recep/customers/search?nic=${searchCustomer}`
+            );
+            setSuggestions(res.data);
+            setShowSuggestions(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInfoChange = (e) => {
         const { name, value } = e.target;
@@ -64,12 +96,10 @@ const ReceptionistView = () => {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 element.classList.add('highlight-loan');
 
-                // Clear previous timeout
                 if (highlightTimeout) {
                     clearTimeout(highlightTimeout);
                 }
 
-                // Set new timeout
                 const timeout = setTimeout(() => {
                     element.classList.remove('highlight-loan');
                 }, 2000);
@@ -81,7 +111,6 @@ const ReceptionistView = () => {
     };
 
     const saveCustomer = async () => {
-        // Validation
         if (!infoForm.businessName.trim()) {
             toast.error('Business name is required');
             return;
@@ -92,7 +121,6 @@ const ReceptionistView = () => {
             return;
         }
 
-        // Email validation (if provided)
         if (infoForm.businessEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(infoForm.businessEmail)) {
             toast.error('Please enter a valid email address');
             return;
@@ -109,8 +137,6 @@ const ReceptionistView = () => {
                 bankAccount: infoForm.bankAccount || '',
             };
 
-            console.log("Updating customer:", payload);
-            console.log("104 : ", infoForm.customerId || existCustomer?.customerId)
             const response = await axiosAPI.put("/recep/customers", payload, {
                 params: {
                     customerId: infoForm.customerId || existCustomer?.customerId
@@ -273,7 +299,7 @@ const ReceptionistView = () => {
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
-            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4'>
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
                         View Customer
@@ -283,22 +309,73 @@ const ReceptionistView = () => {
                     </p>
                 </div>
                 <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
-                    <span className='text-sm font-medium whitespace-nowrap text-gray-700'>Search Customer</span>
-                    <input
-                        type="text"
-                        value={searchCustomer}
-                        className='border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                        placeholder="Enter NIC"
-                        onChange={(e) => setSearchCustomer(e.target.value.toUpperCase())}
-                        onKeyPress={(e) => e.key === 'Enter' && checkCustomerExists()}
-                    />
-                    <button
-                        onClick={checkCustomerExists}
-                        className='bg-blue-600 text-white px-6 py-2 rounded-lg whitespace-nowrap hover:bg-blue-700 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed'
-                        disabled={!searchCustomer.trim()}
-                    >
-                        Search
-                    </button>
+                    <div className='w-1/2 flex flex-col relative'>
+                        <div className='flex justify-between items-center gap-4'>
+                            <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
+                                Search Customer
+                            </span>
+
+                            <input
+                                type="text"
+                                value={searchCustomer}
+                                className='border border-gray-300 rounded-lg px-4 py-2 flex-1 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent'
+                                placeholder="Enter NIC"
+                                onChange={(e) => setSearchCustomer(e.target.value)}
+                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                            />
+
+                            <button
+                                onClick={async () => {
+                                    setShowSuggestions(false);
+                                    await checkCustomerExists();
+                                }}
+                                className='bg-blue-600 text-white px-6 py-2 rounded-lg 
+                       whitespace-nowrap hover:bg-blue-700 
+                       transition-colors shadow-md 
+                       disabled:bg-gray-400 disabled:cursor-not-allowed'
+                                disabled={!searchCustomer.trim()}
+                            >
+                                Search
+                            </button>
+                        </div>
+
+                        {/* Suggestions Dropdown */}
+                        {showSuggestions && (
+                            <div className="absolute top-full mt-2 bg-white border 
+                        border-gray-200 rounded-lg shadow-lg z-50 
+                        max-h-60 overflow-y-auto">
+
+                                {loading && (
+                                    <div className="px-4 py-2 text-sm text-gray-500">
+                                        Searching...
+                                    </div>
+                                )}
+
+                                {!loading && suggestions.length === 0 && (
+                                    <div className="px-4 py-2 text-sm text-gray-500">
+                                        No customers found
+                                    </div>
+                                )}
+
+                                {!loading && suggestions.map((nic, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            setSearchCustomer(nic);
+                                            setShowSuggestions(false);
+                                        }}
+                                        className="px-4 py-2 cursor-pointer hover:bg-blue-50 transition-colors"
+                                    >
+                                        <div className="font-medium text-gray-800">
+                                            {nic}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

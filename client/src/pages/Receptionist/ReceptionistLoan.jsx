@@ -8,8 +8,8 @@ const ReceptionistLoan = () => {
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
     const [isEmployee, setIsEmployee] = useState(false);
-    const [displayInstallments, setDisplayInstallments] = useState([]);
-    const [displayInterestRates, setDisplayInterestRates] = useState([]);
+    // const [displayInstallments, setDisplayInstallments] = useState([]);
+    // const [displayInterestRates, setDisplayInterestRates] = useState([]);
 
     const [nic, setNic] = useState();
     const [name, setName] = useState();
@@ -101,7 +101,7 @@ const ReceptionistLoan = () => {
                 setIsEmployee(true);
                 setLoanForm(prev => ({
                     ...prev,
-                    customerId: searchCustomer // Set the searched NIC as customerId
+                    customerId: searchCustomer
                 }));
                 toast.info('Customer not found. Please fill in customer details.');
             } else if (e.response?.status === 400) {
@@ -141,8 +141,6 @@ const ReceptionistLoan = () => {
             }
         }
 
-
-
         try {
             const response = await axiosAPI.post('/recep/loans', loanForm);
             toast.success('Loan created successfully!');
@@ -171,25 +169,6 @@ const ReceptionistLoan = () => {
         }));
     };
 
-    // const fetchInstallments = async () => {
-    //     try {
-    //         const response = await axiosAPI.get('/recep/installments');
-    //         setDisplayInstallments(response.data);
-    //     } catch (e) {
-    //         console.log(e);
-    //         toast.error('Failed to fetch installment options');
-    //     }
-    // };
-    // const fetchInterestRates = async () => {
-    //     try {
-    //         const response = await axiosAPI.get('/recep/interestRates');
-    //         setDisplayInterestRates(response.data);
-    //     } catch (e) {
-    //         console.log(e);
-    //         toast.error('Failed to fetch interest rates');
-    //     }
-    // }
-
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
             if (searchCustomer.trim().length >= 3) {
@@ -217,12 +196,6 @@ const ReceptionistLoan = () => {
             setLoading(false);
         }
     };
-
-
-    // useEffect(() => {
-    //     fetchInterestRates();
-    //     fetchInstallments();
-    // }, [])
 
     return (
         <div className='p-3'>
@@ -271,7 +244,7 @@ const ReceptionistLoan = () => {
 
                         {/* Suggestions Dropdown */}
                         {showSuggestions && (
-                            <div className="absolute top-full mt-2 w-full bg-white border 
+                            <div className="absolute top-full mt-2 bg-white border 
                         border-gray-200 rounded-lg shadow-lg z-50 
                         max-h-60 overflow-y-auto">
 
@@ -309,7 +282,8 @@ const ReceptionistLoan = () => {
 
             <div className='shadow-2xl p-6 mt-6 rounded-2xl'>
                 {/* Existing Customer Loans Table */}
-                {existCustomer && existCustomer.loans?.length > 0 && (
+
+                {existCustomer && existCustomer.loans?.length > 0 ? (
                     <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
 
                         <div className="mb-6">
@@ -407,6 +381,10 @@ const ReceptionistLoan = () => {
                             </table>
                         </div>
                     </div>
+                ) : (
+                    <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                        Loan Details
+                    </h2>
                 )}
 
                 <form onSubmit={handleLoanSubmit}>
@@ -430,7 +408,7 @@ const ReceptionistLoan = () => {
                                 name="fileNumber"
                                 value={loanForm.fileNumber}
                                 onChange={handleLoanChange}
-                                placeholder="D001"
+                                placeholder="Enter file number"
                                 required
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
@@ -518,7 +496,7 @@ const ReceptionistLoan = () => {
                                         setLoanForm(prev => ({ ...prev, interestRate: value }));
                                     }
                                 }}
-                                placeholder='%'
+                                placeholder='Enter interest rate'
                                 required
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
@@ -567,6 +545,7 @@ const ReceptionistLoan = () => {
                             <input
                                 type="number"
                                 name="numberOfInstallments"
+                                placeholder='Enter installment value'
                                 value={loanForm.numberOfInstallments}
                                 onChange={(e) => {
                                     const value = e.target.value;
