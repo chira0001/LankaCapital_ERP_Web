@@ -19,4 +19,6 @@ public class Role {
     private Integer id;
 
     private String roleName;
+
+    private Long updateStatus = 0L;
 }

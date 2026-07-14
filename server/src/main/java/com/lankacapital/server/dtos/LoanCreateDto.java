@@ -10,11 +10,11 @@ import java.math.BigDecimal;
 public class LoanCreateDto {
     private String fileNumber;
     private BigDecimal loanAmount;
-    private Integer interestRate;
+    private Double interestRate;
     private BigDecimal documentCharge;
     private Integer numberOfInstallments;
 
-    private Long customerId;
+    private String customerId;
 
     private String name;
     private String email;

@@ -17,4 +17,6 @@ public class SalaryCondition {
     private Integer id;
 
     private String conditionName;
+
+    private Long updateStatus = 0L;
 }

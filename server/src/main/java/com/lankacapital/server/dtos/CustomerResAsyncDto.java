@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class CustomerResAsyncDto {
-    private long nic;
+    private String nic;
     private String name;
     private String email;
     private String address;

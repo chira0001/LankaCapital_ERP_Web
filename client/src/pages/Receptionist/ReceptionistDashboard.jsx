@@ -109,7 +109,7 @@ const ReceptionistDashboard = () => {
 
             <div className='bg-gray-100 w-full text-black flex gap-1 md:gap-8 h-screen md:p-6 overflow-hidden'>
                 {/* Sidebar */}
-                <div className='bg-white w-fit px-1 md:px-3 py-6 rounded-2xl shadow-xl md:flex md:flex-col gap-6'>
+                <div className='bg-white w-fit overflow-auto overflow-x-hidden px-1 md:px-3 py-6 rounded-2xl shadow-xl md:flex md:flex-col gap-6'>
                     {panelNames.map((value, key) => (
                         <button
                             key={key}

@@ -17,7 +17,7 @@ public interface LoanService {
 
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
-    List<LoanResponseDto> getAllLoans();
+    List<LoanResponseDto> getAllLoans(String username);
 
     LoanResponseDto getLoan(String fileNumber);
 
@@ -32,12 +32,10 @@ public interface LoanService {
     @Transactional
     Loan resetLoan(LoanActionDto dto);
 
-//    @Transactional
-//    Loan completeLoan(LoanActionDto dto);
-
+    LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber);
 
     //interest update
-    LoanResponseDto updateInterest(InterestUpdateDTO dto);
+    LoanResponseDto updateInterest(InterestUpdateDTO dto, String username);
 
     //get interest
     LoanResponseDto getInterest(String fileNumber);

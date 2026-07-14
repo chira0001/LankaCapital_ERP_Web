@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class CustomerResponseDto {
-    private long nic;
+    private String nic;
     private String name;
     private String email;
     private String address;

@@ -1,424 +1,230 @@
 import React, { useState, useEffect } from 'react';
-
 import { CheckCircle, XCircle, Filter } from 'lucide-react';
-import { Button } from '@/component/ui/button';
 import { Input } from '@/component/ui/input';
 import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
-import axiosAPI from '@/api/axiosAPI'; // Import the axios instance
-//import { useToast } from '@/hooks/use-toast';
-//import { useAuth } from '@/contexts/AuthContext.jsx';
+import axiosAPI from '@/api/axiosAPI';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/component/ui/select';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue
+// } from '@/component/ui/select';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/component/ui/alert-dialog';
-
-
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+// } from '@/component/ui/alert-dialog';
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
 
-const formatLKR=(amount) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
+const formatLKR = (amount) =>
+  new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR'
+  }).format(amount);
+
 const LoanApplication = () => {
-    const toast = useToast();//temporary stub- replace with actual toast hook
-    const currentEmployeeId = 3;
-    const [applicationData, setApplicationData] = useState([]);
-    const[filteredApps, setFilteredApps] = useState([]);
-    const[loading, setLoading] = useState(true);
-    const[selectedApp, setSelectedApp] = useState(null);
-    const [actionType,setActionType] = useState(null);
-    const [showDialog, setShowDialog] = useState(false);
-    const [decisionNote, setDecisionNote] = useState("");
-    const[filters, setFilters] = useState({
-        status: "ALL",
-        search: "",
-        loanId: "",
-        minAmount: "",
-        maxAmount: "",
-    });
+  const toast = useToast();
+  // const currentEmployeeId = 3;
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+  const [applicationData, setApplicationData] = useState([]);
+  const [filteredApps, setFilteredApps] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [actionType, setActionType] = useState(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showLoan, setShowLoan] = useState(false);
+  const [decisionNote, setDecisionNote] = useState("");
+  const [isEdit, setIsEdit] = useState(false);
 
-    
+  const [filters, setFilters] = useState({
+    status: "ALL",
+    search: "",
+    loanId: "",
+    minAmount: "",
+    maxAmount: "",
+  });
 
-//    useEffect(() => {
-//   applyFilters();
-// }, [filters, applicationData]);
+  const [loanUpdatePayload, setLoanUpdatePayload] = useState({
+    amount: "",
+    decisionNote: "",
+    documentCharge: "",
+    interestRate: "",
+    installment: "",
+    status: ""
+  });
 
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-      useEffect(() => {
-  const filtered = applyFilters(applicationData, filters);
-  setFilteredApps(filtered);
-}, [filters, applicationData]);
+  useEffect(() => {
+    const filtered = applyFilters(applicationData, filters);
+    setFilteredApps(filtered);
+  }, [filters, applicationData]);
 
-    /*const fetchApplications = async () => {
-        try {
-         const apps =await pb.collection('loan_applications').getFullList({
-            sort:'-request_date',
-            $autoCancel: false
-         });
-         setApplications(apps);
-        } catch (error) {
-            console.error("Error fetching applications:", error);
-        TransformStream({
-            title: "Error",
-            description :"Failed to load applications:",
-            variant: "destructive"
-        });
-        } finally {
-            setLoading(false);      
+  useEffect(() => {
+    if (showLoan || isEdit) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showLoan, isEdit]);
 
-        }
-    };
-
-    */
-
-    // FETCH LOANS FROM BACKEND 
   const fetchApplications = async () => {
     try {
-
-      /////3 new code////////////
       const res = await axiosAPI.get("/admin/loans");
-
-    const data = res.data;
-
-    console.log("RAW API DATA:", data);
-
-    setApplicationData(data);
-     const filtered = applyFilters(data, filters);
-    setFilteredApps(filtered);
-
-      ////////////////workin code after previous code 2////////////////////////
-     /* const res = await fetch('http://localhost:8080/api/v1/admin/loans');
-      const data = await res.json();
-
-      console.log("RAW API DATA:", data);
-
-      if (!Array.isArray(data)) {
-        console.error("Backend did not return an array:", data);
-
-        setApplicationData([]);
-        setFilteredApps([]);
-        return;
-      }
-
-
-      const normalized = data.map(app => ({
-        ...app,
-
-
-        status: (app.status && app.status.trim() !== '' 
-            ? app.status 
-            : 'PENDING').toUpperCase()
-      }));
-
-       console.log("NORMALIZED DATA:", normalized);
-
-      setApplicationData(normalized);
-      setFilteredApps(normalized);
-*/
-      ////////////////////////////////////////
-
-
-      ///////////previous code 1 //////////////
-       // status: (app.status ?? '').toUpperCase() // can use after backend fixed as prnding all
-      // status: (app.status || 'PENDING').trim().toUpperCase()
-
-     // setApplicationData(data);
-     // setFilteredApps(data); // IMPORTANT FIX
-      ////////////////////////////////////////////////
-
-
-
+      const data = res.data;
+      console.log("Loans : ", data)
+      setApplicationData(data);
+      setFilteredApps(applyFilters(data, filters));
     } catch (error) {
       console.error("Error fetching applications:", error);
     } finally {
       setLoading(false);
     }
   };
- 
-
-
-  // const applyFilters = () => {
-  //   let filtered = [...applicationData];
-
-  //   if (filters.status !== 'ALL') {
-  //     filtered = filtered.filter(app =>
-  //       (app.status || '').toUpperCase() === filters.status
-  //     );
-  //   }
-
-  //   if (filters.search) {
-  //     filtered = filtered.filter(app =>
-  //       app.customer?.businessName
-  //         ?.toLowerCase()
-  //         .includes(filters.search.toLowerCase())
-  //     );
-  //   }
-
-  //   if (filters.loanId) {
-  //     filtered = filtered.filter(app =>
-  //      app.fileNumber
-  //       ?.toLowerCase()
-  //       .includes(filters.loanId.toLowerCase())
-  //  );
-  //  }
-
-  //   if (filters.minAmount) {
-  //     filtered = filtered.filter(app =>
-  //       Number(app.amount) >= Number(filters.minAmount)
-  //     );
-  //   }
-
-  //   if (filters.maxAmount) {
-  //     filtered = filtered.filter(app =>
-  //       Number(app.amount) <= Number(filters.maxAmount)
-  //     );
-  //   }
-
-  //   setFilteredApps(filtered);
-  // };
-
 
   const applyFilters = (data, filters) => {
     let filtered = [...data];
 
     if (filters.status !== "ALL") {
-        filtered = filtered.filter(
-            app => (app.status || "").toUpperCase() === filters.status
-        );
+      filtered = filtered.filter(
+        app => (app.status || "").toUpperCase() === filters.status
+      );
     }
 
     if (filters.search) {
-    filtered = filtered.filter(app =>
+      filtered = filtered.filter(app =>
         (app.customerId ?? '')
-            .toString()
-            .toLowerCase()
-            .includes(filters.search.toLowerCase())
-     );
+          .toString()
+          .toLowerCase()
+          .includes(filters.search.toLowerCase())
+      );
     }
 
     if (filters.loanId) {
-        filtered = filtered.filter(app =>
-            app.fileNumber
-                ?.toLowerCase()
-                .includes(filters.loanId.toLowerCase())
-        );
+      filtered = filtered.filter(app =>
+        app.fileNumber?.toLowerCase()
+          .includes(filters.loanId.toLowerCase())
+      );
     }
 
     if (filters.minAmount) {
-        filtered = filtered.filter(
-            app => Number(app.amount) >= Number(filters.minAmount)
-        );
+      filtered = filtered.filter(
+        app => Number(app.amount) >= Number(filters.minAmount)
+      );
     }
 
     if (filters.maxAmount) {
-        filtered = filtered.filter(
-            app => Number(app.amount) <= Number(filters.maxAmount)
-        );
+      filtered = filtered.filter(
+        app => Number(app.amount) <= Number(filters.maxAmount)
+      );
     }
 
     return filtered;
-};
+  };
 
   const handleAction = (app, action) => {
-    console.log("SELECTED APP FULL OBJECT:", app);
     setSelectedApp(app);
     setActionType(action);
     setDecisionNote('');
     setShowDialog(true);
   };
 
-const confirmAction = async () => {
+  const confirmAction = async () => {
+    if (!selectedApp) return;
 
-  console.log("SELECTED APP:", selectedApp);
-  console.log("FILE NUMBER:", selectedApp?.fileNumber);
-  console.log("ACTION TYPE:", actionType);
+    try {
+      setLoading(true);
 
-
-  if (!selectedApp) {
-    return;
-  }
-
-  //  if (actionType === 'reject') {
-
-
-  //   toast({
-  //     title: 'Error',
-  //     description: 'Rejection note is required',
-  //     variant: 'destructive'
-  //   });
-  //   return;
-
-  //           response = await axiosAPI.put("/admin/approve", {
-  //         fileNumber: selectedApp.fileNumber,
-  //         employeeId: currentEmployeeId
-  //     });
-  //   }
-
-
-  //  }
-
-  try {
-
-    setLoading(true);
-    let response;
-
-    if (actionType === 'approve') {
-      if (!decisionNote.trim()) {
-        toast({
-          title: 'Error',
-          description: 'Decision note is required ',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-
-       response = await axiosAPI.put("/admin/approve", {
-          fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId,
-          decisionNote: decisionNote
-      });
-    }
-
-
-      //  response = await fetch('http://localhost:8080/api/v1/admin/approve', {
-         // method: 'PUT',
-        //  headers: {
-       //     'Content-Type': 'application/json'
-        //  },
-        //  body: JSON.stringify({
-           // fileNumber: selectedApp.fileNumber,
-        //    employeeId: currentEmployeeId
-         // })
-      //  });
-      //} 
-
-
-
-
-    //    toast({
-    //     title: 'Error',
-    //     description: 'Decision note is required for approval',
-    //     variant: 'destructive'
-    //   });
-    //   return;
-    // }
-
-
-
-           
-
-      else if (actionType === 'reject') {
-        response = await axiosAPI.put("/admin/reject",{ //fetch('http://localhost:8080/api/v1/admin/reject', {
-          // method: 'PUT',
-          // headers: {
-          //   'Content-Type': 'application/json'
-          // },
-          // body: JSON.stringify({
-            fileNumber: selectedApp.fileNumber,
-            decisionNote: decisionNote,
-            employeeId: currentEmployeeId
-          // })
-        });
-      } 
-      else if (actionType === 'reset') {
-        response = await axiosAPI.put("/admin/reset", {
-        //fetch('http://localhost:8080/api/v1/admin/reset', {
-          // method: 'PUT',
-          // headers: {
-          //   'Content-Type': 'application/json'
-          // },
-          // body: JSON.stringify({
-            fileNumber: selectedApp.fileNumber,
-            employeeId: currentEmployeeId
-          })
-        // });
-      }
-
-          else if (actionType === 'complete') {
-          response = await axiosAPI.put("/admin/complete", {
-            fileNumber: selectedApp.fileNumber,
-            employeeId: currentEmployeeId
+      if (actionType === 'approve') {
+        if (!decisionNote.trim()) {
+          toast({
+            title: 'Error',
+            description: 'Decision note is required',
+            variant: 'destructive'
           });
+          return;
         }
 
-    // if (!response.ok) {
-    //   throw new Error('Failed to update application');
-    // }
+        await axiosAPI.put("/admin/approve", {
+          fileNumber: selectedApp.fileNumber,
+          employeeId: currentEmployeeId,
+          decisionNote
+        });
+      }
 
-    // const updatedLoan = await response.json();
-   // console.log("UPDATED LOAN:", updatedLoan);
+      else if (actionType === 'reject') {
+        await axiosAPI.put("/admin/reject", {
+          fileNumber: selectedApp.fileNumber,
+          decisionNote,
+          employeeId: currentEmployeeId
+        });
+      }
 
+      else if (actionType === 'reset') {
+        await axiosAPI.put("/admin/reset", {
+          fileNumber: selectedApp.fileNumber,
+          employeeId: currentEmployeeId
+        });
+      }
 
-//await fetchApplications();
+      else if (actionType === 'incomplete') {
+        await axiosAPI.put("/admin/incomplete", {
+          fileNumber: selectedApp.fileNumber,
+          employeeId: currentEmployeeId
+        });
+      }
 
-const res = await axiosAPI.get("/admin/loans");
-const data = res.data;
+      // else if (actionType === 'reset') {
+      //   await axiosAPI.put("/admin/reset", {
+      //     fileNumber: selectedApp.fileNumber,
+      //     employeeId: currentEmployeeId
+      //   });
+      // }
 
-setApplicationData(data);
-setFilteredApps(applyFilters(data, filters));
+      // else if (actionType === 'complete') {
+      //   await axiosAPI.put("/admin/complete", {
+      //     fileNumber: selectedApp.fileNumber,
+      //     employeeId: currentEmployeeId
+      //   });
+      // }
 
+      await fetchApplications();
 
-    toast({
-      title: 'Success',
-      description: `Application ${actionType === 'approve' ? 'approved' : 'rejected'} successfully`
-    });
-  } catch (error) {
-    console.error('Failed to update application:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to update application',
-      variant: 'destructive'
-    });
-  } finally {
+      toast({
+        title: 'Success',
+        description: `Application ${actionType} successfully`
+      });
 
-    setLoading(false);
-
-    setShowDialog(false);
-    setSelectedApp(null);
-    setActionType(null);
-    setDecisionNote('');
-  }
-};
-
-  const getRiskBadge = (risk) => {
-    const styles = {
-      Low: 'bg-gray-100 text-gray-700 border-gray-200',
-      Medium: 'bg-gray-200 text-gray-800 border-gray-300',
-      High: 'bg-red-100 text-red-700 border-red-200'
-    };
-    return styles[risk] || styles.Medium;
+    } catch (error) {
+      console.error('Failed to update application:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update application',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+      setShowDialog(false);
+      setSelectedApp(null);
+      setActionType(null);
+      setDecisionNote('');
+    }
   };
 
- /* const getStatusBadge = (status) => {
-    const styles = {
-      PENDING: 'bg-gray-100 text-gray-700 border-gray-200',
-      APPROVED: 'bg-black text-white border-black',
-      REJECTED: 'bg-red-100 text-red-700 border-red-200'
-    };
-    return styles[status] || styles.PENDING;
-  };
-*/
   const getStatusBadge = (status) => {
     const normalized = (status ?? '').toUpperCase();
 
@@ -432,398 +238,437 @@ setFilteredApps(applyFilters(data, filters));
     return styles[normalized] || styles.PENDING;
   };
 
+  const Info = ({ label, children }) => (
+    <div className="flex flex-col">
+      <span className="text-xs text-gray-500 mb-1">{label}</span>
+      <span className="text-sm font-medium text-gray-800 break-words">
+        {children}
+      </span>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="flex">
-      {/*  <Sidebar /> */}
-        <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading applications...</p>
-          </div>
+      <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading applications...</p>
         </div>
       </div>
     );
   }
 
+  const handleUpdateLoan = async () => {
+    try {
+      await axiosAPI.put(
+        `/admin/loans/${selectedApp.fileNumber}`,
+        loanUpdatePayload
+      );
+
+      toast({
+        title: "Success",
+        description: "Loan updated successfully"
+      });
+
+      const res = await axiosAPI.get("/admin/loans");
+      const updatedData = res.data;
+
+      setApplicationData(updatedData);
+      setFilteredApps(applyFilters(updatedData, filters));
+
+      const updatedLoan = updatedData.find(
+        (loan) => loan.fileNumber === selectedApp.fileNumber
+      );
+
+      if (updatedLoan) {
+        setSelectedApp(updatedLoan);
+      }
+
+      setIsEdit(false);
+
+    } catch (error) {
+      console.error("Update failed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update loan",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <>
-      
+      <div className="flex min-h-screen bg-gray-50 w-full">
+        <div className="flex-1">
+          <div className="p-6">
 
-      <div className="flex min-h-screen bg-gray-50 w-full overflow-x-hidde">
-        {/*  <Sidebar /> */}
-        
-        <div className="flex-1 overflow-x-hidden">
-          <div className="p-4 sm:p-6 lg:p-8">
-            <div className="mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Loan Applications</h1>
-              <p className="text-gray-600">Review and approve pending loan applications</p>
-            </div>
+            <h1 className="text-3xl font-bold text-black mb-6">
+              Loan Applications
+            </h1>
 
-                      {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              
-              {/* Header */}
-              <div className="flex items-center gap-2 mb-4">
-                <Filter className="w-5 h-5 text-gray-600" />
-                <h3 className="font-bold text-black">Filters</h3>
-              </div>
+            {/* TABLE */}
+            <div className="bg-white rounded-xl shadow border border-gray-200 overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-4 text-left">Loan ID</th>
+                    <th className="px-6 py-4 text-left">Loan Date</th>
+                    <th className="px-6 py-4 text-left">Applicant NIC</th>
+                    <th className="px-6 py-4 text-left">Applicant Name</th>
+                    <th className="px-6 py-4 text-left">Amount</th>
+                    <th className="px-6 py-4 text-left">Status</th>
+                    <th className="px-6 py-4 text-left">Entered By</th>
+                  </tr>
+                </thead>
 
-              {/* Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-
-                {/* STATUS FILTER */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Status</Label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters({ ...filters, status: value })}
-                  >
-                    <SelectTrigger className="w-full bg-gray-50 border-gray-300 text-black">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">All</SelectItem>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="APPROVED">Approved</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
-                      <SelectItem value="REJECTED">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* CUSTOMER SEARCH */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Applicant NIC</Label>
-                  <Input
-                    placeholder="Search by NIC"
-                    value={filters.search}
-                    onChange={(e) =>
-                      setFilters({ ...filters, search: e.target.value })
-                    }
-                    className="w-full bg-gray-50 border-gray-300 text-black"
-                  />
-                </div>
-
-                    {/* LOAN ID SEARCH */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-700">Loan ID</Label>
-
-                    <Input
-                      placeholder="Search by Loan ID"
-                      value={filters.loanId}
-                      onChange={(e) =>
-                        setFilters({ ...filters, loanId: e.target.value })
-                      }
-                      className="w-full bg-gray-50 border-gray-300 text-black"
-                    />
-                  </div>
-
-                {/* MIN AMOUNT */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Min Amount</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={filters.minAmount}
-                    onChange={(e) =>
-                      setFilters({ ...filters, minAmount: e.target.value })
-                    }
-                    className="w-full bg-gray-50 border-gray-300 text-black"
-                  />
-                </div>
-
-                {/* MAX AMOUNT */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Max Amount</Label>
-                  <Input
-                    type="number"
-                    placeholder="1000000"
-                    value={filters.maxAmount}
-                    onChange={(e) =>
-                      setFilters({ ...filters, maxAmount: e.target.value })
-                    }
-                    className="w-full bg-gray-50 border-gray-300 text-black"
-                  />
-                </div>
-
-              </div>
-
-              {/* Optional Reset Button */}
-              <div className="flex justify-end mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    setFilters({
-                      status: "ALL",
-                      search: "",
-                      loanId: "",
-                      minAmount: "",
-                      maxAmount: ""
-                    })
-                  }
-                >
-                  Reset Filters
-                </Button>
-              </div>
-            </div>
-
-            {/* Applications Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto scrollbar-hide" >
-              <div className="overflow-x-auto scrollbar-hide">
-                <table className="w-full min-w-[900px]">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Loan ID</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Applicant NIC</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Amount</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Duration</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Interest</th>
-                       
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Status</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee Id</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Actions</th>
+                <tbody>
+                  {filteredApps.map((app) => (
+                    <tr
+                      key={app.fileNumber}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => {
+                        setSelectedApp(app);
+                        setShowLoan(true);
+                      }}
+                    >
+                      {/* {console.log("App : ", app)} */}
+                      <td className="px-6 py-4">
+                        {app.fileNumber.slice(0, 8)}
+                      </td>
+                      <td className="px-6 py-4">
+                        {new Date(app.createdAt).toLocaleDateString("en-LK", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </td>
+                      <td className="px-6 py-4">
+                        {app.customer.nic}
+                      </td>
+                      <td className="px-6 py-4">
+                        {app.customer.name}
+                      </td>
+                      <td className="px-6 py-4">
+                        {formatLKR(app.amount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs border ${getStatusBadge(app.status)}`}>
+                          {(app.status || '').toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {app.enteredBy?.firstName} {app.enteredBy?.lastName}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredApps.map((app) => {
-                      console.log("APP DATA:", app);
-                      return (
-                        <tr key={app.fileNumber} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="font-mono text-sm text-gray-600">{app.fileNumber.slice(0, 8)}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                          <p className="font-medium text-black truncate max-w-[140px]">{app.customerId}</p>
-                          <p className="text-sm text-gray-500">{app.customer?.contactNumber}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-black">{formatLKR(app.amount)}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-gray-700">{app.noOfInstallments ?? app.numberOfInstallments?.value}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-gray-700">{app.interestRate == 0 ? "N/A" : app.interestRate}</p>
-                        </td>
-                       
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(app.status)}`}>
-                            {(app.status || '').toUpperCase()}
-                          </span>
-                          {/* {app.status?.toUpperCase() === 'REJECTED' && app.rejectionNote && (
-                            <p className="text-xs text-red-600 mt-1 max-w-[150px] truncate" title={app.rejectionNote}>
-                              {app.rejectionNote}
-                            </p>
-                          )} */}
-
-                            {app.status?.toUpperCase() === 'APPROVED' && app.decisionNote && (
-                              <p
-                                className="text-xs text-green-600 mt-1 max-w-[150px] truncate"
-                                title={app.decisionNote}
-                              >
-                                {app.decisionNote}
-                              </p>
-                            )}
-
-                        </td>
-                         <td className="px-6 py-4">
-                          <p className="text-sm text-gray-600">
-                            {app.employeeId || '1'}
-                          </p>
-                         </td>
-                          {/* <td className="px-6 py-4">
-                            {(app.status || '').toUpperCase() === 'PENDING' ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleAction(app, 'approve')}
-                                  className="bg-black hover:bg-gray-800 text-white"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                  Approve
-                                </Button>
-
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleAction(app, 'reject')}
-                                >
-                                  <XCircle className="w-4 h-4 mr-1" />
-                                  Reject
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleAction(app, 'reset')}
-                                className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                              >
-                                Reset
-                              </Button>
-                            )}
-                          </td> */}
-                          {/*  */}
-                        
-                            <td className="px-6 py-4">
-
-                              {(() => {
-                                const status = (app.status || '').toUpperCase();
-
-                                // BEFORE ACTION → show all buttons
-                                if (status === 'PENDING') {
-                                  return (
-                                    <div className="flex gap-2">
-                                      
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleAction(app, 'approve')}
-                                        className="bg-black hover:bg-gray-800 text-white"
-                                      >
-                                        {/* <CheckCircle className="w-4 h-4 mr-1" /> */}
-                                        Resubmit
-                                      </Button>
-
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() => handleAction(app, 'reject')}
-                                      >
-                                        <XCircle className="w-4 h-4 mr-1" />
-                                        Reject
-                                      </Button>
-
-                                      <Button
-                                        size="sm"
-                                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                                        onClick={() => handleAction(app, 'complete')}
-                                      >
-                                        <CheckCircle className="w-4 h-4 mr-1" />
-                                        Complete
-                                      </Button>
-
-                                    </div>
-                                  );
-                                }
-
-                                // AFTER ANY ACTION
-                                if (
-                                  status === 'APPROVED' ||
-                                  status === 'REJECTED' ||
-                                  status === 'COMPLETED'
-                                ) {
-                                  return (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleAction(app, 'reset')}
-                                      className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                                    >
-                                      Reset
-                                    </Button>
-                                  );
-                                }
-
-                                return null;
-                              })()}
-
-                            </td>
-                            {/*  */}
-                       </tr>
-                      );
-                    } )}
-                  </tbody>
-                </table>
-
-                {filteredApps.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No applications found</p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
+
+            {/* LOAN DETAIL SECTION */}
+            {showLoan && selectedApp && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+                {/* Modal Container */}
+                <div className="relative w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_.2s_ease-in-out]">
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setShowLoan(false);
+                      setSelectedApp(null);
+                      setIsEdit(false);
+                    }}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-black transition"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+
+                  {/* Header */}
+                  <div className="px-8 py-6 border-b bg-gray-50 rounded-t-2xl">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Loan Details
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      File #{selectedApp.fileNumber.slice(0, 8)}
+                    </p>
+                  </div>
+
+                  <div className="p-8 space-y-10">
+
+                    {/* ================= LOAN INFORMATION ================= */}
+                    <div>
+                      <div className='flex justify-between items-center'>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                          Loan Information
+                        </h3>
+                        {console.log("selectedApp : ", selectedApp)}
+                        <button
+                          onClick={() => {
+                            setLoanUpdatePayload({
+                              amount: selectedApp.amount || "",
+                              decisionNote: selectedApp.decisionNote || "",
+                              documentCharge: selectedApp.documentCharge || "",
+                              interestRate: selectedApp.interestRate || "",
+                              installment: selectedApp.noOfInstallments || "",
+                              status: selectedApp.status || "PENDING"
+                            });
+                            setIsEdit(true);
+                          }}
+                          className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
+                            <path d="M7 13v3c0 .55.45 1 1 1h3c.27 0 .52-.11.71-.29l9-9a.996.996 0 0 0 0-1.41l-3-3a.996.996 0 0 0-1.41 0l-9.01 8.99A1 1 0 0 0 7 13m10-7.59L18.59 7 17.5 8.09 15.91 6.5zm-8 8 5.5-5.5 1.59 1.59-5.5 5.5H9z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+
+                        <Info label="Loan Date">
+                          {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit"
+                          })}
+                        </Info>
+
+                        <Info label="Amount">
+                          Rs. {selectedApp.amount}
+                        </Info>
+
+                        <Info label="Document Charge">
+                          Rs. {selectedApp.documentCharge}
+                        </Info>
+
+                        <Info label="Installments">
+                          {selectedApp.noOfInstallments}
+                        </Info>
+
+                        <Info label="Interest Rate">
+                          {selectedApp.interestRate}%
+                        </Info>
+
+                        <Info label="Decision Note">
+                          {selectedApp.decisionNote || "Not available"}
+                        </Info>
+
+                        <Info label="Entered By">
+                          Id: {selectedApp.enteredBy?.id} <br />
+                          {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
+                        </Info>
+
+                        <Info label="Approved By">
+                          {selectedApp.approvedBy?.id
+                            ? <>
+                              Id: {selectedApp.approvedBy.id} <br />
+                              {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
+                            </>
+                            : "Approval Pending"}
+                        </Info>
+
+                        <Info label="Updated By">
+                          {selectedApp.updatedBy?.id
+                            ? <>
+                              Id: {selectedApp.updatedBy.id} <br />
+                              {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
+                            </>
+                            : "No updates made"}
+                        </Info>
+
+                        {selectedApp.rejectionNote && (
+                          <Info label="Rejection Note">
+                            {selectedApp.rejectionNote}
+                          </Info>
+                        )}
+
+                      </div>
+                    </div>
+
+                    {/* ================= CUSTOMER INFORMATION ================= */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                        Customer Information
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+
+                        <Info label="NIC">
+                          {selectedApp.customer?.nic}
+                        </Info>
+
+                        <Info label="Name">
+                          {selectedApp.customer?.name}
+                        </Info>
+
+                        <Info label="Address">
+                          {selectedApp.customer?.address}
+                        </Info>
+
+                        <Info label="Phone">
+                          {selectedApp.customer?.phoneNumber}
+                        </Info>
+
+                        <Info label="Email">
+                          {selectedApp.customer?.email || "N/A"}
+                        </Info>
+
+                        <Info label="Bank">
+                          {selectedApp.customer?.bank || "N/A"} <br />
+                          {selectedApp.customer?.bankAccount || "N/A"}
+                        </Info>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isEdit && (
+              <div
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                onClick={() => setIsEdit(false)}
+              >
+
+                <div
+                  className="relative w-[95%] max-w-xl bg-white rounded-2xl shadow-2xl p-8"
+                  onClick={(e) => e.stopPropagation()}
+                >
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setIsEdit(false)}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-black"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
+
+                  <h2 className="text-xl font-bold mb-6">
+                    Update Loan Information
+                  </h2>
+
+                  <div className="space-y-4">
+                    <div className='flex flex-col gap-2'>
+                      <Label>Loan Amount</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.amount}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            amount: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className='flex flex-col gap-2'>
+                      <Label>Document Charge</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.documentCharge}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            documentCharge: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className='flex flex-col gap-2'>
+                      <Label>Interest Rate (%)</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.interestRate}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            interestRate: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className='flex flex-col gap-2'>
+                      <Label>Installments</Label>
+                      <Input
+                        type="number"
+                        value={loanUpdatePayload.installment}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            installment: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className='flex flex-col gap-2'>
+                      <Label>Status</Label>
+                      <select
+                        className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
+           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
+           disabled:opacity-50"
+                        value={loanUpdatePayload.status}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            status: e.target.value
+                          })
+                        }
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="APPROVED">APPROVED</option>
+                        <option value="REJECTED">REJECTED</option>
+                        {/* <option value="COMPLETED">COMPLETED</option> */}
+                      </select>
+                    </div>
+
+                    <div className='flex flex-col gap-2'>
+                      <Label>Decision Note (Optional)</Label>
+                      <Textarea
+                        value={loanUpdatePayload.decisionNote}
+                        onChange={(e) =>
+                          setLoanUpdatePayload({
+                            ...loanUpdatePayload,
+                            decisionNote: e.target.value
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        onClick={() => setIsEdit(false)}
+                        className="px-4 py-2 rounded-lg border"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        onClick={handleUpdateLoan}
+                        className="px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                      >
+                        Update Loan
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
-
-      {/* Confirmation Dialog */}
-      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {/* {actionType === 'approve' ? 'Approve Application' : 'Reject Application'} */}
-                          {/* <AlertDialogTitle> */}
-              {actionType === 'approve' && 'Approve Loan'}
-              {actionType === 'reject' && 'Reject Loan'}
-              {actionType === 'complete' && 'Complete Loan'}
-              {actionType === 'reset' && 'Reset Loan'}
-            {/* </AlertDialogTitle> */}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to {actionType} the loan application for {selectedApp?.customerId}?
-              {actionType === 'approve' && ` Amount: ${formatLKR(selectedApp?.amount || 0)}`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          {/* {actionType === 'reject' && (
-            <div className="my-4">
-              <Label htmlFor="reason" className="mb-2 block text-black">Rejection Reason</Label>
-              <Textarea
-                id="reason"
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-                placeholder="Please provide a reason for rejection..."
-                className="w-full border-gray-300 text-black"
-                rows={3}
-              />
-            </div>
-          )} */}
-
-          {actionType === 'complete' && (
-            <p className="text-sm text-gray-500 mt-2">
-              This will mark the loan as COMPLETED permanently.
-            </p>
-          )}
-
-         
-
-          {actionType === 'approve' && (
-            <div className="my-4">
-              <Label htmlFor="reason" className="mb-2 block text-black">Decision Note</Label>
-              <Textarea
-                id="reason"
-                value={decisionNote}
-                onChange={(e) => setDecisionNote(e.target.value)}
-                placeholder="Please provide a reason for the decision..."
-                className="w-full border-gray-300 text-black"
-                rows={3}
-              />
-            </div>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmAction}
-              // className={actionType === 'reject' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-black hover:bg-gray-800 text-white'}
-                 className={
-                  actionType === 'reject'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : actionType === 'complete'
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-black hover:bg-gray-800 text-white'
-                }
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
-
-
 
 export default LoanApplication;
