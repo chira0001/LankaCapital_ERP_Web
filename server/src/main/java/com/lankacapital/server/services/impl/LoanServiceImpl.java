@@ -179,13 +179,6 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Employee not found")
                 );
-        Installment installment = installmentRepository
-                .findById(loanCreateDto.getInstallmentId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Installment not found"
-                        )
-                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
@@ -329,14 +322,14 @@ public class LoanServiceImpl implements LoanService {
         customer = customerRepository.findByNic(loanRequestDto.getCustomerId());
         loan.setCustomer(customer);
 
-//        Installment installment = installmentRepository.findById(loanRequestDto.getInstallments())
-//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
         loan.setInstallment(loanRequestDto.getInstallments());
 
         Employee employee = employeeRepository.findById(loanRequestDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanRequestDto.getEmployeeId()));
         loan.setCreatedEmployee(employee);
         loan.setStatus(LoanStatus.PENDING);
+        loan.setUpdateStatus(loan.getUpdateStatus());
+
         return loanRepository.save(loan);
     }
 
@@ -347,8 +340,6 @@ public class LoanServiceImpl implements LoanService {
         }
         Loan loan = new Loan();
 
-//        Installment installment = installmentRepository.findById(customerAddDto.getInstallmentId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
         loan.setInstallment(customerAddDto.getInstallmentId());
 
         Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
@@ -365,6 +356,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setCustomer(customer);
 
         loan.setStatus(LoanStatus.PENDING);
+        loan.setUpdateStatus(loan.getUpdateStatus());
         loanRepository.save(loan);
 
         return "Loan created successfully.";

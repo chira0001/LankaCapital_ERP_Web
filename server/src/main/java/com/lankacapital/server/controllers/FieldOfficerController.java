@@ -54,31 +54,6 @@ public class FieldOfficerController {
         return new ResponseEntity<>(customerList, HttpStatus.OK);
     }
 
-    @PostMapping(path = "/async/installments")
-    public ResponseEntity<?> asyncToInstallments(@RequestBody InstallmentsAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getId() == null){
-            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
-        }
-        List<Installment> installmentList = installmentService.findAllInstallmentsById(dto, page);
-        if(installmentList == null){
-            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(installmentList, HttpStatus.OK);
-    }
-
-    @PostMapping(path = "/async/interests")
-    public ResponseEntity<?> asyncToInstallments(@RequestBody InterestRateAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getId() == null){
-            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
-        }
-        List<InterestRate> interestRateList = interestRateService.findAllinterestRatesById(dto, page);
-        if(interestRateList == null){
-            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(interestRateList, HttpStatus.OK);
-    }
-
-
     @PostMapping(path = "/async/fieldOfficers")
     public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto){
         if(dto.getId() == null){
@@ -117,16 +92,6 @@ public class FieldOfficerController {
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addLoanByFieldOfficer(dto), HttpStatus.OK);
-    }
-
-    @GetMapping(path = "/installments")
-    public ResponseEntity<?> getInstallments(){
-        return new ResponseEntity<>(installmentService.getAllInstallments(), HttpStatus.OK);
-    }
-
-    @GetMapping("/interestRates")
-    public ResponseEntity<?> getInterestRates(){
-        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
     }
 
     @PostMapping("/sync/customer")

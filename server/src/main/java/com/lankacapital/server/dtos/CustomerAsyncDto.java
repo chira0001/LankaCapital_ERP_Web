@@ -6,5 +6,5 @@ import java.util.List;
 
 @Data
 public class CustomerAsyncDto {
-    private List<Long> nic;
+    private List<String> nic;
 }

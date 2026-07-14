@@ -14,7 +14,7 @@ public class LoanResDto {
     private Double documentCharge;
     private LoanStatus status;
     private String rejectionNote;
-    private InstallmentResDto installments;
+    private Integer installment;
     private EmployeeResDto employee;
-    private InterestRateResDto interestRate;
+    private Double interestRate;
 }

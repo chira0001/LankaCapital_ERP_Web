@@ -115,18 +115,10 @@ public class LoanMapper {
     public static LoanResDto mapToLoanResDto(Loan loan) {
         LoanResDto dto = new LoanResDto();
         EmployeeResDto employee = new EmployeeResDto();
-        InstallmentResDto installment = new InstallmentResDto();
-        InterestRateResDto interestRate = new InterestRateResDto();
 
         employee.setFirstName(loan.getCreatedEmployee().getFirstName());
         employee.setLastName(loan.getCreatedEmployee().getLastName());
         employee.setPhoneNumber(loan.getCreatedEmployee().getPhoneNumber());
-
-        installment.setValue(loan.getInstallment());
-        interestRate.setRate(loan.getInterestRate() != null
-                ? loan.getInterestRate()
-                : 0.0
-        );
 
         dto.setFileNumber(loan.getFileNumber() != null ? loan.getFileNumber() : null);
         dto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
@@ -136,10 +128,9 @@ public class LoanMapper {
                 : 0.0
         );
         dto.setStatus(loan.getStatus());
-        dto.setInterestRate(interestRate);
-        dto.setInstallments(installment);
+        dto.setInterestRate(loan.getInterestRate());
+        dto.setInstallment(loan.getInstallment());
         dto.setEmployee(employee);
-
 
         return dto;
     }
