@@ -553,8 +553,7 @@ const LoanApplication = () => {
                   </h2>
 
                   <div className="space-y-4">
-                    {console.log("Payload : ", loanUpdatePayload)}
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Loan Amount</Label>
                       <Input
                         type="number"
@@ -568,7 +567,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Document Charge</Label>
                       <Input
                         type="number"
@@ -582,7 +581,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Interest Rate (%)</Label>
                       <Input
                         type="number"
@@ -596,7 +595,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Installments</Label>
                       <Input
                         type="number"
@@ -610,9 +609,12 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Status</Label>
                       <select
+                        className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
+           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
+           disabled:opacity-50"
                         value={loanUpdatePayload.status}
                         onChange={(e) =>
                           setLoanUpdatePayload({
@@ -624,11 +626,11 @@ const LoanApplication = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED">REJECTED</option>
-                        <option value="COMPLETED">COMPLETED</option>
+                        {/* <option value="COMPLETED">COMPLETED</option> */}
                       </select>
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Decision Note (Optional)</Label>
                       <Textarea
                         value={loanUpdatePayload.decisionNote}
@@ -665,37 +667,6 @@ const LoanApplication = () => {
           </div>
         </div>
       </div>
-
-      {/* ALERT DIALOG
-      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType?.toUpperCase()} LOAN
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to {actionType} this loan?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {actionType === 'approve' && (
-            <div className="my-4">
-              <Label>Decision Note</Label>
-              <Textarea
-                value={decisionNote}
-                onChange={(e) => setDecisionNote(e.target.value)}
-              />
-            </div>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmAction}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
     </>
   );
 };
