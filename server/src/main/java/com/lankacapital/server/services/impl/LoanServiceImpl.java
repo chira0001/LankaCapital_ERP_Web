@@ -73,6 +73,14 @@ public class LoanServiceImpl implements LoanService {
 //        return loanRepository.save(loan);
 //    }
 
+    private boolean isValidUUID(String value) {
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return false;
+        }
+    }
 
     @Transactional
     @Override
@@ -196,13 +204,17 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResponseDto> getAllLoans() {
+    public List<LoanResponseDto> getAllLoans(String username) {
+
+        Employee employee = employeeRepository.findByEmail(username);
+        boolean isAdmin = "ADMIN".equals(employee.getRole().getRoleName());
+
         return loanRepository.findAll()
                 .stream()
+                .filter(loan -> !isAdmin || !isValidUUID(loan.getFileNumber()))
                 .map(LoanMapper::mapToLoanResponseDto)
                 .toList();
     }
-
 
     @Override
     public LoanResponseDto getLoan(String fileNumber) {
@@ -274,12 +286,14 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber) {
-
-        System.out.println("279 : " + loanUpdateDto);
+    public LoanResponseDto updateLoan(String username,
+                                      LoanUpdateDto loanUpdateDto,
+                                      String fileNumber) {
 
         Loan loan = loanRepository.findById(fileNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not Found "+fileNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not Found " + fileNumber));
+
+        Employee employee = employeeRepository.findByEmail(username);
 
         loan.setAmount(loanUpdateDto.getAmount());
         loan.setDecisionNote(loanUpdateDto.getDecisionNote());
@@ -288,11 +302,15 @@ public class LoanServiceImpl implements LoanService {
         loan.setInstallment(loanUpdateDto.getInstallment());
         loan.setStatus(LoanStatus.valueOf(loanUpdateDto.getStatus()));
 
-        if(Objects.equals(loanUpdateDto.getStatus(), LoanStatus.APPROVED.name())){
-            loan.setApprovedEmployee(employeeRepository.findByEmail(username));
+        if (LoanStatus.APPROVED.name().equals(loanUpdateDto.getStatus())) {
+            loan.setApprovedEmployee(employee);
+        } else if (LoanStatus.PENDING.name().equals(loanUpdateDto.getStatus())) {
+            loan.setApprovedEmployee(null);
+            loan.setUpdatedEmployee(employee);
+        } else {
+            loan.setUpdatedEmployee(employee);
         }
 
-        loan.setUpdatedEmployee(employeeRepository.findByEmail(username));
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
 
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));

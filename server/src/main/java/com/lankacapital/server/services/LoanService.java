@@ -17,7 +17,7 @@ public interface LoanService {
 
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);
 
-    List<LoanResponseDto> getAllLoans();
+    List<LoanResponseDto> getAllLoans(String username);
 
     LoanResponseDto getLoan(String fileNumber);
 

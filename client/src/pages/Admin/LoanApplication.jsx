@@ -260,7 +260,6 @@ const LoanApplication = () => {
 
   const handleUpdateLoan = async () => {
     try {
-      console.log("Update Loan : ", loanUpdatePayload)
       await axiosAPI.put(
         `/admin/loans/${selectedApp.fileNumber}`,
         loanUpdatePayload
@@ -271,8 +270,21 @@ const LoanApplication = () => {
         description: "Loan updated successfully"
       });
 
+      const res = await axiosAPI.get("/admin/loans");
+      const updatedData = res.data;
+
+      setApplicationData(updatedData);
+      setFilteredApps(applyFilters(updatedData, filters));
+
+      const updatedLoan = updatedData.find(
+        (loan) => loan.fileNumber === selectedApp.fileNumber
+      );
+
+      if (updatedLoan) {
+        setSelectedApp(updatedLoan);
+      }
+
       setIsEdit(false);
-      await fetchApplications();
 
     } catch (error) {
       console.error("Update failed:", error);
@@ -516,7 +528,6 @@ const LoanApplication = () => {
                   </div>
                 </div>
               </div>
-
             )}
             {isEdit && (
               <div
