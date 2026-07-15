@@ -8,8 +8,7 @@ const ReceptionistLoan = () => {
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
     const [isEmployee, setIsEmployee] = useState(false);
-    const [displayInstallments, setDisplayInstallments] = useState([]);
-    const [displayInterestRates, setDisplayInterestRates] = useState([]);
+    const [lastFileNumber, setLastFileNumber] = useState();
 
     const [nic, setNic] = useState();
     const [name, setName] = useState();
@@ -43,6 +42,7 @@ const ReceptionistLoan = () => {
         interestRate: '',
         documentCharge: '100',
         numberOfInstallments: '',
+        loanType: "",
         customerId: '',
         name: '',
         email: '',
@@ -59,6 +59,7 @@ const ReceptionistLoan = () => {
             interestRate: '',
             documentCharge: '100',
             numberOfInstallments: '',
+            loanType: "DAILY",
             name: '',
             email: '',
             address: '',
@@ -101,7 +102,7 @@ const ReceptionistLoan = () => {
                 setIsEmployee(true);
                 setLoanForm(prev => ({
                     ...prev,
-                    customerId: searchCustomer // Set the searched NIC as customerId
+                    customerId: searchCustomer
                 }));
                 toast.info('Customer not found. Please fill in customer details.');
             } else if (e.response?.status === 400) {
@@ -141,7 +142,7 @@ const ReceptionistLoan = () => {
             }
         }
 
-
+        console.log("Form : ", loanForm)
 
         try {
             const response = await axiosAPI.post('/recep/loans', loanForm);
@@ -163,6 +164,18 @@ const ReceptionistLoan = () => {
         }
     };
 
+    const fetchlastFileNumber = async (loanType) => {
+        console.log("Type : ", loanType);
+        try {
+            const res = await axiosAPI.get(`/recep/loans/lastFileNumber/${loanType}`);
+            console.log("Result : ", res.data);
+            setLastFileNumber(res.data);
+        } catch (e) {
+            console.log(e);
+        }
+
+    }
+
     const handleLoanChange = (e) => {
         const { name, value } = e.target;
         setLoanForm(prev => ({
@@ -170,25 +183,6 @@ const ReceptionistLoan = () => {
             [name]: value
         }));
     };
-
-    // const fetchInstallments = async () => {
-    //     try {
-    //         const response = await axiosAPI.get('/recep/installments');
-    //         setDisplayInstallments(response.data);
-    //     } catch (e) {
-    //         console.log(e);
-    //         toast.error('Failed to fetch installment options');
-    //     }
-    // };
-    // const fetchInterestRates = async () => {
-    //     try {
-    //         const response = await axiosAPI.get('/recep/interestRates');
-    //         setDisplayInterestRates(response.data);
-    //     } catch (e) {
-    //         console.log(e);
-    //         toast.error('Failed to fetch interest rates');
-    //     }
-    // }
 
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
@@ -217,12 +211,6 @@ const ReceptionistLoan = () => {
             setLoading(false);
         }
     };
-
-
-    // useEffect(() => {
-    //     fetchInterestRates();
-    //     fetchInstallments();
-    // }, [])
 
     return (
         <div className='p-3'>
@@ -271,7 +259,7 @@ const ReceptionistLoan = () => {
 
                         {/* Suggestions Dropdown */}
                         {showSuggestions && (
-                            <div className="absolute top-full mt-2 w-full bg-white border 
+                            <div className="absolute top-full mt-2 bg-white border 
                         border-gray-200 rounded-lg shadow-lg z-50 
                         max-h-60 overflow-y-auto">
 
@@ -309,7 +297,8 @@ const ReceptionistLoan = () => {
 
             <div className='shadow-2xl p-6 mt-6 rounded-2xl'>
                 {/* Existing Customer Loans Table */}
-                {existCustomer && existCustomer.loans?.length > 0 && (
+
+                {existCustomer && existCustomer.loans?.length > 0 ? (
                     <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
 
                         <div className="mb-6">
@@ -379,7 +368,7 @@ const ReceptionistLoan = () => {
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
                                             </td>
-                                            {console.log("Loan : ", loan)}
+
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 {loan.enteredBy.firstName} {loan.enteredBy.lastName}
                                                 <br /> Id : {loan.enteredBy.id}
@@ -407,20 +396,56 @@ const ReceptionistLoan = () => {
                             </table>
                         </div>
                     </div>
+                ) : (
+                    <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                        Loan Details
+                    </h2>
                 )}
 
                 <form onSubmit={handleLoanSubmit}>
                     {loanForm.customerId ?
-                        <div className="mb-6 flex items-center gap-3">
-                            <span className="text-md text-gray-500">Customer ID:</span>
-                            <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
-                                {loanForm.customerId}
-                            </span>
+                        <div className='flex justify-between'>
+                            <div className="mb-6 flex items-center gap-3">
+                                <span className="text-md text-gray-500">Customer ID:</span>
+                                <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
+                                    {loanForm.customerId}
+                                </span>
+                            </div>
+                            {lastFileNumber ?
+                                <div className='mb-6 flex items-center gap-3'>
+                                    <span className='text-md text-gray-500'>Last File Number:</span>
+                                    <span className="px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
+                                        {lastFileNumber}
+                                    </span>
+                                </div>
+                                :
+                                ""}
                         </div>
                         :
                         ""
                     }
                     <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Loan Type <span className='text-red-500'>*</span>
+                            </span>
+                            <select
+                                name="loanType"
+                                value={loanForm.loanType}
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                                onChange={(e) => {
+                                    handleLoanChange(e);
+                                    fetchlastFileNumber(e.target.value);
+                                }}
+                            >
+                                <option value="">Select Loan Type</option>
+                                <option value="DAILY">Daily</option>
+                                <option value="WEEKLY">Weekly</option>
+                            </select>
+                        </div>
+
                         <div className='flex flex-col'>
                             <span className='mb-2 text-sm font-medium text-gray-700'>
                                 File Number <span className='text-red-500'>*</span>
@@ -430,7 +455,7 @@ const ReceptionistLoan = () => {
                                 name="fileNumber"
                                 value={loanForm.fileNumber}
                                 onChange={handleLoanChange}
-                                placeholder="D001"
+                                placeholder="Enter file number"
                                 required
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
@@ -472,28 +497,6 @@ const ReceptionistLoan = () => {
                             />
                         </div>
 
-                        {/* <div className='flex flex-col'>
-                            <span className='mb-2 text-sm font-medium text-gray-700'>
-                                Interest Rate (%) <span className='text-red-500'>*</span>
-                            </span>
-                            <select
-                                name="interestRate"
-                                value={loanForm.interestRate}
-                                onChange={handleLoanChange}
-                                required
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                            >
-                                <option value="">Select Interest Rate</option>
-                                {displayInterestRates?.map((displayInterestRate) => (
-                                    <option key={displayInterestRate.id} value={displayInterestRate.id}>
-                                        {displayInterestRate.rate}%
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
-
                         <div className='flex flex-col'>
                             <span className='mb-2 text-sm font-medium text-gray-700'>
                                 Interest Rate (%) <span className='text-red-500'>*</span>
@@ -518,7 +521,7 @@ const ReceptionistLoan = () => {
                                         setLoanForm(prev => ({ ...prev, interestRate: value }));
                                     }
                                 }}
-                                placeholder='%'
+                                placeholder='Enter interest rate'
                                 required
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
@@ -567,6 +570,7 @@ const ReceptionistLoan = () => {
                             <input
                                 type="number"
                                 name="numberOfInstallments"
+                                placeholder='Enter installment value'
                                 value={loanForm.numberOfInstallments}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -595,29 +599,6 @@ const ReceptionistLoan = () => {
     focus:border-transparent transition-all'
                             />
                         </div>
-
-                        {/* <div className='flex flex-col'>
-                            <span className='mb-2 text-sm font-medium text-gray-700'>
-                                Number of Installments <span className='text-red-500'>*</span>
-                            </span>
-                            <select
-                                name="numberOfInstallments"
-                                value={loanForm.numberOfInstallments}
-                                onChange={handleLoanChange}
-                                required
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                            >
-                                <option value="">Select Installments</option>
-                                {displayInstallments?.map((displayInstallment) => (
-                                    <option key={displayInstallment.id} value={displayInstallment.id}>
-                                        {displayInstallment.value} installments
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
-
                     </div>
 
                     {/* New Customer Details Section */}

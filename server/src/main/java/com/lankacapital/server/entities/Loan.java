@@ -1,6 +1,7 @@
 package com.lankacapital.server.entities;
 
 import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.enums.RiskLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,10 @@ import java.util.UUID;
 public class Loan {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
     private String fileNumber;
 
     @ManyToOne
@@ -46,6 +51,9 @@ public class Loan {
 
     @Enumerated(EnumType.STRING)
     private LoanStatus status=LoanStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private LoanType loanType = LoanType.DAILY;
 
     @Column(length = 1000)
     private String decisionNote;
