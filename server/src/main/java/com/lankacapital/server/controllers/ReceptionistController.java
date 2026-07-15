@@ -1,6 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.services.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -81,12 +82,34 @@ public class ReceptionistController {
         return new ResponseEntity<>(customerService.getCustomerInfoById(id), HttpStatus.OK);
     }
 
+    @GetMapping("/loans")
+    public ResponseEntity<?> getAllLoans(Authentication authentication) {
+        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+    }
+
+    @GetMapping("/loans/lastFileNumber/{loanType}")
+    public ResponseEntity<?> fetchLastFileNumber(Authentication authentication, @PathVariable String loanType){
+        if(authentication.getName() == null){
+            return new ResponseEntity<>("Employee cannot be determined", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(loanService.fetchLastFileNumber(loanType), HttpStatus.OK);
+    }
+
     @PostMapping(path = "/loans")
     public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto, Authentication authentication){
         if(authentication.getName() == null){
             return new ResponseEntity<>("Employee cannot be determined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addLoan(loanCreateDto, authentication.getName()), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/loans")
+    public ResponseEntity<?> updateLoan(
+            @RequestParam String fileNumber,
+            @RequestBody RecepLoanUpdateDto recepLoanUpdateDto,
+            Authentication authentication)
+    {
+        return new ResponseEntity<>(loanService.recepUpdateLoan(authentication.getName(),recepLoanUpdateDto,fileNumber), HttpStatus.OK);
     }
 
     @GetMapping(path = "/loan/customers/{id}")

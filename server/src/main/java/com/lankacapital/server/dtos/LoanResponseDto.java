@@ -27,4 +27,5 @@ public class LoanResponseDto {
     private LoanStatus status;
     private String decisionNote;
     private CustomerResponseDto customer;
+    private String loanType;
 }
