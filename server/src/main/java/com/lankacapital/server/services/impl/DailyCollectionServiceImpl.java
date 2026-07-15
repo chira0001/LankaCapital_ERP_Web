@@ -161,7 +161,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         collection.setEmployee(employee);
 
         Loan loan = loanRepository
-                .findById(collectionSyncDto.getFileNumber())
+                .findByFileNumber(collectionSyncDto.getFileNumber())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not found")
                 );
@@ -183,7 +183,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         collection.setEmployee(employee);
 
         Loan loan = loanRepository
-                .findById(collectionDto.getFileNumber())
+                .findByFileNumber(collectionDto.getFileNumber())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not found")
                 );
