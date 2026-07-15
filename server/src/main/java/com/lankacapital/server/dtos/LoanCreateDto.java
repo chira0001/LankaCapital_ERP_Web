@@ -13,6 +13,7 @@ public class LoanCreateDto {
     private Double interestRate;
     private BigDecimal documentCharge;
     private Integer numberOfInstallments;
+    private String loanType;
 
     private String customerId;
 

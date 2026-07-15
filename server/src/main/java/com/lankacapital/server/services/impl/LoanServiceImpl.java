@@ -124,31 +124,14 @@ public class LoanServiceImpl implements LoanService {
         }
 
         loan.setCustomer(customer);
-
-        // 4. INSTALLMENT
-//        Installment installment = installmentRepository.findById(dto.getNumberOfInstallments())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Invalid installment value"));
-//
-//        loan.setInstallment(installment);
         loan.setInstallment(dto.getNumberOfInstallments());
-        // 5. EMPLOYEE (logged-in user)
         Employee employee = employeeRepository.findByEmail(username);
         loan.setCreatedEmployee(employee);
-
-        // 6. INTEREST
-//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Interest rate not found"));
-//
-//        loan.setInterestRate(rate);
         loan.setInterestRate(dto.getInterestRate());
-        // 7. STATUS
         loan.setStatus(LoanStatus.PENDING);
 
         loan.setFileNumber(dto.getFileNumber());
 
-        // 8. SAVE
         return loanRepository.save(loan);
     }
 

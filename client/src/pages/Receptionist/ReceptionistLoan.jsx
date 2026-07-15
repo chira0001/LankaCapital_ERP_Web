@@ -43,6 +43,7 @@ const ReceptionistLoan = () => {
         interestRate: '',
         documentCharge: '100',
         numberOfInstallments: '',
+        loanType: "",
         customerId: '',
         name: '',
         email: '',
@@ -59,6 +60,7 @@ const ReceptionistLoan = () => {
             interestRate: '',
             documentCharge: '100',
             numberOfInstallments: '',
+            loanType: "DAILY",
             name: '',
             email: '',
             address: '',
@@ -140,6 +142,8 @@ const ReceptionistLoan = () => {
                 return;
             }
         }
+
+        console.log("Form : ", loanForm)
 
         try {
             const response = await axiosAPI.post('/recep/loans', loanForm);
@@ -353,7 +357,7 @@ const ReceptionistLoan = () => {
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 Rs. {((parseFloat(loan.amount) * loan.interestRate) / 100.0).toLocaleString()}
                                             </td>
-                                            {console.log("Loan : ", loan)}
+
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 {loan.enteredBy.firstName} {loan.enteredBy.lastName}
                                                 <br /> Id : {loan.enteredBy.id}
@@ -399,6 +403,23 @@ const ReceptionistLoan = () => {
                         ""
                     }
                     <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Loan Type <span className='text-red-500'>*</span>
+                            </span>
+                            <select
+                                name="loanType"
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+    focus:outline-none focus:ring-2 focus:ring-blue-500 
+    focus:border-transparent transition-all'
+                                value={loanForm.loanType}
+                                onChange={handleLoanChange}
+                            >
+                                <option value="DAILY">Daily</option>
+                                <option value="WEEKLY">Weekly</option>
+                            </select>
+                        </div>
+
                         <div className='flex flex-col'>
                             <span className='mb-2 text-sm font-medium text-gray-700'>
                                 File Number <span className='text-red-500'>*</span>
@@ -449,28 +470,6 @@ const ReceptionistLoan = () => {
     focus:border-transparent transition-all'
                             />
                         </div>
-
-                        {/* <div className='flex flex-col'>
-                            <span className='mb-2 text-sm font-medium text-gray-700'>
-                                Interest Rate (%) <span className='text-red-500'>*</span>
-                            </span>
-                            <select
-                                name="interestRate"
-                                value={loanForm.interestRate}
-                                onChange={handleLoanChange}
-                                required
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                            >
-                                <option value="">Select Interest Rate</option>
-                                {displayInterestRates?.map((displayInterestRate) => (
-                                    <option key={displayInterestRate.id} value={displayInterestRate.id}>
-                                        {displayInterestRate.rate}%
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
 
                         <div className='flex flex-col'>
                             <span className='mb-2 text-sm font-medium text-gray-700'>

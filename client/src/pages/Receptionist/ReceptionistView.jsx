@@ -618,10 +618,15 @@ const ReceptionistView = () => {
                                         className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
                                         onClick={() => viewLoanDetails(infoDetail.fileNumber)}
                                     >
+                                        {console.log("InfoDet : ", infoDetail)}
                                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                                             <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>File Number</span>
                                                 <span className='text-base font-semibold text-gray-800'>{infoDetail.fileNumber}</span>
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className='text-xs text-gray-500 font-medium uppercase'>Loan Type</span>
+                                                <span className='text-base font-semibold text-gray-800'>{infoDetail.loanType}</span>
                                             </div>
                                             <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>Created At</span>
@@ -859,26 +864,6 @@ const ReceptionistView = () => {
 
                 </div>
             )}
-
-            {/* <style jsx>{`
-                .highlight-loan {
-                    animation: highlight 2s ease-in-out;
-                }
-
-                @keyframes highlight {
-                    0%, 100% {
-                        background: linear-gradient(to right, rgb(249 250 251), white);
-                    }
-                    50% {
-                        background: linear-gradient(to right, rgb(254 249 195), rgb(254 240 138));
-                        transform: scale(1.02);
-                    }
-                }
-
-                .loan-card {
-                    transition: all 0.3s ease;
-                }
-            `}</style> */}
         </div>
     );
 };

@@ -428,7 +428,7 @@ const LoanApplication = () => {
                           Id: {selectedApp.enteredBy?.nic} <br />
                           {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
                         </Info>
-                        {console.log("NIC : ", selectedApp)}
+                        
                         <Info label="Updated By">
                           {selectedApp.updatedBy?.id
                             ? <>
@@ -447,13 +447,11 @@ const LoanApplication = () => {
                             : "Approval Pending"}
                         </Info>
 
-                        {selectedApp.rejectionNote && (
-                          <Info label="Rejection Note">
-                            {selectedApp.rejectionNote}
-                          </Info>
-                        )}
+                        <Info label="Loan Type">
+                          {selectedApp.loanType || "Not available"}
+                        </Info>
 
-                        <div className="col-span-3">
+                        <div className="col-span-2">
                           <Info label="Decision Note">
                             {selectedApp.decisionNote || "Not available"}
                           </Info>

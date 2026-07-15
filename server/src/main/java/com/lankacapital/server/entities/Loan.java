@@ -1,6 +1,7 @@
 package com.lankacapital.server.entities;
 
 import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.enums.RiskLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,9 @@ public class Loan {
 
     @Enumerated(EnumType.STRING)
     private LoanStatus status=LoanStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private LoanType loanType = LoanType.DAILY;
 
     @Column(length = 1000)
     private String decisionNote;
