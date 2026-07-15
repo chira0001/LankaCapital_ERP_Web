@@ -13,7 +13,7 @@ public interface LoanService {
 
     BigDecimal getApprovedLoanTotal();
     Loan addLoan(LoanCreateDto loanCreateDto, String username);
-
+    String fetchLastFileNumber(String loanType);
     CustomerResponseDto getLoansByCustomerId(String id);
 
     Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto);

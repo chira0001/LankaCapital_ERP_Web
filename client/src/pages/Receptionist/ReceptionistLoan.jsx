@@ -8,8 +8,7 @@ const ReceptionistLoan = () => {
     const [searchCustomer, setSearchCustomer] = useState('');
     const [existCustomer, setExistCustomer] = useState(null);
     const [isEmployee, setIsEmployee] = useState(false);
-    // const [displayInstallments, setDisplayInstallments] = useState([]);
-    // const [displayInterestRates, setDisplayInterestRates] = useState([]);
+    const [lastFileNumber, setLastFileNumber] = useState();
 
     const [nic, setNic] = useState();
     const [name, setName] = useState();
@@ -164,6 +163,18 @@ const ReceptionistLoan = () => {
             }
         }
     };
+
+    const fetchlastFileNumber = async (loanType) => {
+        console.log("Type : ", loanType);
+        try {
+            const res = await axiosAPI.get(`/recep/loans/lastFileNumber/${loanType}`);
+            console.log("Result : ", res.data);
+            setLastFileNumber(res.data);
+        } catch (e) {
+            console.log(e);
+        }
+
+    }
 
     const handleLoanChange = (e) => {
         const { name, value } = e.target;
@@ -393,11 +404,22 @@ const ReceptionistLoan = () => {
 
                 <form onSubmit={handleLoanSubmit}>
                     {loanForm.customerId ?
-                        <div className="mb-6 flex items-center gap-3">
-                            <span className="text-md text-gray-500">Customer ID:</span>
-                            <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
-                                {loanForm.customerId}
-                            </span>
+                        <div className='flex justify-between'>
+                            <div className="mb-6 flex items-center gap-3">
+                                <span className="text-md text-gray-500">Customer ID:</span>
+                                <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
+                                    {loanForm.customerId}
+                                </span>
+                            </div>
+                            {lastFileNumber ?
+                                <div className='mb-6 flex items-center gap-3'>
+                                    <span className='text-md text-gray-500'>Last File Number:</span>
+                                    <span className="px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
+                                        {lastFileNumber}
+                                    </span>
+                                </div>
+                                :
+                                ""}
                         </div>
                         :
                         ""
@@ -409,12 +431,16 @@ const ReceptionistLoan = () => {
                             </span>
                             <select
                                 name="loanType"
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-    focus:outline-none focus:ring-2 focus:ring-blue-500 
-    focus:border-transparent transition-all'
                                 value={loanForm.loanType}
-                                onChange={handleLoanChange}
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 
+                       focus:border-transparent transition-all'
+                                onChange={(e) => {
+                                    handleLoanChange(e);
+                                    fetchlastFileNumber(e.target.value);
+                                }}
                             >
+                                <option value="">Select Loan Type</option>
                                 <option value="DAILY">Daily</option>
                                 <option value="WEEKLY">Weekly</option>
                             </select>
@@ -573,29 +599,6 @@ const ReceptionistLoan = () => {
     focus:border-transparent transition-all'
                             />
                         </div>
-
-                        {/* <div className='flex flex-col'>
-                            <span className='mb-2 text-sm font-medium text-gray-700'>
-                                Number of Installments <span className='text-red-500'>*</span>
-                            </span>
-                            <select
-                                name="numberOfInstallments"
-                                value={loanForm.numberOfInstallments}
-                                onChange={handleLoanChange}
-                                required
-                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                       focus:border-transparent transition-all bg-white'
-                            >
-                                <option value="">Select Installments</option>
-                                {displayInstallments?.map((displayInstallment) => (
-                                    <option key={displayInstallment.id} value={displayInstallment.id}>
-                                        {displayInstallment.value} installments
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
-
                     </div>
 
                     {/* New Customer Details Section */}

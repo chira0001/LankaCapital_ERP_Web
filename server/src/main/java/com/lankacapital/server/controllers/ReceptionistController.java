@@ -87,6 +87,14 @@ public class ReceptionistController {
         return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
     }
 
+    @GetMapping("/loans/lastFileNumber/{loanType}")
+    public ResponseEntity<?> fetchLastFileNumber(Authentication authentication, @PathVariable String loanType){
+        if(authentication.getName() == null){
+            return new ResponseEntity<>("Employee cannot be determined", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(loanService.fetchLastFileNumber(loanType), HttpStatus.OK);
+    }
+
     @PostMapping(path = "/loans")
     public ResponseEntity<?> addLoan(@RequestBody LoanCreateDto loanCreateDto, Authentication authentication){
         if(authentication.getName() == null){
