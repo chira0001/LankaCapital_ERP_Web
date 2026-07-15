@@ -1,8 +1,10 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
@@ -37,48 +39,18 @@ public class LoanServiceImpl implements LoanService {
     private final RoleRepository roleRepository;
     private final InterestRateRepository interestRateRepository;
 
-//    @Transactional
-//    @Override
-//    public Loan addLoan(LoanCreateDto loanCreateDto, String username) {
-//        Loan loan = LoanMapper.mapToLoan(loanCreateDto);
-//        Customer customer;
-//        //customer not exists => create new customer
-//        if (!customerRepository.existsById(loanCreateDto.getCustomerId())) {
-//            Customer newCustomer = LoanMapper.mapToCustomer(loanCreateDto);
-//            Role role = roleRepository.findByRoleName("Customer");
-//            newCustomer.setRole(role);
-//            customerRepository.save(newCustomer);
-//        }
-//
-//        if (loanRepository.existsByFileNumber(loan.getFileNumber())) {
-//            throw new ResourceExistException("Loan exists with file number : " + loan.getFileNumber());
-//        }
-//
-//        customer = customerRepository.findByNic(loanCreateDto.getCustomerId());
-//        loan.setCustomer(customer);
-//
-//        Installment installment = installmentRepository.findById(loanCreateDto.getNumberOfInstallments())
-//                .orElseThrow(() -> new ResourceNotFoundException("Invalid installment value"));
-//        loan.setInstallment(installment);
-//
-//        Employee employee = employeeRepository.findByEmail(username);
-//        loan.setEmployee(employee);
-//
-//        InterestRate rate = interestRateRepository.findById(loanCreateDto.getInterestRate())
-//                .orElseThrow(() -> new ResourceNotFoundException("Interest rate not found with id : " + loanCreateDto.getInterestRate()));
-//        loan.setInterestRate(rate);
-//        loan.setStatus(LoanStatus.PENDING);
-//
-//        loan.setFileNumber(loanCreateDto.getFileNumber());
-//        return loanRepository.save(loan);
-//    }
-
+    private boolean isValidUUID(String value) {
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return false;
+        }
+    }
 
     @Transactional
     @Override
     public Loan addLoan(LoanCreateDto dto, String username) {
-
-        // 1. CREATE OR FETCH CUSTOMER
         Customer customer;
 
         if (!customerRepository.existsById(dto.getCustomerId())) {
@@ -103,11 +75,7 @@ public class LoanServiceImpl implements LoanService {
                     .orElseThrow(() ->
                             new ResourceNotFoundException("Customer not found"));
         }
-
-        // 2. CREATE LOAN
         Loan loan = LoanMapper.mapToLoan(dto);
-
-        // 3. DUPLICATE CHECK
         if (loanRepository.existsByFileNumber(dto.getFileNumber())) {
             throw new ResourceExistException(
                     "Loan exists with file number: " + dto.getFileNumber()
@@ -115,37 +83,32 @@ public class LoanServiceImpl implements LoanService {
         }
 
         loan.setCustomer(customer);
-
-        // 4. INSTALLMENT
-//        Installment installment = installmentRepository.findById(dto.getNumberOfInstallments())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Invalid installment value"));
-//
-//        loan.setInstallment(installment);
         loan.setInstallment(dto.getNumberOfInstallments());
-        // 5. EMPLOYEE (logged-in user)
         Employee employee = employeeRepository.findByEmail(username);
         loan.setCreatedEmployee(employee);
-
-        // 6. INTEREST
-//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException("Interest rate not found"));
-//
-//        loan.setInterestRate(rate);
         loan.setInterestRate(dto.getInterestRate());
-        // 7. STATUS
         loan.setStatus(LoanStatus.PENDING);
 
         loan.setFileNumber(dto.getFileNumber());
 
-        // 8. SAVE
         return loanRepository.save(loan);
     }
 
     @Override
+    public String fetchLastFileNumber(String loanType) {
+
+        LoanType type = LoanType.valueOf(loanType.toUpperCase());
+
+        return loanRepository.findByLoanTypeOrderByIdDesc(type)
+                .stream()
+                .filter(loan -> !isValidUUID(loan.getFileNumber()))
+                .map(Loan::getFileNumber)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("File number unable to fetch")); // or return "0" or throw exception
+    }
+
+    @Override
     public CustomerResponseDto getLoansByCustomerId(String id) {
-    //public List<LoanResponseDto> getLoansByCustomerId(String id) {
 
         try {
             Customer customer = customerRepository.findById(id)
@@ -189,13 +152,25 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResponseDto> getAllLoans() {
+    public List<LoanResponseDto> getAllLoans(String username) {
+
+        Employee employee = employeeRepository.findByEmail(username);
+        String role = employee.getRole().getRoleName();
+
         return loanRepository.findAll()
                 .stream()
+                .filter(loan -> {
+                    if ("ADMIN".equals(role)) {
+                        return !isValidUUID(loan.getFileNumber());
+                    }
+                    if ("RECEPTIONIST".equals(role)) {
+                        return isValidUUID(loan.getFileNumber());
+                    }
+                    return false; // other roles see nothing
+                })
                 .map(LoanMapper::mapToLoanResponseDto)
                 .toList();
     }
-
 
     @Override
     public LoanResponseDto getLoan(String fileNumber) {
@@ -267,12 +242,14 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber) {
-
-        System.out.println("279 : " + loanUpdateDto);
+    public LoanResponseDto updateLoan(String username,
+                                      LoanUpdateDto loanUpdateDto,
+                                      String fileNumber) {
 
         Loan loan = loanRepository.findById(fileNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not Found "+fileNumber));
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not Found " + fileNumber));
+
+        Employee employee = employeeRepository.findByEmail(username);
 
         loan.setAmount(loanUpdateDto.getAmount());
         loan.setDecisionNote(loanUpdateDto.getDecisionNote());
@@ -281,15 +258,48 @@ public class LoanServiceImpl implements LoanService {
         loan.setInstallment(loanUpdateDto.getInstallment());
         loan.setStatus(LoanStatus.valueOf(loanUpdateDto.getStatus()));
 
-        if(Objects.equals(loanUpdateDto.getStatus(), LoanStatus.APPROVED.name())){
-            loan.setApprovedEmployee(employeeRepository.findByEmail(username));
+        if (LoanStatus.APPROVED.name().equals(loanUpdateDto.getStatus())) {
+            loan.setApprovedEmployee(employee);
+        } else if (LoanStatus.PENDING.name().equals(loanUpdateDto.getStatus())) {
+            loan.setApprovedEmployee(null);
+            loan.setUpdatedEmployee(employee);
+        } else {
+            loan.setUpdatedEmployee(employee);
         }
 
-        loan.setUpdatedEmployee(employeeRepository.findByEmail(username));
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
 
         return LoanMapper.mapToLoanResponseDto(loanRepository.save(loan));
     }
+
+    @Override
+    public LoanResponseDto recepUpdateLoan(String username,
+                                           RecepLoanUpdateDto dto,
+                                           String fileNumber) {
+
+        Loan loan = loanRepository.findById(fileNumber)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Loan not Found " + fileNumber)
+                );
+
+        Employee employee = employeeRepository.findByEmail(username);
+
+        // ⚠️ Changing ID - only safe if intentional
+        loan.setFileNumber(dto.getFileNumber());
+
+        loan.setDocumentCharge(dto.getDocumentCharge());
+        loan.setInterestRate(dto.getInterestRate());
+        loan.setUpdatedEmployee(employee);
+        loan.setUpdateStatus(
+                loan.getUpdateStatus() == null ? 1 : loan.getUpdateStatus() + 1
+        );
+
+        Loan savedLoan = loanRepository.save(loan);
+
+        return LoanMapper.mapToLoanResponseDto(savedLoan);
+    }
+
+//    Lookup at this ---------------------------------------------------------------------------
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {

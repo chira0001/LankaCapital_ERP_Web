@@ -2,6 +2,7 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.enums.LoanType;
 
 import java.math.BigDecimal;
 
@@ -13,7 +14,7 @@ public class LoanMapper {
         loan.setFileNumber(loanCreateDto.getFileNumber());
         loan.setAmount(loanCreateDto.getLoanAmount());
         loan.setDocumentCharge(loanCreateDto.getDocumentCharge());
-
+        loan.setLoanType(LoanType.valueOf(loanCreateDto.getLoanType()));
         return loan;
     }
 
@@ -25,7 +26,7 @@ public class LoanMapper {
         responseDto.setFileNumber(loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
-
+        responseDto.setLoanType(loan.getLoanType().toString());
         responseDto.setNoOfInstallments(
                 loan.getInstallment() != null
                         ? loan.getInstallment()

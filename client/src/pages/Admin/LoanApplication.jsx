@@ -5,25 +5,6 @@ import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
 import axiosAPI from '@/api/axiosAPI';
 
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue
-// } from '@/component/ui/select';
-
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-// } from '@/component/ui/alert-dialog';
-
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
@@ -36,7 +17,6 @@ const formatLKR = (amount) =>
 
 const LoanApplication = () => {
   const toast = useToast();
-  // const currentEmployeeId = 3;
 
   const [applicationData, setApplicationData] = useState([]);
   const [filteredApps, setFilteredApps] = useState([]);
@@ -188,20 +168,6 @@ const LoanApplication = () => {
         });
       }
 
-      // else if (actionType === 'reset') {
-      //   await axiosAPI.put("/admin/reset", {
-      //     fileNumber: selectedApp.fileNumber,
-      //     employeeId: currentEmployeeId
-      //   });
-      // }
-
-      // else if (actionType === 'complete') {
-      //   await axiosAPI.put("/admin/complete", {
-      //     fileNumber: selectedApp.fileNumber,
-      //     employeeId: currentEmployeeId
-      //   });
-      // }
-
       await fetchApplications();
 
       toast({
@@ -260,7 +226,6 @@ const LoanApplication = () => {
 
   const handleUpdateLoan = async () => {
     try {
-      console.log("Update Loan : ", loanUpdatePayload)
       await axiosAPI.put(
         `/admin/loans/${selectedApp.fileNumber}`,
         loanUpdatePayload
@@ -271,8 +236,21 @@ const LoanApplication = () => {
         description: "Loan updated successfully"
       });
 
+      const res = await axiosAPI.get("/admin/loans");
+      const updatedData = res.data;
+
+      setApplicationData(updatedData);
+      setFilteredApps(applyFilters(updatedData, filters));
+
+      const updatedLoan = updatedData.find(
+        (loan) => loan.fileNumber === selectedApp.fileNumber
+      );
+
+      if (updatedLoan) {
+        setSelectedApp(updatedLoan);
+      }
+
       setIsEdit(false);
-      await fetchApplications();
 
     } catch (error) {
       console.error("Update failed:", error);
@@ -442,38 +420,42 @@ const LoanApplication = () => {
                           {selectedApp.interestRate}%
                         </Info>
 
-                        <Info label="Decision Note">
-                          {selectedApp.decisionNote || "Not available"}
+                        <Info label="Status">
+                          {selectedApp.status || "Not available"}
                         </Info>
 
                         <Info label="Entered By">
-                          Id: {selectedApp.enteredBy?.id} <br />
+                          Id: {selectedApp.enteredBy?.nic} <br />
                           {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
                         </Info>
-
-                        <Info label="Approved By">
-                          {selectedApp.approvedBy?.id
-                            ? <>
-                              Id: {selectedApp.approvedBy.id} <br />
-                              {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
-                            </>
-                            : "Approval Pending"}
-                        </Info>
-
+                        
                         <Info label="Updated By">
                           {selectedApp.updatedBy?.id
                             ? <>
-                              Id: {selectedApp.updatedBy.id} <br />
+                              Id: {selectedApp.updatedBy.nic} <br />
                               {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
                             </>
                             : "No updates made"}
                         </Info>
 
-                        {selectedApp.rejectionNote && (
-                          <Info label="Rejection Note">
-                            {selectedApp.rejectionNote}
+                        <Info label="Approved By">
+                          {selectedApp.approvedBy?.id
+                            ? <>
+                              Id: {selectedApp.approvedBy.nic} <br />
+                              {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
+                            </>
+                            : "Approval Pending"}
+                        </Info>
+
+                        <Info label="Loan Type">
+                          {selectedApp.loanType || "Not available"}
+                        </Info>
+
+                        <div className="col-span-2">
+                          <Info label="Decision Note">
+                            {selectedApp.decisionNote || "Not available"}
                           </Info>
-                        )}
+                        </div>
 
                       </div>
                     </div>
@@ -516,7 +498,6 @@ const LoanApplication = () => {
                   </div>
                 </div>
               </div>
-
             )}
             {isEdit && (
               <div
@@ -542,8 +523,7 @@ const LoanApplication = () => {
                   </h2>
 
                   <div className="space-y-4">
-                    {console.log("Payload : ", loanUpdatePayload)}
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Loan Amount</Label>
                       <Input
                         type="number"
@@ -557,7 +537,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Document Charge</Label>
                       <Input
                         type="number"
@@ -571,7 +551,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Interest Rate (%)</Label>
                       <Input
                         type="number"
@@ -585,7 +565,7 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Installments</Label>
                       <Input
                         type="number"
@@ -599,9 +579,12 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Status</Label>
                       <select
+                        className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
+           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
+           disabled:opacity-50"
                         value={loanUpdatePayload.status}
                         onChange={(e) =>
                           setLoanUpdatePayload({
@@ -613,11 +596,11 @@ const LoanApplication = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED">REJECTED</option>
-                        <option value="COMPLETED">COMPLETED</option>
+                        {/* <option value="COMPLETED">COMPLETED</option> */}
                       </select>
                     </div>
 
-                    <div>
+                    <div className='flex flex-col gap-2'>
                       <Label>Decision Note (Optional)</Label>
                       <Textarea
                         value={loanUpdatePayload.decisionNote}
@@ -654,37 +637,6 @@ const LoanApplication = () => {
           </div>
         </div>
       </div>
-
-      {/* ALERT DIALOG
-      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType?.toUpperCase()} LOAN
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to {actionType} this loan?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {actionType === 'approve' && (
-            <div className="my-4">
-              <Label>Decision Note</Label>
-              <Textarea
-                value={decisionNote}
-                onChange={(e) => setDecisionNote(e.target.value)}
-              />
-            </div>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmAction}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog> */}
     </>
   );
 };

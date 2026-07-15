@@ -85,8 +85,8 @@ public class AdminController {
 
 
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans() {
-        return ResponseEntity.ok(loanService.getAllLoans());
+    public ResponseEntity<?> getAllLoans(Authentication authentication) {
+        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
     }
 
     @GetMapping("/loans/customer/{id}")
