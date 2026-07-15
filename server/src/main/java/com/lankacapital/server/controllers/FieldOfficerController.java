@@ -20,9 +20,7 @@ import java.util.List;
 public class FieldOfficerController {
     private final LoanService loanService;
     private final CustomerService customerService;
-    private final InstallmentService installmentService;
     private final EmployeeService employeeService;
-    private final InterestRateService interestRateService;
     private final DailyCollectionService dailyCollectionService;
 
     @PostMapping(path = "/customers/loans")

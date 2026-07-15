@@ -13,6 +13,6 @@ public class CustomerAddDto {
     private String phoneNumber;
 
     private BigDecimal loanAmount;
-    private Integer installmentId;
+    private Integer installment;
     private Long employeeId;
 }

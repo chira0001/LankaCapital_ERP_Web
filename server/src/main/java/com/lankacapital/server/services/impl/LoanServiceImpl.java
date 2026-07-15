@@ -182,7 +182,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setCustomer(customer);
         loan.setAmount(loanCreateDto.getAmount());
         loan.setCreatedEmployee(employee);
-        loan.setInstallment(loanCreateDto.getInstallmentId());
+        loan.setInstallment(loanCreateDto.getInstallment());
         loan.setCreatedAt(loanCreateDto.getCreatedAt());
 
         return loanRepository.save(loan);
@@ -362,7 +362,7 @@ public class LoanServiceImpl implements LoanService {
         }
         Loan loan = new Loan();
 
-        loan.setInstallment(customerAddDto.getInstallmentId());
+        loan.setInstallment(customerAddDto.getInstallment());
 
         Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + customerAddDto.getEmployeeId()));
