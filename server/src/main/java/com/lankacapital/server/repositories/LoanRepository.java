@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LoanRepository extends JpaRepository<Loan, String> {
+public interface LoanRepository extends JpaRepository<Loan, Long> {
     List<Loan> findAllByCustomer(Customer customer);
     Boolean existsByFileNumber(String fileNumber);
     Optional<Loan> findByFileNumber(String fileNumber);

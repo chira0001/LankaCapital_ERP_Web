@@ -618,7 +618,6 @@ const ReceptionistView = () => {
                                         className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
                                         onClick={() => viewLoanDetails(infoDetail.fileNumber)}
                                     >
-                                        {console.log("InfoDet : ", infoDetail)}
                                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                                             <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>File Number</span>
