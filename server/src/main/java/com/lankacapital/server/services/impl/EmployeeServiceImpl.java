@@ -63,7 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Employee addNewEmployee(EmployeeAddDto dto) {
+    public Employee addNewEmployee(String username, EmployeeAddDto dto) {
 
         if (employeeRepository.existsByNic(dto.getNic())) {
             throw new ResourceExistException("Employee already registered with id : " + dto.getNic());
@@ -76,6 +76,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         newEmployee.setRole(role);
         newEmployee.setPassword(passwordEncoder.encode("1234567"));
+        newEmployee.setCreatedEmployee(employeeRepository.findByEmail(username));
 
         return employeeRepository.save(newEmployee);
     }
@@ -150,11 +151,11 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .toList();
     }
 
-    public EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto) {
+    public EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto) {
 
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
 
         employee.setNic(dto.getNic());
         employee.setFirstName(dto.getFirstName());
@@ -163,11 +164,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setAddress(dto.getAddress());
         employee.setPhoneNumber(dto.getPhoneNumber());
         employee.setBasicSalary(dto.getBasicSalary());
-
+        employee.setUpdateStatus(employee.getUpdateStatus() + 1);
+        employee.setUpdatedEmployee(employeeRepository.findByEmail(username));
         if (dto.getRole() != null) {
-
             Role role = roleRepository.findByRoleName(dto.getRole());
-
             if (role != null) {
                 employee.setRole(role);
             }

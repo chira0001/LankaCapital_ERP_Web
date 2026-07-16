@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { UserPlus, X } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
-import axios from "axios";
 import axiosAPI from "@/api/axiosAPI";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -26,6 +26,7 @@ const UserManagementPage = () => {
     roleId: "",
     address: "",
     phoneNumber: "",
+    basicSalary: ""
   });
 
   const fetchUsers = async () => {
@@ -56,11 +57,7 @@ const UserManagementPage = () => {
 
   const handleCreateUser = async () => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/employee`,
-        newUser
-      );
-
+      await axiosAPI.post("/admin/employee", newUser);
       toast.success("User created successfully");
 
       setNewUser({
@@ -71,6 +68,7 @@ const UserManagementPage = () => {
         roleId: "",
         address: "",
         phoneNumber: "",
+        basicSalary: ""
       });
 
       setShowAddForm(false);
@@ -94,6 +92,28 @@ const UserManagementPage = () => {
       toast.error("Update failed");
     }
   }
+
+  const deleteUser = async (employeeId) => {
+    try {
+      setDeleting(true);
+
+      await axiosAPI.post(`/admin/employees/delete/${employeeId}`);
+
+      toast.success("User deleted successfully");
+
+      setOpenModal(false);
+      setSelecetedEmployee(null);
+
+      // Optimistically update UI (no need to refetch immediately)
+      setUsers((prev) => prev.filter((u) => u.id !== employeeId));
+
+    } catch (e) {
+      console.error(e);
+      toast.error("User not deleted");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -153,12 +173,19 @@ const UserManagementPage = () => {
                   }
                   className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                  <option value="">Select Role</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.roleName}
-                    </option>
-                  ))}
+                  <option value="" hidden>
+                    Select user role
+                  </option>
+
+                  {roles.map((r) => {
+                    if (r.roleName === "CUSTOMER") return null;
+
+                    return (
+                      <option key={r.id} value={r.id}>
+                        {r.roleName === "FO" ? "FIELD OFFICER" : r.roleName}
+                      </option>
+                    );
+                  })}
                 </select>
               )
             )}
@@ -303,7 +330,7 @@ const UserManagementPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 text-right">
+            <div className="flex gap-3 right-0 mt-6 text-right">
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => {
@@ -312,6 +339,14 @@ const UserManagementPage = () => {
                 }}
               >
                 Edit
+              </Button>
+
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleting}
+                onClick={() => deleteUser(selectedEmployee.id)}
+              >
+                {deleting ? "Deleting..." : "Delete"}
               </Button>
             </div>
           </div>

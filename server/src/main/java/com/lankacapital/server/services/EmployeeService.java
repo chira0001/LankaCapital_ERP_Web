@@ -14,7 +14,7 @@ public interface EmployeeService {
 
     UserDetailsService userDetailsService();
 
-    Employee addNewEmployee(EmployeeAddDto dto);
+    Employee addNewEmployee(String username, EmployeeAddDto dto);
     List<EmployeeResponseDto> getAllEmployees(String username);
     
     EmployeeResponseDto getEmployeeDetailByUsername(String username);
@@ -24,7 +24,7 @@ public interface EmployeeService {
 
     List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList);
 
-    EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto);
+    EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto);
 
     void deleteEmployee(Long id);
     

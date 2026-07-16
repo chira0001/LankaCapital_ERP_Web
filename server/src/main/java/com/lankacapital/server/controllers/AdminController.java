@@ -70,8 +70,9 @@ public class AdminController {
     }
 
     @PostMapping(path = "/employee")
-    public ResponseEntity<?> addNewEmployee(@RequestBody EmployeeAddDto dto){
-        Employee newEmployee = employeeService.addNewEmployee(dto);
+    public ResponseEntity<?> addNewEmployee(Authentication authentication,
+                                            @RequestBody EmployeeAddDto dto){
+        Employee newEmployee = employeeService.addNewEmployee(authentication.getName(), dto);
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
@@ -82,20 +83,21 @@ public class AdminController {
 
     @PutMapping("/employees/{id}")
     public ResponseEntity<?> updateEmployee(
+            Authentication authentication,
             @PathVariable Long id,
             @RequestBody EmployeeResponseDto dto
     ) {
 
         return ResponseEntity.ok(
-                employeeService.updateEmployee(id, dto)
+                employeeService.updateEmployee(authentication.getName(),id, dto)
         );
     }
 
-    @DeleteMapping("/employee/{id}")
+    @PostMapping("/employees/delete/{id}")
     public ResponseEntity<?> deleteEmployee(
+            Authentication authentication,
             @PathVariable Long id
     ) {
-
         employeeService.deleteEmployee(id);
 
         return ResponseEntity.ok("Employee deleted successfully");
