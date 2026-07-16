@@ -17,6 +17,7 @@ import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -79,8 +81,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeResponseDto> getAllEmployees() {
+    @Transactional
+    public List<EmployeeResponseDto> getAllEmployees(String username) {
         List<Employee> employeeList = employeeRepository.findAll();
+        employeeList.remove(employeeRepository.findByEmail(username));
         return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
     }
 
@@ -158,6 +162,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmail(dto.getEmail());
         employee.setAddress(dto.getAddress());
         employee.setPhoneNumber(dto.getPhoneNumber());
+        employee.setBasicSalary(dto.getBasicSalary());
 
         if (dto.getRole() != null) {
 

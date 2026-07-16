@@ -173,7 +173,6 @@ const ReceptionistLoan = () => {
         } catch (e) {
             console.log(e);
         }
-
     }
 
     const handleLoanChange = (e) => {

@@ -15,7 +15,7 @@ public interface EmployeeService {
     UserDetailsService userDetailsService();
 
     Employee addNewEmployee(EmployeeAddDto dto);
-    List<EmployeeResponseDto> getAllEmployees();
+    List<EmployeeResponseDto> getAllEmployees(String username);
     
     EmployeeResponseDto getEmployeeDetailByUsername(String username);
     String updatePasswordByUsername(String username, PasswordRequestDto dto);

@@ -13,7 +13,9 @@ const ReceptionistHome = () => {
     const [submitting, setSubmitting] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [selectedPendingLoan, setSelectedPendingLoan] = useState(null);
-    
+    const [lastFileNumber, setLastFileNumber] = useState();
+
+
     const [pendingLoanUpdatePayload, setPendingLoanUpdatePayload] = useState({
         fileNumber: "",
         documentCharge: "",
@@ -23,6 +25,17 @@ const ReceptionistHome = () => {
     useEffect(() => {
         fetchPendingLoans();
     }, []);
+
+    const fetchlastFileNumber = async (loanType) => {
+        try {
+            setLoading(true);
+            const res = await axiosAPI.get(`/recep/loans/lastFileNumber/${loanType}`);
+            setLastFileNumber(res.data);
+            setLoading(false);
+        } catch (e) {
+            console.log(e);
+        }
+    }
 
     const fetchPendingLoans = async () => {
         try {
@@ -79,7 +92,7 @@ const ReceptionistHome = () => {
             toast.success("Loan successfully updated and assigned!");
             handleCloseModal();
             await fetchPendingLoans(); // Refresh the list
-            
+
         } catch (e) {
             console.error(e);
             toast.error(e.response?.data?.message || "Failed to update loan");
@@ -113,7 +126,7 @@ const ReceptionistHome = () => {
 
             {/* ================= MAIN GRID ================= */}
             <div className="grid lg:grid-cols-3 gap-6 flex-1">
-                
+
                 {/* ================= LOAN APPLICATIONS ================= */}
                 <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
                     <div className="flex justify-between items-center p-6 border-b bg-gray-50">
@@ -141,7 +154,10 @@ const ReceptionistHome = () => {
                                     <div
                                         key={index}
                                         className="flex flex-col md:flex-row md:justify-between md:items-center border border-gray-200 p-4 rounded-xl hover:shadow-md hover:border-blue-300 transition-all cursor-pointer bg-white group"
-                                        onClick={() => handleOpenModal(loan)}
+                                        onClick={() => {
+                                            handleOpenModal(loan);
+                                            fetchlastFileNumber(loan.loanType);
+                                        }}
                                     >
                                         <div className="flex flex-col gap-1 mb-3 md:mb-0">
                                             <p className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
@@ -185,117 +201,136 @@ const ReceptionistHome = () => {
             </div>
 
             {/* ================= UPDATE LOAN MODAL ================= */}
-            {showModal && selectedPendingLoan && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-in-out]">
-                        
-                        {/* Modal Header */}
-                        <div className="flex justify-between items-center p-6 border-b bg-gray-50">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-800">Process Loan Application</h2>
-                                <p className="text-sm text-gray-500 mt-1">Review details and assign file parameters</p>
-                            </div>
-                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-red-500 transition-colors">
-                                <XCircle className="w-7 h-7" />
-                            </button>
-                        </div>
+            {
+                showModal && selectedPendingLoan && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                        <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[fadeIn_0.2s_ease-in-out]">
 
-                        {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            
-                            {/* Left Column: Read-only Info */}
-                            <div className="space-y-6">
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center p-6 border-b bg-gray-50">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Customer Information</h3>
-                                    <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-100">
-                                        <InfoRow label="Name" value={selectedPendingLoan.customer?.name} />
-                                        <InfoRow label="NIC" value={selectedPendingLoan.customer?.nic} />
-                                        <InfoRow label="Phone" value={selectedPendingLoan.customer?.phoneNumber} />
-                                        <InfoRow label="Address" value={selectedPendingLoan.customer?.address} />
-                                        {selectedPendingLoan.customer?.email && <InfoRow label="Email" value={selectedPendingLoan.customer?.email} />}
+                                    <h2 className="text-xl font-bold text-gray-800">Process Loan Application</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Review details and assign file parameters</p>
+                                </div>
+                                <button onClick={handleCloseModal} className="text-gray-400 hover:text-red-500 transition-colors">
+                                    <XCircle className="w-7 h-7" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                                {/* Left Column: Read-only Info */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Customer Information</h3>
+                                        <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-100">
+                                            <InfoRow label="Name" value={selectedPendingLoan.customer?.name} />
+                                            <InfoRow label="NIC" value={selectedPendingLoan.customer?.nic} />
+                                            <InfoRow label="Phone" value={selectedPendingLoan.customer?.phoneNumber} />
+                                            <InfoRow label="Address" value={selectedPendingLoan.customer?.address} />
+                                            {selectedPendingLoan.customer?.email && <InfoRow label="Email" value={selectedPendingLoan.customer?.email} />}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Loan Details</h3>
+                                        <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
+                                            <InfoRow label="Requested Amount" value={`LKR. ${parseFloat(selectedPendingLoan.amount || 0).toLocaleString()}`} highlight />
+                                            <InfoRow label="Installments" value={selectedPendingLoan.noOfInstallments} />
+                                            <InfoRow label="Applied Date" value={new Date(selectedPendingLoan.createdAt).toLocaleDateString('en-GB')} />
+                                        </div>
                                     </div>
                                 </div>
 
+                                {/* Right Column: Editable Form */}
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Loan Details</h3>
-                                    <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
-                                        <InfoRow label="Requested Amount" value={`LKR. ${parseFloat(selectedPendingLoan.amount || 0).toLocaleString()}`} highlight />
-                                        <InfoRow label="Installments" value={selectedPendingLoan.noOfInstallments} />
-                                        <InfoRow label="Applied Date" value={new Date(selectedPendingLoan.createdAt).toLocaleDateString('en-GB')} />
+                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Assign Parameters</h3>
+                                    <div className="space-y-5">
+                                        {loading ?
+                                            <div className='mb-6 flex items-center gap-3'>
+                                                <span className='text-md text-gray-500'>Fetching last file number...</span>
+                                                <div className="flex items-center justify-center">
+                                                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                </div>
+                                            </div>
+                                            :
+                                            lastFileNumber ?
+                                                <div className='mb-6 flex items-center gap-3'>
+                                                    <span className='text-md text-gray-500'>Last File Number:</span>
+                                                    <span className="px-3 py-1 bg-linear-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
+                                                        {lastFileNumber}
+                                                    </span>
+                                                </div>
+                                                :
+                                                ""}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">File Number <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                name="fileNumber"
+                                                value={pendingLoanUpdatePayload.fileNumber}
+                                                onChange={handleInputChange}
+                                                placeholder="e.g., LN-2023-001"
+                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Document Charges (LKR)</label>
+                                            <input
+                                                type="number"
+                                                name="documentCharge"
+                                                value={pendingLoanUpdatePayload.documentCharge}
+                                                onChange={handleInputChange}
+                                                placeholder="e.g., 100"
+                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Interest Rate (%)</label>
+                                            <input
+                                                type="number"
+                                                name="interestRate"
+                                                value={pendingLoanUpdatePayload.interestRate}
+                                                onChange={handleInputChange}
+                                                placeholder="e.g., 12.5"
+                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Right Column: Editable Form */}
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Assign Parameters</h3>
-                                <div className="space-y-5">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">File Number <span className="text-red-500">*</span></label>
-                                        <input
-                                            type="text"
-                                            name="fileNumber"
-                                            value={pendingLoanUpdatePayload.fileNumber}
-                                            onChange={handleInputChange}
-                                            placeholder="e.g., LN-2023-001"
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Document Charges (LKR)</label>
-                                        <input
-                                            type="number"
-                                            name="documentCharge"
-                                            value={pendingLoanUpdatePayload.documentCharge}
-                                            onChange={handleInputChange}
-                                            placeholder="e.g., 2500"
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">Interest Rate (%)</label>
-                                        <input
-                                            type="number"
-                                            name="interestRate"
-                                            value={pendingLoanUpdatePayload.interestRate}
-                                            onChange={handleInputChange}
-                                            placeholder="e.g., 12.5"
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                        />
-                                    </div>
-                                </div>
+                            {/* Modal Footer */}
+                            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={updatePendingLoan}
+                                    disabled={submitting}
+                                    className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        "Update & Assign Loan"
+                                    )}
+                                </button>
                             </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-                            <button 
-                                onClick={handleCloseModal}
-                                className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={updatePendingLoan}
-                                disabled={submitting}
-                                className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {submitting ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Processing...
-                                    </>
-                                ) : (
-                                    "Update & Assign Loan"
-                                )}
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
