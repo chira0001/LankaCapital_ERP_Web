@@ -70,19 +70,38 @@ public class AdminController {
     }
 
     @PostMapping(path = "/employee")
-    public ResponseEntity<?> addNewEmployee(@RequestBody EmployeeAddDto dto){
-        Employee newEmployee = employeeService.addNewEmployee(dto);
+    public ResponseEntity<?> addNewEmployee(Authentication authentication,
+                                            @RequestBody EmployeeAddDto dto){
+        Employee newEmployee = employeeService.addNewEmployee(authentication.getName(), dto);
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
-    @GetMapping("/employee")
-    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees() {
+    @GetMapping("/employees")
+    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees(Authentication authentication) {
+        return ResponseEntity.ok(employeeService.getAllEmployees(authentication.getName()));
+    }
+
+    @PutMapping("/employees/{id}")
+    public ResponseEntity<?> updateEmployee(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody EmployeeResponseDto dto
+    ) {
 
         return ResponseEntity.ok(
-                employeeService.getAllEmployees()
+                employeeService.updateEmployee(authentication.getName(),id, dto)
         );
     }
 
+    @PostMapping("/employees/delete/{id}")
+    public ResponseEntity<?> deleteEmployee(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        employeeService.deleteEmployee(id);
+
+        return ResponseEntity.ok("Employee deleted successfully");
+    }
 
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans(Authentication authentication) {
@@ -418,26 +437,7 @@ public class AdminController {
     }
 
 
-    @PutMapping("/employee/{id}")
-    public ResponseEntity<?> updateEmployee(
-            @PathVariable Long id,
-            @RequestBody EmployeeResponseDto dto
-    ) {
 
-        return ResponseEntity.ok(
-                employeeService.updateEmployee(id, dto)
-        );
-    }
-
-    @DeleteMapping("/employee/{id}")
-    public ResponseEntity<?> deleteEmployee(
-            @PathVariable Long id
-    ) {
-
-        employeeService.deleteEmployee(id);
-
-        return ResponseEntity.ok("Employee deleted successfully");
-    }
 
     @GetMapping("/financial-dashboard/summary")
     public ResponseEntity<FinancialDashboardDto> getFinancialDashboard() {

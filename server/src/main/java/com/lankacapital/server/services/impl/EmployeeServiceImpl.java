@@ -17,6 +17,7 @@ import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.EmployeeService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -61,7 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Employee addNewEmployee(EmployeeAddDto dto) {
+    public Employee addNewEmployee(String username, EmployeeAddDto dto) {
 
         if (employeeRepository.existsByNic(dto.getNic())) {
             throw new ResourceExistException("Employee already registered with id : " + dto.getNic());
@@ -74,13 +76,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         newEmployee.setRole(role);
         newEmployee.setPassword(passwordEncoder.encode("1234567"));
+        newEmployee.setCreatedEmployee(employeeRepository.findByEmail(username));
 
         return employeeRepository.save(newEmployee);
     }
 
     @Override
-    public List<EmployeeResponseDto> getAllEmployees() {
+    @Transactional
+    public List<EmployeeResponseDto> getAllEmployees(String username) {
         List<Employee> employeeList = employeeRepository.findAll();
+        employeeList.remove(employeeRepository.findByEmail(username));
         return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
     }
 
@@ -146,11 +151,11 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .toList();
     }
 
-    public EmployeeResponseDto updateEmployee(Long id, EmployeeResponseDto dto) {
+    public EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto) {
 
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
 
         employee.setNic(dto.getNic());
         employee.setFirstName(dto.getFirstName());
@@ -158,11 +163,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmail(dto.getEmail());
         employee.setAddress(dto.getAddress());
         employee.setPhoneNumber(dto.getPhoneNumber());
-
+        employee.setBasicSalary(dto.getBasicSalary());
+        employee.setUpdateStatus(employee.getUpdateStatus() + 1);
+        employee.setUpdatedEmployee(employeeRepository.findByEmail(username));
         if (dto.getRole() != null) {
-
             Role role = roleRepository.findByRoleName(dto.getRole());
-
             if (role != null) {
                 employee.setRole(role);
             }

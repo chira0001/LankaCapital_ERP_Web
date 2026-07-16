@@ -25,15 +25,6 @@ const ReceptionistSalary = () => {
         loans: "",
         salaryAdvance: ""
     });
-    // const handleSalaryChange = (employeeId, field, value) => {
-    //     setEmployeeSalaries(prev => ({
-    //         ...prev,
-    //         [employeeId]: {
-    //             ...prev[employeeId],
-    //             [field]: value || 0
-    //         }
-    //     }));
-    // };
 
     const handleSalaryChange = (employeeId, field, value) => {
 
@@ -201,24 +192,23 @@ const ReceptionistSalary = () => {
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-gray-200 text-center">
+                        <tbody className="divide-y divide-gray-200">
                             {employees.map((employee, index) => (
                                 <tr
                                     key={employee.id}
                                     className="hover:bg-blue-50 transition-colors"
                                 >
                                     <td className="px-6 py-4 text-sm text-gray-500">
-                                        {index + 1}
+                                        {employee.id}
                                     </td>
 
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">
                                         {employee.firstName} {employee.lastName}
                                     </td>
-
                                     <td className="px-6 py-4 text-sm text-gray-600">
-                                        {employee.role.roleName === "FO"
+                                        {employee.role === "FO"
                                             ? "Field Officer"
-                                            : toSentenceCase(employee.role.roleName)}
+                                            : toSentenceCase(employee.role)}
                                     </td>
 
                                     {/* Standardized Input Style */}

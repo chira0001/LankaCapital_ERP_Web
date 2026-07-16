@@ -173,7 +173,6 @@ const ReceptionistLoan = () => {
         } catch (e) {
             console.log(e);
         }
-
     }
 
     const handleLoanChange = (e) => {
@@ -414,7 +413,7 @@ const ReceptionistLoan = () => {
                             {lastFileNumber ?
                                 <div className='mb-6 flex items-center gap-3'>
                                     <span className='text-md text-gray-500'>Last File Number:</span>
-                                    <span className="px-3 py-1 bg-gradient-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
+                                    <span className="px-3 py-1 bg-linear-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
                                         {lastFileNumber}
                                     </span>
                                 </div>
