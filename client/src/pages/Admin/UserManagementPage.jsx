@@ -8,6 +8,7 @@ const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const [openModal, setOpenModal] = useState(false);
@@ -57,9 +58,19 @@ const UserManagementPage = () => {
 
   const handleCreateUser = async () => {
     try {
-      await axiosAPI.post("/admin/employee", newUser);
+      // Basic validation (minimal, non-breaking)
+      if (!newUser.nic || !newUser.firstName || !newUser.email || !newUser.roleId) {
+        toast.error("Please fill required fields");
+        return;
+      }
+
+      setCreating(true);
+
+      const res = await axiosAPI.post("/admin/employee", newUser);
+
       toast.success("User created successfully");
 
+      setUsers((prev) => [...prev, res.data]);
       setNewUser({
         nic: "",
         firstName: "",
@@ -72,9 +83,13 @@ const UserManagementPage = () => {
       });
 
       setShowAddForm(false);
-      fetchUsers();
+      fetchUsers()
+
     } catch (error) {
+      console.error(error);
       toast.error("Create failed");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -193,6 +208,7 @@ const UserManagementPage = () => {
 
           <div className="mt-4 flex justify-end gap-3">
             <Button
+              className="border border-gray-400"
               variant="ghost"
               onClick={() => setShowAddForm(false)}
             >
@@ -201,8 +217,9 @@ const UserManagementPage = () => {
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleCreateUser}
+              disabled={creating}
             >
-              Create User
+              {creating ? "Creating..." : "Create User"}
             </Button>
           </div>
         </div>
