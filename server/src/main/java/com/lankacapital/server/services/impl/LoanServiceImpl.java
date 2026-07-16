@@ -289,9 +289,16 @@ public class LoanServiceImpl implements LoanService {
                         new ResourceNotFoundException("Loan not Found " + fileNumber)
                 );
 
+        if(isValidUUID(dto.getFileNumber())){
+            throw new ResourceExistException("Please assign a file number");
+        }
+
+        if(loanRepository.existsByFileNumber(dto.getFileNumber())){
+            throw new ResourceExistException("Loan number already exists. Increment by one");
+        }
+        
         Employee employee = employeeRepository.findByEmail(username);
 
-        // ⚠️ Changing ID - only safe if intentional
         loan.setFileNumber(dto.getFileNumber());
 
         loan.setDocumentCharge(dto.getDocumentCharge());

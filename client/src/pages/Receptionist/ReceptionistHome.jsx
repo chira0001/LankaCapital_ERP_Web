@@ -80,6 +80,14 @@ const ReceptionistHome = () => {
             toast.error("File Number is required to assign the loan.");
             return;
         }
+        if (!pendingLoanUpdatePayload.documentCharge.trim()) {
+            toast.error("Document charge is required to assign the loan.");
+            return;
+        }
+        if (!pendingLoanUpdatePayload.interestRate.trim()) {
+            toast.error("Interest rate is required to assign the loan.");
+            return;
+        }
 
         try {
             setSubmitting(true);
@@ -277,7 +285,7 @@ const ReceptionistHome = () => {
                                         </div>
 
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Document Charges (LKR)</label>
+                                            <label className="text-sm font-semibold text-gray-700">Document Charges (LKR)<span className="text-red-500">*</span></label>
                                             <input
                                                 type="number"
                                                 name="documentCharge"
@@ -289,7 +297,7 @@ const ReceptionistHome = () => {
                                         </div>
 
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Interest Rate (%)</label>
+                                            <label className="text-sm font-semibold text-gray-700">Interest Rate (%)<span className="text-red-500">*</span></label>
                                             <input
                                                 type="number"
                                                 name="interestRate"
