@@ -55,6 +55,14 @@ public class Employee implements UserDetails {
 
     private Long updateStatus = 0L;
 
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private Employee createdEmployee;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private Employee updatedEmployee;
+
     @Column(nullable = false)
     private String accountStatus = "Active";
 

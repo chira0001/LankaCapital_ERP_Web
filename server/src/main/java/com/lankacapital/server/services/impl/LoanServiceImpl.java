@@ -182,7 +182,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public LoanResponseDto getLoan(String fileNumber) {
 
-        Loan loan = loanRepository.findById(fileNumber)
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not found: " + fileNumber));
 
@@ -193,7 +193,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public Loan approveLoan(LoanActionDto dto) {
         //find loan from DB
-        Loan loan = loanRepository.findById(dto.getFileNumber())
+        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
 
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
@@ -214,7 +214,7 @@ public class LoanServiceImpl implements LoanService {
     @Transactional
     @Override
     public Loan rejectLoan(LoanActionDto dto) {
-        Loan loan = loanRepository.findById(dto.getFileNumber())
+        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found:" + dto.getFileNumber()));
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
@@ -253,7 +253,7 @@ public class LoanServiceImpl implements LoanService {
                                       LoanUpdateDto loanUpdateDto,
                                       String fileNumber) {
 
-        Loan loan = loanRepository.findById(fileNumber)
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not Found " + fileNumber));
 
         Employee employee = employeeRepository.findByEmail(username);
@@ -284,14 +284,21 @@ public class LoanServiceImpl implements LoanService {
                                            RecepLoanUpdateDto dto,
                                            String fileNumber) {
 
-        Loan loan = loanRepository.findById(fileNumber)
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not Found " + fileNumber)
                 );
 
+        if(isValidUUID(dto.getFileNumber())){
+            throw new ResourceExistException("Please assign a file number");
+        }
+
+        if(loanRepository.existsByFileNumber(dto.getFileNumber())){
+            throw new ResourceExistException("Loan number already exists. Increment by one");
+        }
+        
         Employee employee = employeeRepository.findByEmail(username);
 
-        // ⚠️ Changing ID - only safe if intentional
         loan.setFileNumber(dto.getFileNumber());
 
         loan.setDocumentCharge(dto.getDocumentCharge());
@@ -310,7 +317,7 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
-        Loan loan=loanRepository.findById(dto.getFileNumber())
+        Loan loan=loanRepository.findByFileNumber(dto.getFileNumber())
                 .orElseThrow(()->new ResourceNotFoundException("Loan not Found"+dto.getFileNumber()));
 
 //        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
@@ -324,14 +331,14 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponseDto getInterest(String fileNumber) {
-        Loan loan=loanRepository.findById(fileNumber)
+        Loan loan=loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
         return LoanMapper.mapToLoanResponseDto(loan);
     }
 
     @Override
     public LoanResponseDto resetInterest(String fileNumber) {
-        Loan loan = loanRepository.findById(fileNumber)
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(()->new ResourceNotFoundException("Loan not founded:"+fileNumber));
 //        loan.setInterestRate(0.0);
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);

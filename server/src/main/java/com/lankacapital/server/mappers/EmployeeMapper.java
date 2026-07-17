@@ -39,10 +39,10 @@ public class EmployeeMapper {
                         ? employee.getRole().getRoleName()
                         : null
         );
-        //dto.setRole(employee.getRole());
         dto.setAddress(employee.getAddress());
         dto.setPhoneNumber(employee.getPhoneNumber());
         dto.setBasicSalary(employee.getBasicSalary());
+        dto.setAccountStatus(employee.getAccountStatus());
 
         return dto;
     }

@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { UserPlus, Trash2, Edit } from 'lucide-react';
-import { Button } from '@/component/ui/button';
+import React, { useState, useEffect } from "react";
+import { UserPlus, X } from "lucide-react";
+import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
+import axiosAPI from "@/api/axiosAPI";
 
 const UserManagementPage = () => {
-
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+
+  const [selectedEmployee, setSelecetedEmployee] = useState();
+  const [editEmployee, setEditEmployee] = useState();
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingUserId, setEditingUserId] = useState(null);
 
   const [newUser, setNewUser] = useState({
     nic: "",
@@ -20,33 +26,14 @@ const UserManagementPage = () => {
     email: "",
     roleId: "",
     address: "",
-    phoneNumber: ""
+    phoneNumber: "",
+    basicSalary: ""
   });
 
-  const [editUser, setEditUser] = useState({});
-
-  // ===============================
-  // AUTH HEADER
-  // ===============================
-  const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    };
-  };
-
-  // ===============================
-  // FETCH USERS
-  // ===============================
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/employee`,
-        getAuthConfig()
-      );
+      const res = await axiosAPI.get("/admin/employees");
       setUsers(res.data);
     } catch (error) {
       toast.error("Failed to load users");
@@ -55,15 +42,9 @@ const UserManagementPage = () => {
     }
   };
 
-  // ===============================
-  // FETCH ROLES
-  // ===============================
   const fetchRoles = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/role`,
-        getAuthConfig()
-      );
+      const res = await axiosAPI.get("/admin/role");
       setRoles(res.data);
     } catch (error) {
       toast.error("Failed to load roles");
@@ -75,20 +56,21 @@ const UserManagementPage = () => {
     fetchRoles();
   }, []);
 
-  // ===============================
-  // CREATE USER
-  // ===============================
   const handleCreateUser = async () => {
     try {
+      // Basic validation (minimal, non-breaking)
+      if (!newUser.nic || !newUser.firstName || !newUser.email || !newUser.roleId) {
+        toast.error("Please fill required fields");
+        return;
+      }
 
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/employee`,
-        newUser,
-        getAuthConfig()
-      );
+      setCreating(true);
+
+      const res = await axiosAPI.post("/admin/employee", newUser);
 
       toast.success("User created successfully");
 
+      setUsers((prev) => [...prev, res.data]);
       setNewUser({
         nic: "",
         firstName: "",
@@ -96,218 +78,391 @@ const UserManagementPage = () => {
         email: "",
         roleId: "",
         address: "",
-        phoneNumber: ""
+        phoneNumber: "",
+        basicSalary: ""
       });
 
       setShowAddForm(false);
-      fetchUsers();
+      fetchUsers()
 
     } catch (error) {
+      console.error(error);
       toast.error("Create failed");
+    } finally {
+      setCreating(false);
     }
   };
 
-  // ===============================
-  // DELETE USER
-  // ===============================
-  const handleDeleteUser = async (id) => {
+  const updateEmployee = async () => {
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/employee/${id}`,
-        getAuthConfig()
+      await axiosAPI.put(
+        `/admin/employees/${editEmployee.id}`,
+        editEmployee
       );
-
-      toast.success("User deleted");
-      fetchUsers();
-
-    } catch (error) {
-      toast.error("Delete failed");
-    }
-  };
-
-  // ===============================
-  // START EDIT
-  // ===============================
-  const handleEdit = (user) => {
-    setEditingUserId(user.id);
-    setEditUser(user);
-  };
-
-  // ===============================
-  // SAVE EDIT
-  // ===============================
-  const handleSaveEdit = async (id) => {
-    try {
-
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/employee/${id}`,
-        editUser,
-        getAuthConfig()
-      );
-
       toast.success("User updated");
-
-      setEditingUserId(null);
+      setOpenEditModal(false);
+      setOpenModal(false);
       fetchUsers();
-
-    } catch (error) {
+    } catch {
       toast.error("Update failed");
     }
+  }
+
+  const deleteUser = async (employeeId) => {
+    try {
+      setDeleting(true);
+
+      await axiosAPI.post(`/admin/employees/delete/${employeeId}`);
+
+      toast.success("User deleted successfully");
+
+      setOpenModal(false);
+      setSelecetedEmployee(null);
+
+      // Optimistically update UI (no need to refetch immediately)
+      setUsers((prev) => prev.filter((u) => u.id !== employeeId));
+
+    } catch (e) {
+      console.error(e);
+      toast.error("User not deleted");
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  // ===============================
-  // LOADING
-  // ===============================
   if (loading) {
-    return <div className="p-8">Loading users...</div>;
+    return (
+      <div className="flex items-center justify-center h-[60vh] text-gray-500">
+        Loading users...
+      </div>
+    );
   }
 
   return (
-    <div className="p-8">
-
+    <div className="min-h-screen bg-gray-50 p-8">
       {/* HEADER */}
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-semibold text-gray-800">
+            User Management
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Manage employees, roles and details
+          </p>
+        </div>
 
-        <Button onClick={() => setShowAddForm(true)}>
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+          onClick={() => setShowAddForm(true)}
+        >
           <UserPlus className="w-4 h-4 mr-2" />
           Add User
         </Button>
       </div>
 
-      {/* ADD FORM */}
+      {/* ADD USER CARD */}
       {showAddForm && (
-        <div className="grid grid-cols-2 gap-3 bg-white p-4 border mb-4">
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <h2 className="text-lg font-medium mb-4 text-gray-700">
+            Create New User
+          </h2>
 
-          <input placeholder="NIC"
-            value={newUser.nic}
-            onChange={(e) => setNewUser({ ...newUser, nic: e.target.value })}
-          />
+          <div className="grid md:grid-cols-3 gap-4">
+            {Object.keys(newUser).map((field) =>
+              field !== "roleId" ? (
+                <input
+                  key={field}
+                  placeholder={field}
+                  value={newUser[field]}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, [field]: e.target.value })
+                  }
+                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              ) : (
+                <select
+                  key={field}
+                  value={newUser.roleId}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, roleId: e.target.value })
+                  }
+                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="" hidden>
+                    Select user role
+                  </option>
 
-          <input placeholder="First Name"
-            value={newUser.firstName}
-            onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-          />
+                  {roles.map((r) => {
+                    if (r.roleName === "CUSTOMER") return null;
 
-          <input placeholder="Last Name"
-            value={newUser.lastName}
-            onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-          />
+                    return (
+                      <option key={r.id} value={r.id}>
+                        {r.roleName === "FO" ? "FIELD OFFICER" : r.roleName}
+                      </option>
+                    );
+                  })}
+                </select>
+              )
+            )}
+          </div>
 
-          <input placeholder="Email"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-          />
-
-          <input placeholder="Address"
-            value={newUser.address}
-            onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
-          />
-
-          <input placeholder="Phone"
-            value={newUser.phoneNumber}
-            onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
-          />
-
-          <select
-            value={newUser.roleId}
-            onChange={(e) => setNewUser({ ...newUser, roleId: e.target.value })}
-          >
-            <option value="">Select Role</option>
-            {roles.map(r => (
-              <option key={r.id} value={r.id}>
-                {r.roleName}
-              </option>
-            ))}
-          </select>
-
-          <Button onClick={handleCreateUser}>
-            Create User
-          </Button>
-
+          <div className="mt-4 flex justify-end gap-3">
+            <Button
+              className="border border-gray-400"
+              variant="ghost"
+              onClick={() => setShowAddForm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={handleCreateUser}
+              disabled={creating}
+            >
+              {creating ? "Creating..." : "Create User"}
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* TABLE */}
-      <div className="bg-white border rounded">
-
-        <table className="w-full">
-
-          <thead className="bg-gray-100">
+      {/* USERS TABLE */}
+      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wide">
             <tr>
-              <th>NIC</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Actions</th>
+              <th className="px-6 py-4 text-left">NIC</th>
+              <th className="px-6 py-4 text-left">Name</th>
+              <th className="px-6 py-4 text-left">Email</th>
+              <th className="px-6 py-4 text-left">Role</th>
             </tr>
           </thead>
-
           <tbody>
-            {users.map(user => (
-              <tr key={user.id} className="border-t">
-
-                <td>{user.nic}</td>
-
-                <td>
-                  {editingUserId === user.id ? (
-                    <input
-                      value={editUser.firstName}
-                      onChange={(e) =>
-                        setEditUser({ ...editUser, firstName: e.target.value })
-                      }
-                    />
-                  ) : (
-                    `${user.firstName} ${user.lastName}`
-                  )}
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                onClick={() => {
+                  setOpenModal(true);
+                  setSelecetedEmployee(user);
+                }}
+                className="border-t hover:bg-blue-50 cursor-pointer transition"
+              >
+                <td className="px-6 py-4">{user.nic}</td>
+                <td className="px-6 py-4 font-medium text-gray-800">
+                  {user.firstName} {user.lastName}
                 </td>
-
-                <td>
-                  {editingUserId === user.id ? (
-                    <input
-                      value={editUser.email}
-                      onChange={(e) =>
-                        setEditUser({ ...editUser, email: e.target.value })
-                      }
-                    />
-                  ) : (
-                    user.email
-                  )}
+                <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">
+                    {user.role}
+                  </span>
                 </td>
-
-                <td>{user.role}</td>
-
-                <td className="flex gap-2">
-
-                  {editingUserId === user.id ? (
-                    <Button onClick={() => handleSaveEdit(user.id)}>
-                      Save
-                    </Button>
-                  ) : (
-                    <Button onClick={() => handleEdit(user)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  )}
-
-                  <Button
-                    onClick={() => handleDeleteUser(user.id)}
-                    className="bg-red-500 text-white"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-
-                </td>
-
               </tr>
             ))}
           </tbody>
-
         </table>
-
       </div>
 
+      {/* DETAILS MODAL */}
+      {openModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
+          <div className="bg-white w-[520px] rounded-xl shadow-2xl p-6 relative animate-fadeIn">
+            <button
+              onClick={() => setOpenModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-xl font-semibold mb-6">
+              Employee Details
+            </h2>
+
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+
+              <div>
+                <p className="text-gray-500">Employee ID</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.id}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">NIC</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.nic}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Name</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.firstName} {selectedEmployee.lastName}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Email</p>
+                <p className="font-medium text-gray-800 break-all">
+                  {selectedEmployee.email}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Role</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.role === "FO"
+                    ? "Field Officer"
+                    : selectedEmployee.role}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Phone Number</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.phoneNumber}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Basic Salary</p>
+                <p className="font-medium text-gray-900">
+                  {selectedEmployee.basicSalary
+                    ? `LKR ${Number(selectedEmployee.basicSalary).toLocaleString()}`
+                    : "No basic salaray"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500">Account Status</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.accountStatus}
+                </p>
+              </div>
+
+              <div className="col-span-2">
+                <p className="text-gray-500">Address</p>
+                <p className="font-medium text-gray-800">
+                  {selectedEmployee.address}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 right-0 mt-6 text-right">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  setEditEmployee(selectedEmployee);
+                  setOpenEditModal(true);
+                }}
+              >
+                Edit
+              </Button>
+
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleting}
+                onClick={() => deleteUser(selectedEmployee.id)}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL (STACKED ABOVE) */}
+      {openEditModal && editEmployee && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-[520px] rounded-xl shadow-2xl p-6 relative">
+            <button
+              onClick={() => setOpenEditModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 className="text-xl font-semibold mb-6">
+              Edit Employee
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-500">Role</label>
+                <select
+                  value={editEmployee.role}
+                  onChange={(e) =>
+                    setEditEmployee({
+                      ...editEmployee,
+                      role: e.target.value,
+                    })
+                  }
+                  className="w-full mt-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  {roles
+                    .filter((role) => role.roleName !== "CUSTOMER")
+                    .map((role) => (
+                      <option key={role.id} value={role.roleName}>
+                        {role.roleName === "FO"
+                          ? "Field Officer".toUpperCase()
+                          : role.roleName.toUpperCase()}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">
+                  Basic Salary
+                </label>
+
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={editEmployee.basicSalary ?? ""}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (
+                      editEmployee.basicSalary === "0" &&
+                      value.length === 2 &&
+                      !value.includes(".")
+                    ) {
+                      value = value.substring(1);
+                    }
+
+                    const regex = /^(0|[1-9]\d*)(\.\d{0,2})?$/;
+
+                    if (value === "" || regex.test(value)) {
+                      setEditEmployee({
+                        ...editEmployee,
+                        basicSalary: value,
+                      });
+                    }
+                  }}
+                  placeholder="0.00"
+                  className="w-full mt-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setOpenEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={updateEmployee}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default UserManagementPage; 
+export default UserManagementPage;

@@ -187,9 +187,9 @@ const ReceptionistSetting = () => {
                                 User Role
                             </span>
                             <p className="px-4 py-3 font-medium text-gray-800 bg-gray-50 rounded-lg border border-gray-200">
-                                {profileForm.role?.roleName === "fo"
+                                {profileForm.role === "fo"
                                     ? "Field Officer"
-                                    : toSentenceCase(profileForm.role?.roleName)}
+                                    : toSentenceCase(profileForm.role)}
                             </p>
                         </div>
                     </div>
