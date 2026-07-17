@@ -331,9 +331,8 @@ const CustomerManagementPage = () => {
             <button
               key={i}
               onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 border rounded ${
-                page === i + 1 ? "bg-black text-white" : "bg-white"
-              }`}
+              className={`px-3 py-1 border rounded ${page === i + 1 ? "bg-black text-white" : "bg-white"
+                }`}
             >
               {i + 1}
             </button>
@@ -341,22 +340,33 @@ const CustomerManagementPage = () => {
         </div>
       )}
 
-      {/* ======================== DIALOGS ======================== */}
+      {showCustomerDetails && selectedCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-      {/* CUSTOMER DETAILS DIALOG */}
-      <Dialog
-        open={showCustomerDetails}
-        onOpenChange={setShowCustomerDetails}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-          </DialogHeader>
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowCustomerDetails(false)}
+          />
 
-          {selectedCustomer && (
+          {/* Modal Content */}
+          <div className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 z-10">
+
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Customer Details</h2>
+              <button
+                onClick={() => setShowCustomerDetails(false)}
+                className="text-gray-500 hover:text-black text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
             <div className="space-y-6">
+
               {/* CUSTOMER INFO */}
-              <div className="grid md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border text-sm">
+              <div className="grid md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border text-sm">
                 <div>
                   <span className="font-medium text-gray-500">NIC</span>
                   <p className="text-gray-900">{selectedCustomer.nic}</p>
@@ -389,12 +399,14 @@ const CustomerManagementPage = () => {
                   <span className="font-medium text-gray-500">
                     Bank Details
                   </span>
-                  <p className="text-gray-900">
-                    {selectedCustomer.bank || "N/A"}
-                  </p>
-                  <p className="text-gray-900">
-                    {selectedCustomer.bankAccount || "N/A"}
-                  </p>
+                  {selectedCustomer.bank != null ? (
+                    <p className="text-gray-900">
+                      {selectedCustomer.bank} <br />
+                      {selectedCustomer.bankAccount}
+                    </p>
+                  ) : (
+                    <p className="text-gray-900">N/A</p>
+                  )}
                 </div>
               </div>
 
@@ -414,57 +426,54 @@ const CustomerManagementPage = () => {
                 {selectedCustomer.loans?.length > 0 ? (
                   <div className="overflow-x-auto border rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200 text-sm">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 text-center">
                         <tr>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             File No.
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Amount
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Interest
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Installments
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Status
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Created At
                           </th>
-                          <th className="px-4 py-2 text-left font-semibold text-gray-600">
+                          <th className="px-4 py-2 font-semibold text-gray-600">
                             Entered By
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+
+                      <tbody className="divide-y divide-gray-100 text-center">
                         {selectedCustomer.loans.map((loan, idx) => (
                           <tr key={idx} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 text-gray-900 font-medium">
+                            <td className="px-4 py-2 font-medium">
                               {loan.fileNumber}
                             </td>
-                            <td className="px-4 py-2 text-gray-600">
-                              {loan.amount}
-                            </td>
-                            <td className="px-4 py-2 text-gray-600">
+                            <td className="px-4 py-2">{loan.amount}</td>
+                            <td className="px-4 py-2">
                               {loan.interestRate}%
                             </td>
-                            <td className="px-4 py-2 text-gray-600">
+                            <td className="px-4 py-2">
                               {loan.noOfInstallments}
                             </td>
-                            <td className="px-4 py-2 text-gray-600">
-                              {loan.Status || "-"}
+                            <td className="px-4 py-2">
+                              {loan.status || "-"}
                             </td>
-                            <td className="px-4 py-2 text-gray-600">
+                            <td className="px-4 py-2">
                               {loan.createdAt || "-"}
                             </td>
-                            <td className="px-4 py-2 text-gray-600">
-                              <div>
-                                {loan.enteredBy?.firstName}{" "}
-                                {loan.enteredBy?.lastName}
-                              </div>
+                            <td className="px-4 py-2">
+                              {loan.enteredBy?.firstName}{" "}
+                              {loan.enteredBy?.lastName}
                               <div className="text-xs text-gray-400">
                                 {loan.enteredBy?.nic}
                               </div>
@@ -482,7 +491,7 @@ const CustomerManagementPage = () => {
               </div>
 
               {/* ACTION BUTTONS */}
-              <div className="flex gap-3 pt-2 border-t">
+              <div className="flex gap-3 pt-4 border-t">
                 <button
                   onClick={() => {
                     setShowCustomerDetails(false);
@@ -504,10 +513,11 @@ const CustomerManagementPage = () => {
                   Delete
                 </button>
               </div>
+
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
 
       {/* ADD / EDIT CUSTOMER DIALOG */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
