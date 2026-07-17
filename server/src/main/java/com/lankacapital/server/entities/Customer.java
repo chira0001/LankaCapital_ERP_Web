@@ -25,7 +25,7 @@ public class Customer {
     @Column(nullable = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String address;
 
     @ManyToOne
@@ -36,15 +36,21 @@ public class Customer {
     private String phoneNumber;
 
     private String bank;
+
     private String bankAccount;
 
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
 
-    private List<Loan> loans;
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private Employee createdEmployee;
 
-    @Column(nullable = false)
-    private Boolean deleted = false;
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private Employee updatedEmployee;
+
+//    private List<Loan> loans;
 
     private Long updateStatus = 0L;
 
