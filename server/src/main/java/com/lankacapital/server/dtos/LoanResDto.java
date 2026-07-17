@@ -13,7 +13,7 @@ public class LoanResDto {
     private LocalDateTime createdAt;
     private Double documentCharge;
     private LoanStatus status;
-    private String rejectionNote;
+    private String decisionNote;
     private Integer installment;
     private EmployeeResDto employee;
     private Double interestRate;
