@@ -18,4 +18,5 @@ public class LoanResAsyncDto {
     private Integer installment;
     private Double interestRate;
     private Long updateStatus;
+    private String loanType;
 }

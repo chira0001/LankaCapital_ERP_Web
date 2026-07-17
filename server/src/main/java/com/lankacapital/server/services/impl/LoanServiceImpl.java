@@ -147,6 +147,13 @@ public class LoanServiceImpl implements LoanService {
         loan.setCreatedEmployee(employee);
         loan.setInstallment(loanCreateDto.getInstallment());
         loan.setCreatedAt(loanCreateDto.getCreatedAt());
+        if(loanCreateDto.getLoanType().equalsIgnoreCase("DAILY")){
+            loan.setLoanType(LoanType.DAILY);
+        } else if (loanCreateDto.getLoanType().equalsIgnoreCase("WEEKLY")) {
+            loan.setLoanType(LoanType.WEEKLY);
+        }else{
+            throw new ResourceNotFoundException("Loan Type not found");
+        }
 
         return loanRepository.save(loan);
     }
@@ -361,6 +368,13 @@ public class LoanServiceImpl implements LoanService {
         loan.setCreatedEmployee(employee);
         loan.setStatus(LoanStatus.PENDING);
         loan.setUpdateStatus(loan.getUpdateStatus());
+        if(loanRequestDto.getLoanType().equalsIgnoreCase("DAILY")){
+            loan.setLoanType(LoanType.DAILY);
+        } else if (loanRequestDto.getLoanType().equalsIgnoreCase("WEEKLY")) {
+            loan.setLoanType(LoanType.WEEKLY);
+        }else{
+            throw new ResourceNotFoundException("Loan Type not found");
+        }
 
         return loanRepository.save(loan);
     }
@@ -371,7 +385,6 @@ public class LoanServiceImpl implements LoanService {
             throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());
         }
         Loan loan = new Loan();
-
         loan.setInstallment(customerAddDto.getInstallment());
 
         Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
@@ -386,9 +399,16 @@ public class LoanServiceImpl implements LoanService {
 
         Customer customer = customerRepository.findByNic(customerAddDto.getCustomerId());
         loan.setCustomer(customer);
-
         loan.setStatus(LoanStatus.PENDING);
         loan.setUpdateStatus(loan.getUpdateStatus());
+        if(customerAddDto.getLoanType().equalsIgnoreCase("DAILY")){
+            loan.setLoanType(LoanType.DAILY);
+        } else if (customerAddDto.getLoanType().equalsIgnoreCase("WEEKLY")) {
+            loan.setLoanType(LoanType.WEEKLY);
+        }else{
+            throw new ResourceNotFoundException("Loan Type not found");
+        }
+
         loanRepository.save(loan);
 
         return "Loan created successfully.";

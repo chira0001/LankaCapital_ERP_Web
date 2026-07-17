@@ -17,4 +17,5 @@ public class LoanResDto {
     private Integer installment;
     private EmployeeResDto employee;
     private Double interestRate;
+    private String loanType;
 }

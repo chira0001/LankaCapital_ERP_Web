@@ -15,4 +15,5 @@ public class CustomerAddDto {
     private BigDecimal loanAmount;
     private Integer installment;
     private Long employeeId;
+    private String loanType;
 }

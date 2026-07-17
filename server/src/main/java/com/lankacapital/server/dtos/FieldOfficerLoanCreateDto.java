@@ -18,4 +18,5 @@ public class FieldOfficerLoanCreateDto {
     private Long employeeId;
     private Integer installment;
     private LocalDateTime createdAt;
+    private String loanType;
 }

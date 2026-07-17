@@ -109,6 +109,7 @@ public class LoanMapper {
         dto.setInstallment(loan.getInstallment());
         dto.setUpdateStatus(loan.getUpdateStatus());
         dto.setInterestRate(loan.getInterestRate());
+        dto.setLoanType(loan.getLoanType().toString());
 
         return dto;
     }
@@ -132,6 +133,7 @@ public class LoanMapper {
         dto.setInterestRate(loan.getInterestRate());
         dto.setInstallment(loan.getInstallment());
         dto.setEmployee(employee);
+        dto.setLoanType(loan.getLoanType().toString());
 
         return dto;
     }
