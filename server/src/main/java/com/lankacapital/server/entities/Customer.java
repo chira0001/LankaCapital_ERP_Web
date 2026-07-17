@@ -41,6 +41,7 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer")
     @JsonIgnore
+    private List<Loan> loans;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
@@ -50,7 +51,9 @@ public class Customer {
     @JoinColumn(name = "updated_by")
     private Employee updatedEmployee;
 
-//    private List<Loan> loans;
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
     private Long updateStatus = 0L;
 

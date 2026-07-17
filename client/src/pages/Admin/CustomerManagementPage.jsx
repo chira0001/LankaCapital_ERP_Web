@@ -36,6 +36,7 @@ const emptyLoanForm = {
   phoneNumber: "",
   bank: "",
   bankAccount: "",
+  loanType: "DAILY"
 };
 
 const CustomerManagementPage = () => {
@@ -168,7 +169,6 @@ const CustomerManagementPage = () => {
 
   const saveLoan = async () => {
     if (
-      !loanForm.fileNumber ||
       !loanForm.loanAmount ||
       !loanForm.interestRate ||
       !loanForm.numberOfInstallments
@@ -191,7 +191,7 @@ const CustomerManagementPage = () => {
         numberOfInstallments: Number(loanForm.numberOfInstallments),
         customerId: Number(loanForm.customerId),
       };
-
+      console.log("Create Payload : ", payload)
       await axiosAPI.post(`admin/loans`, payload);
 
       setShowLoanForm(false);
@@ -465,7 +465,7 @@ const CustomerManagementPage = () => {
                             <td className="px-4 py-2">
                               {loan.noOfInstallments}
                             </td>
-                            <td className="px-4 py-2">
+                            <td className={`px-4 py-2 ${loan.status == "PENDING" ? "text-red-500" : ""}`}>
                               {loan.status || "-"}
                             </td>
                             <td className="px-4 py-2">
@@ -586,14 +586,6 @@ const CustomerManagementPage = () => {
                 {loanError}
               </div>
             )}
-
-            <Input
-              placeholder="File Number"
-              value={loanForm.fileNumber}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, fileNumber: e.target.value })
-              }
-            />
             <Input
               type="number"
               placeholder="Loan Amount"
@@ -612,14 +604,6 @@ const CustomerManagementPage = () => {
             />
             <Input
               type="number"
-              placeholder="Document Charge"
-              value={loanForm.documentCharge}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, documentCharge: e.target.value })
-              }
-            />
-            <Input
-              type="number"
               placeholder="Number of Installments"
               value={loanForm.numberOfInstallments}
               onChange={(e) =>
@@ -629,21 +613,19 @@ const CustomerManagementPage = () => {
                 })
               }
             />
-            <Input
-              placeholder="Bank"
-              value={loanForm.bank}
+            <select
+              name="loanType"
+              value={loanForm.loanType}
               onChange={(e) =>
-                setLoanForm({ ...loanForm, bank: e.target.value })
+                setLoanForm({
+                  ...loanForm,
+                  loanType: e.target.value,
+                })
               }
-            />
-            <Input
-              placeholder="Bank Account"
-              value={loanForm.bankAccount}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, bankAccount: e.target.value })
-              }
-            />
-
+            >
+              <option value="DAILY">Dialy</option>
+              <option value="WEEKLY">Weekly</option>
+            </select>
             <button
               onClick={saveLoan}
               disabled={loanSaving}
