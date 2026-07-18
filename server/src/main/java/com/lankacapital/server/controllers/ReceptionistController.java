@@ -35,8 +35,10 @@ public class ReceptionistController {
     }
 
     @PostMapping(path = "/customers")
-    public ResponseEntity<?> registerCustomer(@RequestBody CustomerRegisterDto customerRegisterDto){
-        CustomerResponseDto registeredCustomer = customerService.registerCustomer(customerRegisterDto);
+    public ResponseEntity<?> registerCustomer(
+            @RequestBody CustomerRegisterDto customerRegisterDto,
+                                              Authentication authentication){
+        CustomerResponseDto registeredCustomer = customerService.registerCustomer(customerRegisterDto,authentication.getName());
         if (registeredCustomer == null){
             return new ResponseEntity<>("Customer not registered", HttpStatus.EXPECTATION_FAILED);
         }

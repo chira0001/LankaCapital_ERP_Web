@@ -414,11 +414,12 @@ public class AdminController {
     //Add Customer to Customer Management
     @PostMapping("/customers")
     public ResponseEntity<?> createCustomer(
-            @RequestBody CustomerRegisterDto dto
+            @RequestBody CustomerRegisterDto dto,
+            Authentication authentication
     ) {
 
         return new ResponseEntity<>(
-                customerService.registerCustomer(dto),
+                customerService.registerCustomer(dto, authentication.getName()),
                 HttpStatus.CREATED
         );
     }

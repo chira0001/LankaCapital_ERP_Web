@@ -108,6 +108,7 @@ const CustomerManagementPage = () => {
       if (editMode) {
         await axiosAPI.put(`admin/customers/${form.nic}`, form);
       } else {
+        console.log("Create Form : ", form);
         await axiosAPI.post(`admin/customers`, form);
       }
 
@@ -535,16 +536,25 @@ const CustomerManagementPage = () => {
               disabled={editMode}
               onChange={(e) => setForm({ ...form, nic: e.target.value })}
             />
+
             <Input
               placeholder="Name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
+            
+            <Input
+              placeholder="Address"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+            />
+
             <Input
               placeholder="Email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
+
             <Input
               placeholder="Phone"
               value={form.phoneNumber}
@@ -552,12 +562,23 @@ const CustomerManagementPage = () => {
                 setForm({ ...form, phoneNumber: e.target.value })
               }
             />
+
             <Input
-              placeholder="Address"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              placeholder="Bank Name"
+              value={form.bank}
+              onChange={(e) =>
+                setForm({ ...form, bank: e.target.value })
+              }
             />
 
+            <Input
+              placeholder="Bank Account Number"
+              value={form.bankAccount}
+              onChange={(e) =>
+                setForm({ ...form, bankAccount: e.target.value })
+              }
+            />
+            
             <button
               onClick={saveCustomer}
               disabled={saving}

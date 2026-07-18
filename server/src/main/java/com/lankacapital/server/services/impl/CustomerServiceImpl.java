@@ -8,6 +8,7 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.CustomerRepository;
+import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.LoanRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
@@ -29,10 +30,11 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
     private LoanRepository loanRepository;
     private RoleRepository roleRepository;
+    private EmployeeRepository employeeRepository;
 
     @Transactional
     @Override
-    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto) {
+    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto, String username) {
 
         if (customerRepository.existsById(dto.getNic())) {
             throw new ResourceExistException(
@@ -49,9 +51,8 @@ public class CustomerServiceImpl implements CustomerService {
             role = roleRepository.save(role);
         }
         customer.setRole(role);
-
-        Customer savedCustomer = customerRepository.save(customer);
-        return CustomerMapper.mapToCustomerResponseDto(savedCustomer);
+        customer.setCreatedEmployee(employeeRepository.findByEmail(username));
+        return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 
     @Override

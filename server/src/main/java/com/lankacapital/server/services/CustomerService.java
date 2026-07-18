@@ -6,7 +6,7 @@ import com.lankacapital.server.entities.Customer;
 import java.util.List;
 
 public interface CustomerService {
-    CustomerResponseDto registerCustomer(CustomerRegisterDto customerRegisterDto);
+    CustomerResponseDto registerCustomer(CustomerRegisterDto customerRegisterDto, String username);
     List<CustomerResponseDto> getAllCustomer();
     CustomerResponseDto getCustomerById(String nic);
     CustomerInfoDto getCustomerInfoById(String nic);
