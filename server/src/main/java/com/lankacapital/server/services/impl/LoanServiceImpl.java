@@ -12,6 +12,7 @@ import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.LoanService;
 import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.utils.UtilityFunctions;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
+
 @Slf4j
 
 @Service
@@ -38,15 +41,6 @@ public class LoanServiceImpl implements LoanService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final InterestRateRepository interestRateRepository;
-
-    private boolean isValidUUID(String value) {
-        try {
-            UUID.fromString(value);
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            return false;
-        }
-    }
 
     @Transactional
     @Override
@@ -64,6 +58,7 @@ public class LoanServiceImpl implements LoanService {
             newCustomer.setPhoneNumber(dto.getPhoneNumber());
             newCustomer.setBank(dto.getBank());
             newCustomer.setBankAccount(dto.getBankAccount());
+            newCustomer.setCreatedEmployee(employeeRepository.findByEmail(username));
 
             Role role = roleRepository.findByRoleName("Customer");
             newCustomer.setRole(role);
@@ -84,13 +79,11 @@ public class LoanServiceImpl implements LoanService {
 
         loan.setCustomer(customer);
         loan.setInstallment(dto.getNumberOfInstallments());
-        Employee employee = employeeRepository.findByEmail(username);
-        loan.setCreatedEmployee(employee);
+        loan.setCreatedEmployee(employeeRepository.findByEmail(username));
         loan.setInterestRate(dto.getInterestRate());
         loan.setStatus(LoanStatus.PENDING);
 
-        loan.setFileNumber(dto.getFileNumber());
-
+        loan.setFileNumber(UUID.randomUUID().toString());
         return loanRepository.save(loan);
     }
 

@@ -108,6 +108,16 @@ public class AdminController {
         return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
     }
 
+    @PostMapping("/loans")
+    public ResponseEntity<Loan> addLoan(
+            @RequestBody LoanCreateDto dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.addLoan(dto, authentication.getName())
+        );
+    }
+
     @GetMapping("/loans/customer/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
         return ResponseEntity.ok(loanService.getLoansByCustomerId(id));
@@ -426,15 +436,7 @@ public class AdminController {
     }
 
 
-    @PostMapping("/loans")
-    public ResponseEntity<Loan> addLoan(
-            @RequestBody LoanCreateDto dto,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(
-                loanService.addLoan(dto, authentication.getName())
-        );
-    }
+
 
 
 
