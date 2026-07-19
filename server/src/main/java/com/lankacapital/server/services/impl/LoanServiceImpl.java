@@ -37,10 +37,8 @@ import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
 public class LoanServiceImpl implements LoanService {
     private final LoanRepository loanRepository;
     private final CustomerRepository customerRepository;
-    private final InstallmentRepository installmentRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
-    private final InterestRateRepository interestRateRepository;
 
     @Transactional
     @Override
@@ -133,13 +131,13 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Employee not found")
                 );
-        Installment installment = installmentRepository
-                .findById(loanCreateDto.getInstallmentId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Installment not found"
-                        )
-                );
+//        Installment installment = installmentRepository
+//                .findById(loanCreateDto.getInstallmentId())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException(
+//                                "Installment not found"
+//                        )
+//                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);

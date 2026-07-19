@@ -22,17 +22,12 @@ public class ReceptionistController {
     private final LoanService loanService;
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
-    private final InstallmentService installmentService;
+//    private final InstallmentService installmentService;
     private final MonthlyExpenseService monthlyExpenseService;
     private final DailyCollectionService dailyCollectionService;
-    private final InterestRateService interestRateService;
+//    private final InterestRateService interestRateService;
     private final PettyCashService pettyCashService;
     private final FinancialStatementService financialStatementService;
-
-    @GetMapping(path = "/installments")
-    public ResponseEntity<?> getAllInstallments(){
-        return new ResponseEntity<>(installmentService.getAllInstallments(), HttpStatus.OK);
-    }
 
     @PostMapping(path = "/customers")
     public ResponseEntity<?> registerCustomer(
@@ -165,11 +160,6 @@ public class ReceptionistController {
                 dailyCollectionService.getLoanCollectionDetailsByFileNumber(fileNumber);
 
         return ResponseEntity.ok(collections);
-    }
-
-    @GetMapping("/interestRates")
-    public ResponseEntity<?> getAllInterestRates(){
-        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
     }
 
     @PostMapping("/pettyCash")

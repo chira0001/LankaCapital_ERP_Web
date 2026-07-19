@@ -7,7 +7,6 @@ import com.lankacapital.server.dtos.DailyCollectionResponseDto;
 import com.lankacapital.server.dtos.DailyCollectionSummaryDto;
 import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Employee;
-import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.DailyCollectionMapper;

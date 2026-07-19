@@ -223,7 +223,7 @@ const ReceptionistView = () => {
                 });
                 setInfoDetails(response.data.loans || []);
                 setIsEmployee(false);
-                setIsEdit(false); // Reset edit mode
+                setIsEdit(false);
                 toast.success('Customer found!');
             }
         } catch (error) {

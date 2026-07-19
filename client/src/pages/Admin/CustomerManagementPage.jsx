@@ -60,7 +60,7 @@ const CustomerManagementPage = () => {
   const [loanError, setLoanError] = useState("");
 
   const [page, setPage] = useState(1);
-  const perPage = 6;
+  const perPage = 10;
 
   // ================= LOAD =================
   const loadCustomers = async () => {
@@ -542,7 +542,7 @@ const CustomerManagementPage = () => {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
-            
+
             <Input
               placeholder="Address"
               value={form.address}
@@ -578,7 +578,7 @@ const CustomerManagementPage = () => {
                 setForm({ ...form, bankAccount: e.target.value })
               }
             />
-            
+
             <button
               onClick={saveCustomer}
               disabled={saving}
