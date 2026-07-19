@@ -22,11 +22,11 @@ public interface EmployeeService {
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
     List<EmployeeResponseDto> getAllEmployeesWithRole();
 
-    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList);
+    List<FieldOfficerResAsyncDto> findAllFieldOfficersById(String username, FieldOfficerAsyncDto idList);
 
     EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto);
 
     void deleteEmployee(Long id);
     
-    List<EmployeeManageDto> manageEmployees(int page);
+    List<EmployeeManageDto> manageEmployees(String username, int page);
 }
