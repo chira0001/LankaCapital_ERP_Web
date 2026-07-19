@@ -119,7 +119,12 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public Loan addLoanToExistingCustomer(FieldOfficerLoanCreateDto loanCreateDto) {
+    public Loan addLoanToExistingCustomer(String username, FieldOfficerLoanCreateDto loanCreateDto) {
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
         Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
@@ -128,11 +133,6 @@ public class LoanServiceImpl implements LoanService {
         if (loanCount >= 2) {
             throw new ResourceExistException("Customer already has 2 loans.");
         }
-        Employee employee = employeeRepository
-                .findById(loanCreateDto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found")
-                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
@@ -339,7 +339,11 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResAsyncDto> findAllLoansById(LoanAsyncDto fileNoLis){
+    public List<LoanResAsyncDto> findAllLoansById(String username, LoanAsyncDto fileNoLis){
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         List<Loan> loans = loanRepository.findLoansByIds(fileNoLis.getId());
 
         return loans.stream()
@@ -348,7 +352,7 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public Loan addLoanByFieldOfficer(LoanRequestDto loanRequestDto){
+    public Loan addLoanByFieldOfficer(String username, LoanRequestDto loanRequestDto){
         Loan loan = new Loan();
         loan.setAmount(loanRequestDto.getLoanAmount());
         if (!customerRepository.existsById(loanRequestDto.getCustomerId())) {
@@ -363,8 +367,10 @@ public class LoanServiceImpl implements LoanService {
 
         loan.setInstallment(loanRequestDto.getInstallments());
 
-        Employee employee = employeeRepository.findById(loanRequestDto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + loanRequestDto.getEmployeeId()));
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         loan.setCreatedEmployee(employee);
         loan.setStatus(LoanStatus.PENDING);
         loan.setUpdateStatus(loan.getUpdateStatus());
@@ -380,15 +386,17 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public String addNewLoanByOfficer(CustomerAddDto customerAddDto){
+    public String addNewLoanByOfficer(String username, CustomerAddDto customerAddDto){
         if (customerRepository.existsById(customerAddDto.getCustomerId())) {
             throw new ResourceExistException("Customer exists with NIC : " + customerAddDto.getCustomerId());
         }
         Loan loan = new Loan();
         loan.setInstallment(customerAddDto.getInstallment());
 
-        Employee employee = employeeRepository.findById(customerAddDto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id : " + customerAddDto.getEmployeeId()));
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         loan.setCreatedEmployee(employee);
 
         loan.setAmount(customerAddDto.getLoanAmount());
@@ -470,7 +478,11 @@ public class LoanServiceImpl implements LoanService {
         return CustomerMapper.mapToCustomerResponseDto(customer);
     }
 
-    public List<LoanManageDto> manageLoans(int page){
+    public List<LoanManageDto> manageLoans(String username, int page){
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         Pageable pageable = PageRequest.of(page, 50);
 
         return loanRepository.findAll(pageable)
