@@ -11,10 +11,10 @@ public interface CustomerService {
     CustomerResponseDto getCustomerById(String nic);
     CustomerInfoDto getCustomerInfoById(String nic);
     CustomerResponseDto updateCustomerById(String nic, CustomerRegisterDto customerRegisterDto);
-    List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto nicList);
-    CustomerResDto getCustomerDataById(String nic);
+    List<CustomerResAsyncDto> findAllCustomerById(String username, CustomerAsyncDto nicList);
+    CustomerResDto getCustomerDataById(String username, String nic);
 
-    List<CustomerManageDto> manageCustomers(int page);
+    List<CustomerManageDto> manageCustomers(String username, int page);
 
     List<CustomerResponseDto> getAllActiveCustomers();
 
@@ -23,6 +23,6 @@ public interface CustomerService {
     void deleteCustomer(String nic);
 
     void undoDelete(String nic);
-    Customer addNewCustomer(CustomerAddSyncDto customerAddSyncDto);
+    Customer addNewCustomer(String username, CustomerAddSyncDto customerAddSyncDto);
     public List<String> searchCustomersByNic(String nic);
 }

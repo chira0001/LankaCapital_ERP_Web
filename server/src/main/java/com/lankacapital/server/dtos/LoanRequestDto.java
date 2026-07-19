@@ -15,4 +15,5 @@ public class LoanRequestDto {
     private String email;
     private String address;
     private String phoneNumber;
+    private String loanType;
 }

@@ -101,16 +101,18 @@ public class LoanMapper {
     public static LoanResAsyncDto mapToCustomerAsyncDto(Loan loan) {
         LoanResAsyncDto dto = new LoanResAsyncDto();
 
-        dto.setFile_number(loan.getFileNumber());
+        dto.setFileNumber(loan.getFileNumber());
         dto.setAmount(loan.getAmount());
-        dto.setCustomer_id(loan.getCustomer().getNic());
-        dto.setEmployee_id(loan.getCreatedEmployee().getId());
-        dto.setCreated_at(loan.getCreatedAt());
-        dto.setDocument_charge(loan.getDocumentCharge());
+        dto.setCustomerId(loan.getCustomer().getNic());
+        dto.setEmployeeId(loan.getCreatedEmployee().getId());
+        dto.setCreatedAt(loan.getCreatedAt());
+        dto.setDocumentCharge(loan.getDocumentCharge());
+        dto.setDecisionNote(loan.getDecisionNote());
         dto.setStatus(loan.getStatus().toString());
-        dto.setInstallment_id(loan.getInstallment());
-        dto.setUpdate_status(loan.getUpdateStatus());
-        dto.setInterest_rate_id(loan.getInterestRate());
+        dto.setInstallment(loan.getInstallment());
+        dto.setUpdateStatus(loan.getUpdateStatus());
+        dto.setInterestRate(loan.getInterestRate());
+        dto.setLoanType(loan.getLoanType().toString());
 
         return dto;
     }
@@ -118,18 +120,10 @@ public class LoanMapper {
     public static LoanResDto mapToLoanResDto(Loan loan) {
         LoanResDto dto = new LoanResDto();
         EmployeeResDto employee = new EmployeeResDto();
-        InstallmentResDto installment = new InstallmentResDto();
-        InterestRateResDto interestRate = new InterestRateResDto();
 
         employee.setFirstName(loan.getCreatedEmployee().getFirstName());
         employee.setLastName(loan.getCreatedEmployee().getLastName());
         employee.setPhoneNumber(loan.getCreatedEmployee().getPhoneNumber());
-
-        installment.setValue(loan.getInstallment());
-        interestRate.setRate(loan.getInterestRate() != null
-                ? loan.getInterestRate()
-                : 0.0
-        );
 
         dto.setFileNumber(loan.getFileNumber() != null ? loan.getFileNumber() : null);
         dto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
@@ -139,10 +133,11 @@ public class LoanMapper {
                 : 0.0
         );
         dto.setStatus(loan.getStatus());
-        dto.setInterestRate(interestRate);
-        dto.setInstallments(installment);
+        dto.setDecisionNote(loan.getDecisionNote());
+        dto.setInterestRate(loan.getInterestRate());
+        dto.setInstallment(loan.getInstallment());
         dto.setEmployee(employee);
-
+        dto.setLoanType(loan.getLoanType().toString());
 
         return dto;
     }
