@@ -80,11 +80,9 @@ const PettyCashPage = () => {
       setOpRejecting(true);
       await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
       await fetchPettyCash();
-      setOpRejecting(true);
+      setOpRejecting(false);
     } catch (error) {
       console.error(error);
-    } finally {
-      setOpRejecting(true);
     }
   };
 
@@ -202,10 +200,10 @@ const PettyCashPage = () => {
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <div className="flex flex-col">
                           <span className="font-semibold text-slate-800 text-xs">
-                            {record.requestEmployee?.firstName || record.requestEmployee?.email || 'Unknown'}
+                            {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
                           </span>
                           <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                            {record.requestEmployee?.email}
+                            {record.requestEmployee?.nic}
                           </span>
                         </div>
                       </td>
