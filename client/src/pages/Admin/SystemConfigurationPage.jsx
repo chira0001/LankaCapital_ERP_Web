@@ -1,62 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-//import pb from '@/lib/pocketbaseClient.js';
-import { Settings, Save } from 'lucide-react';
-import { Button } from '@/component/ui/button';
-import { Input } from '@/component/ui/input';
-import { Label } from '@/component/ui/label';
-import { toast } from "sonner"; // ✅ SONNER
+import { toast } from "sonner";
+import axiosAPI from '@/api/axiosAPI';
+
+const roles = ["ADMIN", "RECEPTIONIST", "FO"];
 
 const SystemConfigurationPage = () => {
-  const [configs, setConfigs] = useState({
-    default_interest_rate: '',
-    penalty_rate: '',
-    min_loan_duration: '',
-    max_loan_duration: ''
-  });
   const [loading, setLoading] = useState(true);
+  const [salaryCondition, setSalaryCondition] = useState([]);
+  const [isEdit, setIsEdit] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
-    fetchConfigs();
+    fetchSalaryCondition();
   }, []);
 
-  /* ===============================
-     FETCH CONFIGS (HARDCODE + DB)
-  =============================== */
-  const fetchConfigs = async () => {
+  const fetchSalaryCondition = async () => {
     try {
-
-      /* ===============================
-         HARD CODE DATA (FOR TESTING)
-      =============================== */
-      const data = {
-        default_interest_rate: "12.5",
-        penalty_rate: "2.0",
-        min_loan_duration: "3",
-        max_loan_duration: "60"
-      };
-
-      setConfigs(data);
-
-      /* ===============================
-         DATABASE VERSION (UNCOMMENT LATER)
-      =============================== */
-      /*
-      const allConfigs = await pb.collection('system_config').getFullList({ $autoCancel: false });
-
-      const configMap = {};
-      allConfigs.forEach(config => {
-        configMap[config.config_key] = config.config_value;
-      });
-
-      setConfigs({
-        default_interest_rate: configMap.default_interest_rate || '',
-        penalty_rate: configMap.penalty_rate || '',
-        min_loan_duration: configMap.min_loan_duration || '',
-        max_loan_duration: configMap.max_loan_duration || ''
-      });
-      */
-
+      setLoading(true);
+      const res = await axiosAPI.get("admin/salary-meta-data");
+      setSalaryCondition(res.data);
     } catch (error) {
       console.error('Failed to fetch configs:', error);
       toast.error("Failed to load configuration");
@@ -65,63 +28,35 @@ const SystemConfigurationPage = () => {
     }
   };
 
-  /* ===============================
-     SAVE CONFIGS
-  =============================== */
   const handleSave = async () => {
     try {
-
-      /* ===============================
-         HARD CODE MODE (UI ONLY)
-      =============================== */
-      toast.success("System configuration updated successfully");
-
-      /* ===============================
-         DATABASE VERSION (UNCOMMENT LATER)
-      =============================== */
-      /*
-      const configKeys = Object.keys(configs);
-
-      for (const key of configKeys) {
-        try {
-          const existing = await pb.collection('system_config').getFirstListItem(
-            `config_key = "${key}"`,
-            { $autoCancel: false }
-          );
-
-          await pb.collection('system_config').update(existing.id, {
-            config_value: configs[key]
-          }, { $autoCancel: false });
-
-        } catch (error) {
-
-          await pb.collection('system_config').create({
-            config_key: key,
-            config_value: configs[key],
-            description: key.replace(/_/g, ' ').toUpperCase()
-          }, { $autoCancel: false });
-
-        }
-      }
-
-      toast.success("System configuration updated successfully");
-      */
-
+      setSaveLoading(true);
+      const res = await axiosAPI.put("admin/salary-meta-data", salaryCondition);
+      setSalaryCondition(res.data);
+      setSaveLoading(false);
+      setIsEdit(false);
+      toast.success("Salary Information updated successfully");
     } catch (error) {
-      console.error('Failed to save configs:', error);
       toast.error("Failed to update configuration");
     }
   };
 
+  const groupedData = salaryCondition.reduce((acc, item) => {
+    const condition = item.salaryCondition.conditionName;
+    const role = item.role.roleName;
+
+    if (!acc[condition]) {
+      acc[condition] = {};
+    }
+
+    acc[condition][role] = item.value;
+    return acc;
+  }, {});
+
   if (loading) {
     return (
-      <div className="flex">
-        <div className="flex-1 flex items-center justify-center min-h-screen bg-slate-50">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600 font-medium">Loading configuration...</p>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -130,88 +65,94 @@ const SystemConfigurationPage = () => {
     <>
       <Helmet>
         <title>System Configuration - LendPro</title>
-        <meta name="description" content="Configure system-wide settings for your money lending business." />
       </Helmet>
 
-      <div className="flex min-h-screen bg-slate-50">
-        <div className="flex-1 overflow-auto">
-          <div className="p-8">
+      <div className="p-8 bg-slate-50 min-h-screen">
+        <h1 className="text-3xl font-bold mb-6">System Configuration</h1>
 
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">System Configuration</h1>
-              <p className="text-slate-600">Manage system-wide settings and parameters</p>
-            </div>
+        <div className="bg-white rounded-lg overflow-hidden p-3 shadow-md">
+          <h3 className="text-xl font-bold text-gray-600 mb-6">Salary Information</h3>
+          <table className="min-w-full border border-slate-200">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="px-4 py-3 text-left border">Salary Condition</th>
+                {roles.map(role => (
+                  <th key={role} className="px-4 py-3 text-center border">
+                    {role}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 max-w-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <Settings className="w-5 h-5 text-slate-600" />
-                <h3 className="font-bold text-slate-900">Loan Settings</h3>
-              </div>
+            <tbody>
+              {Object.keys(groupedData).map(condition => (
+                <tr key={condition} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 border font-medium">
+                    {condition}
+                  </td>
 
-              <div className="space-y-6">
+                  {roles.map(role => (
+                    <td key={role} className="px-4 py-3 border text-center">
+                      <input
+                        type="number"
+                        disabled={!isEdit}
+                        value={groupedData[condition][role] || ""}
+                        className={`w-24 border rounded px-2 py-1 text-center ${isEdit ? "text-gray-800" : "text-gray-400"}`}
+                        onChange={(e) => {
+                          const updated = [...salaryCondition];
+                          const index = updated.findIndex(
+                            item =>
+                              item.salaryCondition.conditionName === condition &&
+                              item.role.roleName === role
+                          );
 
-                <div>
-                  <Label className="text-slate-700 mb-2 block">Default Interest Rate (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={configs.default_interest_rate}
-                    onChange={(e) => setConfigs({ ...configs, default_interest_rate: e.target.value })}
-                    placeholder="12.5"
-                    className="bg-slate-50 border-slate-300 text-slate-900"
-                  />
-                  <p className="text-sm text-slate-500 mt-1">Default interest rate for new loans</p>
-                </div>
-
-                <div>
-                  <Label className="text-slate-700 mb-2 block">Penalty Rate (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={configs.penalty_rate}
-                    onChange={(e) => setConfigs({ ...configs, penalty_rate: e.target.value })}
-                    placeholder="2.0"
-                    className="bg-slate-50 border-slate-300 text-slate-900"
-                  />
-                  <p className="text-sm text-slate-500 mt-1">Penalty rate for overdue payments</p>
-                </div>
-
-                <div>
-                  <Label className="text-slate-700 mb-2 block">Minimum Loan Duration (months)</Label>
-                  <Input
-                    type="number"
-                    value={configs.min_loan_duration}
-                    onChange={(e) => setConfigs({ ...configs, min_loan_duration: e.target.value })}
-                    placeholder="3"
-                    className="bg-slate-50 border-slate-300 text-slate-900"
-                  />
-                  <p className="text-sm text-slate-500 mt-1">Minimum allowed loan duration</p>
-                </div>
-
-                <div>
-                  <Label className="text-slate-700 mb-2 block">Maximum Loan Duration (months)</Label>
-                  <Input
-                    type="number"
-                    value={configs.max_loan_duration}
-                    onChange={(e) => setConfigs({ ...configs, max_loan_duration: e.target.value })}
-                    placeholder="60"
-                    className="bg-slate-50 border-slate-300 text-slate-900"
-                  />
-                  <p className="text-sm text-slate-500 mt-1">Maximum allowed loan duration</p>
-                </div>
-
-                <Button
-                  onClick={handleSave}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                          if (index !== -1) {
+                            updated[index].value = parseFloat(e.target.value);
+                            setSalaryCondition(updated);
+                          }
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {
+            isEdit ?
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    // fetchSalaryCondition(); // reload original data
+                    setIsEdit(false);
+                  }}
+                  className="bg-gray-200 text-black-700 px-6 py-2 rounded hover:bg-gray-300"
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Configuration
-                </Button>
+                  Cancel
+                </button>
 
+                <button
+                  onClick={handleSave}
+                  disabled={saveLoading}
+                  className={`text-white px-6 py-2 rounded transition
+    ${saveLoading
+                      ? "bg-blue-800 cursor-not-allowed opacity-70 pointer-events-none"
+                      : "bg-blue-500 hover:bg-blue-800"
+                    }`}
+                >
+                  {saveLoading ? "Saving..." : "Save Changes"}
+                </button>
               </div>
-            </div>
-
-          </div>
+              :
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setIsEdit(true)}
+                  className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
+                >
+                  Edit
+                </button>
+              </div>
+          }
         </div>
       </div>
     </>

@@ -37,10 +37,8 @@ import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
 public class LoanServiceImpl implements LoanService {
     private final LoanRepository loanRepository;
     private final CustomerRepository customerRepository;
-    private final InstallmentRepository installmentRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
-    private final InterestRateRepository interestRateRepository;
 
     @Transactional
     @Override
@@ -133,6 +131,12 @@ public class LoanServiceImpl implements LoanService {
         if (loanCount >= 2) {
             throw new ResourceExistException("Customer already has 2 loans.");
         }
+
+        Employee employee = employeeRepository
+                .findById(loanCreateDto.getEmployeeId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Employee not found")
+                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);

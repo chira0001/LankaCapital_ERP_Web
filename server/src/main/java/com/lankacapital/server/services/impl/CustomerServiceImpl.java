@@ -31,11 +31,11 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
     private LoanRepository loanRepository;
     private RoleRepository roleRepository;
-    private final EmployeeRepository employeeRepository;
+    private EmployeeRepository employeeRepository;
 
     @Transactional
     @Override
-    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto) {
+    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto, String username) {
 
         if (customerRepository.existsById(dto.getNic())) {
             throw new ResourceExistException(
@@ -52,9 +52,8 @@ public class CustomerServiceImpl implements CustomerService {
             role = roleRepository.save(role);
         }
         customer.setRole(role);
-
-        Customer savedCustomer = customerRepository.save(customer);
-        return CustomerMapper.mapToCustomerResponseDto(savedCustomer);
+        customer.setCreatedEmployee(employeeRepository.findByEmail(username));
+        return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 
     @Override

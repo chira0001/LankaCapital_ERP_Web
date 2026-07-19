@@ -3,6 +3,7 @@ package com.lankacapital.server.mappers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.enums.LoanType;
+import com.lankacapital.server.utils.UtilityFunctions;
 
 import java.math.BigDecimal;
 
@@ -23,7 +24,8 @@ public class LoanMapper {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
-        responseDto.setFileNumber(loan.getFileNumber());
+
+        responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
         responseDto.setLoanType(loan.getLoanType().toString());
@@ -81,20 +83,20 @@ public class LoanMapper {
         return responseDto;
     }
 
-    public static Customer mapToCustomer(LoanCreateDto loanCreateDto){
-        Customer customer = new Customer();
-
-        customer.setNic(loanCreateDto.getCustomerId());
-        customer.setName(loanCreateDto.getName());
-        customer.setEmail(loanCreateDto.getEmail());
-        customer.setAddress(loanCreateDto.getAddress());
-        customer.setPhoneNumber(loanCreateDto.getPhoneNumber());
-
-        customer.setBank(loanCreateDto.getBank());
-        customer.setBankAccount(loanCreateDto.getBankAccount());
-
-        return customer;
-    }
+//    public static Customer mapToCustomer(LoanCreateDto loanCreateDto){
+//        Customer customer = new Customer();
+//
+//        customer.setNic(loanCreateDto.getCustomerId());
+//        customer.setName(loanCreateDto.getName());
+//        customer.setEmail(loanCreateDto.getEmail());
+//        customer.setAddress(loanCreateDto.getAddress());
+//        customer.setPhoneNumber(loanCreateDto.getPhoneNumber());
+//
+//        customer.setBank(loanCreateDto.getBank());
+//        customer.setBankAccount(loanCreateDto.getBankAccount());
+//
+//        return customer;
+//    }
 
     public static LoanResAsyncDto mapToCustomerAsyncDto(Loan loan) {
         LoanResAsyncDto dto = new LoanResAsyncDto();
