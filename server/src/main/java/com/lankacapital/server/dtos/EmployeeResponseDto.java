@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Data
 public class EmployeeResponseDto {
     private Long id;
-    private Long nic;
+    private String nic;
     private String firstName;
     private String lastName;
     private String email;

@@ -13,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
-    Boolean existsByNic(Long nic);
+    Boolean existsByNic(String nic);
     Employee findByEmail(String email);
     Boolean existsByEmail(String email);
 

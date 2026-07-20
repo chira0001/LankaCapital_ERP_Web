@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class FieldOfficerResAsyncDto {
     private Long id;
-    private Long nic;
+    private String nic;
     private String first_name;
     private String last_name;
     private String email;

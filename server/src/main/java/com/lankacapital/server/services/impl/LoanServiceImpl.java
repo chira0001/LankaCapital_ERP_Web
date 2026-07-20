@@ -132,7 +132,7 @@ public class LoanServiceImpl implements LoanService {
             throw new ResourceExistException("Customer already has 2 loans.");
         }
 
-        Employee employee = employeeRepository
+        employee = employeeRepository
                 .findById(loanCreateDto.getEmployeeId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Employee not found")

@@ -26,7 +26,7 @@ public class Employee implements UserDetails {
     private Long id;
 
     @Column(nullable = true)
-    private Long nic = 0000000000L;
+    private String nic;
 
     @Column(nullable = false)
     private String firstName;

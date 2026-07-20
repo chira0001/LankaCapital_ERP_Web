@@ -1,229 +1,12 @@
-/*import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
-//import pb from '@/lib/pocketbaseClient.js';
-import { Wallet, Download, Calendar } from 'lucide-react';
-import { Button } from '@/component/ui/button';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import * as XLSX from 'xlsx';
-
-const formatLKR = (amount) => new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
-
-const PettyCashPage = () => {
-  const [pettyCashData, setPettyCashData] = useState([]);
-  const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchPettyCash();
-  }, []);
-
-  const fetchPettyCash = async () => {
-    try {
-        {/*
-      const data = await pb.collection('petty_cash').getFullList({
-        expand: 'field_officer_id',
-        sort: '-date',
-        $autoCancel: false
-      });
-
-      */
-     /*}
-
-     
-    
-
-     // NORMALIZATION LOGIC (IN CASE OF NESTED EXPAND ISSUES)
-      const normalizedData = data.map(item => ({
-        ...item,
-        fieldOfficer: item.fieldOfficer ?? item.expand?.field_officer_id ?? {}
-      }));
-
-      // USE NORMALIZED DATA
-      setPettyCashData(normalizedData);
-
-      //setPettyCashData(data);
-
-      // Process chart data (group by date)
-      const groupedByDate = data.reduce((acc, curr) => {
-        const dateStr = new Date(curr.date).toLocaleDateString();
-        if (!acc[dateStr]) {
-          acc[dateStr] = { date: dateStr, collected: 0 };
-        }
-        acc[dateStr].collected += curr.amount_collected;
-        return acc;
-      }, {});
-
-      setChartData(Object.values(groupedByDate).slice(0, 14).reverse()); // Last 14 days
-    } catch (error) {
-      console.error('Failed to fetch petty cash:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExportExcel = () => {
-    const exportData = pettyCashData.map(item => ({
-      'Date': new Date(item.date).toLocaleDateString(),
-      'Field Officer Name': item.fieldOfficer?.name || item.fieldOfficer?.email || 'N/A',
-      'Amount Collected (LKR)': item.amount_collected,
-      'Cash Balance (LKR)': item.cash_balance || 0,
-      'Notes': item.notes || ''
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Petty Cash");
-    XLSX.writeFile(wb, `Petty_Cash_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex">
-       
-        <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading petty cash data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Helmet>
-        <title>Petty Cash - LendPro</title>
-        <meta name="description" content="Manage and track daily petty cash collections." />
-      </Helmet>
-
-      <div className="flex min-h-screen bg-gray-50">
-        
-        
-        <div className="flex-1 overflow-auto">
-          <div className="p-8">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-black mb-2">Petty Cash Management</h1>
-                <p className="text-gray-600">Track daily cash collections by field officers</p>
-              </div>
-              <Button
-                onClick={handleExportExcel}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export to Excel
-              </Button>
-            </div>
-
-           // {Chart }
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-              <h3 className="text-lg font-bold text-black mb-6">Daily Cash Collection Trends</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="date" stroke="#4b5563" />
-                  <YAxis stroke="#4b5563" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value) => formatLKR(value)}
-                  />
-                  <Legend />
-                  <Bar dataKey="collected" fill="#000000" name="Amount Collected" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-           // {Table }
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-200 flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-bold text-black">Field Officer Cash Collections</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Date</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Employee ID</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Field Officer Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Total Collected (LKR)</th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-black">Cash Balance (LKR)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {pettyCashData.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(record.date).toLocaleDateString()}</span>
-                          </div>
-                        </td>
-                        //{NORMALIZED FIELD }
-                        <td className="px-6 py-4">
-                          <p className="font-mono text-sm text-gray-600">
-                            {record.fieldOfficer?.employee_id || 'N/A'}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-black">
-                            {record.fieldOfficer?.name || record.fieldOfficer?.email || 'N/A'}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-black">{formatLKR(record.amount_collected)}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-gray-700">{formatLKR(record.cash_balance || 0)}</p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {pettyCashData.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No petty cash records found</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-export default PettyCashPage;
-
-*/
-
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
-import { Wallet, Download, Calendar } from 'lucide-react';
+import { Download, Calendar, FileText, AlertCircle, User, Undo2 } from 'lucide-react';
 import { Button } from '@/component/ui/button';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import axiosAPI from '@/api/axiosAPI';
 import { useNavigate } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
 import * as XLSX from 'xlsx';
+
+// --- Constants & Helpers ---
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -231,247 +14,113 @@ const formatLKR = (amount) =>
     currency: 'LKR'
   }).format(amount || 0);
 
+// --- Sub-Components ---
+
+const StatusBadge = ({ status }) => {
+  const styles = {
+    APPROVED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    REJECTED: "bg-red-100 text-red-700 border-red-200",
+    PENDING: "bg-amber-100 text-amber-700 border-amber-200"
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${styles[status] || 'bg-slate-100'}`}>
+      {status}
+    </span>
+  );
+};
+
 const PettyCashPage = () => {
   const navigate = useNavigate();
   const [pettyCashData, setPettyCashData] = useState([]);
-  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL =
-    `${import.meta.env.VITE_BACKEND_URL}/admin/pettyCash`;
-
-  const token = localStorage.getItem('token');
-
-  // useEffect(() => {
-  //   fetchPettyCash();
-  // }, []);
+  const [chartData, setChartData] = useState([]);
+  const [opRejecting, setOpRejecting] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
+    fetchPettyCash();
+  }, []);
+
+  const fetchPettyCash = async () => {
+    try {
+      const response = await axiosAPI.get("/admin/pettyCash");
+      const data = response.data;
+      setPettyCashData(data);
+
+      const grouped = data.reduce((acc, curr) => {
+        const date = new Date(curr.dateTime).toLocaleDateString();
+        if (!acc[date]) acc[date] = { date, collected: 0 };
+        acc[date].collected += Number(curr.amount);
+        return acc;
+      }, {});
+      setChartData(Object.values(grouped));
+
+    } catch (error) {
+      console.error("Failed to load petty cash:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchPettyCash();
-}, []);
+  const approve = async (id) => {
+    try {
+      setActionLoadingId(id);
+      await axiosAPI.put(`/admin/pettyCash/approve/${id}`);
+      await fetchPettyCash();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
+  const reject = async (id) => {
+    try {
+      setOpRejecting(true);
+      await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
+      await fetchPettyCash();
+      setOpRejecting(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-  // const fetchPettyCash = async () => {
-  //   try {
-  //     const response = await fetch(API_URL, {
-  //       method: 'GET',
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //         'Content-Type': 'application/json'
-  //       }
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error('Failed to load petty cash');
-  //     }
-
-  //     const data = await response.json();
-
-  //     setPettyCashData(data);
-
-  //     const grouped = data.reduce((acc, curr) => {
-  //       const date = new Date(curr.dateTime).toLocaleDateString();
-
-  //       if (!acc[date]) {
-  //         acc[date] = {
-  //           date,
-  //           collected: 0
-  //         };
-  //       }
-
-  //       acc[date].collected += Number(curr.amount);
-
-  //       return acc;
-  //     }, {});
-
-  //     setChartData(Object.values(grouped));
-
-  //   } catch (error) {
-  //     console.error(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  
-
-const fetchPettyCash = async () => {
-  try {
-    const response = await axiosAPI.get("/admin/pettyCash");
-
-    console.log("PETTY CASH RAW:", response.data);
-
-    const data = response.data;
-
-    setPettyCashData(data);
-
-    const grouped = data.reduce((acc, curr) => {
-      const date = new Date(curr.dateTime).toLocaleDateString();
-
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          collected: 0
-        };
-      }
-
-      acc[date].collected += Number(curr.amount);
-
-      return acc;
-    }, {});
-
-    setChartData(Object.values(grouped));
-
-  } catch (error) {
-    console.error("Failed to load petty cash:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-// APPROVE FUNCTION
-// const approve = async (id) => {
-//   try {
-//     await fetch(
-//       `http://localhost:8080/api/v1/admin/petty-cash/approve/${id}/${localStorage.getItem('username')}`,
-//       {
-//         method: 'PUT',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       }
-//     );
-
-//     fetchPettyCash();
-//   } catch (error) {
-//     console.error('Approve failed:', error);
-//   }
-// };
-
-
-const approve = async (id) => {
-  try {
-    const username = localStorage.getItem("username");
-
-    await axiosAPI.put(
-      `/admin/pettyCash/approve/${id}`
-    );
-
-    fetchPettyCash();
-  } catch (error) {
-    console.error("Approve failed:", error);
-  }
-};
-
-//  REJECT FUNCTION
-// const reject = async (id) => {
-//   try {
-//     await fetch(
-//       `http://localhost:8080/api/v1/admin/petty-cash/reject/${id}/${localStorage.getItem('username')}`,
-//       {
-//         method: 'PUT',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       }
-//     );
-
-//     fetchPettyCash();
-//   } catch (error) {
-//     console.error('Reject failed:', error);
-//   }
-// };
-
-const reject = async (id) => {
-  try {
-    const username = localStorage.getItem("username");
-
-    await axiosAPI.put(
-     `/admin/pettyCash/reject/${id}`
-    );
-
-    fetchPettyCash();
-  } catch (error) {
-    console.error("Reject failed:", error);
-  }
-};
-
-
-//  UNDO FUNCTION
-// const undo = async (id) => {
-//   try {
-//     await fetch(
-//       `http://localhost:8080/api/v1/admin/petty-cash/undo/${id}/${localStorage.getItem('username')}`,
-//       {
-//         method: 'PUT',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       }
-//     );
-
-//     fetchPettyCash();
-//   } catch (error) {
-//     console.error('Undo failed:', error);
-//   }
-// };
-
-
-const undo = async (id) => {
-  try {
-    const username = localStorage.getItem("username");
-
-    await axiosAPI.put(
-      `/admin/undo/${id}/${username}`
-    );
-
-    fetchPettyCash();
-  } catch (error) {
-    console.error("Undo failed:", error);
-  }
-};
-
-
+  const undo = async (id) => {
+    try {
+      setActionLoadingId(id);
+      const username = localStorage.getItem("username");
+      await axiosAPI.put(`/admin/undo/${id}/${username}`);
+      await fetchPettyCash();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const handleExportExcel = () => {
     const exportData = pettyCashData.map((item) => ({
       Date: new Date(item.dateTime).toLocaleDateString(),
-      Employee:
-        item.requestEmployee?.firstName ||
-        item.requestEmployee?.email ||
-        'N/A',
+      Employee: item.requestEmployee?.firstName || item.requestEmployee?.email || 'N/A',
       Amount: item.amount,
       Narration: item.narration || '',
       Status: item.request
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
-
     const wb = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-      wb,
-      ws,
-      'Petty Cash'
-    );
-
-    XLSX.writeFile(
-      wb,
-      `PettyCash_${new Date().toISOString().split('T')[0]}.xlsx`
-    );
+    XLSX.utils.book_append_sheet(wb, ws, 'Petty Cash');
+    XLSX.writeFile(wb, `PettyCash_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-slate-500 text-xs font-medium">Synchronizing Ledger Data...</p>
+        </div>
       </div>
     );
   }
@@ -479,220 +128,174 @@ const undo = async (id) => {
   return (
     <>
       <Helmet>
-        <title>Petty Cash</title>
+        <title>Petty Cash Management - LendPro</title>
       </Helmet>
 
-      <div className="p-8">
+      <div className="min-h-screen bg-slate-50 p-3 md:p-6 text-sm">
 
-        <div className="flex justify-between mb-8">
-
+        {/* Page Header - Zoomed Out */}
+        <header className="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-5 border-b border-slate-200">
           <div>
-            <h1 className="text-3xl font-bold">
-              Petty Cash Management
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <FileText className="w-6 h-6 text-blue-600" />
+              Petty Cash Requests
             </h1>
-
-            <p className="text-gray-600">
-              Pending petty cash requests
+            <p className="mt-1 text-slate-500 text-xs max-w-md">
+              Review pending financial requests from staff members. Approve valid expenses or reject discrepancies.
             </p>
           </div>
 
-          <Button onClick={handleExportExcel}>
-            <Download className="w-4 h-4 mr-2" />
+          <Button
+            onClick={handleExportExcel}
+            className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm h-9 px-4 text-sm flex items-center gap-2 self-start sm:self-auto"
+          >
+            <Download className="w-4 h-4" />
             Export Excel
           </Button>
+        </header>
 
-        </div>
+        {/* Main Content Area - Compact */}
+        <main className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
 
-        <div className="bg-white p-6 rounded-xl mb-8">
+          {/* Toolbar */}
+          <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
+            <span className="text-xs font-semibold text-slate-700">
+              All Transactions
+              <span className="ml-2 px-2 py-px bg-slate-200 text-slate-600 rounded text-[10px]">{pettyCashData.length}</span>
+            </span>
+          </div>
 
-          <ResponsiveContainer
-            width="100%"
-            height={300}
-          >
-            <BarChart data={chartData}>
-
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="date" />
-
-              <YAxis />
-
-              <Tooltip
-                formatter={(v) =>
-                  formatLKR(v)
-                }
-              />
-
-              <Legend />
-
-              <Bar
-                dataKey="collected"
-                name="Amount"
-                fill="#000"
-              />
-
-            </BarChart>
-          </ResponsiveContainer>
-
-        </div>
-
-        <div className="bg-white rounded-xl overflow-hidden">
-
-          <table className="w-full">
-
-            <thead>
-
-              <tr className="bg-gray-100">
-
-                <th className="p-4">Date</th>
-                <th className="p-4">Employee</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Narration</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Actions</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {/* {pettyCashData.map((record) => (
-
-                <tr
-                  key={record.id}
-                  className="border-b"
-                >
-
-                  <td className="p-4">
-
-                    <Calendar className="inline w-4 mr-2" />
-
-                    {new Date(
-                      record.dateTime
-                    ).toLocaleDateString()}
-
-                  </td>
-
-                  <td className="p-4">
-                    {record.requestEmployee?.firstName ||
-                      record.requestEmployee?.email ||
-                      'N/A'}
-                  </td>
-
-                  <td className="p-4">
-                    {formatLKR(
-                      record.amount
-                    )}
-                  </td>
-
-                  <td className="p-4">
-                    {record.narration}
-                  </td>
-
-                  <td className="p-4">
-                    {record.request}
-                  </td>
-
+          {/* Table - Denser Spacing */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-sm uppercase text-slate-500 font-semibold tracking-wider border-b border-slate-200">
+                  <th className="px-5 py-3">Date</th>
+                  <th className="px-5 py-3">Requester</th>
+                  <th className="px-5 py-3 text-right">Amount</th>
+                  <th className="px-5 py-3">Narration</th>
+                  <th className="px-5 py-3 text-center">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
+              </thead>
 
+              <tbody className="divide-y divide-slate-100 text-md">
+                {pettyCashData.length > 0 ? (
+                  pettyCashData.map((record) => (
+                    <tr key={record.id} className="group hover:bg-blue-50/60 transition-colors duration-150">
 
-              ))} */}
+                      {/* DATE */}
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        <div className="flex items-center text-slate-600">
+                          <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                          {new Date(record.dateTime).toLocaleDateString(undefined, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </td>
 
+                      {/* EMPLOYEE */}
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800 text-xs">
+                            {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
+                          </span>
+                          <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                            {record.requestEmployee?.nic}
+                          </span>
+                        </div>
+                      </td>
 
-                {pettyCashData.map((record) => (
-              <tr key={record.id} className="border-b hover:bg-gray-50">
+                      {/* AMOUNT */}
+                      <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                        <span className="font-mono font-bold text-slate-900 tabular-nums text-sm">
+                          {formatLKR(record.amount)}
+                        </span>
+                      </td>
 
-                {/* DATE */}
-                <td className="p-4">
-                  <Calendar className="inline w-4 mr-2" />
-                  {new Date(record.dateTime).toLocaleDateString()}
-                </td>
+                      {/* NARRATION */}
+                      <td className="px-5 py-3.5 max-w-[220px]">
+                        <p className="text-slate-500 line-clamp-2 text-md" title={record.narration}>
+                          {record.narration || <span className="italic text-slate-300">No description provided</span>}
+                        </p>
+                      </td>
 
-                {/* EMPLOYEE */}
-                <td className="p-4">
-                  {record.requestEmployee?.firstName ||
-                    record.requestEmployee?.email ||
-                    'N/A'}
-                </td>
+                      {/* STATUS */}
+                      <td className="px-5 py-3.5 text-center">
+                        <StatusBadge status={record.request} />
+                      </td>
 
-                {/* AMOUNT */}
-                <td className="p-4">
-                  {record.amount}
-                </td>
+                      {/* ACTIONS */}
+                      <td className="px-5 py-3.5 text-right">
+                        {record.request === "PENDING" ? (
+                          <div className="flex justify-end items-center gap-2 opacity-75 group-hover:opacity-100 transition-opacity">
 
-                {/* NARRATION */}
-                <td className="p-4">
-                  {record.narration}
-                </td>
+                            <button
+                              disabled={actionLoadingId === record.id}
+                              onClick={() => approve(record.id)}
+                              className={`px-3 py-1 rounded-md text-[10px] font-semibold border transition-colors
+          ${actionLoadingId === record.id
+                                  ? "bg-green-200 text-green-700 cursor-not-allowed"
+                                  : "bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border-green-200 hover:border-green-600"
+                                }`}
+                            >
+                              {actionLoadingId === record.id ? "Processing..." : "Approve"}
+                            </button>
 
-                {/* STATUS */}
-                <td className="p-4">
-                  <span
-                    className={
-                      record.request === "APPROVED"
-                        ? "text-green-600 font-semibold"
-                        : record.request === "REJECTED"
-                        ? "text-red-600 font-semibold"
-                        : "text-yellow-600 font-semibold"
-                    }
-                  >
-                    {record.request}
-                  </span>
-                </td>
-
-                {/* ACTIONS */}
-                {/* <td className="p-4 flex gap-2"> */}
-                   <td className="p-4">
-                    <div className="flex gap-2">
-
-                      {record.request === "PENDING" ? (
-                        <>
-                          {/* APPROVE */}
+                            <button
+                              disabled={actionLoadingId === record.id}
+                              onClick={() => reject(record.id)}
+                              className={`px-3 py-1 rounded-md text-[10px] font-semibold border transition-colors
+          ${actionLoadingId === record.id
+                                  ? "bg-red-200 text-red-700 cursor-not-allowed"
+                                  : "bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border-red-200 hover:border-red-600"
+                                }`}
+                            >
+                              {opRejecting ? "Processing..." : "Reject"}
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => approve(record.id)}
-                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                            disabled={actionLoadingId === record.id}
+                            onClick={() => undo(record.id)}
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-[10px] font-medium transition-colors
+        ${actionLoadingId === record.id
+                                ? "bg-slate-200 text-slate-600 cursor-not-allowed"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white"
+                              }`}
                           >
-                            Approve
+                            <Undo2 className="w-3 h-3" />
+                            {actionLoadingId === record.id ? "Processing..." : "Undo"}
                           </button>
+                        )}
+                      </td>
 
-                          {/* REJECT */}
-                          <button
-                            onClick={() => reject(record.id)}
-                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      ) : (
-                        /* UNDO / RESET */
-                        <button
-                          onClick={() => undo(record.id)}
-                          className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
-                        >
-                          Undo
-                        </button>
-                      )}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6">
+                      <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                        <AlertCircle className="w-10 h-10 mb-2 opacity-30" />
+                        <p className="font-medium text-xs text-slate-500">No requests found</p>
+                        <p className="text-[10px] mt-1">New entries will appear here automatically.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-                    </div>
-                  </td>
-
-              </tr>
-             ))}
-
-
-            </tbody>
-
-          </table>
-
-          {pettyCashData.length === 0 && (
-            <div className="p-12 text-center">
-              No pending requests
-            </div>
-          )}
-
-        </div>
-
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/70">
+            <p className="text-[10px] text-slate-400 text-center">
+              End of ledger list • Last updated {new Date().toLocaleTimeString()}
+            </p>
+          </div>
+        </main>
       </div>
     </>
   );
