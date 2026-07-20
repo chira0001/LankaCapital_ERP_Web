@@ -6,15 +6,11 @@ import axiosAPI from '@/api/axiosAPI';
 import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
 
-// --- Constants & Helpers ---
-
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
     style: 'currency',
     currency: 'LKR'
   }).format(amount || 0);
-
-// --- Sub-Components ---
 
 const StatusBadge = ({ status }) => {
   const styles = {
