@@ -2,12 +2,14 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Customer;
+import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.CustomerRepository;
+import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.LoanRepository;
 import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
@@ -29,10 +31,11 @@ public class CustomerServiceImpl implements CustomerService {
     private CustomerRepository customerRepository;
     private LoanRepository loanRepository;
     private RoleRepository roleRepository;
+    private EmployeeRepository employeeRepository;
 
     @Transactional
     @Override
-    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto) {
+    public CustomerResponseDto registerCustomer(CustomerRegisterDto dto, String username) {
 
         if (customerRepository.existsById(dto.getNic())) {
             throw new ResourceExistException(
@@ -49,9 +52,8 @@ public class CustomerServiceImpl implements CustomerService {
             role = roleRepository.save(role);
         }
         customer.setRole(role);
-
-        Customer savedCustomer = customerRepository.save(customer);
-        return CustomerMapper.mapToCustomerResponseDto(savedCustomer);
+        customer.setCreatedEmployee(employeeRepository.findByEmail(username));
+        return CustomerMapper.mapToCustomerResponseDto(customerRepository.save(customer));
     }
 
     @Override
@@ -121,7 +123,11 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<CustomerResAsyncDto> findAllCustomerById(CustomerAsyncDto customerAsyncDto) {
+    public List<CustomerResAsyncDto> findAllCustomerById(String username, CustomerAsyncDto customerAsyncDto) {
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         List<Customer> customers = customerRepository.findCustomersByNics(customerAsyncDto.getNic());
 
         return customers.stream()
@@ -130,7 +136,12 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerResDto getCustomerDataById(String nic){
+    public CustomerResDto getCustomerDataById(String username, String nic){
+        Employee emp = employeeRepository.findByEmail(username);
+        if(emp == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
         Customer customer = customerRepository.findByNicWithLoans(nic);
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found with id : " + nic);
@@ -195,7 +206,11 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.save(customer);
     }
 
-    public List<CustomerManageDto> manageCustomers(int page) {
+    public List<CustomerManageDto> manageCustomers(String username, int page) {
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         Pageable pageable = PageRequest.of(page, 50);
 
         return customerRepository.findAll(pageable)
@@ -216,7 +231,12 @@ public class CustomerServiceImpl implements CustomerService {
 //                .toList();
 
     @Override
-    public Customer addNewCustomer(CustomerAddSyncDto customerAddSyncDto){
+    public Customer addNewCustomer(String username, CustomerAddSyncDto customerAddSyncDto){
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
         if (customerRepository.existsById(customerAddSyncDto.getNic())) {
             throw new ResourceExistException(
                     "Customer already registered with id : " + customerAddSyncDto.getNic()

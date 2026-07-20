@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Search, User, Trash2, Plus, Edit, Undo, DollarSign } from "lucide-react";
+import axiosAPI from "@/api/axiosAPI";
+import {
+  Search,
+  Trash2,
+  Plus,
+  Edit,
+  DollarSign,
+} from "lucide-react";
 import { Input } from "@/component/ui/input";
 import {
   Dialog,
@@ -9,10 +15,6 @@ import {
   DialogTitle,
 } from "@/component/ui/dialog";
 
-const API_BASE = `${import.meta.env.VITE_BACKEND_URL}/admin`;
-
-// nic is the customer's unique identifier used everywhere in the backend
-// (CustomerController uses @PathVariable Long nic on every customer endpoint).
 const emptyCustomer = {
   nic: "",
   name: "",
@@ -21,10 +23,6 @@ const emptyCustomer = {
   address: "",
 };
 
-// Matches LoanCreateDto exactly:
-// fileNumber, loanAmount, interestRate, documentCharge,
-// numberOfInstallments, customerId, name, email, address,
-// phoneNumber, bank, bankAccount
 const emptyLoanForm = {
   fileNumber: "",
   loanAmount: "",
@@ -38,6 +36,7 @@ const emptyLoanForm = {
   phoneNumber: "",
   bank: "",
   bankAccount: "",
+  loanType: "DAILY"
 };
 
 const CustomerManagementPage = () => {
@@ -48,36 +47,27 @@ const CustomerManagementPage = () => {
   const [error, setError] = useState("");
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showDialog, setShowDialog] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const [form, setForm] = useState(emptyCustomer);
 
-  // Add Loan modal state
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [loanForm, setLoanForm] = useState(emptyLoanForm);
   const [loanSaving, setLoanSaving] = useState(false);
   const [loanError, setLoanError] = useState("");
 
   const [page, setPage] = useState(1);
-  const perPage = 6;
-
-  const authHeaders = () => {
-    const token = localStorage.getItem("token");
-    return { headers: { Authorization: `Bearer ${token}` } };
-  };
+  const perPage = 10;
 
   // ================= LOAD =================
   const loadCustomers = async () => {
     try {
       setLoading(true);
       setError("");
-
-      const res = await axios.get(`${API_BASE}/customers`, authHeaders());
-
+      const res = await axiosAPI.get("/admin/customers");
       setCustomers(res.data);
       setFiltered(res.data);
     } catch (err) {
@@ -106,7 +96,7 @@ const CustomerManagementPage = () => {
     setPage(1);
   }, [search, customers]);
 
-  // ================= CREATE / UPDATE CUSTOMER =================
+  // ================= SAVE CUSTOMER =================
   const saveCustomer = async () => {
     if (!form.nic || !form.name) {
       alert("NIC and Name are required.");
@@ -115,15 +105,11 @@ const CustomerManagementPage = () => {
 
     try {
       setSaving(true);
-
       if (editMode) {
-        await axios.put(
-          `${API_BASE}/customers/${form.nic}`,
-          form,
-          authHeaders()
-        );
+        await axiosAPI.put(`admin/customers/${form.nic}`, form);
       } else {
-        await axios.post(`${API_BASE}/customers`, form, authHeaders());
+        console.log("Create Form : ", form);
+        await axiosAPI.post(`admin/customers`, form);
       }
 
       setShowForm(false);
@@ -132,19 +118,23 @@ const CustomerManagementPage = () => {
       await loadCustomers();
     } catch (err) {
       console.error("Failed to save customer:", err);
-      alert("Failed to save customer. Please check the details and try again.");
+      alert("Failed to save customer.");
     } finally {
       setSaving(false);
     }
   };
 
-  // ================= DELETE (soft delete) =================
+  // ================= DELETE =================
   const deleteCustomer = async (nic) => {
-    const ok = window.confirm("Are you sure you want to delete this customer?");
+    const ok = window.confirm(
+      "Are you sure you want to delete this customer?"
+    );
     if (!ok) return;
 
     try {
-      await axios.delete(`${API_BASE}/customers/${nic}`, authHeaders());
+      await axiosAPI.delete(`admin/customers/${nic}`);
+      setShowCustomerDetails(false);
+      setSelectedCustomer(null);
       await loadCustomers();
     } catch (err) {
       console.error("Failed to delete customer:", err);
@@ -152,41 +142,15 @@ const CustomerManagementPage = () => {
     }
   };
 
-  // ================= UNDO DELETE =================
-  const undoDelete = async (nic) => {
-    try {
-      await axios.put(
-        `${API_BASE}/customers/${nic}/undo`,
-        {},
-        authHeaders()
-      );
-      await loadCustomers();
-    } catch (err) {
-      console.error("Failed to restore customer:", err);
-      alert("Failed to restore customer.");
-    }
-  };
-
-  // ================= EDIT CUSTOMER =================
-  const openEdit = (customer) => {
-    setForm(customer);
-    setEditMode(true);
-    setShowForm(true);
-  };
-
-  // ================= VIEW CUSTOMER =================
+  // ================= VIEW =================
   const viewCustomer = async (customer) => {
     try {
-      const res = await axios.get(
-        `${API_BASE}/customers/${customer.nic}`,
-        authHeaders()
-      );
+      const res = await axiosAPI.get(`admin/customers/${customer.nic}`);
       setSelectedCustomer(res.data);
-      setShowDialog(true);
-    } catch (err) {
-      console.error("Failed to load customer details:", err);
+      setShowCustomerDetails(true);
+    } catch {
       setSelectedCustomer(customer);
-      setShowDialog(true);
+      setShowCustomerDetails(true);
     }
   };
 
@@ -206,14 +170,11 @@ const CustomerManagementPage = () => {
 
   const saveLoan = async () => {
     if (
-      !loanForm.fileNumber ||
       !loanForm.loanAmount ||
       !loanForm.interestRate ||
       !loanForm.numberOfInstallments
     ) {
-      setLoanError(
-        "File number, loan amount, interest rate, and number of installments are required."
-      );
+      setLoanError("Required fields are missing.");
       return;
     }
 
@@ -231,31 +192,23 @@ const CustomerManagementPage = () => {
         numberOfInstallments: Number(loanForm.numberOfInstallments),
         customerId: Number(loanForm.customerId),
       };
-
-      await axios.post(`${API_BASE}/loans`, payload, authHeaders());
+      console.log("Create Payload : ", payload)
+      await axiosAPI.post(`admin/loans`, payload);
 
       setShowLoanForm(false);
       setLoanForm(emptyLoanForm);
 
-      // Refresh the currently open customer detail (if any) so the new
-      // loan shows up immediately, and refresh the list in the background.
       if (selectedCustomer) {
-        const res = await axios.get(
-          `${API_BASE}/customers/${selectedCustomer.nic}`,
-          authHeaders()
+        const res = await axiosAPI.get(
+          `admin/customers/${selectedCustomer.nic}`
         );
         setSelectedCustomer(res.data);
       }
+
       await loadCustomers();
     } catch (err) {
       console.error("Failed to add loan:", err);
-      const backendMessage =
-        err.response?.data?.message || err.response?.data || "";
-      setLoanError(
-        `Failed to add loan. ${
-          typeof backendMessage === "string" ? backendMessage : ""
-        }`
-      );
+      setLoanError("Failed to add loan.");
     } finally {
       setLoanSaving(false);
     }
@@ -267,15 +220,21 @@ const CustomerManagementPage = () => {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   if (loading) {
-    return <div className="p-6">Loading customers...</div>;
+    return <div className="p-8">Loading customers...</div>;
   }
 
   return (
-    <div className="p-6">
-
+    <div className="min-h-screen bg-gray-50 p-8">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Customer Management</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Customer Management
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Manage customers and their loans
+          </p>
+        </div>
 
         <button
           onClick={() => {
@@ -283,96 +242,98 @@ const CustomerManagementPage = () => {
             setEditMode(false);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded"
+          className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-sm transition"
         >
-          <Plus size={16} /> Add Customer
+          <Plus size={16} />
+          Add Customer
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded bg-red-50 text-red-600 text-sm">
+        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
           {error}
         </div>
       )}
 
       {/* SEARCH */}
-      <div className="relative mb-6 max-w-md">
+      <div className="relative mb-8 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <Input
-          className="pl-10"
+          className="pl-10 bg-white shadow-sm"
           placeholder="Search customers..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      {/* CUSTOMER LIST */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paginated.map((c) => (
-          <div key={c.nic} className="border p-4 rounded bg-white">
+      {/* CUSTOMER TABLE */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  NIC
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  Phone Number
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                  Loan Count
+                </th>
+              </tr>
+            </thead>
 
-            <div onClick={() => viewCustomer(c)} className="cursor-pointer">
-              <div className="flex items-center gap-2">
-                <User size={18} />
-                <b>{c.name}</b>
-              </div>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {paginated.map((c) => (
+                <tr
+                  key={c.nic}
+                  className="hover:bg-gray-50 transition cursor-pointer"
+                  onClick={() => viewCustomer(c)}
+                >
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    {c.name}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">{c.nic}</td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {c.phoneNumber || "No phone"}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {c.email || "No email"}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {c.loans?.length ?? 0}
+                  </td>
+                </tr>
+              ))}
 
-              <div className="text-sm text-gray-500">{c.email}</div>
-              <div className="text-sm text-gray-500">{c.phoneNumber}</div>
-              <div className="text-xs text-gray-400">NIC: {c.nic}</div>
-            </div>
-
-            {/* ACTIONS */}
-            <div className="flex gap-2 mt-3">
-
-              <button onClick={() => openEdit(c)} title="Edit">
-                <Edit size={16} />
-              </button>
-
-              <button
-                onClick={() => deleteCustomer(c.nic)}
-                className="text-red-500"
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-
-              <button
-                onClick={() => undoDelete(c.nic)}
-                className="text-green-600"
-                title="Undo delete"
-              >
-                <Undo size={16} />
-              </button>
-
-              {/* Adding a loan is a fully separate action/endpoint from adding a
-                  customer above — this never blocks or requires customer creation. */}
-              <button onClick={() => openAddLoan(c)} title="Add loan" className="text-blue-600">
-                <DollarSign size={16} />
-              </button>
-
-            </div>
-
-          </div>
-        ))}
-
-        {paginated.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500">
-            No customers found
-          </div>
-        )}
+              {paginated.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="text-center py-16 text-gray-400">
+                    No customers found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
+        <div className="flex justify-center mt-8 gap-2">
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i}
               onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 border ${
-                page === i + 1 ? "bg-black text-white" : ""
-              }`}
+              className={`px-3 py-1 border rounded ${page === i + 1 ? "bg-black text-white" : "bg-white"
+                }`}
             >
               {i + 1}
             </button>
@@ -380,71 +341,195 @@ const CustomerManagementPage = () => {
         </div>
       )}
 
-      {/* CUSTOMER DETAILS + LOANS */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-          </DialogHeader>
+      {showCustomerDetails && selectedCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-          {selectedCustomer && (
-            <div>
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowCustomerDetails(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 z-10">
+
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Customer Details</h2>
+              <button
+                onClick={() => setShowCustomerDetails(false)}
+                className="text-gray-500 hover:text-black text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6">
 
               {/* CUSTOMER INFO */}
-              <div className="mb-4">
-                <p><b>NIC:</b> {selectedCustomer.nic}</p>
-                <p><b>Name:</b> {selectedCustomer.name}</p>
-                <p><b>Email:</b> {selectedCustomer.email}</p>
-                <p><b>Phone:</b> {selectedCustomer.phoneNumber}</p>
-                <p><b>Address:</b> {selectedCustomer.address}</p>
+              <div className="grid md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border text-sm">
+                <div>
+                  <span className="font-medium text-gray-500">NIC</span>
+                  <p className="text-gray-900">{selectedCustomer.nic}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Name</span>
+                  <p className="text-gray-900">{selectedCustomer.name}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Email</span>
+                  <p className="text-gray-900">
+                    {selectedCustomer.email || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">
+                    Phone Number
+                  </span>
+                  <p className="text-gray-900">
+                    {selectedCustomer.phoneNumber || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">Address</span>
+                  <p className="text-gray-900">
+                    {selectedCustomer.address || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-500">
+                    Bank Details
+                  </span>
+                  {selectedCustomer.bank != null ? (
+                    <p className="text-gray-900">
+                      {selectedCustomer.bank} <br />
+                      {selectedCustomer.bankAccount}
+                    </p>
+                  ) : (
+                    <p className="text-gray-900">N/A</p>
+                  )}
+                </div>
               </div>
 
-              {/* LOANS */}
+              {/* LOANS TABLE */}
               <div>
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold">Loans</h3>
-
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="font-semibold text-gray-800">Loans</h2>
                   <button
                     onClick={() => openAddLoan(selectedCustomer)}
-                    className="flex items-center gap-1 bg-black text-white px-2 py-1 text-sm rounded"
+                    className="flex items-center gap-1 bg-black hover:bg-gray-800 text-white px-3 py-1.5 text-sm rounded-md transition"
                   >
-                    <DollarSign size={14} /> Add Loan
+                    <DollarSign size={14} />
+                    Add Loan
                   </button>
                 </div>
 
                 {selectedCustomer.loans?.length > 0 ? (
-                  selectedCustomer.loans.map((l) => (
-                    <div key={l.fileNumber} className="border p-2 mt-2 rounded">
-                      <p><b>{l.fileNumber}</b></p>
-                      <p>Amount: {l.loanAmount ?? l.amount ?? "-"}</p>
-                      {l.interestRate != null && (
-                        <p>Interest rate: {l.interestRate}%</p>
-                      )}
-                      {l.numberOfInstallments != null && (
-                        <p>Installments: {l.numberOfInstallments}</p>
-                      )}
-                      {l.status && <p>Status: {l.status}</p>}
-                    </div>
-                  ))
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead className="bg-gray-50 text-center">
+                        <tr>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            File No.
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Amount
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Interest
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Installments
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Status
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Created At
+                          </th>
+                          <th className="px-4 py-2 font-semibold text-gray-600">
+                            Entered By
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody className="divide-y divide-gray-100 text-center">
+                        {selectedCustomer.loans.map((loan, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 font-medium">
+                              {loan.fileNumber}
+                            </td>
+                            <td className="px-4 py-2">{loan.amount}</td>
+                            <td className="px-4 py-2">
+                              {loan.interestRate}%
+                            </td>
+                            <td className="px-4 py-2">
+                              {loan.noOfInstallments}
+                            </td>
+                            <td className={`px-4 py-2 ${loan.status == "PENDING" ? "text-red-500" : ""}`}>
+                              {loan.status || "-"}
+                            </td>
+                            <td className="px-4 py-2">
+                              {loan.createdAt || "-"}
+                            </td>
+                            <td className="px-4 py-2">
+                              {loan.enteredBy?.firstName}{" "}
+                              {loan.enteredBy?.lastName}
+                              <div className="text-xs text-gray-400">
+                                {loan.enteredBy?.nic}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
-                  <p className="text-gray-500">No loans found</p>
+                  <p className="text-gray-400 text-sm py-4">
+                    No loans available
+                  </p>
                 )}
               </div>
 
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+              {/* ACTION BUTTONS */}
+              <div className="flex gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setShowCustomerDetails(false);
+                    setForm(selectedCustomer);
+                    setEditMode(true);
+                    setShowForm(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-700 text-sm transition"
+                >
+                  <Edit size={14} />
+                  Edit
+                </button>
 
-      {/* ADD / EDIT CUSTOMER FORM */}
+                <button
+                  onClick={() => deleteCustomer(selectedCustomer.nic)}
+                  className="flex items-center gap-2 px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 text-red-600 text-sm transition"
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD / EDIT CUSTOMER DIALOG */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent>
-          <DialogTitle>
-            {editMode ? "Edit Customer" : "Add Customer"}
-          </DialogTitle>
+          <DialogHeader>
+            <DialogTitle>
+              {editMode ? "Edit Customer" : "Add Customer"}
+            </DialogTitle>
+          </DialogHeader>
 
-          <div className="space-y-2">
-
+          <div className="space-y-4 mt-4">
             <Input
               placeholder="NIC"
               value={form.nic}
@@ -456,6 +541,12 @@ const CustomerManagementPage = () => {
               placeholder="Name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+
+            <Input
+              placeholder="Address"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
 
             <Input
@@ -473,48 +564,49 @@ const CustomerManagementPage = () => {
             />
 
             <Input
-              placeholder="Address"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              placeholder="Bank Name"
+              value={form.bank}
+              onChange={(e) =>
+                setForm({ ...form, bank: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Bank Account Number"
+              value={form.bankAccount}
+              onChange={(e) =>
+                setForm({ ...form, bankAccount: e.target.value })
+              }
             />
 
             <button
               onClick={saveCustomer}
               disabled={saving}
-              className="w-full bg-black text-white py-2 rounded disabled:opacity-50"
+              className="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg transition disabled:opacity-50"
             >
               {saving ? "Saving..." : editMode ? "Update" : "Create"}
             </button>
-
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ADD LOAN FORM */}
+      {/* ADD LOAN DIALOG */}
       <Dialog open={showLoanForm} onOpenChange={setShowLoanForm}>
         <DialogContent>
-          <DialogTitle>Add Loan</DialogTitle>
+          <DialogHeader>
+            <DialogTitle>Add Loan</DialogTitle>
+          </DialogHeader>
 
-          <div className="space-y-2">
-
+          <div className="space-y-4 mt-4">
             <p className="text-sm text-gray-500">
               Customer: <b>{loanForm.name}</b> (NIC: {loanForm.customerId})
             </p>
 
             {loanError && (
-              <div className="p-2 rounded bg-red-50 text-red-600 text-sm">
+              <div className="p-3 rounded bg-red-50 text-red-600 text-sm">
                 {loanError}
               </div>
             )}
-
-            <Input
-              placeholder="File Number"
-              value={loanForm.fileNumber}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, fileNumber: e.target.value })
-              }
-            />
-
             <Input
               type="number"
               placeholder="Loan Amount"
@@ -523,7 +615,6 @@ const CustomerManagementPage = () => {
                 setLoanForm({ ...loanForm, loanAmount: e.target.value })
               }
             />
-
             <Input
               type="number"
               placeholder="Interest Rate (%)"
@@ -532,16 +623,6 @@ const CustomerManagementPage = () => {
                 setLoanForm({ ...loanForm, interestRate: e.target.value })
               }
             />
-
-            <Input
-              type="number"
-              placeholder="Document Charge"
-              value={loanForm.documentCharge}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, documentCharge: e.target.value })
-              }
-            />
-
             <Input
               type="number"
               placeholder="Number of Installments"
@@ -553,35 +634,29 @@ const CustomerManagementPage = () => {
                 })
               }
             />
-
-            <Input
-              placeholder="Bank"
-              value={loanForm.bank}
+            <select
+              name="loanType"
+              value={loanForm.loanType}
               onChange={(e) =>
-                setLoanForm({ ...loanForm, bank: e.target.value })
+                setLoanForm({
+                  ...loanForm,
+                  loanType: e.target.value,
+                })
               }
-            />
-
-            <Input
-              placeholder="Bank Account"
-              value={loanForm.bankAccount}
-              onChange={(e) =>
-                setLoanForm({ ...loanForm, bankAccount: e.target.value })
-              }
-            />
-
+            >
+              <option value="DAILY">Dialy</option>
+              <option value="WEEKLY">Weekly</option>
+            </select>
             <button
               onClick={saveLoan}
               disabled={loanSaving}
-              className="w-full bg-black text-white py-2 rounded disabled:opacity-50"
+              className="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg transition disabled:opacity-50"
             >
               {loanSaving ? "Saving..." : "Create Loan"}
             </button>
-
           </div>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 };

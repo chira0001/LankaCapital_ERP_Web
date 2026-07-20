@@ -247,6 +247,17 @@ const ReceptionistHome = () => {
                                             <InfoRow label="Requested Amount" value={`LKR. ${parseFloat(selectedPendingLoan.amount || 0).toLocaleString()}`} highlight />
                                             <InfoRow label="Installments" value={selectedPendingLoan.noOfInstallments} />
                                             <InfoRow label="Applied Date" value={new Date(selectedPendingLoan.createdAt).toLocaleDateString('en-GB')} />
+                                            <InfoRow
+                                                label="Entered By"
+                                                value={
+                                                    <>
+                                                        {selectedPendingLoan.enteredBy.firstName}{" "}
+                                                        {selectedPendingLoan.enteredBy.lastName}
+                                                        <br />
+                                                        NIC : {selectedPendingLoan.enteredBy.nic}
+                                                    </>
+                                                }
+                                            />
                                         </div>
                                     </div>
                                 </div>

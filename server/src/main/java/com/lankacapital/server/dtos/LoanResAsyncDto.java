@@ -7,15 +7,16 @@ import java.time.LocalDateTime;
 
 @Data
 public class LoanResAsyncDto {
-    private String file_number;
+    private String fileNumber;
     private BigDecimal amount;
-    private LocalDateTime created_at;
-    private BigDecimal document_charge;
-    private String rejection_note;
+    private LocalDateTime createdAt;
+    private BigDecimal documentCharge;
+    private String decisionNote;
     private String status;
-    private String customer_id;
-    private Long employee_id;
-    private Integer installment_id;
-    private Double interest_rate_id;
-    private Long update_status;
+    private String customerId;
+    private Long employeeId;
+    private Integer installment;
+    private Double interestRate;
+    private Long updateStatus;
+    private String loanType;
 }

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 @Data
 public class EmployeeAddDto {
 
-    private Long nic;
+    private String nic;
     private String firstName;
     private String lastName;
     private String email;

@@ -1,19 +1,15 @@
 package com.lankacapital.server.services.impl;
 
-import com.lankacapital.server.dtos.DailyCollectionDto;
-import com.lankacapital.server.dtos.CollectionRequestDto;
-import com.lankacapital.server.dtos.CollectionSyncDto;
-import com.lankacapital.server.dtos.DailyCollectionResponseDto;
-import com.lankacapital.server.dtos.DailyCollectionSummaryDto;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Employee;
-import com.lankacapital.server.entities.Installment;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.DailyCollectionMapper;
 import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.DailyCollectionService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,8 +17,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class DailyCollectionServiceImpl implements DailyCollectionService {
@@ -150,14 +148,13 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     }
 
     @Override
-    public String syncDailyCollection(CollectionSyncDto collectionSyncDto){
+    public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto){
         DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
 
-        Employee employee = employeeRepository
-                .findById(collectionSyncDto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found")
-                );
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         collection.setEmployee(employee);
 
         Loan loan = loanRepository
@@ -172,22 +169,46 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     }
 
     @Override
-    public DailyCollection addDailyCollection(CollectionRequestDto collectionDto){
+    public DailyCollection addDailyCollection(String username, CollectionRequestDto collectionDto){
         DailyCollection collection = DailyCollectionMapper.mapToDailyCollection(collectionDto);
 
-        Employee employee = employeeRepository
-                .findById(collectionDto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found")
-                );
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         collection.setEmployee(employee);
-
         Loan loan = loanRepository
                 .findByFileNumber(collectionDto.getFileNumber())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not found")
                 );
         collection.setLoan(loan);
+
         return dailyCollectionRepository.save(collection);
+    }
+
+    @Override
+    public List<CollectionResDto> manageCollections(String username, List<CollectionReqDto> collectionReqDto){
+        Employee employee = employeeRepository.findByEmail(username);
+        if(employee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
+        List<CollectionResDto> dtoList = new ArrayList<>();
+
+        for (CollectionReqDto dto : collectionReqDto){
+            Optional<DailyCollection> collection = dailyCollectionRepository.findNextInstallment(dto.getFileNumber(), dto.getInstallmentNo());
+            if(collection.isEmpty()){
+                continue;
+            }
+            CollectionResDto collectionResDto = new CollectionResDto();
+
+            collectionResDto.setFileNumber(collection.get().getLoan().getFileNumber());
+            collectionResDto.setDueAmount(collection.get().getDueAmount());
+            collectionResDto.setInstallmentNo(collection.get().getInstallmentNumber());
+
+            dtoList.add(collectionResDto);
+        }
+        return dtoList;
     }
 }

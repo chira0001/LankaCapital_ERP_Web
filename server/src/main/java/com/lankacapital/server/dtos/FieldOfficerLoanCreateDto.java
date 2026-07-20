@@ -16,6 +16,7 @@ public class FieldOfficerLoanCreateDto {
     private String customerNic;
     private BigDecimal amount;
     private Long employeeId;
-    private Integer installmentId;
+    private Integer installment;
     private LocalDateTime createdAt;
+    private String loanType;
 }

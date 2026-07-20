@@ -472,9 +472,8 @@ const ReceptionistPettyCash = () => {
                                                 <td className='px-6 py-4 text-sm text-gray-600'>
                                                     {pettyCashDetail.approvedEmployee?.id ? (
                                                         <span className="flex items-center">
-                                                            <svg className="w-4 h-4 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                                            </svg>
+                                                            {pettyCashDetail.approvedEmployee.firstName} {pettyCashDetail.approvedEmployee.lastName}
+                                                            <br />
                                                             ID: {pettyCashDetail.approvedEmployee.id}
                                                         </span>
                                                     ) : (
