@@ -13,15 +13,15 @@ import java.util.List;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
-    Boolean existsByNic(Long nic);
+    Boolean existsByNic(String nic);
     Employee findByEmail(String email);
     Boolean existsByEmail(String email);
 
-    @Query("SELECT e FROM Employee e WHERE e.id IN :ids AND e.role.id IN (3, 1, 2)")
+    @Query("SELECT e FROM Employee e WHERE e.id IN :ids AND e.role.id IN (1, 2, 3)")
     List<Employee> findCustomersByIds(@Param("ids") List<Long> ids);
 
     @Query("""
-    SELECT e FROM Employee e WHERE e.role.id IN (3, 2)
+    SELECT e FROM Employee e WHERE e.role.id IN (1, 2, 3)
     """)
     Page<Employee> findAllByRole(Pageable pageable);
 

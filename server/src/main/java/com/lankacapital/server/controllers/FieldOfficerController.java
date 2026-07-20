@@ -20,15 +20,21 @@ import java.util.List;
 public class FieldOfficerController {
     private final LoanService loanService;
     private final CustomerService customerService;
-    private final InstallmentService installmentService;
     private final EmployeeService employeeService;
-    private final InterestRateService interestRateService;
     private final DailyCollectionService dailyCollectionService;
 
+    @GetMapping("/ping")
+    public ResponseEntity<?> ping(Authentication authentication) {
+        if(authentication.getName() == null){
+            throw new ResourceNotFoundException("Authentication name is null");
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @PostMapping(path = "/customers/loans")
-    public ResponseEntity<?> addLoanToExistingCustomer(@RequestBody FieldOfficerLoanCreateDto dto) {
+    public ResponseEntity<?> addLoanToExistingCustomer(Authentication authentication, @RequestBody FieldOfficerLoanCreateDto dto) {
         try {
-            Loan loan = loanService.addLoanToExistingCustomer(dto);
+            Loan loan = loanService.addLoanToExistingCustomer(authentication.getName(), dto);
             if (loan == null) {
                 return new ResponseEntity<>("Loan not created", HttpStatus.NOT_IMPLEMENTED);
             }
@@ -43,48 +49,23 @@ public class FieldOfficerController {
     }
 
     @PostMapping(path = "/async/customers")
-    public ResponseEntity<?> asyncToCustomers(@RequestBody CustomerAsyncDto dto){
+    public ResponseEntity<?> asyncToCustomers(Authentication authentication, @RequestBody CustomerAsyncDto dto){
         if(dto.getNic() == null){
             return new ResponseEntity<>("Nic cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(dto);
+        List<CustomerResAsyncDto> customerList = customerService.findAllCustomerById(authentication.getName(), dto);
         if(customerList == null){
             return new ResponseEntity<>("No customers found", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(customerList, HttpStatus.OK);
     }
 
-    @PostMapping(path = "/async/installments")
-    public ResponseEntity<?> asyncToInstallments(@RequestBody InstallmentsAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getId() == null){
-            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
-        }
-        List<Installment> installmentList = installmentService.findAllInstallmentsById(dto, page);
-        if(installmentList == null){
-            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(installmentList, HttpStatus.OK);
-    }
-
-    @PostMapping(path = "/async/interests")
-    public ResponseEntity<?> asyncToInstallments(@RequestBody InterestRateAsyncDto dto, @RequestParam(defaultValue = "0") int page){
-        if(dto.getId() == null){
-            return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
-        }
-        List<InterestRate> interestRateList = interestRateService.findAllinterestRatesById(dto, page);
-        if(interestRateList == null){
-            return new ResponseEntity<>("No Installments found", HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(interestRateList, HttpStatus.OK);
-    }
-
-
     @PostMapping(path = "/async/fieldOfficers")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody FieldOfficerAsyncDto dto){
+    public ResponseEntity<?> asyncToFieldOfficers(Authentication authentication, @RequestBody FieldOfficerAsyncDto dto){
         if(dto.getId() == null){
             return new ResponseEntity<>("Id cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(dto);
+        List<FieldOfficerResAsyncDto> employeeList = employeeService.findAllFieldOfficersById(authentication.getName(), dto);
         if(employeeList == null){
             return new ResponseEntity<>("No Field Officer found", HttpStatus.BAD_REQUEST);
         }
@@ -92,11 +73,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping(path = "/async/loans")
-    public ResponseEntity<?> asyncToFieldOfficers(@RequestBody LoanAsyncDto dto){
+    public ResponseEntity<?> asyncToFieldOfficers(Authentication authentication, @RequestBody LoanAsyncDto dto){
         if(dto.getId() == null){
             return new ResponseEntity<>("File Number cannot be empty", HttpStatus.BAD_REQUEST);
         }
-        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(dto);
+        List<LoanResAsyncDto> loanList = loanService.findAllLoansById(authentication.getName(), dto);
         if(loanList == null){
             return new ResponseEntity<>("No Loans found", HttpStatus.BAD_REQUEST);
         }
@@ -104,37 +85,27 @@ public class FieldOfficerController {
     }
 
     @GetMapping(path = "/customers/loans/{id}")
-    public ResponseEntity<?> getLoanDetailsByCustomerId(@PathVariable String id){
+    public ResponseEntity<?> getLoanDetailsByCustomerId(Authentication authentication, @PathVariable String id){
         if(id == null){
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(customerService.getCustomerDataById(id), HttpStatus.OK);
+        return new ResponseEntity<>(customerService.getCustomerDataById(authentication.getName(), id), HttpStatus.OK);
     }
 
     @PostMapping(path = "/customer/loan")
-    public ResponseEntity<?> addLoanByFieldOfficer(@RequestBody LoanRequestDto dto) {
+    public ResponseEntity<?> addLoanByFieldOfficer(Authentication authentication, @RequestBody LoanRequestDto dto) {
         if (dto.getEmployeeId() == null) {
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(loanService.addLoanByFieldOfficer(dto), HttpStatus.OK);
-    }
-
-    @GetMapping(path = "/installments")
-    public ResponseEntity<?> getInstallments(){
-        return new ResponseEntity<>(installmentService.getAllInstallments(), HttpStatus.OK);
-    }
-
-    @GetMapping("/interestRates")
-    public ResponseEntity<?> getInterestRates(){
-        return new ResponseEntity<>(interestRateService.getAllInterestRates(),HttpStatus.OK);
+        return new ResponseEntity<>(loanService.addLoanByFieldOfficer(authentication.getName(), dto), HttpStatus.OK);
     }
 
     @PostMapping("/sync/customer")
-    public ResponseEntity<?> syncToFieldOfficers(@RequestBody List<CustomerAddSyncDto> customerList) {
+    public ResponseEntity<?> syncToFieldOfficers(Authentication authentication, @RequestBody List<CustomerAddSyncDto> customerList) {
         List<String> successIds = new ArrayList<>();
         for (CustomerAddSyncDto customerDto : customerList) {
             try {
-                Customer customer = customerService.addNewCustomer(customerDto);
+                Customer customer = customerService.addNewCustomer(authentication.getName(), customerDto);
                 successIds.add(customer.getNic());
             } catch (ResourceExistException e) {
                 successIds.add(customerDto.getNic());
@@ -146,11 +117,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping("/sync/loan")
-    public ResponseEntity<?> syncToLoan(@RequestBody List<FieldOfficerLoanCreateDto> loanList) {
+    public ResponseEntity<?> syncToLoan(Authentication authentication, @RequestBody List<FieldOfficerLoanCreateDto> loanList) {
         List<LoanResSyncDto> response = new ArrayList<>();
         for (FieldOfficerLoanCreateDto loanDto : loanList) {
             try {
-                Loan loan = loanService.addLoanToExistingCustomer(loanDto);
+                Loan loan = loanService.addLoanToExistingCustomer(authentication.getName(), loanDto);
                 if (loan != null) {
                     response.add(
                             new LoanResSyncDto(
@@ -176,11 +147,11 @@ public class FieldOfficerController {
     }
 
     @PostMapping("/sync/collection")
-    public ResponseEntity<?> syncToDailyCollections(@RequestBody List<CollectionSyncDto> collectionList) {
+    public ResponseEntity<?> syncToDailyCollections(Authentication authentication, @RequestBody List<CollectionSyncDto> collectionList) {
         List<Integer> successIds = new ArrayList<>();
         for (CollectionSyncDto collectionDto : collectionList) {
             try {
-                String value = dailyCollectionService.syncDailyCollection(collectionDto);
+                String value = dailyCollectionService.syncDailyCollection(authentication.getName(), collectionDto);
                 successIds.add(collectionDto.getId());
             }catch (Exception e) {
                 return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -190,44 +161,53 @@ public class FieldOfficerController {
     }
 
     @PostMapping("add/customer")
-    public ResponseEntity<?> addLoanToNewCustomer(@RequestBody CustomerAddDto customerAddDto) {
+    public ResponseEntity<?> addLoanToNewCustomer(Authentication authentication, @RequestBody CustomerAddDto customerAddDto) {
         if(customerAddDto.getEmployeeId() == null || customerAddDto.getCustomerId() == null){
             return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(loanService.addNewLoanByOfficer(customerAddDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(loanService.addNewLoanByOfficer(authentication.getName(), customerAddDto), HttpStatus.CREATED);
     }
 
     @GetMapping("/manage/customer")
-    public ResponseEntity<?> updateCustomers(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<?> updateCustomers(Authentication authentication, @RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(customerService.manageCustomers(page));
+            return ResponseEntity.ok(customerService.manageCustomers(authentication.getName(), page));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @GetMapping("/manage/employee")
-    public ResponseEntity<?> updateEmployees(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<?> updateEmployees(Authentication authentication, @RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(employeeService.manageEmployees(page));
+            return ResponseEntity.ok(employeeService.manageEmployees(authentication.getName(), page));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @GetMapping("/manage/loan")
-    public ResponseEntity<?> updateLoans(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<?> updateLoans(Authentication authentication, @RequestParam(defaultValue = "0") int page) {
         try {
-            return ResponseEntity.ok(loanService.manageLoans(page));
+            return ResponseEntity.ok(loanService.manageLoans(authentication.getName(), page));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/manage/collection")
+    public ResponseEntity<?> updateCollection(Authentication authentication, @RequestBody List<CollectionReqDto> dto) {
+        try {
+            return ResponseEntity.ok(dailyCollectionService.manageCollections(authentication.getName(), dto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @PostMapping("/add/collection")
-    public ResponseEntity<?> addDailyCollection(@RequestBody CollectionRequestDto collectionDto){
+    public ResponseEntity<?> addDailyCollection(Authentication authentication, @RequestBody CollectionRequestDto collectionDto){
         try {
-            DailyCollection collection = dailyCollectionService.addDailyCollection(collectionDto);
+            DailyCollection collection = dailyCollectionService.addDailyCollection(authentication.getName(), collectionDto);
             if (collection == null) {
                 return new ResponseEntity<>("Failed to submit the daily collection", HttpStatus.NOT_IMPLEMENTED);
             }

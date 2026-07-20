@@ -143,7 +143,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(FieldOfficerAsyncDto idList){
+    public List<FieldOfficerResAsyncDto> findAllFieldOfficersById(String username, FieldOfficerAsyncDto idList){
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         List<Employee> employees = employeeRepository.findCustomersByIds(idList.getId());
 
         return employees.stream()
@@ -189,7 +193,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeManageDto> manageEmployees(int page) {
+    public List<EmployeeManageDto> manageEmployees(String username, int page) {
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
         Pageable pageable = PageRequest.of(page, 50);
 
         return employeeRepository.findAllByRole(pageable)

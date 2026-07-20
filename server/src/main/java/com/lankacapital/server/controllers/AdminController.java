@@ -4,6 +4,8 @@ import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
 
+import com.lankacapital.server.entities.SalaryMetaData;
+import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +29,7 @@ import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 public class AdminController {
 
     private final RoleService roleService;
-    private final SalaryConditionService salaryConditionService;
+
     private final EmployeeService employeeService;
     private final LoanService loanService;
     private final PettyCashService pettyCashService;
@@ -37,6 +39,8 @@ public class AdminController {
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
     private final DashboardService dashboardService;
+    private final SalaryConditionService salaryConditionService;
+    private final SalaryMetaDataService salaryMetaDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -67,6 +71,24 @@ public class AdminController {
     @GetMapping(path = "/salary-condition")
     public ResponseEntity<?> getAllSalaryConditions(){
         return new ResponseEntity<>(salaryConditionService.getAllSalaryConditions(), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/salary-meta-data")
+    public ResponseEntity<?> getSalaryMetaData(Authentication authentication){
+        if(authentication.getName() == null){
+            throw new ResourceNotFoundException("Invalid token");
+        }
+        return new ResponseEntity<>(salaryMetaDataService.getAllSalaryMetaData(), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/salary-meta-data")
+    public ResponseEntity<?> updateSalaryMetaData(
+            Authentication authentication,
+            @RequestBody List<SalaryMetaData> metaDataList){
+        if(authentication.getName() == null){
+            throw new ResourceNotFoundException("Invalid token");
+        }
+        return new ResponseEntity<>(salaryMetaDataService.updateAllSalaryMetaData(metaDataList), HttpStatus.OK);
     }
 
     @PostMapping(path = "/employee")
@@ -108,6 +130,16 @@ public class AdminController {
         return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
     }
 
+    @PostMapping("/loans")
+    public ResponseEntity<Loan> addLoan(
+            @RequestBody LoanCreateDto dto,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.addLoan(dto, authentication.getName())
+        );
+    }
+
     @GetMapping("/loans/customer/{id}")
     public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
         return ResponseEntity.ok(loanService.getLoansByCustomerId(id));
@@ -128,20 +160,20 @@ public class AdminController {
     }
 
     //loan actions
-    @PutMapping("/approve")
-    public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){
-        return  ResponseEntity.ok(loanService.approveLoan(dto));
-    }
-
-    @PutMapping("/reject")
-    public ResponseEntity<?> reject(@RequestBody LoanActionDto dto){
-        return ResponseEntity.ok(loanService.rejectLoan(dto));
-    }
-
-    @PutMapping("/reset")
-    public ResponseEntity<Loan> resetLoan(@RequestBody LoanActionDto dto) {
-        return ResponseEntity.ok(loanService.resetLoan(dto));
-    }
+//    @PutMapping("/approve")
+//    public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){
+//        return  ResponseEntity.ok(loanService.approveLoan(dto));
+//    }
+//
+//    @PutMapping("/reject")
+//    public ResponseEntity<?> reject(@RequestBody LoanActionDto dto){
+//        return ResponseEntity.ok(loanService.rejectLoan(dto));
+//    }
+//
+//    @PutMapping("/reset")
+//    public ResponseEntity<Loan> resetLoan(@RequestBody LoanActionDto dto) {
+//        return ResponseEntity.ok(loanService.resetLoan(dto));
+//    }
 
     //admin interest management
     @PutMapping("/loans/interest")
@@ -367,14 +399,11 @@ public class AdminController {
 
     // ================= CUSTOMER MANAGEMENT =================
 
-    // Get all active customers
     @GetMapping("/customers")
     public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
         return ResponseEntity.ok(customerService.getAllActiveCustomers());
     }
 
-
-    // Get one customer with loans
     @GetMapping("/customers/{nic}")
     public ResponseEntity<?> getCustomer(@PathVariable String nic) {
 
@@ -383,7 +412,6 @@ public class AdminController {
         );
     }
 
-    // Soft delete customer
     @DeleteMapping("/customers/{nic}")
     public ResponseEntity<?> deleteCustomer(@PathVariable String nic) {
 
@@ -392,28 +420,18 @@ public class AdminController {
         return ResponseEntity.ok("Customer deleted successfully");
     }
 
-    // Undo delete
-    @PutMapping("/customers/{nic}/undo")
-    public ResponseEntity<?> undoDeleteCustomer(@PathVariable String nic) {
-
-        customerService.undoDelete(nic);
-
-        return ResponseEntity.ok("Customer restored successfully");
-    }
-
-    //Add Customer to Customer Management
     @PostMapping("/customers")
     public ResponseEntity<?> createCustomer(
-            @RequestBody CustomerRegisterDto dto
+            @RequestBody CustomerRegisterDto dto,
+            Authentication authentication
     ) {
 
         return new ResponseEntity<>(
-                customerService.registerCustomer(dto),
+                customerService.registerCustomer(dto, authentication.getName()),
                 HttpStatus.CREATED
         );
     }
 
-    //Update Customer
     @PutMapping("/customers/{nic}")
     public ResponseEntity<?> updateCustomer(
             @PathVariable String nic,
@@ -425,20 +443,6 @@ public class AdminController {
         );
     }
 
-
-    @PostMapping("/loans")
-    public ResponseEntity<Loan> addLoan(
-            @RequestBody LoanCreateDto dto,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(
-                loanService.addLoan(dto, authentication.getName())
-        );
-    }
-
-
-
-
     @GetMapping("/financial-dashboard/summary")
     public ResponseEntity<FinancialDashboardDto> getFinancialDashboard() {
         return ResponseEntity.ok(
@@ -446,14 +450,19 @@ public class AdminController {
         );
     }
 
-//    @PutMapping("/complete")
-//    public ResponseEntity<?> complete(
-//            @RequestBody LoanActionDto dto
-//    ){
-//        return ResponseEntity.ok(
-//                loanService.completeLoan(dto)
-//        );
-//    }
+
+
+
+
+
+    // Undo delete
+    @PutMapping("/customers/{nic}/undo")
+    public ResponseEntity<?> undoDeleteCustomer(@PathVariable String nic) {
+
+        customerService.undoDelete(nic);
+
+        return ResponseEntity.ok("Customer restored successfully");
+    }
 }
 
 

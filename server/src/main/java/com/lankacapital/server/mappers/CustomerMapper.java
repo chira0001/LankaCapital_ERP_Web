@@ -5,6 +5,7 @@ import com.lankacapital.server.entities.Customer;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class CustomerMapper {
@@ -22,6 +23,14 @@ public class CustomerMapper {
 
         return customer;
     }
+    private static boolean isValidUUID(String value) {
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return false;
+        }
+    }
 
     public static CustomerResponseDto mapToCustomerResponseDto(Customer customer) {
 
@@ -32,7 +41,7 @@ public class CustomerMapper {
                         .map(loan -> {
                             LoanResponseDto loanDto = new LoanResponseDto();
 
-                            loanDto.setFileNumber(loan.getFileNumber());
+                            loanDto.setFileNumber(CustomerMapper.isValidUUID(loan.getFileNumber()) ? "" : loan.getFileNumber());
                             loanDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
                             loanDto.setAmount(loan.getAmount());
                             loanDto.setCreatedAt(loan.getCreatedAt());

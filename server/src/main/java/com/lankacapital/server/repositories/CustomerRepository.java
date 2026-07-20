@@ -24,7 +24,7 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
     Customer findByNic(String nic);
 
     @Query("SELECT c FROM Customer c WHERE c.nic IN :nics")
-    List<Customer> findCustomersByNics(@Param("nics") List<Long> nics);
+    List<Customer> findCustomersByNics(@Param("nics") List<String> nics);
 
     List<Customer> findTop10ByNicStartingWith(String nic);
 }

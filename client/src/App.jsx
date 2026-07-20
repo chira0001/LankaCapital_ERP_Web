@@ -165,7 +165,7 @@ const App = () => {
           {/* <Route path="categories" element={<LoanCategoryConfigPage />} /> */}
           <Route path="users" element={<UserManagementPage />} />
           {/* <Route path="audit" element={<AuditLogsPage />} /> */}
-          {/* <Route path="settings" element={<SystemConfigurationPage />} /> */}
+          <Route path="settings" element={<SystemConfigurationPage />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
 
