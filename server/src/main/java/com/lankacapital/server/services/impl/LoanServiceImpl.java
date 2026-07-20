@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.RoundingMode;
 import java.util.*;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
+import static org.apache.el.lang.ELArithmetic.divide;
 
 @Slf4j
 
@@ -39,6 +41,7 @@ public class LoanServiceImpl implements LoanService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
+    private final DailyCollectionRepository dailyCollectionRepository;
 
     @Transactional
     @Override
@@ -132,11 +135,11 @@ public class LoanServiceImpl implements LoanService {
             throw new ResourceExistException("Customer already has 2 loans.");
         }
 
-        employee = employeeRepository
-                .findById(loanCreateDto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found")
-                );
+//        employee = employeeRepository
+//                .findById(loanCreateDto.getEmployeeId())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Employee not found")
+//                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
@@ -497,6 +500,82 @@ public class LoanServiceImpl implements LoanService {
                         loan.getUpdateStatus()
                 ))
                 .toList();
+    }
+
+    @Override
+    public LoanCollectionDto getLoanInfoByFileNumber(String username, String fileNumber) {
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if (authEmployee == null) {
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Loan not found: " + fileNumber
+                ));
+
+        if (loan.getStatus() != LoanStatus.APPROVED) {
+            throw new ResourceNotFoundException(
+                    "APPROVED Loan not found: " + fileNumber
+            );
+        }
+
+        try {
+            LoanCollectionDto collectionDto = LoanMapper.mapToLoanCollectionDto(loan);
+
+            List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_FileNumber(fileNumber);
+
+            if (collections != null && !collections.isEmpty()) {
+                DailyCollection lastCollection = collections.stream()
+                        .max(Comparator.comparing(DailyCollection::getInstallmentNumber))
+                        .orElse(null);
+
+                if (lastCollection != null) {
+                    collectionDto.setLastInstallmentNo(
+                            lastCollection.getInstallmentNumber()
+                    );
+                }
+
+                BigDecimal totalDueAmount = collections.stream()
+                        .map(DailyCollection::getDueAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                collectionDto.setDueAmount(totalDueAmount.doubleValue());
+            } else {
+                collectionDto.setLastInstallmentNo(0);
+                collectionDto.setDueAmount(0.00);
+            }
+
+            BigDecimal interestAmount = loan.getAmount()
+                    .multiply(BigDecimal.valueOf(loan.getInterestRate()))
+                    .divide(
+                            BigDecimal.valueOf(100),
+                            10,
+                            RoundingMode.HALF_UP
+                    );
+
+            BigDecimal totalAmount = loan.getAmount()
+                    .add(interestAmount)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal installmentAmount = totalAmount
+                    .divide(
+                            BigDecimal.valueOf(loan.getInstallment()),
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            collectionDto.setTotalAmount(totalAmount.doubleValue());
+
+            collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
+
+            return collectionDto;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to get loan collection information: "
+                            + e.getMessage(),e
+            );
+        }
     }
 
 //    @Transactional

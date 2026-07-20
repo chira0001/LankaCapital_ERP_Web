@@ -28,4 +28,7 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
             @Param("fileNumber") String fileNumber,
             @Param("installmentNo") Integer installmentNo
     );
+
+    DailyCollection findTopByOrderByInstallmentNumberDesc(String fileNumber);
+    List<DailyCollection> findDailyCollectionByLoan_FileNumber(String fileNumber);
 }

@@ -153,5 +153,21 @@ public class LoanMapper {
 
         return customer;
     }
+
+    public static LoanCollectionDto mapToLoanCollectionDto(Loan loan) {
+        LoanCollectionDto dto = new LoanCollectionDto();
+
+        dto.setAmount(loan.getAmount().doubleValue());
+        dto.setCreatedAt(loan.getCreatedAt());
+        dto.setInterestRate(loan.getInterestRate());
+        dto.setInstallment(loan.getInstallment());
+        dto.setEnteredBy(loan.getCreatedEmployee().getId());
+        dto.setLoanType(loan.getLoanType().toString());
+        dto.setCustomerNic(loan.getCustomer().getNic());
+        dto.setCustomerName(loan.getCustomer().getName());
+        dto.setCustomerAddress(loan.getCustomer().getAddress());
+
+        return dto;
+    }
 }
 

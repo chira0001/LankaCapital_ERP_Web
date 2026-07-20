@@ -57,6 +57,7 @@ public interface LoanService {
 
     List<LoanManageDto> manageLoans(String username, int page);
 
+    LoanCollectionDto getLoanInfoByFileNumber(String username, String fileNumber);
 }
 
 
