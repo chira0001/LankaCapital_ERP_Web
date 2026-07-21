@@ -26,6 +26,7 @@ const menuItems = [
   { name: "User Management", icon: UserPlus, path: "/ad/users" },
   { name: "Petty Cash", icon: CreditCard, path: "/ad/petty-cash" },
   { name: "Financial Reports", icon: BarChart2, path: "/ad/reports" },
+  { name: "Field Officer Collection", icon: BarChart2, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 ];
 
