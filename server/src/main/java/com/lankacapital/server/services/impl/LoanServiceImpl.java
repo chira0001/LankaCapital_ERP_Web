@@ -535,20 +535,25 @@ public class LoanServiceImpl implements LoanService {
                     .add(interestAmount)
                     .setScale(2, RoundingMode.HALF_UP);
 
+            BigDecimal installmentAmount = totalAmount
+                    .divide(
+                            BigDecimal.valueOf(loan.getInstallment()),
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
             collectionDto.setTotalAmount(totalAmount.doubleValue());
 
-            List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_FileNumber(fileNumber);
+            List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_Id(loan.getId());
 
             if (collections != null && !collections.isEmpty()) {
                 DailyCollection lastCollection = collections.stream()
                         .max(Comparator.comparing(DailyCollection::getInstallmentNumber))
                         .orElse(null);
 
-                if (lastCollection != null) {
-                    collectionDto.setLastInstallmentNo(
-                            lastCollection.getInstallmentNumber()
-                    );
-                }
+                collectionDto.setLastInstallmentNo(
+                        lastCollection.getInstallmentNumber()
+                );
 
                 BigDecimal totalDueAmount = collections.stream()
                         .map(DailyCollection::getDueAmount)
@@ -556,33 +561,26 @@ public class LoanServiceImpl implements LoanService {
 
                 collectionDto.setDueAmount(totalDueAmount.doubleValue());
 
-                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment())){
+                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment() - 1)){
                     BigDecimal totalPaidAmount = collections.stream()
                             .map(DailyCollection::getPaidAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                    double installmentAmount = totalAmount
+                    double lastInstallmentAmount = totalAmount
                             .subtract(totalPaidAmount)
                             .setScale(2, RoundingMode.HALF_UP)
                             .doubleValue();
 
-                    collectionDto.setInstallmentAmount(installmentAmount);
+                    collectionDto.setInstallmentAmount(lastInstallmentAmount);
 
                 }else{
-                    BigDecimal installmentAmount = totalAmount
-                            .divide(
-                                    BigDecimal.valueOf(loan.getInstallment()),
-                                    2,
-                                    RoundingMode.HALF_UP
-                            );
                     collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
                 }
             } else {
+                collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
                 collectionDto.setLastInstallmentNo(0);
                 collectionDto.setDueAmount(0.00);
             }
-
-
 
             return collectionDto;
         } catch (Exception e) {

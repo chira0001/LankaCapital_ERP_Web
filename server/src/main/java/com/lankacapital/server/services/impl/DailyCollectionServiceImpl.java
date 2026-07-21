@@ -151,11 +151,12 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto){
         DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
 
-        Employee employee = employeeRepository.findByEmail(username);
-        if(employee == null){
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        collection.setEmployee(employee);
+
+        collection.setEmployee(authEmployee);
 
         Loan loan = loanRepository
                 .findByFileNumber(collectionSyncDto.getFileNumber())

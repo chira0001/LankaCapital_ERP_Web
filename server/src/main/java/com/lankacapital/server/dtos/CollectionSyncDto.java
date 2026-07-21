@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class CollectionSyncDto {
-    private Integer id;
+    private String id;
     private String fileNumber;
     private Integer installmentNumber;
     private BigDecimal paidAmount;

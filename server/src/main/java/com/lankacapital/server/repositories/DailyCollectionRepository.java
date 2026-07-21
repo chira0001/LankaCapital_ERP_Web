@@ -22,13 +22,12 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
     );
 
     @Query(value = """
-    SELECT * FROM collection WHERE file_number = :fileNumber AND installment_number > :installmentNo ORDER BY installment_number ASC LIMIT 1
+    SELECT * FROM daily_collections WHERE file_number = :fileNumber AND installment_number > :installmentNo ORDER BY installment_number ASC LIMIT 1
     """, nativeQuery = true)
     Optional<DailyCollection> findNextInstallment(
             @Param("fileNumber") String fileNumber,
             @Param("installmentNo") Integer installmentNo
     );
 
-    DailyCollection findTopByOrderByInstallmentNumberDesc(String fileNumber);
-    List<DailyCollection> findDailyCollectionByLoan_FileNumber(String fileNumber);
+    List<DailyCollection> findDailyCollectionByLoan_Id(Long loanId);
 }
