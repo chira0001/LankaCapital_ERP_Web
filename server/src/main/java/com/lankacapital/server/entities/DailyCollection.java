@@ -22,7 +22,7 @@ public class DailyCollection {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "file_number")
+    @JoinColumn(name = "loan_id")
     private Loan loan;
 
     private Integer installmentNumber;
