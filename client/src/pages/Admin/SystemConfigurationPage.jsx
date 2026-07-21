@@ -61,6 +61,14 @@ const SystemConfigurationPage = () => {
     );
   }
 
+  const formatCondition = (text) => {
+  return text
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+    .replace(/\bOt\b/g, "OT")
+    .trim();
+};
+
   return (
     <>
       <Helmet>
@@ -88,7 +96,7 @@ const SystemConfigurationPage = () => {
               {Object.keys(groupedData).map(condition => (
                 <tr key={condition} className="hover:bg-slate-50">
                   <td className="px-4 py-3 border font-medium">
-                    {condition}
+                    {formatCondition(condition)}
                   </td>
 
                   {roles.map(role => (
