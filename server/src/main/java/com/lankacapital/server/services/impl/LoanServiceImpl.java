@@ -511,12 +511,12 @@ public class LoanServiceImpl implements LoanService {
 
         Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Loan not found: " + fileNumber
+                        "No loan found for file number: " + fileNumber
                 ));
 
         if (loan.getStatus() != LoanStatus.APPROVED) {
             throw new ResourceNotFoundException(
-                    "APPROVED Loan not found: " + fileNumber
+                    "This loan is currently: " + loan.getStatus().toString()
             );
         }
 

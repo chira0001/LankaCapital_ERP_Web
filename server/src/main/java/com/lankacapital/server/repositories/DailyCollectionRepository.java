@@ -21,13 +21,6 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
             LocalDateTime end
     );
 
-    @Query(value = """
-    SELECT * FROM daily_collections WHERE file_number = :fileNumber AND installment_number > :installmentNo ORDER BY installment_number ASC LIMIT 1
-    """, nativeQuery = true)
-    Optional<DailyCollection> findNextInstallment(
-            @Param("fileNumber") String fileNumber,
-            @Param("installmentNo") Integer installmentNo
-    );
-
+    Optional<DailyCollection> findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(String fileNumber);
     List<DailyCollection> findDailyCollectionByLoan_Id(Long loanId);
 }

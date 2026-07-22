@@ -218,6 +218,8 @@ public class FieldOfficerController {
             return new ResponseEntity<>("Daily Collection submitted successfully", HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (ResourceExistException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         } catch (Exception e) {
             return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
