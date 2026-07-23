@@ -561,11 +561,13 @@ public class LoanServiceImpl implements LoanService {
 
                 collectionDto.setDueAmount(totalDueAmount.doubleValue());
 
-                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment() - 1)){
-                    BigDecimal totalPaidAmount = collections.stream()
-                            .map(DailyCollection::getPaidAmount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalPaidAmount = collections.stream()
+                        .map(DailyCollection::getPaidAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                collectionDto.setTotalPaidAmount(totalPaidAmount.doubleValue());
+
+                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment() - 1)){
                     double lastInstallmentAmount = totalAmount
                             .subtract(totalPaidAmount)
                             .setScale(2, RoundingMode.HALF_UP)

@@ -17,6 +17,7 @@ public class LoanCollectionDto {
     private Integer lastInstallmentNo;
     private Double installmentAmount;
     private Double dueAmount;
+    private Double totalPaidAmount;
 //    private Double preClosureAmount;
 
     private String customerNic;
