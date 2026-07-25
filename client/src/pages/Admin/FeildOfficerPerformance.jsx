@@ -187,7 +187,7 @@ const FieldOfficerPerformancePage = () => {
                           <td className="px-6 py-3">
                             {record.installmentNumber}
                           </td>
-                          <td className="px-6 py-3">
+                          <td className={`px-6 py-3 ${record.dueAmount < 0 ? "text-red-400" : "text-gray-500"}`}>
                             {formatLKR(record.dueAmount)}
                           </td>
                           <td className="px-6 py-3 text-green-600 font-semibold">
