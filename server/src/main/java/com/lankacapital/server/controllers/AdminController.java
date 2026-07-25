@@ -1,6 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
 
@@ -158,22 +159,6 @@ public class AdminController {
     {
         return new ResponseEntity<>(loanService.updateLoan(authentication.getName(),loanUpdateDto,fileNumber), HttpStatus.OK);
     }
-
-    //loan actions
-//    @PutMapping("/approve")
-//    public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){
-//        return  ResponseEntity.ok(loanService.approveLoan(dto));
-//    }
-//
-//    @PutMapping("/reject")
-//    public ResponseEntity<?> reject(@RequestBody LoanActionDto dto){
-//        return ResponseEntity.ok(loanService.rejectLoan(dto));
-//    }
-//
-//    @PutMapping("/reset")
-//    public ResponseEntity<Loan> resetLoan(@RequestBody LoanActionDto dto) {
-//        return ResponseEntity.ok(loanService.resetLoan(dto));
-//    }
 
     //admin interest management
     @PutMapping("/loans/interest")
@@ -465,7 +450,25 @@ public class AdminController {
         return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
     }
 
+    @GetMapping(path = "/dailyCollections")
+    public ResponseEntity<?> getDailyCollection(
+            Authentication authentication,
+            @RequestParam String startDate,
+            @RequestParam String endDate)
+    {
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
 
+        DailyCollectionRequestDto dto = new DailyCollectionRequestDto();
+        dto.setStartDate(startDate);
+        dto.setEndDate(endDate);
+
+        return new ResponseEntity<>(
+                dailyCollectionService.getDailyCollections(dto),
+                HttpStatus.OK
+        );
+    }
 
 
 
