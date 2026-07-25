@@ -1,5 +1,6 @@
 package com.lankacapital.server.mappers;
 
+import com.lankacapital.server.dtos.AdminDto.AdminDailyCollectionResponseDto;
 import com.lankacapital.server.dtos.CollectionRequestDto;
 import com.lankacapital.server.dtos.CollectionSyncDto;
 import com.lankacapital.server.dtos.DailyCollectionResponseDto;
@@ -43,5 +44,16 @@ public class DailyCollectionMapper {
         collection.setPaidAt(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime());
 
         return collection;
+    }
+
+    public static AdminDailyCollectionResponseDto mapToAdminDailyCollectionResponseDto(DailyCollection dailyCollection){
+        AdminDailyCollectionResponseDto dto = new AdminDailyCollectionResponseDto();
+        dto.setDueAmount(dailyCollection.getDueAmount());
+        dto.setInstallmentNumber(dailyCollection.getInstallmentNumber());
+        dto.setPaidAmount(dailyCollection.getPaidAmount());
+        dto.setPaidAt(dailyCollection.getPaidAt());
+        dto.setEnteredBy(EmployeeMapper.mapToEmployeeResponseDto(dailyCollection.getEmployee()));
+        dto.setLoan(LoanMapper.mapToLoanResponseDto(dailyCollection.getLoan()));
+        return dto;
     }
 }
