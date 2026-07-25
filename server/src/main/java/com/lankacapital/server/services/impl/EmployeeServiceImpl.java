@@ -109,6 +109,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public String updatePasswordByUsername(String username, PasswordRequestDto dto) {
         Employee emp = employeeRepository.findByEmail(username);
+        Long status = emp.getUpdateStatus();
+
         if(emp == null){
             throw new ResourceNotFoundException("Employee verification not found");
         }
@@ -117,6 +119,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         try {
             emp.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+            emp.setUpdatedEmployee(emp);
+            emp.setUpdateStatus(status + 1);
+
             employeeRepository.save(emp);
             return "Password changed successfully";
         } catch (Exception e) {
@@ -137,6 +142,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setEmail(dto.getEmail());
         emp.setAddress(dto.getAddress());
         emp.setPhoneNumber(dto.getPhoneNumber());
+        emp.setUpdatedEmployee(emp);
         emp.setUpdateStatus(status + 1);
 
         return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(emp));

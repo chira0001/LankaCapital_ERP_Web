@@ -450,6 +450,21 @@ public class AdminController {
         );
     }
 
+    @GetMapping(path = "/employees/profile")
+    public ResponseEntity<?> getProfileDetails(Authentication authentication){
+        return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/profile/password")
+    public ResponseEntity<?> changeProfilePassword(Authentication authentication, @RequestBody PasswordRequestDto passwordRequestDto){
+        return new ResponseEntity<>(employeeService.updatePasswordByUsername(authentication.getName(), passwordRequestDto), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/employees/profile")
+    public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
+        return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
+    }
+
 
 
 

@@ -1,147 +1,325 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axiosAPI from "../../api/axiosAPI";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AdminProfile = () => {
+  const [isPasswordEdit, setIsPasswordEdit] = useState(false);
+  const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({
+    address: "",
+    basicSalary: "",
+    email: "",
+    firstName: "",
+    id: "",
+    lastName: "",
+    nic: "",
+    phoneNumber: "",
+    role: null
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
+  const toSentenceCase = (str) => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
+  const fetchProfileInfo = async () => {
+    try {
+      const response = await axiosAPI.get("/admin/employees/profile");
+      if (response.status === 200) {
+        setProfileForm(response.data);
+      } else {
+        toast.error("Failed to load profile information");
+      }
+    } catch {
+      toast.error("Failed to load profile information");
+    }
+  };
+
+  const updateProfileInfo = async () => {
+    try {
+      setIsUpdating(true);
+      const response = await axiosAPI.put(
+        "/admin/employees/profile",
+        profileForm
+      );
+
+      if (response.status === 200) {
+        toast.success("Profile updated successfully");
+        setIsEdit(false);
+        fetchProfileInfo();
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update profile"
+      );
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const updatePassword = async () => {
+    if (
+      !passwordForm.oldPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
+      toast.error("All password fields are required");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      setIsPasswordUpdating(true);
+
+      const response = await axiosAPI.put(
+        "/admin/employees/profile/password",
+        passwordForm
+      );
+
+      if (response.status === 200) {
+        toast.success("Password changed successfully");
+        setPasswordForm({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+        setIsPasswordEdit(false);
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update password"
+      );
+    } finally {
+      setIsPasswordUpdating(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileInfo();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-full bg-slate-100 p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-6xl font-bold text-black">
+      <div className="mb-10">
+        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
           Admin Profile
         </h1>
-
-        <p className="text-gray-500 mt-2 text-lg">
-          Manage your personal information and security
+        <p className="text-slate-500 mt-2 text-sm">
+          Manage your personal information and security settings
         </p>
       </div>
 
+      <div className="flex flex-col gap-10">
 
-      {/* Personal Information */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-4 md:p-8">
+        {/* PERSONAL INFO */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col gap-8">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-slate-800">
+              Personal Information
+            </h2>
 
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-[#071428]">
-            Personal Information
-          </h2>
+            {isEdit ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsEdit(false)}
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 text-sm font-medium border border-slate-300 
+                  text-slate-700 rounded-lg hover:bg-slate-100 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
 
-          <button className="bg-yellow-600 hover:bg-yellow-500 text-black font-semibold px-6 py-3 rounded-xl">
-            Edit
-          </button>
+                <button
+                  onClick={updateProfileInfo}
+                  disabled={isUpdating}
+                  className="px-6 py-2.5 text-sm font-medium bg-indigo-600 
+                  hover:bg-indigo-700 text-white rounded-lg shadow-sm 
+                  transition disabled:opacity-70"
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsEdit(true)}
+                className="px-6 py-2.5 text-sm font-medium bg-indigo-600 
+                hover:bg-indigo-700 text-white rounded-lg shadow-sm transition"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { label: "First Name", name: "firstName" },
+              { label: "Last Name", name: "lastName" },
+              { label: "NIC", name: "nic", disabled: true },
+              { label: "Email Address", name: "email", type: "email" },
+              { label: "Phone Number", name: "phoneNumber" }
+            ].map((field) => (
+              <div key={field.name} className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-slate-600">
+                  {field.label}
+                </label>
+
+                <input
+                  type={field.type || "text"}
+                  name={field.name}
+                  value={profileForm[field.name] || ""}
+                  disabled={!isEdit || field.disabled}
+                  onChange={(e) =>
+                    setProfileForm({
+                      ...profileForm,
+                      [field.name]: e.target.value
+                    })
+                  }
+                  className="px-4 py-2.5 text-sm border border-slate-300 rounded-lg
+                  bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500
+                  focus:border-indigo-500 transition disabled:bg-slate-100
+                  disabled:text-slate-500 disabled:cursor-not-allowed"
+                />
+              </div>
+            ))}
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-slate-600">
+                User Role
+              </label>
+              <div className="px-4 py-2.5 text-sm font-medium 
+              bg-slate-100 border border-slate-200 rounded-lg text-slate-800">
+                {profileForm.role === "fo"
+                  ? "Field Officer"
+                  : toSentenceCase(profileForm.role)}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">First Name</p>
-            <h3 className="text-xl font-semibold">Piumika</h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Last Name</p>
-            <h3 className="text-xl font-semibold">Fernando</h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Date of Birth</p>
-            <h3 className="text-xl font-semibold">15 May 2000</h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Email Address</p>
-            <h3 className="text-xl font-semibold">
-              directer@email.com
-            </h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Phone Number</p>
-            <h3 className="text-xl font-semibold">
-              +94 12 123 4565
-            </h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Role</p>
-            <h3 className="text-xl font-semibold text-yellow-600">
-              Director
-            </h3>
-          </div>
-
-        </div>
-      </div>
-
-
-      {/* Address */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8 mb-8">
-
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-[#071428]">
+        {/* ADDRESS */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
+          <h2 className="text-lg font-semibold text-slate-800 mb-6">
             Address
           </h2>
 
-          <button className="border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100">
-            Edit
-          </button>
+          <textarea
+            name="address"
+            rows="3"
+            value={profileForm.address || ""}
+            onChange={(e) =>
+              setProfileForm({
+                ...profileForm,
+                address: e.target.value
+              })
+            }
+            disabled={!isEdit}
+            className="w-full px-4 py-3 text-sm border border-slate-300 
+            rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500
+            focus:border-indigo-500 transition resize-none
+            disabled:bg-slate-100 disabled:text-slate-500"
+          />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Street</p>
-            <h3 className="text-xl font-semibold">
-              14/P, Galle Road
-            </h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Town</p>
-            <h3 className="text-xl font-semibold">Kalutara</h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Postal Code</p>
-            <h3 className="text-xl font-semibold">12000</h3>
-          </div>
-
-        </div>
-      </div>
-
-
-      {/* Security */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-8">
-
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-[#071428]">
+        {/* SECURITY */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col gap-8">
+          <h2 className="text-lg font-semibold text-slate-800">
             Security
           </h2>
 
-          <button className="bg-[#071428] hover:bg-[#0f1d35] text-white px-6 py-3 rounded-xl">
-            Change Password
-          </button>
+          {isPasswordEdit && (
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { label: "Old Password", name: "oldPassword" },
+                { label: "New Password", name: "newPassword" },
+                { label: "Confirm Password", name: "confirmPassword" }
+              ].map((field) => (
+                <div key={field.name} className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    {field.label}
+                  </label>
+                  <input
+                    type="password"
+                    name={field.name}
+                    value={passwordForm[field.name]}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        [field.name]: e.target.value
+                      })
+                    }
+                    disabled={isPasswordUpdating}
+                    className="px-4 py-2.5 text-sm border border-slate-300 
+                    rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500
+                    focus:border-indigo-500 transition disabled:bg-slate-100"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3">
+            {isPasswordEdit ? (
+              <>
+                <button
+                  onClick={() => {
+                    setIsPasswordEdit(false);
+                    setPasswordForm({
+                      oldPassword: "",
+                      newPassword: "",
+                      confirmPassword: ""
+                    });
+                  }}
+                  disabled={isPasswordUpdating}
+                  className="px-5 py-2.5 text-sm font-medium border border-slate-300 
+                  text-slate-700 rounded-lg hover:bg-slate-100 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={updatePassword}
+                  disabled={isPasswordUpdating}
+                  className="px-6 py-2.5 text-sm font-medium bg-indigo-600 
+                  hover:bg-indigo-700 text-white rounded-lg shadow-sm 
+                  transition disabled:opacity-70"
+                >
+                  {isPasswordUpdating ? "Updating..." : "Update Password"}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsPasswordEdit(true)}
+                className="px-6 py-2.5 text-sm font-medium bg-indigo-600 
+                hover:bg-indigo-700 text-white rounded-lg shadow-sm transition"
+              >
+                Change Password
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">Password</p>
-            <h3 className="text-xl font-semibold">
-              ••••••••••
-            </h3>
-          </div>
-
-          <div>
-            <p className="text-gray-400 text-sm mb-2">
-              Last Updated
-            </p>
-
-            <h3 className="text-xl font-semibold">
-              2 months ago
-            </h3>
-          </div>
-
-        </div>
       </div>
-
     </div>
   );
 };
