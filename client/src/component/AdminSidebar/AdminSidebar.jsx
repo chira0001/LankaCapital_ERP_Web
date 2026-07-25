@@ -33,6 +33,7 @@ const menuItems = [
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
+  const username = localStorage.getItem('username');
 
   const logoutFunc = () => {
     localStorage.clear();
@@ -108,15 +109,11 @@ const Sidebar = () => {
             onClick={() => navigate("/ad/profile")}
             className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-800 transition"
           >
-            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-semibold">
-              D
-            </div>
-
             <div className="flex-1 overflow-hidden">
               <p className="text-sm font-medium text-white truncate">
-                director@email.com
+                {username}
               </p>
-              <p className="text-xs text-slate-400">Director</p>
+              <p className="text-xs text-slate-400">Profile</p>
             </div>
           </div>
 
