@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,11 +33,17 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
     @Query("SELECT COALESCE(SUM(l.amount), 0) FROM Loan l WHERE l.status = 'ACTIVE'")
     BigDecimal sumOutstandingAmount();
-    
+
     @Query("""
-    SELECT COUNT(l) FROM Loan l WHERE l.customer.nic = :nic AND (l.status IS NULL OR l.status <> :status)
+    SELECT COUNT(l) 
+    FROM Loan l 
+    WHERE l.customer.nic = :nic 
+      AND (l.status IS NULL OR l.status IN :statuses)
     """)
-        long countActiveLoans(@Param("nic") String nic, @Param("status") LoanStatus status);
+    long countActiveLoans(
+            @Param("nic") String nic,
+            @Param("statuses") Collection<LoanStatus> statuses
+    );
 
     List<Loan> findByLoanTypeOrderByIdDesc(LoanType loanType);
 }

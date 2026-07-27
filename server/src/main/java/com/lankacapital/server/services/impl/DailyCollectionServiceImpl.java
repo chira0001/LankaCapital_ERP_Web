@@ -10,6 +10,7 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.DailyCollectionMapper;
 import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.DailyCollectionService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -174,38 +172,49 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     }
 
     @Override
-    public DailyCollection addDailyCollection(String username, CollectionRequestDto collectionDto){
-        Employee employee = employeeRepository.findByEmail(username);
-        if(employee == null){
-            throw new ResourceNotFoundException("Employee not found with verification");
+    @Transactional
+    public DailyCollection addDailyCollection(String username, CollectionRequestDto collectionDto) {
+        Employee employee = Optional.ofNullable(employeeRepository.findByEmail(username))
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found for username: " + username));
+
+        Loan loan = loanRepository.findByFileNumber(collectionDto.getFileNumber())
+                .orElseThrow(() -> new ResourceNotFoundException("No loan found for file number: " + collectionDto.getFileNumber()));
+
+        if (loan.getStatus() != LoanStatus.APPROVED) {
+            throw new ResourceExistException("This loan is currently: " + loan.getStatus());
         }
 
-        Loan loan = loanRepository
-                .findByFileNumber(collectionDto.getFileNumber())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("No loan found for file number: " + collectionDto.getFileNumber())
-                );
+        dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber())
+                .ifPresent(lastCollection -> {
+                    if (lastCollection.getInstallmentNumber() >= collectionDto.getInstallmentNumber()) {
+                        throw new ResourceExistException("Invalid installment number: " + collectionDto.getInstallmentNumber());
+                    }
+                });
 
-        if(loan.getStatus() != LoanStatus.APPROVED){
-            throw new ResourceExistException(
-                    "This loan is currently: " + loan.getStatus().toString()
-            );
+        List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_Id(loan.getId());
+
+        BigDecimal currentPayment = Optional.ofNullable(collectionDto.getPaidAmount()).orElse(BigDecimal.ZERO);
+
+        BigDecimal totalPaidAmount = collections.stream()
+                .map(DailyCollection::getPaidAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalLoan = totalPaidAmount.add(currentPayment);
+
+        boolean isFinalInstallment = Objects.equals(loan.getInstallment(), collectionDto.getInstallmentNumber());
+        boolean isFullyPaid = totalLoan.compareTo(loan.getAmount()) >= 0;
+
+        if (isFinalInstallment && !isFullyPaid) {
+            throw new ResourceExistException("Cannot close loan: Total paid amount (" + totalLoan + ") is less than required loan amount (" + loan.getAmount() + ")");
         }
 
-        Optional<DailyCollection> collections = dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber());
-        if(!collections.isEmpty()){
-            if(collections.get().getInstallmentNumber() >= collectionDto.getInstallmentNumber()){
-                throw new ResourceExistException(
-                        "Invalid installment number: " + collectionDto.getInstallmentNumber()
-                );
-            }
+        if (isFullyPaid) {
+            loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+            loan.setStatus(LoanStatus.COMPLETED);
+            loanRepository.save(loan);
         }
-//        else if(collectionDto.getInstallmentNumber() != 0){
-//
-//        }
-//        if(collections.get().getInstallmentNumber()+ 1 == collectionDto.getInstallmentNumber()){
-//
-//        }
+
         DailyCollection collection = DailyCollectionMapper.mapToDailyCollection(collectionDto);
         collection.setEmployee(employee);
         collection.setLoan(loan);

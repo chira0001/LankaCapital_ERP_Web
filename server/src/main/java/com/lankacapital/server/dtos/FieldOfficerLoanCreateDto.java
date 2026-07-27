@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class FieldOfficerLoanCreateDto {
     private Integer id;
+    private String fileNumber;
     private String customerNic;
     private BigDecimal amount;
     private Long employeeId;
