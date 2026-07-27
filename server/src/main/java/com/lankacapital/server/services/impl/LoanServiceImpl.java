@@ -76,12 +76,7 @@ public class LoanServiceImpl implements LoanService {
         }
 
         loan.setCustomer(customer);
-        loan.setInstallment(dto.getNumberOfInstallments());
         loan.setCreatedEmployee(employeeRepository.findByEmail(username));
-        loan.setInterestRate(dto.getInterestRate());
-        loan.setStatus(LoanStatus.PENDING);
-
-        loan.setFileNumber(UUID.randomUUID().toString());
         return loanRepository.save(loan);
     }
 

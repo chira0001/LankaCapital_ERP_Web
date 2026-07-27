@@ -2,17 +2,27 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.utils.UtilityFunctions;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public class LoanMapper {
     public static Loan mapToLoan(LoanCreateDto loanCreateDto){
 
         Loan loan = new Loan();
 
-        loan.setFileNumber(loanCreateDto.getFileNumber());
+        if (loanCreateDto.getFileNumber().isEmpty()) {
+            loan.setFileNumber(UUID.randomUUID().toString());
+        } else {
+            loan.setFileNumber(loanCreateDto.getFileNumber());
+        }
+
+        loan.setInstallment(loanCreateDto.getNumberOfInstallments());
+        loan.setInterestRate(loanCreateDto.getInterestRate());
+        loan.setStatus(LoanStatus.PENDING);
         loan.setAmount(loanCreateDto.getLoanAmount());
         loan.setDocumentCharge(loanCreateDto.getDocumentCharge());
         loan.setLoanType(LoanType.valueOf(loanCreateDto.getLoanType()));
