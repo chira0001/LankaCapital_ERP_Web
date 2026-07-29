@@ -159,6 +159,9 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         Loan loan = loanRepository
                 .findByFileNumber(collectionSyncDto.getFileNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
+        if (loan.getStatus() != LoanStatus.APPROVED) {
+            throw new ResourceExistException("This loan is currently: " + loan.getStatus());
+        }
 
         dailyCollectionRepository
                 .findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber())
