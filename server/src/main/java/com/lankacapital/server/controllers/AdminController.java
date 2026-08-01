@@ -492,11 +492,12 @@ public class AdminController {
     }
 
     @PostMapping(path = "/pettyCashCategories")
-    public ResponseEntity<?> createNewCategory(Authentication authentication, @RequestParam String categoryName){
+    public ResponseEntity<?> createNewCategory(Authentication authentication, @RequestParam String newCategory){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
-        return new ResponseEntity<>(pettyCashCategoryService.createNewCategory(categoryName, authentication.getName()), HttpStatus.OK);
+        
+        return new ResponseEntity<>(pettyCashCategoryService.createNewCategory(newCategory, authentication.getName()), HttpStatus.OK);
     }
 
 

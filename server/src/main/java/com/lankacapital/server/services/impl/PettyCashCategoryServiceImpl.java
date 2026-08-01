@@ -4,6 +4,7 @@ import com.lankacapital.server.dtos.AdminDto.PettyCashCategoryResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.PettyCash;
 import com.lankacapital.server.entities.PettyCashCategory;
+import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.mappers.PettyCashCategoryMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.PettyCashCategoryRepository;
@@ -30,6 +31,9 @@ public class PettyCashCategoryServiceImpl implements PettyCashCategoryService {
 
     @Override
     public Integer createNewCategory(String categoryName, String username) {
+        if(pettyCashCategoryRepository.existsByCategoryName(categoryName)){
+            throw new ResourceExistException("Category already exists");
+        }
         PettyCashCategory newCategory = new PettyCashCategory();
 
         newCategory.setCategoryName(categoryName);

@@ -4,6 +4,8 @@ import { Download, Calendar, FileText, Undo2 } from 'lucide-react';
 import { Button } from '@/component/ui/button';
 import axiosAPI from '@/api/axiosAPI';
 import * as XLSX from 'xlsx';
+import CreatableSelect from "react-select/creatable";
+
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -48,6 +50,11 @@ const PettyCashPage = () => {
     fetchPettyCashCategories();
   }, []);
 
+  const options = pettyCashCategoryDetails.map(cat => ({
+    value: cat.id,
+    label: cat.categoryName
+  }));
+
   const fetchPettyCash = async () => {
     const res = await axiosAPI.get("/admin/pettyCash");
     setPettyCashData(res.data);
@@ -61,22 +68,17 @@ const PettyCashPage = () => {
 
   const updatePettyCashRequest = async (id) => {
     try {
-
       let categoryId = pettyCashUpdatePayload.categoryId;
 
-      // ✅ Create new category if provided
       if (newCategory.trim() !== "") {
-        const categoryRes = await axiosAPI.post(
-          "/admin/pettyCashCategories",
-          { categoryName: newCategory }
-        );
-        categoryId = categoryRes.data.id;
+        console.log("newCategory : ", newCategory)
+        const categoryRes = await axiosAPI.post(`/admin/pettyCashCategories?newCategory=${newCategory}`);
+        categoryId = categoryRes.data;
+        fetchPettyCashCategories();
       }
 
       const finalPayload = {
-
         amount: pettyCashUpdatePayload.amount,
-        // amount : 1000.0,
         narration: pettyCashUpdatePayload.narration,
         category: categoryId
       };
@@ -260,6 +262,11 @@ const PettyCashPage = () => {
 
               <div className="space-y-4 text-sm">
                 <div>
+                  <p className="text-xs text-slate-400">Date</p>
+                  <p>{new Date(pettyCashInfo.dateTime).toLocaleDateString()}</p>
+                </div>
+
+                <div>
                   <p className="text-xs text-slate-400">Amount</p>
                   <p className="font-bold text-lg">{formatLKR(pettyCashInfo.amount)}</p>
                 </div>
@@ -268,6 +275,43 @@ const PettyCashPage = () => {
                   <p className="text-xs text-slate-400">Narration</p>
                   <p>{pettyCashInfo.narration}</p>
                 </div>
+
+                <div>
+                  <p className="text-xs text-slate-400">Requested Employee</p>
+                  <p>
+                    {pettyCashInfo.requestEmployee.firstName} {pettyCashInfo.requestEmployee.lastName}
+                    <br />
+                    <span>
+                      {pettyCashInfo.requestEmployee.nic}
+                    </span>
+                  </p>
+                </div>
+
+                {pettyCashInfo.updatedEmployee.email !== "" &&
+                  <div>
+                    <p className="text-xs text-slate-400">Updated Employee</p>
+                    <p>
+                      {pettyCashInfo.updatedEmployee.firstName} {pettyCashInfo.updatedEmployee.lastName}
+                      <br />
+                      <span>
+                        {pettyCashInfo.updatedEmployee.nic}
+                      </span>
+                    </p>
+                  </div>
+                }
+
+                {pettyCashInfo.approvedEmployee.email !== "" &&
+                  <div>
+                    <p className="text-xs text-slate-400">Approved Employee</p>
+                    <p>
+                      {pettyCashInfo.approvedEmployee.firstName} {pettyCashInfo.approvedEmployee.lastName}
+                      <br />
+                      <span>
+                        {pettyCashInfo.approvedEmployee.nic}
+                      </span>
+                    </p>
+                  </div>
+                }
 
                 <div>
                   <p className="text-xs text-slate-400">Category</p>
@@ -313,7 +357,7 @@ const PettyCashPage = () => {
                   className="w-full border rounded px-3 py-2"
                 />
 
-                <select
+                {/* <select
                   value={pettyCashUpdatePayload.categoryId}
                   onChange={(e) =>
                     setPettyCashUpdatePayload(prev => ({ ...prev, categoryId: e.target.value }))
@@ -332,6 +376,26 @@ const PettyCashPage = () => {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   className="w-full border rounded px-3 py-2"
+                /> */}
+
+                <CreatableSelect
+                  options={options}
+                  onChange={(selectedOption) => {
+                    if (selectedOption.__isNew__) {
+                      setNewCategory(selectedOption.label);
+                      setPettyCashUpdatePayload(prev => ({
+                        ...prev,
+                        categoryId: null
+                      }));
+                    } else {
+                      setPettyCashUpdatePayload(prev => ({
+                        ...prev,
+                        categoryId: selectedOption.value
+                      }));
+                      setNewCategory("");
+                    }
+                  }}
+                  placeholder="Select or type category"
                 />
 
                 <div className="flex justify-end gap-3 pt-4">

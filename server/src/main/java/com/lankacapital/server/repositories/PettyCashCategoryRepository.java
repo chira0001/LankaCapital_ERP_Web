@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PettyCashCategoryRepository extends JpaRepository<PettyCashCategory, Integer> {
+
+    boolean existsByCategoryName(String name);
+
 }
