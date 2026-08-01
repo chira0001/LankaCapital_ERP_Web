@@ -25,7 +25,7 @@ public class Employee implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = true)
+    @Column(nullable = true, unique = true)
     private String nic;
 
     @Column(nullable = false)

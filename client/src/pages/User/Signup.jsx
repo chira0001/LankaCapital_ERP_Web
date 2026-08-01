@@ -21,7 +21,7 @@ const Signup = () => {
     const [lname, setLname] = useState("");
     const [email, setEmail] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
-    const [empNo, setEmpNo] = useState("");
+    const [nicNo, setNICNo] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errors, setErrors] = useState({
@@ -29,7 +29,7 @@ const Signup = () => {
         lname: false,
         email: false,
         phoneNumber: false,
-        empNo: false,
+        nicNo: false,
         password: false,
         confirmPassword: false
     });
@@ -38,6 +38,34 @@ const Signup = () => {
         navigate('/');
     }
 
+    const validateNIC = (nic) => {
+        if (!nic || nic.trim() === "") return false;
+
+        nic = nic.trim();
+
+        const oldNICPattern = /^[0-9]{9}[vVxX]$/;
+        const newNICPattern = /^[0-9]{12}$/;
+
+        if (oldNICPattern.test(nic)) {
+            const day = parseInt(nic.substring(2, 5));
+
+            return (day >= 1 && day <= 366) || (day >= 501 && day <= 866);
+        }
+
+        if (newNICPattern.test(nic)) {
+            const year = parseInt(nic.substring(0, 4));
+            const day = parseInt(nic.substring(4, 7));
+
+            if (year < 1900 || year > new Date().getFullYear()) {
+                return false;
+            }
+
+            return (day >= 1 && day <= 366) || (day >= 501 && day <= 866);
+        }
+
+        return false;
+    };
+
     const signup = async (e) => {
         e.preventDefault();
         const newErrors = {
@@ -45,14 +73,17 @@ const Signup = () => {
             lname: !lname || lname.trim() === "",
             email: !email || email.trim() === "",
             phoneNumber: !phoneNumber || phoneNumber.trim() === "",
-            empNo: !empNo || empNo.trim() === "",
+            nicNo: !validateNIC(nicNo),
             password: !password || password.trim() === "" || password != confirmPassword,
             confirmPassword: !confirmPassword || confirmPassword.trim() === "" || confirmPassword != password
         };
         setErrors(newErrors);
-        if (!newErrors.email && !newErrors.password) {
+        // if (!newErrors.email && !newErrors.password) {
+        const hasErrors = Object.values(newErrors).some(error => error);
+
+        if (!hasErrors) {
             const payload = {
-                id: empNo,
+                nic: nicNo,
                 firstName: fname,
                 lastName: lname,
                 email: email,
@@ -71,7 +102,6 @@ const Signup = () => {
                 console.log(e);
                 toast.error(e.response?.data?.message || "Failed to register");
             }
-            // console.log('Signing with:', payload);
         }
     }
 
@@ -79,251 +109,171 @@ const Signup = () => {
         <>
             <CommonNavbar />
             <ToastContainer position="top-right" autoClose={3000} />
-            <div className='bg-gray-50 text-black flex flex-col items-center justify-center h-fit gap-8 pt-20 px-3 py-8'>
-                <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative mt-10'>
-                    <svg className='absolute left-8 cursor-pointer' onClick={navigateHome} xmlns="http://www.w3.org/2000/svg" width="30" height="30"
-                        fill="grey" viewBox="0 0 24 24" >
-                        <path d="M4 4h2v16H4zm10 3-6 5 6 5v-4h7v-2h-7z"></path>
-                    </svg>
 
-                    <div className='flex flex-col items-center mb-4'>
-                        <CompanyLogo />
-                        <h3 className='font-bold text-3xl md:text-5xl'>Sign Up</h3>
-                    </div>
+            <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
+                <div className="flex justify-center px-4 py-16">
+                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-3">
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Employee Number :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="text"
-                                name="empNo"
-                                id="empNo"
-                                value={empNo}
-                                onChange={(e) => setEmpNo(e.target.value)}
-                                placeholder={errors.empNo ? "Please enter employee number" : "Your employee number"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.empNo ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.empNo && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
+                        {/* LEFT SIDE - Branding */}
+                        <div className="hidden md:flex flex-col justify-center items-center bg-gray-100 text-white p-12">
+                            <CompanyLogo className='max-w-[250px] max-h-[250px]'/>
+                            <h2 className="text-black text-4xl font-bold">Create Account</h2>
+                            <p className="text-black text-center mt-4">
+                                Join with us and manage your employee account easily and securely.
+                            </p>
                         </div>
-                    </div>
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">First Name :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="text"
-                                name="fname"
-                                id="fname"
-                                value={fname}
-                                onChange={(e) => setFname(e.target.value)}
-                                placeholder={errors.fname ? "Please enter First name" : "Your first name"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.fname ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.fname && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                        {/* RIGHT SIDE - FORM */}
+                        <div className="p-8 md:p-12 col-span-2">
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Last name :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="text"
-                                name="lname"
-                                id="lname"
-                                value={lname}
-                                onChange={(e) => setLname(e.target.value)}
-                                placeholder={errors.lname ? "Please enter last name" : "Your last name"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.lname ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.lname && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                            <div className="flex flex-col items-center mb-8">
+                                {/* <CompanyLogo /> */}
+                                <h3 className="font-bold text-3xl mt-4">Sign Up</h3>
+                                <p className="text-gray-500 text-sm mt-2">
+                                    Please fill in the details below
+                                </p>
+                            </div>
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Email address :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder={errors.email ? "Please enter email" : "Your email"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.email ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.email && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                            <form onSubmit={signup} className="space-y-6">
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Phone Number :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="text"
-                                name="phoneNumber"
-                                id="phoneNumber"
-                                value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder={errors.phoneNumber ? "Please phone number" : "Your phone number"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.phoneNumber ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.phoneNumber && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
-                        </div>
-                    </div>
+                                {/* GRID FIELDS */}
+                                <div className="grid md:grid-cols-2 gap-6">
 
-                    <div className="w-full flex flex-col gap-2">
-                        <div className="flex justify-between">
-                            <label htmlFor="password">Password :</label>
-                            <span
-                                className="flex items-center gap-2 cursor-pointer"
-                                onClick={() => setIsPasswordClicked(prev => !prev)}
-                            >
-                                {isPasswordClicked ? (<>Hide {eyeClose}</>) : (<>Show {eyeOpen}</>)}
-                            </span>
-                        </div>
-                        <div className='relative w-full'>
-                            <input
-                                name='password'
-                                id="password"
-                                type={isPasswordClicked ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.password ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                                placeholder={errors.password ? "Please enter password" : "xxxxx"}
-                            />
-                            {errors.password && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
+                                    {/* NIC */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">
+                                            Employee NIC Number
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={nicNo}
+                                            onChange={(e) => setNICNo(e.target.value)}
+                                            placeholder="199110400275 or 911042754V"
+                                            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.nicNo ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                        {errors.nicNo && (
+                                            <p className="text-red-600 text-xs">
+                                                Enter a valid NIC number
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* First Name */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">First Name</label>
+                                        <input
+                                            type="text"
+                                            value={fname}
+                                            onChange={(e) => setFname(e.target.value)}
+                                            placeholder="John"
+                                            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.fname ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                    </div>
+
+                                    {/* Last Name */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">Last Name</label>
+                                        <input
+                                            type="text"
+                                            value={lname}
+                                            onChange={(e) => setLname(e.target.value)}
+                                            placeholder="Doe"
+                                            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.lname ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                    </div>
+
+                                    {/* Email */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">Email Address</label>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="example@email.com"
+                                            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.email ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                    </div>
+
+                                    {/* Phone */}
+                                    <div className="flex flex-col gap-2 md:col-span-2">
+                                        <label className="text-sm font-medium">Phone Number</label>
+                                        <input
+                                            type="text"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value)}
+                                            placeholder="07XXXXXXXX"
+                                            className={`border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.phoneNumber ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                    </div>
+
+                                    {/* Password */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={isPasswordClicked ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className={`border rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black transition
+                                                ${errors.password ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                            />
+                                            <span
+                                                className="absolute right-3 top-2 cursor-pointer text-gray-600"
+                                                onClick={() => setIsPasswordClicked(prev => !prev)}
+                                            >
+                                                {isPasswordClicked ? eyeClose : eyeOpen}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Confirm Password */}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-medium">Confirm Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={isPasswordConfirmClicked ? "text" : "password"}
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className={`border rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black transition
+                                                ${errors.confirmPassword ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                            />
+                                            <span
+                                                className="absolute right-3 top-2 cursor-pointer text-gray-600"
+                                                onClick={() => setIsPasswordConfirmClicked(prev => !prev)}
+                                            >
+                                                {isPasswordConfirmClicked ? eyeClose : eyeOpen}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* SUBMIT BUTTON */}
+                                <button
+                                    type="submit"
+                                    className="w-full bg-black text-white py-3 rounded-lg font-semibold tracking-wide hover:bg-gray-800 transition duration-300"
+                                >
+                                    Create Account
+                                </button>
+                            </form>
+
+                            <p className="text-center text-sm text-gray-500 mt-6">
+                                Already have an account?{" "}
+                                <Link to="/login" className="text-black font-semibold underline">
+                                    Login
+                                </Link>
+                            </p>
+
                         </div>
                     </div>
-
-                    <div className="w-full flex flex-col gap-2">
-                        <div className="flex justify-between">
-                            <label htmlFor="password">Confirm Password :</label>
-                            <span
-                                className="flex items-center gap-2 cursor-pointer"
-                                onClick={() => setIsPasswordConfirmClicked(prev => !prev)}
-                            >
-                                {isPasswordConfirmClicked ? (<>Hide {eyeClose}</>) : (<>Show {eyeOpen}</>)}
-                            </span>
-                        </div>
-                        <div className='relative w-full'>
-                            <input
-                                name='confirmPassword'
-                                id="confirmPassword"
-                                type={isPasswordConfirmClicked ? "text" : "password"}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.confirmPassword ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                                placeholder={errors.confirmPassword ? "Please enter password" : "xxxxx"}
-                            />
-                            {errors.confirmPassword && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <button className='border w-full px-4 py-4 bg-black text-white' onClick={signup}>Sign Up</button>
                 </div>
 
-                <div className='flex bg-white flex-col items-center justify-center md:w-1/3 shadow-2xl p-10 rounded-2xl gap-6 mb-10'>
-                    <span>Have an account? <Link to="/login" className='underline cursor-pointer'>Login</Link></span>
-                </div>
+                <Footer />
             </div>
-            <Footer />
         </>
     )
 }
