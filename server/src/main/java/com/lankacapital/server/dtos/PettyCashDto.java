@@ -9,4 +9,5 @@ import java.math.BigDecimal;
 public class PettyCashDto {
     private String narration;
     private BigDecimal amount;
+    private Integer category;
 }
