@@ -68,6 +68,7 @@ const PettyCashPage = () => {
 
   const updatePettyCashRequest = async (id) => {
     try {
+      setActionLoadingId("save");
       let categoryId = pettyCashUpdatePayload.categoryId;
 
       if (newCategory.trim() !== "") {
@@ -87,31 +88,31 @@ const PettyCashPage = () => {
       await axiosAPI.put(`/admin/pettyCash/${id}`, finalPayload);
 
       await fetchPettyCash();
+      setActionLoadingId(null);
       setIsEdit(false);
       setIsRowClicked(false);
       setNewCategory("");
-
     } catch (e) {
       console.log(e);
     }
   };
 
   const approve = async (id) => {
-    setActionLoadingId(id);
+    setActionLoadingId("approve");
     await axiosAPI.put(`/admin/pettyCash/approve/${id}`);
     await fetchPettyCash();
     setActionLoadingId(null);
   };
 
   const reject = async (id) => {
-    setActionLoadingId(id);
+    setActionLoadingId("reject");
     await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
     await fetchPettyCash();
     setActionLoadingId(null);
   };
 
   const undo = async (id) => {
-    setActionLoadingId(id);
+    setActionLoadingId("undo");
     const username = localStorage.getItem("username");
     await axiosAPI.put(`/admin/undo/${id}/${username}`);
     await fetchPettyCash();
@@ -224,18 +225,18 @@ const PettyCashPage = () => {
                         <div className="flex justify-end gap-2">
                           <button onClick={(e) => { e.stopPropagation(); approve(record.id); }}
                             className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded">
-                            Approve
+                            {actionLoadingId == "approve" ? "Approving" : "Approve"}
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); reject(record.id); }}
                             className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">
-                            Reject
+                            {actionLoadingId == "reject" ? "Rejecting" : "Reject"}
                           </button>
                         </div>
                       ) : (
                         <button onClick={(e) => { e.stopPropagation(); undo(record.id); }}
                           className="px-3 py-1 text-xs bg-slate-100 rounded">
                           <Undo2 className="w-3 h-3 inline mr-1" />
-                          Undo
+                          {actionLoadingId == "undo" ? "Undoing" : "Undo"}
                         </button>
                       )}
                     </td>
@@ -340,6 +341,9 @@ const PettyCashPage = () => {
               <h2 className="text-lg font-semibold mb-4">Edit Petty Cash</h2>
 
               <div className="space-y-4">
+                <span className='text-sm text-slate-400'>
+                  Amount
+                </span>
                 <input
                   type="number"
                   value={pettyCashUpdatePayload.amount}
@@ -349,34 +353,20 @@ const PettyCashPage = () => {
                   className="w-full border rounded px-3 py-2"
                 />
 
+                <span className='text-sm text-slate-400'>
+                  Narration
+                </span>
                 <textarea
                   value={pettyCashUpdatePayload.narration}
                   onChange={(e) =>
                     setPettyCashUpdatePayload(prev => ({ ...prev, narration: e.target.value }))
                   }
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-2 h-fit"
                 />
 
-                {/* <select
-                  value={pettyCashUpdatePayload.categoryId}
-                  onChange={(e) =>
-                    setPettyCashUpdatePayload(prev => ({ ...prev, categoryId: e.target.value }))
-                  }
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">Select Category</option>
-                  {pettyCashCategoryDetails.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.categoryName}</option>
-                  ))}
-                </select>
-
-                <input
-                  type="text"
-                  placeholder="Or create new category"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
-                /> */}
+                <span className='text-sm text-slate-400'>
+                  Current Category : <span className='text-slate-700 font-bold'>{pettyCashCategoryDetails.find(cat => cat.id === pettyCashUpdatePayload.categoryId)?.categoryName}</span>
+                </span>
 
                 <CreatableSelect
                   options={options}
@@ -406,7 +396,7 @@ const PettyCashPage = () => {
                   <button
                     onClick={() => updatePettyCashRequest(pettyCashInfo.id)}
                     className="px-4 py-2 bg-slate-800 text-white rounded">
-                    Save Changes
+                    {actionLoadingId == "save" ? "Saving" : "Save Changes"}
                   </button>
                 </div>
               </div>
