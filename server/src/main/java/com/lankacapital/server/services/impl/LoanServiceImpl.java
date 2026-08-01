@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.RoundingMode;
 import java.util.*;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
+import static org.apache.el.lang.ELArithmetic.divide;
 
 @Slf4j
 
@@ -39,6 +41,7 @@ public class LoanServiceImpl implements LoanService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
+    private final DailyCollectionRepository dailyCollectionRepository;
 
     @Transactional
     @Override
@@ -118,20 +121,25 @@ public class LoanServiceImpl implements LoanService {
             throw new ResourceNotFoundException("Employee not found with verification");
         }
 
+        if(loanCreateDto.getFileNumber() != null){
+            Optional<Loan> loan = loanRepository.findByFileNumber(loanCreateDto.getFileNumber());
+            if(loan.isPresent()){
+                loan.get().setStatus(LoanStatus.COMPLETED);
+                loan.get().setUpdateStatus(loan.get().getUpdateStatus() + 1);
+                loanRepository.save(loan.get());
+                return loan.get();
+            }
+        }
+
         Customer customer = customerRepository.findByNic(loanCreateDto.getCustomerNic());
         if(customer == null){
             throw new ResourceNotFoundException("Customer not found " + loanCreateDto.getCustomerNic());
         }
-        long loanCount = loanRepository.countActiveLoans(customer.getNic(), LoanStatus.REJECTED);
+        List<LoanStatus> activeStatuses = List.of(LoanStatus.PENDING, LoanStatus.APPROVED);
+        long loanCount = loanRepository.countActiveLoans(customer.getNic(), activeStatuses);
         if (loanCount >= 2) {
             throw new ResourceExistException("Customer already has 2 loans.");
         }
-
-        employee = employeeRepository
-                .findById(loanCreateDto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found")
-                );
 
         Loan loan = new Loan();
         loan.setCustomer(customer);
@@ -492,6 +500,97 @@ public class LoanServiceImpl implements LoanService {
                         loan.getUpdateStatus()
                 ))
                 .toList();
+    }
+
+    @Override
+    public LoanCollectionDto getLoanInfoByFileNumber(String username, String fileNumber) {
+        Employee authEmployee = employeeRepository.findByEmail(username);
+        if (authEmployee == null) {
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
+        Loan loan = loanRepository.findByFileNumber(fileNumber)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No loan found for file number: " + fileNumber
+                ));
+
+        if (loan.getStatus() != LoanStatus.APPROVED) {
+            throw new ResourceNotFoundException(
+                    "This loan is currently: " + loan.getStatus().toString()
+            );
+        }
+
+        try {
+            LoanCollectionDto collectionDto = LoanMapper.mapToLoanCollectionDto(loan);
+
+            BigDecimal interestAmount = loan.getAmount()
+                    .multiply(BigDecimal.valueOf(loan.getInterestRate()))
+                    .divide(
+                            BigDecimal.valueOf(100),
+                            10,
+                            RoundingMode.HALF_UP
+                    );
+
+            BigDecimal totalAmount = loan.getAmount()
+                    .add(interestAmount)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal installmentAmount = totalAmount
+                    .divide(
+                            BigDecimal.valueOf(loan.getInstallment()),
+                            2,
+                            RoundingMode.HALF_UP
+                    );
+
+            collectionDto.setTotalAmount(totalAmount.doubleValue());
+
+            List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_Id(loan.getId());
+
+            if (collections != null && !collections.isEmpty()) {
+                DailyCollection lastCollection = collections.stream()
+                        .max(Comparator.comparing(DailyCollection::getInstallmentNumber))
+                        .orElse(null);
+
+                collectionDto.setLastInstallmentNo(
+                        lastCollection.getInstallmentNumber()
+                );
+
+                BigDecimal totalDueAmount = collections.stream()
+                        .map(DailyCollection::getDueAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                collectionDto.setDueAmount(totalDueAmount.doubleValue());
+
+                BigDecimal totalPaidAmount = collections.stream()
+                        .map(DailyCollection::getPaidAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                collectionDto.setTotalPaidAmount(totalPaidAmount.doubleValue());
+
+                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment() - 1)){
+                    double lastInstallmentAmount = totalAmount
+                            .subtract(totalPaidAmount)
+                            .setScale(2, RoundingMode.HALF_UP)
+                            .doubleValue();
+
+                    collectionDto.setInstallmentAmount(lastInstallmentAmount);
+
+                }else{
+                    collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
+                }
+            } else {
+                collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
+                collectionDto.setLastInstallmentNo(0);
+                collectionDto.setDueAmount(0.00);
+            }
+
+            return collectionDto;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to get loan collection information: "
+                            + e.getMessage(),e
+            );
+        }
     }
 
 //    @Transactional

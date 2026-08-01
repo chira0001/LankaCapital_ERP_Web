@@ -94,8 +94,8 @@ public class FieldOfficerController {
 
     @PostMapping(path = "/customer/loan")
     public ResponseEntity<?> addLoanByFieldOfficer(Authentication authentication, @RequestBody LoanRequestDto dto) {
-        if (dto.getEmployeeId() == null) {
-            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        if (dto.getCustomerId() == null) {
+            return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addLoanByFieldOfficer(authentication.getName(), dto), HttpStatus.OK);
     }
@@ -148,11 +148,15 @@ public class FieldOfficerController {
 
     @PostMapping("/sync/collection")
     public ResponseEntity<?> syncToDailyCollections(Authentication authentication, @RequestBody List<CollectionSyncDto> collectionList) {
-        List<Integer> successIds = new ArrayList<>();
+        List<String> successIds = new ArrayList<>();
         for (CollectionSyncDto collectionDto : collectionList) {
             try {
                 String value = dailyCollectionService.syncDailyCollection(authentication.getName(), collectionDto);
-                successIds.add(collectionDto.getId());
+                if(value != null){
+                    successIds.add(collectionDto.getId());
+                }
+            } catch (ResourceNotFoundException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
             }catch (Exception e) {
                 return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -214,6 +218,8 @@ public class FieldOfficerController {
             return new ResponseEntity<>("Daily Collection submitted successfully", HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        } catch (ResourceExistException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         } catch (Exception e) {
             return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -230,5 +236,16 @@ public class FieldOfficerController {
         System.out.printf("----Username----- : " + authentication.getName());
 
         return new ResponseEntity<>(employeeService.getEmployeeDetailByUsername(authentication.getName()), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/collection/loan")
+    public ResponseEntity<?> getLoanByFileNumber(Authentication authentication, @RequestParam("fileNumber") String fileNumber){
+        try {
+            return ResponseEntity.ok(loanService.getLoanInfoByFileNumber(authentication.getName(), fileNumber));
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_IMPLEMENTED);
+        }catch (Exception e){
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
