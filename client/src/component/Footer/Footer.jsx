@@ -6,8 +6,7 @@ const Footer = () => {
 
     return (
         <footer className="bg-gray-100 text-black shadow-2xl flex flex-col items-center justify-center gap-4 py-6">
-            <CompanyLogo />
-            <div className=' md:text-2xl'>
+            <CompanyLogo className='max-w-[150px]' />            <div className=' md:text-2xl'>
                 N K R S Lanka Capital Pvt. Ltd
             </div>
 

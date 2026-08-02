@@ -1,5 +1,6 @@
 package com.lankacapital.server.dtos;
 
+import com.lankacapital.server.dtos.AdminDto.PettyCashCategoryResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.enums.Request;
 import lombok.Data;
@@ -15,5 +16,7 @@ public class PettyCashResponseDto {
     private BigDecimal amount;
     private EmployeeResponseDto requestEmployee;
     private EmployeeResponseDto approvedEmployee;
+    private EmployeeResponseDto updatedEmployee;
+    private PettyCashCategoryResponseDto pettyCashCategory;
     private Request request;
 }

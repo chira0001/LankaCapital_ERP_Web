@@ -77,11 +77,11 @@ instance.interceptors.response.use(
                     `Bearer ${newToken}`;
                 return instance(originalRequest);
             } catch (refreshError) {
-                localStorage.removeItem("token");
                 toast.error(refreshError.response?.data?.message || "Session expired. Please login again.");
                 setTimeout(() => {
                     window.location.href = "/login";
                 }, 2000);
+                localStorage.removeItem("token");
                 return Promise.reject(refreshError);
             }
         }

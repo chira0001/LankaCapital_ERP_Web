@@ -31,8 +31,12 @@ public class AuthServiceImpl implements AuthService {
         if(employeeRepository.existsByEmail(signUpRequest.getEmail())){
             throw new ResourceExistException("Employee already registered with email : " + signUpRequest.getEmail());
         }
+        if(employeeRepository.existsByNic(signUpRequest.getNic())){
+            throw new ResourceExistException("Employee already registered with NIC : " + signUpRequest.getNic());
+        }
         Employee employee = new Employee();
 
+        employee.setNic(signUpRequest.getNic());
         employee.setFirstName(signUpRequest.getFirstName());
         employee.setLastName(signUpRequest.getLastName());
         employee.setEmail(signUpRequest.getEmail());
