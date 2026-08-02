@@ -19,7 +19,7 @@ const CommonNavbar = () => {
             min-h-16
             md:min-h-12 md:px-24
             ">
-                <CompanyLogo />
+                <CompanyLogo className='max-w-[100px]'/>
 
                 <nav className="hidden md:flex gap-8">
                     <Link to="/" className='cursor-pointer'>Home</Link>

@@ -18,15 +18,23 @@ public class PettyCashMapper {
 
     public static PettyCashResponseDto mapToPettyCashResponseDto(PettyCash pettyCash){
         PettyCashResponseDto dto = new PettyCashResponseDto();
+
         dto.setId(pettyCash.getId());
         dto.setDateTime(pettyCash.getDateTime());
         dto.setNarration(pettyCash.getNarration());
         dto.setAmount(pettyCash.getAmount());
         dto.setRequest(pettyCash.getRequest());
+
         if(pettyCash.getRequestEmployee() != null){
             dto.setRequestEmployee(EmployeeMapper.mapToEmployeeResponseDto(pettyCash.getRequestEmployee()));
         }else {
             dto.setRequestEmployee(EmployeeMapper.mapToEmployeeResponseDto(new Employee()));
+        }
+
+        if(pettyCash.getUpdatedEmployee() != null){
+            dto.setUpdatedEmployee(EmployeeMapper.mapToEmployeeResponseDto(pettyCash.getUpdatedEmployee()));
+        }else {
+            dto.setUpdatedEmployee(EmployeeMapper.mapToEmployeeResponseDto(new Employee()));
         }
 
         if(pettyCash.getApprovedEmployee() != null){
@@ -34,6 +42,8 @@ public class PettyCashMapper {
         }else {
             dto.setApprovedEmployee(EmployeeMapper.mapToEmployeeResponseDto(new Employee()));
         }
+
+        dto.setPettyCashCategory(PettyCashCategoryMapper.mapToPettyCashCategoryResponseDto(pettyCash.getPettyCashCategory()));
 
         return dto;
     }

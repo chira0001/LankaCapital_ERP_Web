@@ -26,29 +26,10 @@ const Login = () => {
         navigate('/');
     }
 
-    // const login = (e) => {
-    //     e.preventDefault();
-    //     const newErrors = {
-    //         email: !email || email.trim() === "",
-    //         password: !password || password.trim() === ""
-    //     };
-    //     setErrors(newErrors);
-    //     if (!newErrors.email && !newErrors.password) {
-
-    //         if (email == "admin@email.com") {
-    //             navigate('/admin')
-    //         } else if (email == "receptionist@email.com") {
-    //             navigate('/reception')
-    //         }
-
-    //         console.log('Logging in with:', { email, password });
-    //     }
-    // }
-
     const login = async (/*e*/) => {
-       ////////////////////////
+        ////////////////////////
         // console.log("LOGIN BUTTON CLICKED");
-      //  e.preventDefault();
+        //  e.preventDefault();
         const newErrors = {
             email: !email || email.trim() === "",
             password: !password || password.trim() === ""
@@ -68,25 +49,25 @@ const Login = () => {
                 //     const role = response.data.role.slice(0, 2).toLowerCase()
                 //     navigate(`/${role}`)
                 // } 
-                
+
                 if (response.status == 200) {
 
-    toast.success("Loggin Successfull. Redirecting...");
+                    toast.success("Loggin Successfull. Redirecting...");
 
-    localStorage.setItem("token", response.data.token);
+                    localStorage.setItem("token", response.data.token);
 
-    // decode JWT payload to extract the email (sub claim)
-    const payload = JSON.parse(atob(response.data.token.split('.')[1]));
-    localStorage.setItem("username", payload.sub);
+                    // decode JWT payload to extract the email (sub claim)
+                    const payload = JSON.parse(atob(response.data.token.split('.')[1]));
+                    localStorage.setItem("username", payload.sub);
 
-    // console.log("Saved Token:", localStorage.getItem("token"));
-    // console.log("Saved Username:", localStorage.getItem("username"));
+                    // console.log("Saved Token:", localStorage.getItem("token"));
+                    // console.log("Saved Username:", localStorage.getItem("username"));
 
-    const role = response.data.role.slice(0, 2).toLowerCase();
+                    const role = response.data.role.slice(0, 2).toLowerCase();
 
-    navigate(`/${role}`);
-}
-                
+                    navigate(`/${role}`);
+                }
+
                 else {
                     console.log(response);
                 }
@@ -97,110 +78,115 @@ const Login = () => {
         }
     }
 
-   
+
     return (
         <>
             <CommonNavbar />
             <ToastContainer position="top-right" autoClose={3000} />
-            <div className='bg-gray-50 text-black flex flex-col items-center justify-center h-fit gap-8 pt-20 px-3 pb-15'>
-                <div className='bg-white flex flex-col items-center md:w-1/3 shadow-xl px-10 py-10 rounded-2xl gap-6 relative mt-10'>
-                    <svg className='absolute left-8 cursor-pointer' onClick={navigateHome} xmlns="http://www.w3.org/2000/svg" width="30" height="30"
-                        fill="grey" viewBox="0 0 24 24" >
-                        <path d="M4 4h2v16H4zm10 3-6 5 6 5v-4h7v-2h-7z"></path>
-                    </svg>
 
-                    <div className='flex flex-col items-center mb-4'>
-                        <CompanyLogo />
-                        <h3 className='font-bold text-3xl md:text-5xl'>Login</h3>
-                    </div>
+            <div className="mt-15 min-h-screen bg-gray-50 flex flex-col justify-between">
 
-                    <div className='w-full flex flex-col gap-2'>
-                        <label htmlFor="email">Email address :</label>
-                        <div className='relative w-full'>
-                            <input
-                                type="email"
-                                name="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder={errors.email ? "Please enter email" : "Your email"}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.email ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                            />
-                            {errors.email && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
+                {/* CENTER AREA */}
+                <div className="flex flex-1 items-center justify-center px-4 py-16">
+
+                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-2">
+
+                        {/* LEFT SIDE - Branding */}
+                        <div className="hidden md:flex flex-col justify-center items-center bg-gray-100 text-white p-12 gap-5">
+                            <CompanyLogo className="max-w-[250px] max-h-[250px]" />
+                            <h2 className="text-black text-4xl font-bold">Welcome Back</h2>
+                            <p className="text-black text-center mt-4">
+                                Login to access your employee dashboard and manage your account securely.
+                            </p>
                         </div>
-                    </div>
 
-                    <div className="w-full flex flex-col gap-2">
-                        <div className="flex justify-between">
-                            <label htmlFor="password">Your Password :</label>
-                            <span
-                                className="flex items-center gap-2 cursor-pointer"
-                                onClick={() => setIsClicked(prev => !prev)}
+                        {/* RIGHT SIDE - LOGIN FORM */}
+                        <div className="p-8 md:p-12 relative">
+
+                            {/* Back Button */}
+                            <button
+                                onClick={navigateHome}
+                                className="absolute top-6 left-6 text-gray-400 hover:text-black transition"
                             >
-                                {isClicked ? (<>Hide {eyeClose}</>) : (<>Show {eyeOpen}</>)}
-                            </span>
-                        </div>
-                        <div className='relative w-full'>
-                            <input
-                                name='password'
-                                id="password"
-                                type={isClicked ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className={`border rounded-lg px-3 py-1.5 pr-10 w-full
-                                    ${errors.password ? "border-red-600 border-2 placeholder-red-600" : ""}`}
-                                placeholder={errors.password ? "Please enter password" : "xxxxx"}
-                            />
-                            {errors.password && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width={18}
-                                        height={18}
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
+                                ←
+                            </button>
+
+                            <div className="flex flex-col items-center mb-10">
+                                <h3 className="font-bold text-3xl mt-6">Login</h3>
+                                <p className="text-gray-500 text-sm mt-2">
+                                    Please enter your credentials
+                                </p>
+                            </div>
+
+                            <div className="space-y-6">
+
+                                {/* Email */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium">
+                                        Email Address
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="example@email.com"
+                                            className={`w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.email ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Password */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-medium">
+                                        Password
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={isClicked ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Enter your password"
+                                            className={`w-full border rounded-lg px-4 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-black transition
+                                            ${errors.password ? "border-red-600 ring-red-200" : "border-gray-300"}`}
+                                        />
+                                        <span
+                                            className="absolute right-3 top-2.5 cursor-pointer text-gray-500 hover:text-black transition"
+                                            onClick={() => setIsClicked(prev => !prev)}
+                                        >
+                                            {isClicked ? eyeOpen : eyeClose}
+                                        </span> 
+                                    </div>
+                                </div>
+
+                                {/* Login Button */}
+                                <button
+                                    onClick={login}
+                                    onKeyDown={(e) => e.key === 'Enter' && login()}
+                                    className="w-full bg-black text-white py-3 rounded-lg font-semibold tracking-wide hover:bg-gray-800 transition duration-300"
+                                >
+                                    Login
+                                </button>
+
+                                {/* Signup Link */}
+                                <p className="text-center text-sm text-gray-500 pt-4">
+                                    Don’t have an account?{" "}
+                                    <Link
+                                        to="/signup"
+                                        className="text-black font-semibold underline hover:text-gray-700"
                                     >
-                                        <path d="M11 7h2v6h-2zm0 8h2v2h-2z"></path>
-                                        <path d="M12 22c5.51 0 10-4.49 10-10S17.51 2 12 2 2 6.49 2 12s4.49 10 10 10m0-18c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8"></path>
-                                    </svg>
-                                </span>
-                            )}
+                                        Sign up
+                                    </Link>
+                                </p>
+
+                            </div>
                         </div>
                     </div>
-
-                    <button
-                        className='border w-full px-4 py-4 bg-black text-white'
-                       // onClick={() => {
-                            //console.log("BUTTON CLICK WORKS");
-                           // login();
-                       // }}
-                        onClick={login}
-                        onKeyDown={(e) => e.key === 'Enter' && login()}
-                    >
-                        Log in
-                    </button>
                 </div>
 
-                <div className='flex bg-white flex-col items-center justify-center md:w-1/3 shadow-2xl p-10 rounded-2xl gap-6'>
-                    <span>Don't have an account? <Link to="/signup" className='underline cursor-pointer'>Sign up</Link></span>
-
-                </div>
+                <Footer />
             </div>
-            <Footer />
         </>
     )
 }

@@ -4,10 +4,12 @@ import com.lankacapital.server.dtos.PettyCashDto;
 import com.lankacapital.server.dtos.PettyCashResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.PettyCash;
+import com.lankacapital.server.entities.PettyCashCategory;
 import com.lankacapital.server.enums.Request;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.PettyCashMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
+import com.lankacapital.server.repositories.PettyCashCategoryRepository;
 import com.lankacapital.server.repositories.PettyCashRepository;
 import com.lankacapital.server.services.PettyCashService;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class PettyCashServiceImpl implements PettyCashService {
     private PettyCashRepository pettyCashRepository;
     private EmployeeRepository employeeRepository;
+    private PettyCashCategoryRepository pettyCashCategoryRepository;
 
     @Override
     public PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto, String username) {
@@ -140,6 +143,23 @@ public class PettyCashServiceImpl implements PettyCashService {
                 .stream()
                 .map(PettyCashMapper::mapToPettyCashResponseDto)
                 .toList();
+    }
+
+    @Override
+    public PettyCashResponseDto updatePettyCash(String username, Long id, PettyCashDto pettyCashDto) {
+
+        PettyCash pettyCash = pettyCashRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Petty Cash Not Found"));
+
+        PettyCashCategory pettyCashCategory = pettyCashCategoryRepository.findById(pettyCashDto.getCategory())
+                .orElseThrow(() -> new ResourceNotFoundException("Petty Cash Category Not Found"));
+
+        pettyCash.setAmount(pettyCashDto.getAmount());
+        pettyCash.setNarration(pettyCashDto.getNarration());
+        pettyCash.setPettyCashCategory(pettyCashCategory);
+        pettyCash.setUpdatedEmployee(employeeRepository.findByEmail(username));
+
+        return PettyCashMapper.mapToPettyCashResponseDto(pettyCashRepository.save(pettyCash));
     }
 
 
