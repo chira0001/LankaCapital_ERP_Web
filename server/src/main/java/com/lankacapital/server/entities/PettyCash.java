@@ -30,9 +30,17 @@ public class PettyCash {
     private BigDecimal amount;
 
     @ManyToOne
+    @JoinColumn(name = "category_id")
+    private PettyCashCategory pettyCashCategory;
+
+    @ManyToOne
     @JoinColumn(name = "requested_by")
     private Employee requestEmployee;
-
+//
+    @ManyToOne
+    @JoinColumn(name = "updated_by")
+    private Employee updatedEmployee;
+//
     @ManyToOne
     @JoinColumn(name = "approved_by")
     private Employee approvedEmployee;

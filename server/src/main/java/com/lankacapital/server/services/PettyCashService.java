@@ -14,12 +14,10 @@ public interface PettyCashService {
 
     //admin
     PettyCashResponseDto approvePettyCash(Long id, String adminUsername);
-
     PettyCashResponseDto rejectPettyCash(Long id, String adminUsername);
-
     List<PettyCashResponseDto> getPendingRequests();
 
     List<PettyCashResponseDto> getAllPettyCash();
-
+    PettyCashResponseDto updatePettyCash(String username,Long id, PettyCashDto pettyCashDto);
     PettyCashResponseDto undoStatus(Long id, String adminUsername);
 }

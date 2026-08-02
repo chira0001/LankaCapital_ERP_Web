@@ -1,6 +1,7 @@
 package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
 
@@ -41,6 +42,7 @@ public class AdminController {
     private final DashboardService dashboardService;
     private final SalaryConditionService salaryConditionService;
     private final SalaryMetaDataService salaryMetaDataService;
+    private final PettyCashCategoryService pettyCashCategoryService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -159,22 +161,6 @@ public class AdminController {
         return new ResponseEntity<>(loanService.updateLoan(authentication.getName(),loanUpdateDto,fileNumber), HttpStatus.OK);
     }
 
-    //loan actions
-//    @PutMapping("/approve")
-//    public ResponseEntity<?> approve(@RequestBody LoanActionDto dto){
-//        return  ResponseEntity.ok(loanService.approveLoan(dto));
-//    }
-//
-//    @PutMapping("/reject")
-//    public ResponseEntity<?> reject(@RequestBody LoanActionDto dto){
-//        return ResponseEntity.ok(loanService.rejectLoan(dto));
-//    }
-//
-//    @PutMapping("/reset")
-//    public ResponseEntity<Loan> resetLoan(@RequestBody LoanActionDto dto) {
-//        return ResponseEntity.ok(loanService.resetLoan(dto));
-//    }
-
     //admin interest management
     @PutMapping("/loans/interest")
     public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto, Authentication authentication){
@@ -195,6 +181,18 @@ public class AdminController {
     @GetMapping("/pettyCash")
     public ResponseEntity<?>getAllPettyCash(){
         return ResponseEntity.ok(pettyCashService.getAllPettyCash());
+    }
+
+    @PutMapping(path = "/pettyCash/{id}")
+    public ResponseEntity<?> updatePettyCash(
+            Authentication authentication,
+            @RequestBody PettyCashDto pettyCashDto,
+            @PathVariable Long id
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(pettyCashService.updatePettyCash(authentication.getName(),id,pettyCashDto), HttpStatus.OK);
     }
 
     @PutMapping("/pettyCash/approve/{id}")
@@ -464,6 +462,47 @@ public class AdminController {
     public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
         return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
     }
+
+    @GetMapping(path = "/dailyCollections")
+    public ResponseEntity<?> getDailyCollection(
+            Authentication authentication,
+            @RequestParam String startDate,
+            @RequestParam String endDate)
+    {
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        DailyCollectionRequestDto dto = new DailyCollectionRequestDto();
+        dto.setStartDate(startDate);
+        dto.setEndDate(endDate);
+
+        return new ResponseEntity<>(
+                dailyCollectionService.getDailyCollections(dto),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping(path = "/pettyCashCategories")
+    public ResponseEntity<?> getAllPettyCashCategories(Authentication authentication){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(pettyCashCategoryService.getAllCategories(), HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/pettyCashCategories")
+    public ResponseEntity<?> createNewCategory(Authentication authentication, @RequestParam String newCategory){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        
+        return new ResponseEntity<>(pettyCashCategoryService.createNewCategory(newCategory, authentication.getName()), HttpStatus.OK);
+    }
+
+
+
+
 
 
 

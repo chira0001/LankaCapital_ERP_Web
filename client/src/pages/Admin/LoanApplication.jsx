@@ -368,7 +368,6 @@ const LoanApplication = () => {
                         <h3 className="text-lg font-semibold text-gray-800 mb-6">
                           Loan Information
                         </h3>
-                        {console.log("selectedApp : ", selectedApp)}
                         <button
                           onClick={() => {
                             setLoanUpdatePayload({

@@ -1,6 +1,8 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.AdminDto.AdminDailyCollectionResponseDto;
+import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
@@ -122,32 +124,45 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     }
 
     @Override
-    public DailyCollectionSummaryDto getDailyCollectionSummary(LocalDate date) {
+    public List<AdminDailyCollectionResponseDto> getDailyCollections(DailyCollectionRequestDto dailyCollectionRequestDto) {
+        LocalDate start = LocalDate.parse(dailyCollectionRequestDto.getStartDate());
+        LocalDate end = LocalDate.parse(dailyCollectionRequestDto.getEndDate());
 
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.plusDays(1).atStartOfDay();
+        LocalDateTime startDate = start.atStartOfDay();
+        LocalDateTime endDate = end.plusDays(1).atStartOfDay().minusSeconds(1);
 
-        List<DailyCollection> list =
-                dailyCollectionRepository.findByPaidAtBetween(start, end);
+        List<DailyCollection> collections = dailyCollectionRepository.findByPaidAtBetween(startDate, endDate);
 
-        BigDecimal total = list.stream()
-                .map(DailyCollection::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        DailyCollectionSummaryDto dto = new DailyCollectionSummaryDto();
-
-        dto.setDate(date.toString());
-        dto.setTotalCollected(total);
-        dto.setTotalTransactions(list.size());
-
-        if (!list.isEmpty() && list.get(0).getEmployee() != null) {
-            dto.setOfficerName(
-                    list.get(0).getEmployee().getFirstName()
-            );
-        }
-
-        return dto;
+        return collections.stream().map(DailyCollectionMapper::mapToAdminDailyCollectionResponseDto).toList();
     }
+
+//    @Override
+//    public DailyCollectionSummaryDto getDailyCollectionSummary(LocalDate date) {
+//
+//        LocalDateTime start = date.atStartOfDay();
+//        LocalDateTime end = date.plusDays(1).atStartOfDay();
+//
+//        List<DailyCollection> list =
+//                dailyCollectionRepository.findByPaidAtBetween(start, end);
+//
+//        BigDecimal total = list.stream()
+//                .map(DailyCollection::getPaidAmount)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//        DailyCollectionSummaryDto dto = new DailyCollectionSummaryDto();
+//
+//        dto.setDate(date.toString());
+//        dto.setTotalCollected(total);
+//        dto.setTotalTransactions(list.size());
+//
+//        if (!list.isEmpty() && list.get(0).getEmployee() != null) {
+//            dto.setOfficerName(
+//                    list.get(0).getEmployee().getFirstName()
+//            );
+//        }
+//
+//        return dto;
+//    }
 
     @Override
     public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto) {

@@ -35,7 +35,7 @@ const Contact = () => {
         <>
             <CommonNavbar />
             <div className='text-black bg-white flex flex-col items-center px-4 md:px-24 gap-8 pt-30 pb-15'>
-                <h1 className='font-bold'>Contact Us</h1>
+                <h1 className='text-5xl font-bold'>Contact Us</h1>
                 <p className='md:pb-4 text-center font-light'>We’re here to help with all your lending needs and we’ll respond as quickly as possible to provide reliable and friendly assistance.
                     Contact us for inquiries about loans, applications, or account support.
                 </p>
