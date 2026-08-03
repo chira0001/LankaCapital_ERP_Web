@@ -301,9 +301,11 @@ const PettyCashPage = () => {
                   </div>
                 }
 
-                {pettyCashInfo.approvedEmployee.email !== "" &&
+                {pettyCashInfo.approvedEmployee.email &&
                   <div>
-                    <p className="text-xs text-slate-400">Approved Employee</p>
+                    <p className="text-xs text-slate-400">
+                      {pettyCashInfo.request == "APPROVED" ? "Approved Employee" : "Rejected Employee"}
+                    </p>
                     <p>
                       {pettyCashInfo.approvedEmployee.firstName} {pettyCashInfo.approvedEmployee.lastName}
                       <br />

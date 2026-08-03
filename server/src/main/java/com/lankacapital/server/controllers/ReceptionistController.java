@@ -2,6 +2,7 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
+import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.services.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class ReceptionistController {
 //    private final InstallmentService installmentService;
     private final MonthlyExpenseService monthlyExpenseService;
     private final DailyCollectionService dailyCollectionService;
-//    private final InterestRateService interestRateService;
+    private final PettyCashCategoryService pettyCashCategoryService;
     private final PettyCashService pettyCashService;
     private final FinancialStatementService financialStatementService;
 
@@ -170,6 +171,26 @@ public class ReceptionistController {
     @GetMapping("/pettyCash")
     public ResponseEntity<?> getEmployeeAddedPettyCash(Authentication authentication){
         return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(authentication.getName()), HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/pettyCash/{id}")
+    public ResponseEntity<?> updatePettyCash(
+            Authentication authentication,
+            @RequestBody PettyCashDto pettyCashDto,
+            @PathVariable Long id
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(pettyCashService.updatePettyCash(authentication.getName(),id,pettyCashDto), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/pettyCashCategories")
+    public ResponseEntity<?> getAllPettyCashCategories(Authentication authentication){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(pettyCashCategoryService.getAllCategories(), HttpStatus.OK);
     }
 
     @PostMapping("/financials")
