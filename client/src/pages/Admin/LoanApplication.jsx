@@ -391,7 +391,7 @@ const LoanApplication = () => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
-
+                        {console.log("End Date : ", selectedApp)}
                         <Info label="Loan Date">
                           {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
                             day: "2-digit",
@@ -427,7 +427,7 @@ const LoanApplication = () => {
                           Id: {selectedApp.enteredBy?.nic} <br />
                           {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
                         </Info>
-                        
+
                         <Info label="Updated By">
                           {selectedApp.updatedBy?.id
                             ? <>
@@ -451,10 +451,26 @@ const LoanApplication = () => {
                         </Info>
 
                         <div className="col-span-2">
-                          <Info label="Decision Note">
-                            {selectedApp.decisionNote || "Not available"}
+                          <Info label="Loan End Date">
+                            {selectedApp.endAt ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric"
+                            }) : "Not Entered"}
                           </Info>
                         </div>
+                        {selectedApp.decisionNote ?
+                          <div className="col-span-3 border border-gray-400 p-3 rounded-md">
+                            <Info label="Decision Note">
+                              {selectedApp.decisionNote}
+                            </Info>
+                          </div>
+                          :
+                          ""
+                        }
+
+
+
 
                       </div>
                     </div>

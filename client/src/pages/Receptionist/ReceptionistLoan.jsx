@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker from "react-datepicker";
+
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
@@ -43,6 +45,7 @@ const ReceptionistLoan = () => {
         documentCharge: '100',
         numberOfInstallments: '',
         loanType: "",
+        endAt: "",
         customerId: '',
         name: '',
         email: '',
@@ -60,6 +63,7 @@ const ReceptionistLoan = () => {
             documentCharge: '100',
             numberOfInstallments: '',
             loanType: "DAILY",
+            endAt: "",
             name: '',
             email: '',
             address: '',
@@ -338,14 +342,16 @@ const ReceptionistLoan = () => {
                                     </tr>
                                 </thead>
 
+                                {console.log("Exist Customer : ", existCustomer)}
+
                                 <tbody className="divide-y divide-gray-200">
                                     {existCustomer.loans.map((loan, key) => (
                                         <tr
-                                            key={loan.fileNumber}
+                                            key={key}
                                             className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors text-center`}
                                         >
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap text-center">
-                                                {loan.fileNumber}
+                                                {loan.fileNumber == "" ? "Not Assigned" : loan.fileNumber}
                                             </td>
 
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
@@ -370,7 +376,7 @@ const ReceptionistLoan = () => {
 
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 {loan.enteredBy.firstName} {loan.enteredBy.lastName}
-                                                <br /> Id : {loan.enteredBy.id}
+                                                <br /> NIC : {loan.enteredBy.nic}
                                             </td>
 
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -414,7 +420,7 @@ const ReceptionistLoan = () => {
                                 <div className='mb-6 flex items-center gap-3'>
                                     <span className='text-md text-gray-500'>Last File Number:</span>
                                     <span className="px-3 py-1 bg-linear-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
-                                        {lastFileNumber}
+                                        {lastFileNumber} + 1
                                     </span>
                                 </div>
                                 :
@@ -472,16 +478,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.loanAmount}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, loanAmount: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, loanAmount: value }));
                                     }
@@ -506,16 +507,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.interestRate}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, interestRate: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, interestRate: value }));
                                     }
@@ -538,16 +534,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.documentCharge}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, documentCharge: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, documentCharge: value }));
                                     }
@@ -573,16 +564,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.numberOfInstallments}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty for backspace
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, numberOfInstallments: "" }));
                                         return;
                                     }
-
-                                    // Allow only positive whole numbers
                                     const regex = /^[1-9]\d*$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({
                                             ...prev,
@@ -596,6 +582,31 @@ const ReceptionistLoan = () => {
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
     focus:outline-none focus:ring-2 focus:ring-blue-500 
     focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Loan End Date <span className='text-red-500'>*</span>
+                            </span>
+
+                            <DatePicker
+                                selected={loanForm.endAt ? new Date(loanForm.endAt) : null}
+                                onChange={(date) => {
+                                    // Format to YYYY-MM-DD for storage
+                                    const formatted = date ? date.toISOString().split('T')[0] : "";
+                                    setLoanForm(prev => ({
+                                        ...prev,
+                                        endAt: formatted
+                                    }));
+                                }}
+                                dateFormat="yyyy/MM/dd"
+                                placeholderText="Select loan end date"
+                                required
+                                minDate={new Date()} // optional: prevent past dates
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+        focus:outline-none focus:ring-2 focus:ring-blue-500 
+        focus:border-transparent transition-all text-sm text-gray-700'
                             />
                         </div>
                     </div>

@@ -7,6 +7,7 @@ import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.utils.UtilityFunctions;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public class LoanMapper {
@@ -20,6 +21,7 @@ public class LoanMapper {
             loan.setFileNumber(loanCreateDto.getFileNumber());
         }
 
+        loan.setEndAt(LocalDate.parse(loanCreateDto.getEndAt()));
         loan.setInstallment(loanCreateDto.getNumberOfInstallments());
         loan.setInterestRate(loanCreateDto.getInterestRate());
         loan.setStatus(LoanStatus.PENDING);
@@ -34,7 +36,7 @@ public class LoanMapper {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
-
+        responseDto.setEndAt(loan.getEndAt());
         responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
