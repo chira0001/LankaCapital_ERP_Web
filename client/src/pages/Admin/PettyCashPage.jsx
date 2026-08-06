@@ -56,26 +56,37 @@ const PettyCashPage = () => {
   }));
 
   const fetchPettyCash = async () => {
-    const res = await axiosAPI.get("/admin/pettyCash");
-    setPettyCashData(res.data);
-    setLoading(false);
+    try {
+      const res = await axiosAPI.get("/admin/pettyCash");
+      setPettyCashData(res.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchPettyCashCategories = async () => {
-    const res = await axiosAPI.get("/admin/pettyCashCategories");
-    setPettyCashCategoryDetails(res.data);
+    try {
+      const res = await axiosAPI.get("/admin/pettyCashCategories");
+      setPettyCashCategoryDetails(res.data);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const updatePettyCashRequest = async (id) => {
     try {
-      setActionLoadingId("save");
+      setActionLoadingId({ action: "save", id });
+
       let categoryId = pettyCashUpdatePayload.categoryId;
 
       if (newCategory.trim() !== "") {
-        console.log("newCategory : ", newCategory)
-        const categoryRes = await axiosAPI.post(`/admin/pettyCashCategories?newCategory=${newCategory}`);
+        const categoryRes = await axiosAPI.post(
+          `/admin/pettyCashCategories?newCategory=${newCategory}`
+        );
         categoryId = categoryRes.data;
-        fetchPettyCashCategories();
+        await fetchPettyCashCategories();
       }
 
       const finalPayload = {
@@ -84,39 +95,54 @@ const PettyCashPage = () => {
         category: categoryId
       };
 
-      console.log("finalPayload : ", finalPayload)
       await axiosAPI.put(`/admin/pettyCash/${id}`, finalPayload);
 
       await fetchPettyCash();
-      setActionLoadingId(null);
       setIsEdit(false);
       setIsRowClicked(false);
       setNewCategory("");
     } catch (e) {
       console.log(e);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const approve = async (id) => {
-    setActionLoadingId("approve");
-    await axiosAPI.put(`/admin/pettyCash/approve/${id}`);
-    await fetchPettyCash();
-    setActionLoadingId(null);
+    try {
+      setActionLoadingId({ action: "approve", id });
+      await axiosAPI.put(`/admin/pettyCash/approve/${id}`);
+      await fetchPettyCash();
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   const reject = async (id) => {
-    setActionLoadingId("reject");
-    await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
-    await fetchPettyCash();
-    setActionLoadingId(null);
+    try {
+      setActionLoadingId({ action: "reject", id });
+      await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
+      await fetchPettyCash();
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   const undo = async (id) => {
-    setActionLoadingId("undo");
-    const username = localStorage.getItem("username");
-    await axiosAPI.put(`/admin/undo/${id}/${username}`);
-    await fetchPettyCash();
-    setActionLoadingId(null);
+    try {
+      setActionLoadingId({ action: "undo", id });
+      const username = localStorage.getItem("username");
+      await axiosAPI.put(`/admin/undo/${id}/${username}`);
+      await fetchPettyCash();
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   const handleExportExcel = () => {
@@ -225,18 +251,24 @@ const PettyCashPage = () => {
                         <div className="flex justify-end gap-2">
                           <button onClick={(e) => { e.stopPropagation(); approve(record.id); }}
                             className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded">
-                            {actionLoadingId == "approve" ? "Approving" : "Approve"}
+                            {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
+                              ? "Approving..."
+                              : "Approve"}
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); reject(record.id); }}
                             className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">
-                            {actionLoadingId == "reject" ? "Rejecting" : "Reject"}
+                            {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
+                              ? "Rejecting..."
+                              : "Reject"}
                           </button>
                         </div>
                       ) : (
                         <button onClick={(e) => { e.stopPropagation(); undo(record.id); }}
                           className="px-3 py-1 text-xs bg-slate-100 rounded">
                           <Undo2 className="w-3 h-3 inline mr-1" />
-                          {actionLoadingId == "undo" ? "Undoing" : "Undo"}
+                          {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
+                            ? "Undoing..."
+                            : "Undo"}
                         </button>
                       )}
                     </td>
@@ -301,9 +333,11 @@ const PettyCashPage = () => {
                   </div>
                 }
 
-                {pettyCashInfo.approvedEmployee.email !== "" &&
+                {pettyCashInfo.approvedEmployee.email &&
                   <div>
-                    <p className="text-xs text-slate-400">Approved Employee</p>
+                    <p className="text-xs text-slate-400">
+                      {pettyCashInfo.request == "APPROVED" ? "Approved Employee" : "Rejected Employee"}
+                    </p>
                     <p>
                       {pettyCashInfo.approvedEmployee.firstName} {pettyCashInfo.approvedEmployee.lastName}
                       <br />
@@ -396,7 +430,9 @@ const PettyCashPage = () => {
                   <button
                     onClick={() => updatePettyCashRequest(pettyCashInfo.id)}
                     className="px-4 py-2 bg-slate-800 text-white rounded">
-                    {actionLoadingId == "save" ? "Saving" : "Save Changes"}
+                    {actionLoadingId?.action === "save"
+                            ? "Saving..."
+                            : "Save Changes"}
                   </button>
                 </div>
               </div>

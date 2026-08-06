@@ -14,6 +14,7 @@ public class LoanCreateDto {
     private BigDecimal documentCharge;
     private Integer numberOfInstallments;
     private String loanType;
+    private String endAt;
 
     private String customerId;
 

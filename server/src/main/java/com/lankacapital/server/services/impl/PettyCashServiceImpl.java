@@ -29,12 +29,17 @@ public class PettyCashServiceImpl implements PettyCashService {
     public PettyCashResponseDto addPettyCash(PettyCashDto pettyCashDto, String username) {
         try {
             PettyCash pettyCash = PettyCashMapper.mapToPettyCash(pettyCashDto);
+
             Employee requestEmployee = employeeRepository.findByEmail(username);
             if(requestEmployee == null){
                 throw new ResourceNotFoundException("Employee verification not found");
             }
             pettyCash.setRequestEmployee(requestEmployee);
             pettyCash.setRequest(Request.PENDING);
+            PettyCashCategory pettyCashCategory = pettyCashCategoryRepository.findById(pettyCashDto.getCategory())
+                    .orElseThrow(()-> new ResourceNotFoundException("No category found"));
+            pettyCash.setPettyCashCategory(pettyCashCategory);
+
             pettyCashRepository.save(pettyCash);
 
             return PettyCashMapper.mapToPettyCashResponseDto(pettyCash);
