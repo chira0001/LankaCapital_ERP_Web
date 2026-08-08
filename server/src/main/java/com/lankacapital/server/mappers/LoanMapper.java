@@ -210,7 +210,6 @@ public class LoanMapper {
 
         // ✅ Handle Daily Collections safely
         List<DailyCollection> collections = loan.getDailyCollections();
-
         if (collections != null && !collections.isEmpty()) {
 
             // ✅ Sort by installment number (important!)
@@ -228,11 +227,9 @@ public class LoanMapper {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             if (dto.getInstallmentValue() != null) {
-                dto.setArrearsAmount(
-                        dto.getInstallmentValue()
-                                .multiply(BigDecimal.valueOf(maxInstallmentNumber))
-                                .subtract(totalDueAmount)
-                );
+                dto.setArrearsAmount(totalDueAmount);
+            }else{
+                dto.setInstallmentValue(BigDecimal.ZERO);
             }
 
             dto.setDailyCollection(

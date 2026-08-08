@@ -596,46 +596,6 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public List<LoanSummaryResponseDto> fetchLoanSummary() {
 
-//        List<LoanSummaryProjectionDto> list = loanRepository.fetchLoanSummary();
-
-//        return list.stream().map(data -> {
-//
-//            LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
-//
-//            dto.setAmount(data.getAmount());
-//            dto.setCreatedAt(data.getCreatedAt());
-//            dto.setFileNumber(data.getFileNumber());
-//            dto.setInstallment(data.getInstallment());
-//            dto.setInterestRate(data.getInterestRate());
-//            dto.setLoanType(data.getLoanType());
-//            dto.setEndAt(data.getEndAt());
-////            dto.setCustomer(CustomerMapper.mapToCustomerResponseDto(data.getCustomer()));
-//
-//            // ✅ Total with interest
-//            BigDecimal totalWithInterest = data.getAmount()
-//                    .add(data.getAmount()
-//                            .multiply(BigDecimal.valueOf(data.getInterestRate() / 100)));
-//
-//            // ✅ Installment value
-//            if (data.getInstallment() != null && data.getInstallment() > 0) {
-//                dto.setInstallmentValue(
-//                        totalWithInterest.divide(
-//                                BigDecimal.valueOf(data.getInstallment()),
-//                                2,
-//                                RoundingMode.HALF_UP
-//                        )
-//                );
-//            }
-//
-//            // ✅ Arrears
-//            dto.setArrearsAmount(
-//                    totalWithInterest.subtract(data.getTotalPaid())
-//            );
-//
-//            return dto;
-//
-//        }).toList();
-
         List<Loan> loanList = loanRepository.fetchApprovedLoansWithCollections();
         return loanList.stream().map(LoanMapper::mapToLoanSummaryResponseDto).toList();
     }
