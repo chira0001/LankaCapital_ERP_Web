@@ -141,7 +141,7 @@ const LoanSummary = () => {
     }
 
     return (
-        <div className="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="min-h-screen w-full p-3">
             <div className="mx-auto max-w-[1600px]">
                 {/* Page header */}
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
