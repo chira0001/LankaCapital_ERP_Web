@@ -5,107 +5,135 @@ const formatLKR = (amount) =>
     new Intl.NumberFormat("en-LK", {
         style: "currency",
         currency: "LKR",
-    }).format(amount || 0);
+    }).format(Number(amount) || 0);
+
+const formatDate = (date) => {
+    if (!date) return "—";
+
+    const parsedDate = new Date(date);
+    return Number.isNaN(parsedDate.getTime())
+        ? "—"
+        : parsedDate.toLocaleDateString("en-LK");
+};
 
 const LoanSummary = () => {
     const role = localStorage.getItem("role");
 
     const mainRowsPerPage = 20;
-    const selectedRowsPerPage = 15;
+    const paymentRowsPerPage = 15;
 
-    const [mainCurrentPage, setMainCurrentPage] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
+    const [paymentPage, setPaymentPage] = useState(1);
 
     const [applicationData, setApplicationData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedApp, setSelectedApp] = useState(null);
+    const [selectedLoan, setSelectedLoan] = useState(null);
+
+
 
     useEffect(() => {
         fetchApplications();
     }, []);
 
     useEffect(() => {
-        if (!selectedApp) return;
-
         const handleEscape = (event) => {
             if (event.key === "Escape") {
-                setSelectedApp(null);
-                setCurrentPage(1);
+                closeModal();
             }
         };
 
-        document.addEventListener("keydown", handleEscape);
-        document.body.style.overflow = "hidden";
+        if (selectedApp) {
+            document.addEventListener("keydown", handleEscape);
+            document.body.style.overflow = "hidden";
+        }
 
         return () => {
             document.removeEventListener("keydown", handleEscape);
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = "auto";
         };
     }, [selectedApp]);
 
     const fetchApplications = async () => {
         try {
             const res = await axiosAPI.get(`/${role}/loan-summary`);
-            setApplicationData(res.data);
+            setApplicationData(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error("Error fetching applications:", error);
+            setApplicationData([]);
         } finally {
             setLoading(false);
         }
     };
 
+    const closeModal = () => {
+        setSelectedApp(null);
+        setSelectedLoan(null);
+        setPaymentPage(1);
+    };
+
     const styleArrearsAmount = (amount) => {
-        if (amount === 0) return "text-amber-600 bg-amber-50 border-amber-200";
-        if (amount < 0) return "text-red-600 bg-red-50 border-red-200";
-        if (amount > 0) return "text-emerald-600 bg-emerald-50 border-emerald-200";
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        const numericAmount = Number(amount) || 0;
+
+        if (numericAmount === 0) return "text-amber-600";
+        if (numericAmount < 0) return "text-red-600";
+        if (numericAmount > 0) return "text-emerald-600";
+
+        return "text-gray-600";
     };
 
     const getStatusBadge = (status) => {
         const normalized = (status ?? "").toUpperCase();
+
         const styles = {
-            WEEKLY: "bg-slate-100 text-slate-700 border-slate-300",
+            WEEKLY: "bg-slate-100 text-slate-700 border-slate-200",
             DAILY: "bg-gray-900 text-white border-gray-900",
         };
+
         return styles[normalized] || styles.WEEKLY;
     };
 
-    // Main table pagination - 20 records per page
-    const mainIndexOfLastRow = mainCurrentPage * mainRowsPerPage;
-    const mainIndexOfFirstRow = mainIndexOfLastRow - mainRowsPerPage;
-    const mainCurrentRows = applicationData.slice(
-        mainIndexOfFirstRow,
-        mainIndexOfLastRow
+    // Main table pagination
+    const totalMainPages = Math.ceil(
+        applicationData.length / mainRowsPerPage
     );
-    const mainTotalPages = Math.ceil(applicationData.length / mainRowsPerPage);
 
-    // Selected app/payment table pagination - 15 records per page
-    const indexOfLastRow = currentPage * selectedRowsPerPage;
-    const indexOfFirstRow = indexOfLastRow - selectedRowsPerPage;
+    const indexOfLastMainRow = currentPage * mainRowsPerPage;
+    const indexOfFirstMainRow = indexOfLastMainRow - mainRowsPerPage;
 
-    const currentRows = selectedApp
-        ? selectedApp.slice(indexOfFirstRow, indexOfLastRow)
-        : [];
+    const currentApplications = applicationData.slice(
+        indexOfFirstMainRow,
+        indexOfLastMainRow
+    );
 
-    const totalPages = selectedApp
-        ? Math.ceil(selectedApp.length / selectedRowsPerPage)
-        : 0;
+    // Selected loan payment pagination
+    const paymentRecords = Array.isArray(selectedApp) ? selectedApp : [];
 
-    const closeModal = () => {
-        setSelectedApp(null);
-        setCurrentPage(1);
+    const totalPaymentPages = Math.ceil(
+        paymentRecords.length / paymentRowsPerPage
+    );
+
+    const indexOfLastPayment = paymentPage * paymentRowsPerPage;
+    const indexOfFirstPayment = indexOfLastPayment - paymentRowsPerPage;
+
+    const currentPayments = paymentRecords.slice(
+        indexOfFirstPayment,
+        indexOfLastPayment
+    );
+
+    const openLoanDetails = (app) => {
+        setSelectedLoan(app);
+        setSelectedApp(app.dailyCollection || []);
+        setPaymentPage(1);
     };
 
     if (loading) {
         return (
-            <div className="flex-1 flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-                <div className="text-center bg-white px-10 py-8 rounded-2xl shadow-sm border border-gray-200">
-                    <div className="w-16 h-16 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
-                    <p className="text-gray-800 font-semibold tracking-wide">
-                        Loading Loan Data...
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                        Please wait while we prepare the summary.
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="mx-auto mb-4 h-14 w-14 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+                    <p className="text-sm font-medium text-gray-600">
+                        Loading loan data...
                     </p>
                 </div>
             </div>
@@ -113,488 +141,505 @@ const LoanSummary = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 w-full px-4 sm:px-6 lg:px-8 py-8">
-            <div className="max-w-[1600px] mx-auto">
-                {/* HEADER */}
-                <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-h-screen w-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1600px]">
+                {/* Page header */}
+                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 text-white text-xs font-medium mb-3">
-                            Loan Management
-                        </div>
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                            Finance overview
+                        </p>
 
-                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-950 tracking-tight">
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-950">
                             Loan Summary
                         </h1>
 
-                        <p className="text-gray-500 mt-2 text-sm sm:text-base">
-                            Summary of all ongoing loan records and payment collections.
+                        <p className="mt-2 text-sm text-gray-500">
+                            Review ongoing loans and inspect individual payment
+                            records.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
-                            <p className="text-xs text-gray-500 font-medium">
-                                Total Loans
-                            </p>
-                            <p className="text-2xl font-bold text-gray-950 mt-1">
-                                {applicationData.length}
-                            </p>
-                        </div>
-
-                        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
-                            <p className="text-xs text-gray-500 font-medium">
-                                Current Page
-                            </p>
-                            <p className="text-2xl font-bold text-gray-950 mt-1">
-                                {mainTotalPages === 0 ? 0 : mainCurrentPage}
-                                <span className="text-sm text-gray-400 font-medium">
-                                    {" "}
-                                    / {mainTotalPages || 0}
-                                </span>
-                            </p>
-                        </div>
-
-                        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm col-span-2 sm:col-span-1">
-                            <p className="text-xs text-gray-500 font-medium">
-                                Rows Per Page
-                            </p>
-                            <p className="text-2xl font-bold text-gray-950 mt-1">
-                                {mainRowsPerPage}
-                            </p>
-                        </div>
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                            Total loans
+                        </p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">
+                            {applicationData.length}
+                        </p>
                     </div>
                 </div>
 
-                {/* MAIN TABLE CARD */}
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white">
+                {/* Main table */}
+                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-2 border-b border-gray-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 className="text-lg font-bold text-gray-950">
-                                Ongoing Loans
+                            <h2 className="font-semibold text-gray-900">
+                                Ongoing loan records
                             </h2>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Click on any loan row to view payment details.
+                            <p className="mt-1 text-xs text-gray-500">
+                                Select a row to view its payment history.
                             </p>
                         </div>
 
-                        <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
-                            Showing{" "}
-                            <span className="font-semibold text-gray-900">
-                                {applicationData.length === 0
-                                    ? 0
-                                    : mainIndexOfFirstRow + 1}
-                            </span>{" "}
-                            -{" "}
-                            <span className="font-semibold text-gray-900">
-                                {Math.min(mainIndexOfLastRow, applicationData.length)}
-                            </span>{" "}
-                            of{" "}
-                            <span className="font-semibold text-gray-900">
-                                {applicationData.length}
-                            </span>
-                        </div>
+                        {applicationData.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                                Showing{" "}
+                                <span className="font-semibold text-gray-800">
+                                    {indexOfFirstMainRow + 1}–
+                                    {Math.min(
+                                        indexOfLastMainRow,
+                                        applicationData.length
+                                    )}
+                                </span>{" "}
+                                of{" "}
+                                <span className="font-semibold text-gray-800">
+                                    {applicationData.length}
+                                </span>
+                            </p>
+                        )}
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1200px] text-sm">
-                            <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
-                                <tr className="text-gray-500 uppercase text-[11px] tracking-wider">
-                                    <th className="px-6 py-4 text-left font-bold">
+                        <table className="w-full min-w-[1150px] text-sm">
+                            <thead className="border-b border-gray-200 bg-gray-50">
+                                <tr className="text-left text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Loan ID
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Loan Date
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Complete Date
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Applicant
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Installments
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Amount
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Per Installment
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Type
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Arrears
                                     </th>
-                                    <th className="px-6 py-4 text-left font-bold">
+                                    <th className="whitespace-nowrap px-5 py-4">
                                         Approved By
                                     </th>
                                 </tr>
                             </thead>
 
                             <tbody className="divide-y divide-gray-100">
-                                {mainCurrentRows.length > 0 ? (
-                                    mainCurrentRows.map((app, key) => (
-                                        <tr
-                                            key={key}
-                                            className="group hover:bg-gray-50 transition-all duration-200 cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedApp(app.dailyCollection || []);
-                                                setCurrentPage(1);
-                                            }}
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-gray-950 group-hover:text-black">
-                                                    {app.fileNumber}
-                                                </div>
-                                            </td>
+                                {currentApplications.map((app, index) => (
+                                    <tr
+                                        key={app.id || app.fileNumber || index}
+                                        tabIndex={0}
+                                        role="button"
+                                        onClick={() => openLoanDetails(app)}
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === "Enter" ||
+                                                event.key === " "
+                                            ) {
+                                                event.preventDefault();
+                                                openLoanDetails(app);
+                                            }
+                                        }}
+                                        className="cursor-pointer transition-colors hover:bg-blue-50/50 focus:bg-blue-50 focus:outline-none"
+                                    >
+                                        <td className="px-5 py-4">
+                                            <span className="font-bold text-gray-900">
+                                                {app.fileNumber || "—"}
+                                            </span>
+                                        </td>
 
-                                            <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                                                {new Date(app.createdAt).toLocaleDateString(
-                                                    "en-LK"
-                                                )}
-                                            </td>
+                                        <td className="whitespace-nowrap px-5 py-4 text-gray-600">
+                                            {formatDate(app.createdAt)}
+                                        </td>
 
-                                            <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                                                {new Date(app.endAt).toLocaleDateString(
-                                                    "en-LK"
-                                                )}
-                                            </td>
+                                        <td className="whitespace-nowrap px-5 py-4 text-gray-600">
+                                            {formatDate(app.endAt)}
+                                        </td>
 
-                                            <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900">
-                                                    {app.customer?.name}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-0.5">
-                                                    NIC: {app.customer?.nic}
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
-                                                <div className="font-semibold text-gray-900">
-                                                    {app.installment}x
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-0.5">
-                                                    {app.interestRate}% interest
-                                                </div>
-                                            </td>
-
-                                            <td className="px-6 py-4 font-semibold text-gray-950 whitespace-nowrap">
-                                                {formatLKR(app.amount)}
-                                            </td>
-
-                                            <td className="px-6 py-4 text-gray-700 whitespace-nowrap">
-                                                {formatLKR(app.installmentValue)}
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <span
-                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs border font-semibold ${getStatusBadge(
-                                                        app.loanType
-                                                    )}`}
-                                                >
-                                                    {app.loanType}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs border font-bold ${styleArrearsAmount(
-                                                        app.arrearsAmount
-                                                    )}`}
-                                                >
-                                                    {formatLKR(app.arrearsAmount)}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-4 text-gray-700">
-                                                <div className="font-semibold text-gray-900">
-                                                    {app.approvedEmployee?.firstName}{" "}
-                                                    {app.approvedEmployee?.lastName}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-0.5">
-                                                    NIC: {app.approvedEmployee?.nic}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan="10"
-                                            className="px-6 py-16 text-center"
-                                        >
-                                            <div className="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                                <span className="text-2xl">📄</span>
+                                        <td className="px-5 py-4">
+                                            <div className="font-semibold text-gray-800">
+                                                {app.customer?.name || "—"}
                                             </div>
-                                            <h3 className="text-lg font-bold text-gray-900">
-                                                No loan records found
-                                            </h3>
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                There are no ongoing loans to display.
-                                            </p>
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                {app.customer?.nic || "—"}
+                                            </div>
+                                        </td>
+
+                                        <td className="px-5 py-4 text-gray-700">
+                                            <span className="font-medium">
+                                                {app.installment || 0}x
+                                            </span>
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                {app.interestRate || 0}% interest
+                                            </div>
+                                        </td>
+
+                                        <td className="whitespace-nowrap px-5 py-4 font-semibold text-gray-900">
+                                            {formatLKR(app.amount)}
+                                        </td>
+
+                                        <td className="whitespace-nowrap px-5 py-4 text-gray-700">
+                                            {formatLKR(app.installmentValue)}
+                                        </td>
+
+                                        <td className="px-5 py-4">
+                                            <span
+                                                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadge(
+                                                    app.loanType
+                                                )}`}
+                                            >
+                                                {app.loanType || "UNKNOWN"}
+                                            </span>
+                                        </td>
+
+                                        <td
+                                            className={`whitespace-nowrap px-5 py-4 font-bold ${styleArrearsAmount(
+                                                app.arrearsAmount
+                                            )}`}
+                                        >
+                                            {formatLKR(app.arrearsAmount)}
+                                        </td>
+
+                                        <td className="px-5 py-4 text-gray-700">
+                                            <div>
+                                                {app.approvedEmployee?.firstName ||
+                                                    app.approvedEmployee?.lastName
+                                                    ? `${app.approvedEmployee?.firstName || ""} ${app.approvedEmployee?.lastName || ""
+                                                    }`
+                                                    : "—"}
+                                            </div>
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                {app.approvedEmployee?.nic || "—"}
+                                            </div>
                                         </td>
                                     </tr>
-                                )}
+                                ))}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* MAIN PAGINATION */}
-                    {mainTotalPages > 1 && (
-                        <div className="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-gray-50">
-                            <p className="text-sm text-gray-500">
-                                Page{" "}
-                                <span className="font-semibold text-gray-900">
-                                    {mainCurrentPage}
-                                </span>{" "}
-                                of{" "}
-                                <span className="font-semibold text-gray-900">
-                                    {mainTotalPages}
-                                </span>
+                    {/* Empty state */}
+                    {applicationData.length === 0 && (
+                        <div className="px-6 py-16 text-center">
+                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-xl">
+                                📄
+                            </div>
+                            <h3 className="font-semibold text-gray-900">
+                                No loan records found
+                            </h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                                There are currently no ongoing loans to display.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Main table pagination */}
+                    {totalMainPages > 1 && (
+                        <div className="flex flex-col gap-3 border-t border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs text-gray-500">
+                                Page {currentPage} of {totalMainPages}
                             </p>
 
                             <div className="flex items-center gap-2">
                                 <button
+                                    type="button"
                                     onClick={() =>
-                                        setMainCurrentPage((prev) =>
-                                            Math.max(prev - 1, 1)
+                                        setCurrentPage((page) =>
+                                            Math.max(page - 1, 1)
                                         )
                                     }
-                                    disabled={mainCurrentPage === 1}
-                                    className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition"
+                                    disabled={currentPage === 1}
+                                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     Previous
                                 </button>
 
                                 <button
+                                    type="button"
                                     onClick={() =>
-                                        setMainCurrentPage((prev) =>
-                                            Math.min(prev + 1, mainTotalPages)
+                                        setCurrentPage((page) =>
+                                            Math.min(
+                                                page + 1,
+                                                totalMainPages
+                                            )
                                         )
                                     }
-                                    disabled={mainCurrentPage === mainTotalPages}
-                                    className="px-4 py-2 bg-gray-900 text-white hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition"
+                                    disabled={currentPage === totalMainPages}
+                                    className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     Next
                                 </button>
                             </div>
                         </div>
                     )}
-                </div>
+                </section>
+            </div>
 
-                {/* MODAL */}
-                {selectedApp && (
+            {/* Payment details modal */}
+            {selectedApp && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm"
+                    onClick={closeModal}
+                    aria-hidden="true"
+                >
                     <div
-                        className="fixed inset-0 bg-gray-950/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                        onClick={closeModal}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="payment-details-title"
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
                     >
-                        <div
-                            className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative overflow-hidden border border-gray-200"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            {/* MODAL HEADER */}
-                            <div className="px-6 py-5 border-b border-gray-200 flex items-start justify-between gap-4 bg-white">
-                                <div>
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold mb-3">
-                                        Payment Collection
-                                    </div>
+                        {/* Modal header */}
+                        <div className="flex items-start justify-between border-b border-gray-200 px-6 py-5">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    Payment history
+                                </p>
 
-                                    <h2 className="text-2xl font-bold text-gray-950">
-                                        Loan Payment Details
-                                    </h2>
-
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Showing collected installments for the selected loan.
-                                    </p>
-                                </div>
-
-                                <button
-                                    onClick={closeModal}
-                                    className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-950 hover:bg-gray-100 transition text-xl"
-                                    aria-label="Close modal"
+                                <h2
+                                    id="payment-details-title"
+                                    className="mt-1 text-2xl font-bold text-gray-900"
                                 >
-                                    ×
-                                </button>
-                            </div>
+                                    {selectedLoan?.fileNumber
+                                        ? `Loan ${selectedLoan.fileNumber}`
+                                        : "Loan Payment Details"}
+                                </h2>
 
-                            {/* MODAL BODY */}
-                            <div className="p-6">
-                                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="text-sm text-gray-500">
-                                        Total Payment Records:{" "}
-                                        <span className="font-bold text-gray-950">
-                                            {selectedApp.length}
-                                        </span>
-                                    </div>
-
-                                    <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2">
-                                        Showing{" "}
-                                        <span className="font-semibold text-gray-900">
-                                            {selectedApp.length === 0
-                                                ? 0
-                                                : indexOfFirstRow + 1}
-                                        </span>{" "}
-                                        -{" "}
-                                        <span className="font-semibold text-gray-900">
-                                            {Math.min(indexOfLastRow, selectedApp.length)}
-                                        </span>{" "}
-                                        of{" "}
-                                        <span className="font-semibold text-gray-900">
-                                            {selectedApp.length}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="border border-gray-200 rounded-2xl overflow-hidden">
-                                    <div className="overflow-x-auto max-h-[520px]">
-                                        <table className="w-full min-w-[850px] text-sm">
-                                            <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
-                                                <tr className="text-gray-500 uppercase text-[11px] tracking-wider">
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Installment
-                                                    </th>
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Paid Amount
-                                                    </th>
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Paid Date
-                                                    </th>
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Paid Time
-                                                    </th>
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Processed By
-                                                    </th>
-                                                    <th className="px-6 py-4 text-left font-bold">
-                                                        Status
-                                                    </th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody className="divide-y divide-gray-100 bg-white">
-                                                {currentRows.length > 0 ? (
-                                                    currentRows.map((value) => (
-                                                        <tr
-                                                            key={value.id}
-                                                            className="hover:bg-gray-50 transition"
-                                                        >
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-bold text-gray-950">
-                                                                    Installment #
-                                                                    {value.installmentNumber}
-                                                                </div>
-                                                            </td>
-
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-bold text-gray-950">
-                                                                    {formatLKR(value.paidAmount)}
-                                                                </div>
-                                                            </td>
-
-                                                            <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                                                                {new Date(
-                                                                    value.paidAt
-                                                                ).toLocaleDateString("en-US", {
-                                                                    day: "numeric",
-                                                                    month: "short",
-                                                                    year: "numeric",
-                                                                })}
-                                                            </td>
-
-                                                            <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                                                                {new Date(
-                                                                    value.paidAt
-                                                                ).toLocaleTimeString("en-US", {
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit",
-                                                                    hour12: true,
-                                                                })}
-                                                            </td>
-
-                                                            <td className="px-6 py-4 text-gray-600">
-                                                                {value.employeeId}
-                                                            </td>
-
-                                                            <td className="px-6 py-4">
-                                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                    Paid
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td
-                                                            colSpan="6"
-                                                            className="px-6 py-16 text-center"
-                                                        >
-                                                            <div className="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                                                <span className="text-2xl">
-                                                                    💳
-                                                                </span>
-                                                            </div>
-                                                            <h3 className="text-lg font-bold text-gray-900">
-                                                                No payment records found
-                                                            </h3>
-                                                            <p className="text-sm text-gray-500 mt-1">
-                                                                This loan does not have any
-                                                                collection records yet.
-                                                            </p>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* SELECTED APP PAGINATION */}
-                                {totalPages > 1 && (
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-5">
-                                        <p className="text-sm text-gray-500">
-                                            Page{" "}
-                                            <span className="font-semibold text-gray-900">
-                                                {currentPage}
-                                            </span>{" "}
-                                            of{" "}
-                                            <span className="font-semibold text-gray-900">
-                                                {totalPages}
-                                            </span>
-                                        </p>
-
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() =>
-                                                    setCurrentPage((prev) =>
-                                                        Math.max(prev - 1, 1)
-                                                    )
-                                                }
-                                                disabled={currentPage === 1}
-                                                className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition"
-                                            >
-                                                Previous
-                                            </button>
-
-                                            <button
-                                                onClick={() =>
-                                                    setCurrentPage((prev) =>
-                                                        Math.min(prev + 1, totalPages)
-                                                    )
-                                                }
-                                                disabled={currentPage === totalPages}
-                                                className="px-4 py-2 bg-gray-900 text-white hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition"
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-                                    </div>
+                                {selectedLoan?.customer?.name && (
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        {selectedLoan.customer.name}
+                                    </p>
                                 )}
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                aria-label="Close payment details"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
+                            >
+                                ×
+                            </button>
                         </div>
+
+                        {/* Payment summary */}
+                        <div className="grid grid-cols-2 gap-3 border-b border-gray-200 bg-gray-50 px-6 py-4 sm:grid-cols-3">
+                            <div>
+                                <p className="text-xs text-gray-500">
+                                    Total records
+                                </p>
+                                <p className="mt-1 font-bold text-gray-900">
+                                    {paymentRecords.length}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-gray-500">
+                                    Loan type
+                                </p>
+                                <p className="mt-1 font-bold text-gray-900">
+                                    {selectedLoan?.loanType || "—"}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-gray-500">
+                                    Installment value
+                                </p>
+                                <p className="mt-1 font-bold text-gray-900">
+                                    {formatLKR(selectedLoan?.installmentValue)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Payment table */}
+                        <div className="overflow-auto">
+                            {currentPayments.length > 0 ? (
+                                <table className="w-full min-w-[650px] text-sm">
+                                    <thead className="sticky top-0 border-b border-gray-200 bg-white">
+                                        <tr className="text-left text-xs font-bold uppercase tracking-wide text-gray-500">
+                                            <th className="px-6 py-4">
+                                                Installment
+                                            </th>
+                                            <th className="px-6 py-4">
+                                                Paid Amount
+                                            </th>
+                                            <th className="px-6 py-4">
+                                                Paid At
+                                            </th>
+                                            <th className="px-6 py-4">
+                                                Processed By
+                                            </th>
+                                            <th className="px-6 py-4">
+                                                Due Amount
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody className="divide-y divide-gray-100">
+                                        {currentPayments.map((value, index) => (
+                                            <tr
+                                                key={
+                                                    value.id ||
+                                                    value.installmentNumber ||
+                                                    index
+                                                }
+                                                className="transition-colors hover:bg-gray-50"
+                                            >
+                                                <td className="px-6 py-4 font-semibold text-gray-900">
+                                                    <span className="text-gray-400"># </span>
+                                                    {value.installmentNumber ||
+                                                        "—"}
+                                                </td>
+
+                                                <td className="px-6 py-4 font-bold text-gray-900">
+                                                    {formatLKR(
+                                                        value.paidAmount
+                                                    )}
+                                                </td>
+
+                                                <td className="whitespace-nowrap px-6 py-4 text-gray-600">
+                                                    {value.paidAt ? (
+                                                        <>
+                                                            <div>
+                                                                {new Date(
+                                                                    value.paidAt
+                                                                ).toLocaleDateString(
+                                                                    "en-LK",
+                                                                    {
+                                                                        day: "numeric",
+                                                                        month: "short",
+                                                                        year: "numeric",
+                                                                    }
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-1 text-xs text-gray-400">
+                                                                {new Date(
+                                                                    value.paidAt
+                                                                ).toLocaleTimeString(
+                                                                    "en-LK",
+                                                                    {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                        hour12: true,
+                                                                    }
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        "—"
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">
+                                                    {value.employee?.firstName ? (
+                                                        <>
+                                                            <div className="font-medium text-gray-800">
+                                                                {value.employee.firstName} {value.employee.lastName}
+                                                            </div>
+                                                            <div className="text-xs text-gray-400">
+                                                                {value.employee.nic || "—"}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        "—"
+                                                    )}
+                                                </td>
+
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ${styleArrearsAmount((value.paidAmount || 0) - (selectedLoan?.installmentValue || 0))}`}>
+                                                        {formatLKR(
+                                                            (value.paidAmount || 0) -
+                                                            (selectedLoan?.installmentValue || 0)
+                                                        )}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="px-6 py-16 text-center">
+                                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-xl">
+                                        ✓
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900">
+                                        No payment records
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        No payment history is available for
+                                        this loan.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Payment pagination */}
+                        {totalPaymentPages > 1 && (
+                            <div className="flex flex-col gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs text-gray-500">
+                                    Showing {indexOfFirstPayment + 1}–
+                                    {Math.min(
+                                        indexOfLastPayment,
+                                        paymentRecords.length
+                                    )}{" "}
+                                    of {paymentRecords.length} payments
+                                </p>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setPaymentPage((page) =>
+                                                Math.max(page - 1, 1)
+                                            )
+                                        }
+                                        disabled={paymentPage === 1}
+                                        className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <span className="min-w-[90px] text-center text-xs font-medium text-gray-600">
+                                        Page {paymentPage} of{" "}
+                                        {totalPaymentPages}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setPaymentPage((page) =>
+                                                Math.min(
+                                                    page + 1,
+                                                    totalPaymentPages
+                                                )
+                                            )
+                                        }
+                                        disabled={
+                                            paymentPage === totalPaymentPages
+                                        }
+                                        className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

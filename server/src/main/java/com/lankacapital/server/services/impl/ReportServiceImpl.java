@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.DailyCollection;
+import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.DailyCollectionRepository;
 //import com.lankacapital.server.services.FinancialStatementService;
 import com.lankacapital.server.services.ReportService;
@@ -37,8 +38,8 @@ public class ReportServiceImpl implements ReportService {
             dto.setPaidAmount(c.getPaidAmount());
             dto.setPaidAt(c.getPaidAt());
 
-            dto.setEmployeeId(
-                    c.getEmployee() != null ? c.getEmployee().getId() : null
+            dto.setEmployee(
+                    c.getEmployee() != null ? EmployeeMapper.mapToEmployeeResponseDto(c.getEmployee()) : null
             );
 
             dto.setFileNumber(
