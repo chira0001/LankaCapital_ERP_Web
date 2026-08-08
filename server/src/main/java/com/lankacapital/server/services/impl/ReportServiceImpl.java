@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.DailyCollection;
+import com.lankacapital.server.mappers.EmployeeMapper;
 import com.lankacapital.server.repositories.DailyCollectionRepository;
 //import com.lankacapital.server.services.FinancialStatementService;
 import com.lankacapital.server.services.ReportService;
@@ -37,8 +38,8 @@ public class ReportServiceImpl implements ReportService {
             dto.setPaidAmount(c.getPaidAmount());
             dto.setPaidAt(c.getPaidAt());
 
-            dto.setEmployeeId(
-                    c.getEmployee() != null ? c.getEmployee().getId() : null
+            dto.setEmployee(
+                    c.getEmployee() != null ? EmployeeMapper.mapToEmployeeResponseDto(c.getEmployee()) : null
             );
 
             dto.setFileNumber(
@@ -49,34 +50,6 @@ public class ReportServiceImpl implements ReportService {
 
         }).toList();
     }
-//
-//    @Override
-//    public DailyCollectionDto getDailyCollectionSummary(LocalDate date) {
-//
-//        LocalDateTime start = date.atStartOfDay();
-//        LocalDateTime end = date.plusDays(1).atStartOfDay();
-//
-//        List<DailyCollection> list =
-//                dailyCollectionRepository.findByPaidAtBetween(start, end);
-//
-//        BigDecimal total = list.stream()
-//                .map(DailyCollection::getPaidAmount)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-//
-//        DailyCollectionDto dto = new DailyCollectionDto();
-//
-//        dto.setDate(date.toString());
-//        dto.setTotalCollected(total);
-//        dto.setTotalTransactions(list.size());
-//
-//        // optional: first officer name
-//        if (!list.isEmpty() && list.get(0).getEmployee() != null) {
-//            dto.setOfficerName(list.get(0).getEmployee().getFirstName());
-//        }
-//
-//        return dto;
-//    }
-
 
     @Override
     public DailyCollectionSummaryDto getDailyCollectionSummary(LocalDate date) {
