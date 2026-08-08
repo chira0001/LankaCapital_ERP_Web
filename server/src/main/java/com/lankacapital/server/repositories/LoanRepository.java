@@ -1,5 +1,6 @@
 package com.lankacapital.server.repositories;
 
+import com.lankacapital.server.dtos.LoanSummaryProjectionDto;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.enums.LoanStatus;
@@ -46,4 +47,37 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     );
 
     List<Loan> findByLoanTypeOrderByIdDesc(LoanType loanType);
+
+//    @Query("""
+//    SELECT new com.lankacapital.server.dtos.LoanSummaryProjectionDto(
+//        l.amount,
+//        l.createdAt,
+//        l.fileNumber,
+//        l.installment,
+//        l.interestRate,
+//        l.loanType,
+//        l.endAt,
+//        COALESCE(SUM(dc.paidAmount), 0)
+//    )
+//    FROM Loan l
+//    LEFT JOIN DailyCollection dc ON dc.loan = l
+//    GROUP BY
+//        l.id,
+//        l.amount,
+//        l.createdAt,
+//        l.fileNumber,
+//        l.installment,
+//        l.interestRate,
+//        l.loanType,
+//        l.endAt
+//""")
+//    List<LoanSummaryProjectionDto> fetchLoanSummary();
+
+    @Query("""
+    SELECT DISTINCT l
+    FROM Loan l
+    LEFT JOIN FETCH l.dailyCollections dc
+    WHERE l.status = com.lankacapital.server.enums.LoanStatus.APPROVED
+""")
+    List<Loan> fetchApprovedLoansWithCollections();
 }

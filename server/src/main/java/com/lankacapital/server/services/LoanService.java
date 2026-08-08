@@ -22,17 +22,6 @@ public interface LoanService {
 
     LoanResponseDto getLoan(String fileNumber);
 
-
-    //approve loan
-    @Transactional
-    Loan approveLoan(LoanActionDto dto);
-
-    @Transactional
-    Loan rejectLoan(LoanActionDto dto);
-
-    @Transactional
-    Loan resetLoan(LoanActionDto dto);
-
     LoanResponseDto updateLoan(String username, LoanUpdateDto loanUpdateDto, String fileNumber);
     LoanResponseDto recepUpdateLoan(String username, RecepLoanUpdateDto recepLoanUpdateDto, String fileNumber);
 
@@ -53,11 +42,11 @@ public interface LoanService {
 
     List<LoanReportRow> getMonthlyLoanReport(YearMonth month);
 
-    CustomerResponseDto getCustomerWithLoans(String id);
-
     List<LoanManageDto> manageLoans(String username, int page);
 
     LoanCollectionDto getLoanInfoByFileNumber(String username, String fileNumber);
+
+    List<LoanSummaryResponseDto> fetchLoanSummary();
 }
 
 

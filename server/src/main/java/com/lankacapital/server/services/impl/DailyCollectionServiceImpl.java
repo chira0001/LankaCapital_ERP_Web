@@ -165,33 +165,24 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
 //    }
 
     @Override
-    public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto) {
+    public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto){
+        DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
+
         Employee authEmployee = employeeRepository.findByEmail(username);
-        if (authEmployee == null) {
+        if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
 
+        collection.setEmployee(authEmployee);
+
         Loan loan = loanRepository
                 .findByFileNumber(collectionSyncDto.getFileNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
-        if (loan.getStatus() != LoanStatus.APPROVED) {
-            throw new ResourceExistException("This loan is currently: " + loan.getStatus());
-        }
-
-        dailyCollectionRepository
-                .findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber())
-                .ifPresent(lastCollection -> {
-                    if (lastCollection.getInstallmentNumber() >= collectionSyncDto.getInstallmentNumber()) {
-                        throw new ResourceExistException("Invalid installment number: " + collectionSyncDto.getInstallmentNumber());
-                    }
-                });
-
-        DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
-        collection.setEmployee(authEmployee);
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Loan not found")
+                );
         collection.setLoan(loan);
 
         DailyCollection saved = dailyCollectionRepository.save(collection);
-
         return saved.getId().toString();
     }
 
