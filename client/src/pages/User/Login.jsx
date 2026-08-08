@@ -56,13 +56,9 @@ const Login = () => {
 
                     localStorage.setItem("token", response.data.token);
 
-                    // decode JWT payload to extract the email (sub claim)
                     const payload = JSON.parse(atob(response.data.token.split('.')[1]));
                     localStorage.setItem("username", payload.sub);
-
-                    // console.log("Saved Token:", localStorage.getItem("token"));
-                    // console.log("Saved Username:", localStorage.getItem("username"));
-
+                    localStorage.setItem("role", payload.role.slice(0, 5).toLowerCase());
                     const role = response.data.role.slice(0, 2).toLowerCase();
 
                     navigate(`/${role}`);
@@ -156,7 +152,7 @@ const Login = () => {
                                             onClick={() => setIsClicked(prev => !prev)}
                                         >
                                             {isClicked ? eyeOpen : eyeClose}
-                                        </span> 
+                                        </span>
                                     </div>
                                 </div>
 

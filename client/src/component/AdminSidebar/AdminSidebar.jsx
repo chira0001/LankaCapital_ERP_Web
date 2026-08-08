@@ -22,6 +22,7 @@ import CompanyLogo from "../ComapnyLogo/CompanyLogo";
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
   { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
+  { name: "Loan Summary", icon: FileText, path: "/ad/loan-summary" },
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
   { name: "User Management", icon: UserPlus, path: "/ad/users" },
   { name: "Petty Cash", icon: CreditCard, path: "/ad/petty-cash" },

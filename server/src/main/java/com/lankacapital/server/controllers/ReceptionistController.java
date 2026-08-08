@@ -207,4 +207,13 @@ public class ReceptionistController {
 
         return ResponseEntity.ok(customerService.searchCustomersByNic(nic));
     }
+
+    @GetMapping(path = "/loan-summary")
+    public ResponseEntity<?> fetchLoanSummary(Authentication authentication){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
+    }
 }
