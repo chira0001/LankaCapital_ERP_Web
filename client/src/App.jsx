@@ -37,6 +37,7 @@ import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthly
 import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 import { useEffect, useState } from "react";
 import ReceptionistFinancials from "./pages/Receptionist/ReceptionistFinancials";
+import LoanSummary from "./component/LoanSummary/LoanSummary";
 
 
 
@@ -153,6 +154,7 @@ const App = () => {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="loan-applications" element={<LoanApplications />} />
+          <Route path="loan-summary" element={<LoanSummary />} />
           <Route path="portfolio" element={<PortfolioOverview />} />
           <Route path="performance" element={<LoanPerformance />} />
           <Route path="revenue" element={<RevenueTracking />} />
@@ -175,6 +177,7 @@ const App = () => {
           <Route index element={<ReceptionistHome />} />
           <Route path="home" element={<ReceptionistHome />} />
           <Route path="loan" element={<ReceptionistLoan />} />
+          <Route path="loan-summary" element={<LoanSummary />} />
           <Route path="salary" element={<ReceptionistSalary />} />
           <Route path="view" element={<ReceptionistView />} />
           <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
