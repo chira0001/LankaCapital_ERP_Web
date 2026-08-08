@@ -12,5 +12,6 @@ public class CollectionSyncDto {
     private Integer installmentNumber;
     private BigDecimal paidAmount;
     private LocalDateTime paidAt;
+    private Long employeeId;
     private BigDecimal dueAmount;
 }

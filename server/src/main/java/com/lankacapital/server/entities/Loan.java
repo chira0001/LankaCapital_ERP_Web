@@ -1,5 +1,6 @@
 package com.lankacapital.server.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.LoanType;
 import jakarta.persistence.*;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -70,6 +72,9 @@ public class Loan {
     @JoinColumn(name = "approved_by")
     private Employee approvedEmployee;
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "loan")
+    private List<DailyCollection> dailyCollections;
 
     @PrePersist
     public void update(){
