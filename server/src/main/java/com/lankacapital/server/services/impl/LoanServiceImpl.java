@@ -416,6 +416,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setCustomer(customer);
         loan.setStatus(LoanStatus.PENDING);
         loan.setUpdateStatus(loan.getUpdateStatus());
+        loan.setCreatedAt(customerAddDto.getCreatedAt());
         if(customerAddDto.getLoanType().equalsIgnoreCase("DAILY")){
             loan.setLoanType(LoanType.DAILY);
         } else if (customerAddDto.getLoanType().equalsIgnoreCase("WEEKLY")) {
