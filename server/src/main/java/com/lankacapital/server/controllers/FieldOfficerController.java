@@ -92,7 +92,7 @@ public class FieldOfficerController {
         return new ResponseEntity<>(customerService.getCustomerDataById(authentication.getName(), id), HttpStatus.OK);
     }
 
-    @PostMapping(path = "/customer/loan")
+    @PostMapping(path = "/customer/loan") //not use
     public ResponseEntity<?> addLoanByFieldOfficer(Authentication authentication, @RequestBody LoanRequestDto dto) {
         if (dto.getCustomerId() == null) {
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
@@ -166,8 +166,8 @@ public class FieldOfficerController {
 
     @PostMapping("add/customer")
     public ResponseEntity<?> addLoanToNewCustomer(Authentication authentication, @RequestBody CustomerAddDto customerAddDto) {
-        if(customerAddDto.getEmployeeId() == null || customerAddDto.getCustomerId() == null){
-            return new ResponseEntity<>("Employee Id is not defined", HttpStatus.BAD_REQUEST);
+        if(customerAddDto.getCustomerId() == null){
+            return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(loanService.addNewLoanByOfficer(authentication.getName(), customerAddDto), HttpStatus.CREATED);
     }
