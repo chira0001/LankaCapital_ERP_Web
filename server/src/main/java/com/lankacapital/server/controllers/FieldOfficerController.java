@@ -4,6 +4,7 @@ import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -97,7 +98,10 @@ public class FieldOfficerController {
         if (dto.getCustomerId() == null) {
             return new ResponseEntity<>("Customer Id is not defined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(loanService.addLoanByFieldOfficer(authentication.getName(), dto), HttpStatus.OK);
+        return new ResponseEntity<>(
+                LoanMapper.mapToLoanResponseDto(loanService.addLoanByFieldOfficer(authentication.getName(), dto)),
+                HttpStatus.OK
+        );
     }
 
     @PostMapping("/sync/customer")

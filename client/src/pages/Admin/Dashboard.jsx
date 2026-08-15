@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axiosAPI from "@/api/axiosAPI";
 
 import {
   DollarSign,
@@ -93,14 +93,7 @@ const DashboardPage = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/financial-dashboard/summary`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axiosAPI.get("/admin/financial-dashboard/summary");
 
       const data = res.data;
 
