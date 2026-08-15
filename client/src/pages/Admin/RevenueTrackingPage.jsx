@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosAPI from '@/api/axiosAPI';
 import { DollarSign, Calendar, Filter } from 'lucide-react';
 import { Input } from '@/component/ui/input';
 import { Label } from '@/component/ui/label';
@@ -31,23 +31,9 @@ const RevenueTrackingPage = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
+      const summaryRes = await axiosAPI.get("/admin/revenue/summary");
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-
-      const summaryRes = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/summary`,
-        config
-      );
-
-      const tableRes = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/collections`,
-        config
-      );
+      const tableRes = await axiosAPI.get("/admin/revenue/collections");
 
       setTodayCollection(summaryRes.data.today || 0);
       setWeeklyCollection(summaryRes.data.week || 0);
