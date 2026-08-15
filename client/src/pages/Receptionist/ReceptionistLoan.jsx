@@ -198,9 +198,7 @@ const ReceptionistLoan = () => {
     const fetchSuggestions = async () => {
         try {
             setLoading(true);
-            const res = await axiosAPI.get(
-                `/recep/customers/search?nic=${searchCustomer}`
-            );
+            const res = await axiosAPI.get(`/recep/customers/search?nic=${searchCustomer}`);
             setSuggestions(res.data);
             setShowSuggestions(true);
         } catch (err) {
