@@ -13,6 +13,11 @@ const instance = axios.create({
     withCredentials: true
 });
 
+const refreshInstance = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true
+});
+
 
 instance.interceptors.request.use(
     (config) => {
@@ -39,6 +44,9 @@ instance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        if (!originalRequest || originalRequest.url?.includes("/auth/refresh")) {
+            return Promise.reject(error);
+        }
         // if (
         //     error.response?.status === 401 || error.response?.status === 403 &&
         //     !originalRequest._retry
@@ -63,18 +71,21 @@ instance.interceptors.response.use(
                        // }
                     //);
 
-                    await instance.post("/auth/refresh", {}, {
+                    await refreshInstance.post("/auth/refresh", {}, {
                         withCredentials: true
                     });
 
-                const newToken =
-                    response.data.token;
-                localStorage.setItem(
-                    "token",
-                    newToken
-                );
-                originalRequest.headers.Authorization =
-                    `Bearer ${newToken}`;
+                const newToken = response.data?.token;
+                if (!newToken) {
+                    localStorage.removeItem("token");
+                    toast.error("Session expired. Please login again.");
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 1000);
+                    return Promise.reject(new Error("No token returned from refresh"));
+                }
+                localStorage.setItem("token", newToken);
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return instance(originalRequest);
             } catch (refreshError) {
                 toast.error(refreshError.response?.data?.message || "Session expired. Please login again.");
