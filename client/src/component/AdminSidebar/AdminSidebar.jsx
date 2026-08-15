@@ -46,20 +46,20 @@ const Sidebar = () => {
       <div className="h-full w-full bg-slate-950 text-slate-300 flex flex-col border-r border-slate-800">
 
         {/* Logo / System Name */}
-        <div className="h-20 flex items-center px-6 border-b border-slate-800">
+        <div className="flex h-20 items-center border-b border-slate-800 px-4 sm:px-6">
           <div>
-            <h1 className="text-lg font-semibold text-white tracking-wide">
+            <h1 className="text-base font-semibold tracking-wide text-white sm:text-lg">
               NKRS LANKA CAPITAL
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
               Administration Panel
             </p>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-6 px-4">
-          <p className="text-xs uppercase tracking-wider text-slate-500 mb-4 px-2">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 sm:px-4 sm:py-6">
+          <p className="mb-4 px-2 text-[10px] uppercase tracking-wider text-slate-500 sm:text-xs">
             Main Menu
           </p>
 
@@ -94,7 +94,7 @@ const Sidebar = () => {
                             }`}
                         />
 
-                        <span>{item.name}</span>
+                        <span className="hidden sm:inline">{item.name}</span>
                       </>
                     )}
                   </NavLink>

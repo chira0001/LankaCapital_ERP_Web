@@ -162,7 +162,7 @@ const UserManagementPage = () => {
 
       {/* ADD USER CARD */}
       {showAddForm && (
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+        <div className="mb-4 rounded-xl border bg-white p-3 shadow-sm sm:p-4 lg:p-6 lg:mb-8">
           <h2 className="text-lg font-medium mb-4 text-gray-700">
             Create New User
           </h2>
@@ -226,46 +226,48 @@ const UserManagementPage = () => {
       )}
 
       {/* USERS TABLE */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wide">
-            <tr>
-              <th className="px-6 py-4 text-left">NIC</th>
-              <th className="px-6 py-4 text-left">Name</th>
-              <th className="px-6 py-4 text-left">Email</th>
-              <th className="px-6 py-4 text-left">Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                onClick={() => {
-                  setOpenModal(true);
-                  setSelecetedEmployee(user);
-                }}
-                className="border-t hover:bg-blue-50 cursor-pointer transition"
-              >
-                <td className="px-6 py-4">{user.nic}</td>
-                <td className="px-6 py-4 font-medium text-gray-800">
-                  {user.firstName} {user.lastName}
-                </td>
-                <td className="px-6 py-4 text-gray-600">{user.email}</td>
-                <td className="px-6 py-4">
-                  <span className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">
-                    {user.role}
-                  </span>
-                </td>
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-xs uppercase tracking-wide text-gray-600">
+              <tr>
+                <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">NIC</th>
+                <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Name</th>
+                <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">Email</th>
+                <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Role</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr
+                  key={user.id}
+                  onClick={() => {
+                    setOpenModal(true);
+                    setSelecetedEmployee(user);
+                  }}
+                  className="cursor-pointer border-t transition hover:bg-blue-50"
+                >
+                  <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">{user.nic}</td>
+                  <td className="px-3 py-3 font-medium text-gray-800 sm:px-4 md:px-6 md:py-4">
+                    {user.firstName} {user.lastName}
+                  </td>
+                  <td className="hidden px-3 py-3 text-gray-600 sm:table-cell sm:px-4 md:px-6 md:py-4">{user.email}</td>
+                  <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
+                      {user.role}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* DETAILS MODAL */}
       {openModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="bg-white w-[520px] rounded-xl shadow-2xl p-6 relative animate-fadeIn">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="relative w-[calc(100%-1.5rem)] max-w-[520px] animate-fadeIn rounded-xl bg-white p-4 shadow-2xl sm:p-6">
             <button
               onClick={() => setOpenModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -277,7 +279,7 @@ const UserManagementPage = () => {
               Employee Details
             </h2>
 
-            <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+            <div className="grid gap-3 text-sm sm:gap-4 sm:grid-cols-2 lg:gap-x-8 lg:gap-y-5">
 
               <div>
                 <p className="text-gray-500">Employee ID</p>
@@ -373,7 +375,7 @@ const UserManagementPage = () => {
       {/* EDIT MODAL (STACKED ABOVE) */}
       {openEditModal && editEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-[520px] rounded-xl shadow-2xl p-6 relative">
+          <div className="bg-white w-[calc(100%-1.5rem)] max-w-[520px] rounded-xl shadow-2xl p-6 relative">
             <button
               onClick={() => setOpenEditModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"

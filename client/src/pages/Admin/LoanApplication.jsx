@@ -264,71 +264,72 @@ const LoanApplication = () => {
 
   return (
     <>
-      <div className="flex min-h-screen bg-gray-50 w-full">
+      <div className="flex w-full min-h-screen bg-gray-50">
         <div className="flex-1">
-          <div className="p-6">
+          <div className="p-3 sm:p-4 lg:p-6">
 
-            <h1 className="text-3xl font-bold text-black mb-6">
+            <h1 className="mb-4 text-2xl font-bold text-black sm:text-3xl sm:mb-6 lg:mb-6">
               Loan Applications
             </h1>
 
             {/* TABLE */}
-            <div className="bg-white rounded-xl shadow border border-gray-200 overflow-x-auto">
-              <table className="w-full min-w-[900px]">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-4 text-left">Loan ID</th>
-                    <th className="px-6 py-4 text-left">Loan Date</th>
-                    <th className="px-6 py-4 text-left">Applicant NIC</th>
-                    <th className="px-6 py-4 text-left">Applicant Name</th>
-                    <th className="px-6 py-4 text-left">Amount</th>
-                    <th className="px-6 py-4 text-left">Status</th>
-                    <th className="px-6 py-4 text-left">Entered By</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredApps.map((app) => (
-                    <tr
-                      key={app.fileNumber}
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        setSelectedApp(app);
-                        setShowLoan(true);
-                      }}
-                    >
-                      {/* {console.log("App : ", app)} */}
-                      <td className="px-6 py-4">
-                        {app.fileNumber.slice(0, 8)}
-                      </td>
-                      <td className="px-6 py-4">
-                        {new Date(app.createdAt).toLocaleDateString("en-LK", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        })}
-                      </td>
-                      <td className="px-6 py-4">
-                        {app.customer.nic}
-                      </td>
-                      <td className="px-6 py-4">
-                        {app.customer.name}
-                      </td>
-                      <td className="px-6 py-4">
-                        {formatLKR(app.amount)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs border ${getStatusBadge(app.status)}`}>
-                          {(app.status || '').toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {app.enteredBy?.firstName} {app.enteredBy?.lastName}
-                      </td>
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead className="border-b border-gray-200 bg-gray-50">
+                    <tr className="text-xs uppercase tracking-wide text-gray-600">
+                      <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Loan ID</th>
+                      <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">Loan Date</th>
+                      <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Applicant NIC</th>
+                      <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Name</th>
+                      <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Amount</th>
+                      <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Status</th>
+                      <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Entered By</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {filteredApps.map((app) => (
+                      <tr
+                        key={app.fileNumber}
+                        className="cursor-pointer border-t transition hover:bg-gray-50"
+                        onClick={() => {
+                          setSelectedApp(app);
+                          setShowLoan(true);
+                        }}
+                      >
+                        <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4 text-xs sm:text-sm">
+                          {app.fileNumber.slice(0, 8)}
+                        </td>
+                        <td className="hidden px-3 py-3 sm:table-cell sm:px-4 md:px-6 md:py-4 text-xs sm:text-sm">
+                          {new Date(app.createdAt).toLocaleDateString("en-LK", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          })}
+                        </td>
+                        <td className="hidden px-3 py-3 lg:table-cell lg:px-6 lg:py-4 text-xs sm:text-sm">
+                          {app.customer.nic}
+                        </td>
+                        <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4 text-xs sm:text-sm">
+                          {app.customer.name}
+                        </td>
+                        <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4 text-xs sm:text-sm">
+                          {formatLKR(app.amount)}
+                        </td>
+                        <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                          <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${getStatusBadge(app.status)}`}>
+                            {(app.status || '').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="hidden px-3 py-3 lg:table-cell lg:px-6 lg:py-4 text-xs sm:text-sm">
+                          {app.enteredBy?.firstName} {app.enteredBy?.lastName}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* LOAN DETAIL SECTION */}

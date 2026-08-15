@@ -85,7 +85,7 @@ const Login = () => {
                 {/* CENTER AREA */}
                 <div className="flex flex-1 items-center justify-center px-4 py-16">
 
-                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-2">
+                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
                         {/* LEFT SIDE - Branding */}
                         <div className="hidden md:flex flex-col justify-center items-center bg-gray-100 text-white p-12 gap-5">
