@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -98,7 +99,10 @@ public class ReceptionistController {
         if(authentication.getName() == null){
             return new ResponseEntity<>("Employee cannot be determined", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(loanService.addLoan(loanCreateDto, authentication.getName()), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                LoanMapper.mapToLoanResponseDto(loanService.addLoan(loanCreateDto, authentication.getName())),
+                HttpStatus.CREATED
+        );
     }
 
     @PutMapping("/loans")
