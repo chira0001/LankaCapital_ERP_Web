@@ -23,6 +23,7 @@ const ReceptionistLoan = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -81,7 +82,6 @@ const ReceptionistLoan = () => {
             toast.error('Please enter a customer NIC');
             return;
         }
-
         try {
             const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
             if (response.status === 200) {
@@ -133,30 +133,26 @@ const ReceptionistLoan = () => {
 
     const handleLoanSubmit = async (e) => {
         e.preventDefault();
-
         if (!loanForm.customerId) {
             toast.error('Please search and select a customer first');
             return;
         }
-
         if (isEmployee) {
             if (!loanForm.name || !loanForm.address || !loanForm.phoneNumber) {
                 toast.error('Please fill in all customer details');
                 return;
             }
         }
-
-        console.log("Form : ", loanForm)
-
         try {
+            setIsCreating(true);
             const response = await axiosAPI.post('/recep/loans', loanForm);
             toast.success('Loan created successfully!');
             clearLoanForm();
+            setIsCreating(false);
         } catch (error) {
             if (error.response) {
                 const status = error.response.status;
                 const message = error.response.data?.message;
-
                 if (status === 409 && message) {
                     toast.error(message);
                 } else {
@@ -165,11 +161,11 @@ const ReceptionistLoan = () => {
             } else {
                 toast.error('Failed to connect to server');
             }
+            setIsCreating(false);
         }
     };
 
     const fetchlastFileNumber = async (loanType) => {
-        console.log("Type : ", loanType);
         try {
             const res = await axiosAPI.get(`/recep/loans/lastFileNumber/${loanType}`);
             console.log("Result : ", res.data);
@@ -196,7 +192,6 @@ const ReceptionistLoan = () => {
                 setShowSuggestions(false);
             }
         }, 400);
-
         return () => clearTimeout(delayDebounce);
     }, [searchCustomer]);
 
@@ -299,8 +294,6 @@ const ReceptionistLoan = () => {
             </div>
 
             <div className='shadow-2xl p-6 mt-6 rounded-2xl'>
-                {/* Existing Customer Loans Table */}
-
                 {existCustomer && existCustomer.loans?.length > 0 ? (
                     <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
 
@@ -736,10 +729,26 @@ const ReceptionistLoan = () => {
                         </button>
                         <button
                             type="submit"
-                            className='bg-blue-600 text-white px-6 py-2 rounded-lg w-full md:w-fit hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed'
-                            disabled={!loanForm.customerId}
+                            disabled={!loanForm.customerId || isCreating}
+                            className={`
+    inline-flex items-center justify-center gap-2
+    w-full md:w-auto
+    px-6 py-2.5 rounded-lg font-semibold
+    transition-all duration-200
+    shadow-sm
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
+    active:scale-[0.98]
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+    ${isCreating
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-blue-600 text-white hover:bg-blue-700"
+                                }
+  `}
                         >
-                            Create Loan
+                            {isCreating && (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                            )}
+                            {isCreating ? "Creating..." : "Create Loan"}
                         </button>
                     </div>
                 </form>
