@@ -83,8 +83,7 @@ const UserManagementPage = () => {
       });
 
       setShowAddForm(false);
-      fetchUsers()
-
+      fetchUsers();
     } catch (error) {
       console.error(error);
       toast.error("Create failed");
@@ -95,10 +94,7 @@ const UserManagementPage = () => {
 
   const updateEmployee = async () => {
     try {
-      await axiosAPI.put(
-        `/admin/employees/${editEmployee.id}`,
-        editEmployee
-      );
+      await axiosAPI.put(`/admin/employees/${editEmployee.id}`, editEmployee);
       toast.success("User updated");
       setOpenEditModal(false);
       setOpenModal(false);
@@ -106,7 +102,7 @@ const UserManagementPage = () => {
     } catch {
       toast.error("Update failed");
     }
-  }
+  };
 
   const deleteUser = async (employeeId) => {
     try {
@@ -121,7 +117,6 @@ const UserManagementPage = () => {
 
       // Optimistically update UI (no need to refetch immediately)
       setUsers((prev) => prev.filter((u) => u.id !== employeeId));
-
     } catch (e) {
       console.error(e);
       toast.error("User not deleted");
@@ -132,27 +127,47 @@ const UserManagementPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh] text-gray-500">
-        Loading users...
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Loading Users
+              </p>
+              <p className="text-xs text-gray-500">
+                Please wait while we fetch the latest data...
+              </p>
+            </div>
+          </div>
+
+          {/* simple skeleton */}
+          <div className="mt-6 space-y-3">
+            <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+            <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-800">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800">
             User Management
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs sm:text-sm">
             Manage employees, roles and details
           </p>
         </div>
 
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow"
           onClick={() => setShowAddForm(true)}
         >
           <UserPlus className="w-4 h-4 mr-2" />
@@ -163,11 +178,11 @@ const UserManagementPage = () => {
       {/* ADD USER CARD */}
       {showAddForm && (
         <div className="mb-4 rounded-xl border bg-white p-3 shadow-sm sm:p-4 lg:p-6 lg:mb-8">
-          <h2 className="text-lg font-medium mb-4 text-gray-700">
+          <h2 className="text-base sm:text-lg font-medium mb-4 text-gray-700">
             Create New User
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {Object.keys(newUser).map((field) =>
               field !== "roleId" ? (
                 <input
@@ -177,7 +192,7 @@ const UserManagementPage = () => {
                   onChange={(e) =>
                     setNewUser({ ...newUser, [field]: e.target.value })
                   }
-                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               ) : (
                 <select
@@ -186,7 +201,7 @@ const UserManagementPage = () => {
                   onChange={(e) =>
                     setNewUser({ ...newUser, roleId: e.target.value })
                   }
-                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="" hidden>
                     Select user role
@@ -206,16 +221,16 @@ const UserManagementPage = () => {
             )}
           </div>
 
-          <div className="mt-4 flex justify-end gap-3">
+          <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button
-              className="border border-gray-400"
+              className="border border-gray-400 w-full sm:w-auto"
               variant="ghost"
               onClick={() => setShowAddForm(false)}
             >
               Cancel
             </Button>
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
               onClick={handleCreateUser}
               disabled={creating}
             >
@@ -225,8 +240,44 @@ const UserManagementPage = () => {
         </div>
       )}
 
-      {/* USERS TABLE */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      {/* ===================== MOBILE USERS LIST (cards) ===================== */}
+      <div className="md:hidden space-y-3">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            onClick={() => {
+              setOpenModal(true);
+              setSelecetedEmployee(user);
+            }}
+            className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-blue-50"
+            role="button"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500">NIC</p>
+                <p className="text-sm font-medium text-gray-800 break-all">{user.nic}</p>
+
+                <p className="mt-2 text-xs text-gray-500">Name</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {user.firstName} {user.lastName}
+                </p>
+
+                <p className="mt-2 text-xs text-gray-500">Email</p>
+                <p className="text-sm text-gray-700 break-all">{user.email}</p>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
+                  {user.role}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ===================== USERS TABLE (md+) ===================== */}
+      <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-100 text-xs uppercase tracking-wide text-gray-600">
@@ -251,7 +302,9 @@ const UserManagementPage = () => {
                   <td className="px-3 py-3 font-medium text-gray-800 sm:px-4 md:px-6 md:py-4">
                     {user.firstName} {user.lastName}
                   </td>
-                  <td className="hidden px-3 py-3 text-gray-600 sm:table-cell sm:px-4 md:px-6 md:py-4">{user.email}</td>
+                  <td className="hidden px-3 py-3 text-gray-600 sm:table-cell sm:px-4 md:px-6 md:py-4">
+                    {user.email}
+                  </td>
                   <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
                     <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
                       {user.role}
@@ -266,8 +319,8 @@ const UserManagementPage = () => {
 
       {/* DETAILS MODAL */}
       {openModal && selectedEmployee && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="relative w-[calc(100%-1.5rem)] max-w-[520px] animate-fadeIn rounded-xl bg-white p-4 shadow-2xl sm:p-6">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+          <div className="relative w-full max-w-[520px] max-h-[90vh] overflow-y-auto animate-fadeIn rounded-xl bg-white p-4 shadow-2xl sm:p-6">
             <button
               onClick={() => setOpenModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -275,24 +328,19 @@ const UserManagementPage = () => {
               <X size={18} />
             </button>
 
-            <h2 className="text-xl font-semibold mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Employee Details
             </h2>
 
             <div className="grid gap-3 text-sm sm:gap-4 sm:grid-cols-2 lg:gap-x-8 lg:gap-y-5">
-
               <div>
                 <p className="text-gray-500">Employee ID</p>
-                <p className="font-medium text-gray-800">
-                  {selectedEmployee.id}
-                </p>
+                <p className="font-medium text-gray-800">{selectedEmployee.id}</p>
               </div>
 
               <div>
                 <p className="text-gray-500">NIC</p>
-                <p className="font-medium text-gray-800">
-                  {selectedEmployee.nic}
-                </p>
+                <p className="font-medium text-gray-800">{selectedEmployee.nic}</p>
               </div>
 
               <div>
@@ -341,7 +389,7 @@ const UserManagementPage = () => {
                 </p>
               </div>
 
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <p className="text-gray-500">Address</p>
                 <p className="font-medium text-gray-800">
                   {selectedEmployee.address}
@@ -349,9 +397,9 @@ const UserManagementPage = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 right-0 mt-6 text-right">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 onClick={() => {
                   setEditEmployee(selectedEmployee);
                   setOpenEditModal(true);
@@ -361,7 +409,7 @@ const UserManagementPage = () => {
               </Button>
 
               <Button
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
                 disabled={deleting}
                 onClick={() => deleteUser(selectedEmployee.id)}
               >
@@ -374,8 +422,8 @@ const UserManagementPage = () => {
 
       {/* EDIT MODAL (STACKED ABOVE) */}
       {openEditModal && editEmployee && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-[calc(100%-1.5rem)] max-w-[520px] rounded-xl shadow-2xl p-6 relative">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-4 sm:p-6 relative">
             <button
               onClick={() => setOpenEditModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -383,7 +431,7 @@ const UserManagementPage = () => {
               <X size={18} />
             </button>
 
-            <h2 className="text-xl font-semibold mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Edit Employee
             </h2>
 
@@ -413,9 +461,7 @@ const UserManagementPage = () => {
               </div>
 
               <div>
-                <label className="text-sm text-gray-500">
-                  Basic Salary
-                </label>
+                <label className="text-sm text-gray-500">Basic Salary</label>
 
                 <input
                   type="text"
@@ -446,15 +492,16 @@ const UserManagementPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <Button
                 variant="ghost"
                 onClick={() => setOpenEditModal(false)}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 onClick={updateEmployee}
               >
                 Save Changes

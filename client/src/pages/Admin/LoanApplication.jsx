@@ -66,7 +66,7 @@ const LoanApplication = () => {
     try {
       const res = await axiosAPI.get("/admin/loans");
       const data = res.data;
-      console.log("Loans : ", data)
+      console.log("Loans : ", data);
       setApplicationData(data);
       setFilteredApps(applyFilters(data, filters));
     } catch (error) {
@@ -215,10 +215,26 @@ const LoanApplication = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading applications...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Loading Loan Details
+              </p>
+              <p className="text-xs text-gray-500">
+                Please wait while we fetch the latest data...
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+            <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
+          </div>
         </div>
       </div>
     );
@@ -267,13 +283,66 @@ const LoanApplication = () => {
       <div className="flex w-full min-h-screen bg-gray-50">
         <div className="flex-1">
           <div className="p-3 sm:p-4 lg:p-6">
-
             <h1 className="mb-4 text-2xl font-bold text-black sm:text-3xl sm:mb-6 lg:mb-6">
               Loan Applications
             </h1>
 
-            {/* TABLE */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
+            {/* ===================== MOBILE LIST (cards) ===================== */}
+            <div className="md:hidden space-y-3">
+              {filteredApps.map((app) => (
+                <button
+                  key={app.fileNumber}
+                  type="button"
+                  className="w-full text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition active:scale-[0.99] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black/20"
+                  onClick={() => {
+                    setSelectedApp(app);
+                    setShowLoan(true);
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900">
+                        {app.fileNumber?.slice(0, 8)}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-600 truncate">
+                        {app.customer?.name}
+                      </p>
+                      <p className="mt-1 text-[11px] text-gray-500 break-all">
+                        NIC: {app.customer?.nic}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${getStatusBadge(app.status)}`}>
+                        {(app.status || '').toUpperCase()}
+                      </span>
+                      <p className="mt-2 text-xs font-semibold text-gray-900">
+                        {formatLKR(app.amount)}
+                      </p>
+                      <p className="mt-1 text-[11px] text-gray-500">
+                        {new Date(app.createdAt).toLocaleDateString("en-LK", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {app.enteredBy?.firstName && (
+                    <p className="mt-3 text-[11px] text-gray-500">
+                      Entered by:{" "}
+                      <span className="text-gray-700 font-medium">
+                        {app.enteredBy?.firstName} {app.enteredBy?.lastName}
+                      </span>
+                    </p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ===================== TABLE (md+) ===================== */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[600px]">
                   <thead className="border-b border-gray-200 bg-gray-50">
@@ -334,26 +403,22 @@ const LoanApplication = () => {
 
             {/* LOAN DETAIL SECTION */}
             {showLoan && selectedApp && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-                {/* Modal Container */}
-                <div className="relative w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_.2s_ease-in-out]">
-
-                  {/* Close Button */}
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+                <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-[fadeIn_.2s_ease-in-out]">
                   <button
                     onClick={() => {
                       setShowLoan(false);
                       setSelectedApp(null);
                       setIsEdit(false);
                     }}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-black transition"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black transition"
                   >
                     <XCircle className="w-6 h-6" />
                   </button>
 
                   {/* Header */}
-                  <div className="px-8 py-6 border-b bg-gray-50 rounded-t-2xl">
-                    <h2 className="text-2xl font-bold text-gray-800">
+                  <div className="px-4 py-4 sm:px-8 sm:py-6 border-b bg-gray-50 rounded-t-2xl">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
                       Loan Details
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -361,14 +426,14 @@ const LoanApplication = () => {
                     </p>
                   </div>
 
-                  <div className="p-8 space-y-10">
-
+                  <div className="p-4 sm:p-8 space-y-6 sm:space-y-10">
                     {/* ================= LOAN INFORMATION ================= */}
                     <div>
-                      <div className='flex justify-between items-center'>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                           Loan Information
                         </h3>
+
                         <button
                           onClick={() => {
                             setLoanUpdatePayload({
@@ -381,7 +446,7 @@ const LoanApplication = () => {
                             });
                             setIsEdit(true);
                           }}
-                          className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                          className="w-full sm:w-auto bg-gray-800 text-white px-4 sm:px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors shadow-md"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>
@@ -391,7 +456,7 @@ const LoanApplication = () => {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
                         {console.log("End Date : ", selectedApp)}
                         <Info label="Loan Date">
                           {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
@@ -451,7 +516,7 @@ const LoanApplication = () => {
                           {selectedApp.loanType || "Not available"}
                         </Info>
 
-                        <div className="col-span-2">
+                        <div className="col-span-1 md:col-span-2">
                           <Info label="Loan End Date">
                             {selectedApp.endAt ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
                               day: "2-digit",
@@ -460,30 +525,26 @@ const LoanApplication = () => {
                             }) : "Not Entered"}
                           </Info>
                         </div>
-                        {selectedApp.decisionNote ?
-                          <div className="col-span-3 border border-gray-400 p-3 rounded-md">
+
+                        {selectedApp.decisionNote ? (
+                          <div className="col-span-1 md:col-span-2 lg:col-span-3 border border-gray-200 p-3 sm:p-4 rounded-md bg-white">
                             <Info label="Decision Note">
                               {selectedApp.decisionNote}
                             </Info>
                           </div>
-                          :
+                        ) : (
                           ""
-                        }
-
-
-
-
+                        )}
                       </div>
                     </div>
 
                     {/* ================= CUSTOMER INFORMATION ================= */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">
                         Customer Information
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
-
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
                         <Info label="NIC">
                           {selectedApp.customer?.nic}
                         </Info>
@@ -508,33 +569,31 @@ const LoanApplication = () => {
                           {selectedApp.customer?.bank || "N/A"} <br />
                           {selectedApp.customer?.bankAccount || "N/A"}
                         </Info>
-
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* EDIT LOAN MODAL */}
             {isEdit && (
               <div
-                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4"
                 onClick={() => setIsEdit(false)}
               >
-
                 <div
-                  className="relative w-[95%] max-w-xl bg-white rounded-2xl shadow-2xl p-8"
+                  className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-8"
                   onClick={(e) => e.stopPropagation()}
                 >
-
-                  {/* Close Button */}
                   <button
                     onClick={() => setIsEdit(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-black"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black"
                   >
                     <XCircle className="w-6 h-6" />
                   </button>
 
-                  <h2 className="text-xl font-bold mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
                     Update Loan Information
                   </h2>
 
@@ -599,8 +658,8 @@ const LoanApplication = () => {
                       <Label>Status</Label>
                       <select
                         className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
-           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
-           disabled:opacity-50"
+                          focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
+                          disabled:opacity-50"
                         value={loanUpdatePayload.status}
                         onChange={(e) =>
                           setLoanUpdatePayload({
@@ -612,7 +671,6 @@ const LoanApplication = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED">REJECTED</option>
-                        {/* <option value="COMPLETED">COMPLETED</option> */}
                       </select>
                     </div>
 
@@ -629,22 +687,21 @@ const LoanApplication = () => {
                       />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
                       <button
                         onClick={() => setIsEdit(false)}
-                        className="px-4 py-2 rounded-lg border"
+                        className="w-full sm:w-auto px-4 py-2 rounded-lg border"
                       >
                         Cancel
                       </button>
 
                       <button
                         onClick={handleUpdateLoan}
-                        className="px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                        className="w-full sm:w-auto px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
                       >
                         Update Loan
                       </button>
                     </div>
-
                   </div>
                 </div>
               </div>
