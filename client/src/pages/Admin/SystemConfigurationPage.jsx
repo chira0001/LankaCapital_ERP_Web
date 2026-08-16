@@ -75,7 +75,7 @@ const SystemConfigurationPage = () => {
         <title>System Configuration - LendPro</title>
       </Helmet>
 
-      <div className="p-8 bg-slate-50 min-h-screen">
+      <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-8">
         <h1 className="text-3xl font-bold mb-6">System Configuration</h1>
 
         <div className="bg-white rounded-lg overflow-hidden p-3 shadow-md">

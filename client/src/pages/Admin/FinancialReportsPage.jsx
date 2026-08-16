@@ -274,7 +274,7 @@ const FinancialReportsPage = () => {
       </h1>
 
       {/* FILTER */}
-      <div className="bg-white p-6 rounded-xl shadow mb-6">
+      <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
         <div className="grid md:grid-cols-3 gap-4">
           <div>
             <Label>Report Type</Label>
@@ -353,7 +353,7 @@ const FinancialReportsPage = () => {
       </div>
 
       {/* OUTPUT */}
-      <div className="bg-white p-6 rounded-xl shadow">
+      <div className="rounded-xl bg-white p-3 shadow sm:p-4 lg:p-6">
         {!data ? (
           <p className="text-gray-500">
             Select report type and generate

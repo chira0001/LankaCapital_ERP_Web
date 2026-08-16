@@ -193,7 +193,7 @@ const PettyCashPage = () => {
         </header>
 
         {/* TABLE */}
-        <div className="max-w-7xl mx-auto bg-white rounded-xl shadow border overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow lg:mx-auto lg:max-w-7xl">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">

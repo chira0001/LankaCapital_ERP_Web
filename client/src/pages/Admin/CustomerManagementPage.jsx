@@ -220,15 +220,15 @@ const CustomerManagementPage = () => {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   if (loading) {
-    return <div className="p-8">Loading customers...</div>;
+    return <div className="p-3 sm:p-4 lg:p-8">Loading customers...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-8">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between lg:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Customer Management
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -256,7 +256,7 @@ const CustomerManagementPage = () => {
       )}
 
       {/* SEARCH */}
-      <div className="relative mb-8 max-w-md">
+      <div className="relative mb-4 w-full max-w-md sm:mb-6 lg:mb-8">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <Input
           className="pl-10 bg-white shadow-sm"

@@ -14,7 +14,7 @@ const AdminLayout = () => {
         </aside>
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50">
           <div className="min-h-full flex flex-col">
-            <div className="flex-1 p-3 sm:p-4 md:p-6">
+            <div className="flex-1 p-3 sm:p-4 lg:p-6">
               <Outlet />
             </div>
           </div>
