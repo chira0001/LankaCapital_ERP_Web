@@ -8,6 +8,7 @@ import axiosApi from "../../api/axiosAPI.js"
 import * as XLSX from "xlsx";
 
 import dayjs from "dayjs";
+import { ToastContainer } from "react-toastify";
 
 const FinancialReportsPage = () => {
   const [reportType, setReportType] = useState("");
@@ -22,6 +23,29 @@ const FinancialReportsPage = () => {
   const [importFile, setImportFile] = useState(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isAddingAsset, setIsAddingAsset] = useState(false);
+  const [assetsPayload, setAssetsPayload] = useState({
+    assetName: "",
+    purchasedMonth: "",
+    rate: "",
+    amount: "",
+  });
+
+  const saveAssetToRegistry = async () => {
+    try {
+      setIsSaving(true);
+      const res = await axiosApi.post("/admin/assetss", assetsPayload);
+      toast.success("Asset successfully added");
+      setIsSaving(false);
+    } catch (e) {
+      toast.error("Error adding asset. Try again...");
+      setIsSaving(false);
+      console.log(e);
+    }
+  }
 
   const reportTypes = [
     { value: "PPE", name: "PPE" },
@@ -163,12 +187,82 @@ const FinancialReportsPage = () => {
 
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <h1 className="text-2xl font-bold mb-6">
-        Financial Reports Dashboard
+        Financials Dashboard
       </h1>
+
+      <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
+
+        {isAddingAsset ?
+          <>
+            <h3>Add new asset</h3>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Asset Name</Label>
+                <input
+                  type="text"
+                  name="assetName"
+                  className="w-full border p-2 rounded"
+                  onChange={(e) => {
+                    setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                  }}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Purchased Date</Label>
+                  <input
+                    type="date"
+                    name="purchasedMonth"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Rate</Label>
+                  <input
+                    type="text"
+                    name="rate"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Amount</Label>
+                  <input
+                    type="text"
+                    name="amount"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => saveAssetToRegistry()}>
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+              <button onClick={() => setIsAddingAsset(false)}>Cancel</button>
+            </div>
+          </>
+          :
+          <button onClick={() => setIsAddingAsset(true)}>Add an asset</button>
+        }
+
+
+      </div>
 
       {/* FILTER */}
       <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
+        <h3>Generate report</h3>
         <div className="grid md:grid-cols-3 gap-4">
 
           <div>

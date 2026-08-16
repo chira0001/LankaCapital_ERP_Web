@@ -317,11 +317,8 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
-        Loan loan=loanRepository.findByFileNumber(dto.getFileNumber())
-                .orElseThrow(()->new ResourceNotFoundException("Loan not Found"+dto.getFileNumber()));
-
-//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-//                        .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
+        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+                .orElseThrow(()->new ResourceNotFoundException("Loan not Found "+dto.getFileNumber()));
 
         loan.setInterestRate(dto.getInterestRate());
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);

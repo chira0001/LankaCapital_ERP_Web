@@ -2,12 +2,14 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
 import com.lankacapital.server.entities.Employee;
 
 import com.lankacapital.server.entities.SalaryMetaData;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
+import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +32,7 @@ public class AdminController {
     private final PettyCashService pettyCashService;
 //    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
-//    private final ReportService reportService;
+    private final AssetsRegistryService assetsRegistryService;
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
     private final DashboardService dashboardService;
@@ -222,41 +224,6 @@ public class AdminController {
         return pettyCashService.undoStatus(id, adminUsername);
     }
 
-    //reports
-    @GetMapping("/reports")
-    public ResponseEntity<?> generateReport(
-            @RequestParam String reportType,
-            @RequestParam String startDate,
-            @RequestParam String endDate
-    ) {
-        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
-    }
-
-    //revenue tracking
-    @GetMapping("/revenue/summary")
-    public ResponseEntity<?> getRevenueSummary() {
-
-        var today = dailyCollectionService.getTodayCollection();
-        var week = dailyCollectionService.getWeeklyCollection();
-
-        return ResponseEntity.ok(
-                new RevenueSummary(today, week)
-        );
-    }
-
-    @GetMapping("/revenue/collections")
-    public ResponseEntity<?> getRevenueCollections() {
-
-        return ResponseEntity.ok(
-                dailyCollectionService.getAllCollections()
-        );
-    }
-
-    record RevenueSummary(
-            java.math.BigDecimal today,
-            java.math.BigDecimal week
-    ) {}
-
     // ================= CUSTOMER MANAGEMENT =================
 
     @GetMapping("/customers")
@@ -371,6 +338,51 @@ public class AdminController {
         return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
     }
 
+    //reports
+    @GetMapping("/reports")
+    public ResponseEntity<?> generateReport(
+            @RequestParam String reportType,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+    }
+
+    @PostMapping(path = "/assets")
+    public ResponseEntity<?> addToAssetsRegistry(
+            Authentication authentication,
+            @RequestBody AssetsDto assetsDto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(assetsRegistryService.addAssetToRegistry(assetsDto), HttpStatus.CREATED);
+    }
+
+    //revenue tracking
+    @GetMapping("/revenue/summary")
+    public ResponseEntity<?> getRevenueSummary() {
+
+        var today = dailyCollectionService.getTodayCollection();
+        var week = dailyCollectionService.getWeeklyCollection();
+
+        return ResponseEntity.ok(
+                new RevenueSummary(today, week)
+        );
+    }
+
+    @GetMapping("/revenue/collections")
+    public ResponseEntity<?> getRevenueCollections() {
+
+        return ResponseEntity.ok(
+                dailyCollectionService.getAllCollections()
+        );
+    }
+
+    record RevenueSummary(
+            java.math.BigDecimal today,
+            java.math.BigDecimal week
+    ) {}
 
 
 

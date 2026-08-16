@@ -32,5 +32,4 @@ public class FinancialDashboardResponseDto {
     private List<MonthlyExpenseReportRow> monthlyExpense;
 
     private List<LoanDistributionDto> loanDistribution;
-      private List<AlertDto> alerts;
 }
