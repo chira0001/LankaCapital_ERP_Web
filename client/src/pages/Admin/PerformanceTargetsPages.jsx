@@ -175,26 +175,26 @@ setMonthlyData(monthData);
         
         
         <div className="flex-1 overflow-auto">
-          <div className="p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-black mb-2">Performance & Targets</h1>
+          <div className="p-3 sm:p-4 lg:p-8">
+            <div className="mb-4 sm:mb-6 lg:mb-8">
+              <h1 className="mb-2 text-2xl font-bold text-black sm:text-3xl">Performance & Targets</h1>
               <p className="text-gray-600">Monitor targets and team performance</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Target className="w-6 h-6 text-black" />
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4 lg:mb-8 lg:gap-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
+                <div className="mb-3 flex items-center justify-between sm:mb-4">
+                  <div className="flex w-12 h-12 items-center justify-center rounded-lg bg-gray-100">
+                    <Target className="h-6 w-6 text-black" />
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm font-medium mb-1">Monthly Target</p>
-                <p className="text-3xl font-bold text-black">
+                <p className="mb-1 text-sm font-medium text-gray-600">Monthly Target</p>
+                <p className="text-2xl font-bold text-black sm:text-3xl">
                   {formatLKR(currentTarget?.monthly_target || 0)}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-black" />

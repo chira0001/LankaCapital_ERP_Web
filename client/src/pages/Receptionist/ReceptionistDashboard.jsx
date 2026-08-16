@@ -116,13 +116,13 @@ const ReceptionistDashboard = () => {
         <>
             <ToastContainer position="top-right" autoClose={3000} />
 
-            <div className='bg-gray-100 w-full text-black flex gap-1 md:gap-8 h-screen md:p-6 overflow-hidden'>
+            <div className='bg-gray-100 w-full text-black flex h-screen flex-col gap-3 overflow-hidden p-3 md:flex-row md:gap-8 md:p-6'>
                 {/* Sidebar */}
-                <div className='bg-white w-fit overflow-auto overflow-x-hidden px-1 md:px-3 py-6 rounded-2xl shadow-xl md:flex md:flex-col gap-6'>
+                <div className='flex gap-2 overflow-x-auto overflow-y-hidden rounded-2xl bg-white p-2 shadow-xl md:w-fit md:flex-col md:overflow-auto md:overflow-x-hidden md:px-3 md:py-6'>
                     {panelNames.map((value, key) => (
                         <button
                             key={key}
-                            className={value.css}
+                            className={`${value.css} shrink-0 rounded-xl px-3 py-3 md:px-4`}
                             onClick={() => {
                                 value.func === 'logout'
                                     ? setShowLogoutModal(true)
@@ -136,7 +136,7 @@ const ReceptionistDashboard = () => {
                 </div>
 
                 {/* Main Content */}
-                <div className='flex-1 bg-white p-6 rounded-2xl shadow-xl overflow-y-auto'>
+                <div className='flex-1 overflow-y-auto rounded-2xl bg-white p-3 shadow-xl sm:p-4 md:p-6'>
                     <Outlet />
                 </div>
 

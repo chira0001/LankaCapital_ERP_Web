@@ -37,8 +37,9 @@ const CommonNavbar = () => {
                 </div>
 
                 <button
-                    className="md:hidden text-2xl"
+                    className="md:hidden text-2xl leading-none p-2"
                     onClick={() => setIsOpen(prev => !prev)}
+                    aria-label="Toggle menu"
                 >
                     {isOpen ? "✕" : "☰"}
                 </button>
@@ -54,15 +55,15 @@ const CommonNavbar = () => {
                 `}
             >
                 <nav className="flex flex-col items-center gap-6 py-6">
-                    <Link to="/" className='cursor-pointer'>Home</Link>
-                    <Link to="/about" className='cursor-pointer'>About</Link>
-                    <Link to="/contact" className="cursor-pointer">Contact</Link>
+                    <Link to="/" className='cursor-pointer' onClick={() => setIsOpen(false)}>Home</Link>
+                    <Link to="/about" className='cursor-pointer' onClick={() => setIsOpen(false)}>About</Link>
+                    <Link to="/contact" className="cursor-pointer" onClick={() => setIsOpen(false)}>Contact</Link>
 
                     <div className="flex gap-4 pt-4">
-                        <button className="px-4 py-1.5 bg-black text-white rounded" onClick={() => authNavigate("login")}>
+                        <button className="px-4 py-1.5 bg-black text-white rounded" onClick={() => { setIsOpen(false); authNavigate("login"); }}>
                             Login
                         </button>
-                        <button className="px-4 py-1.5 border border-black rounded" onClick={() => authNavigate("signup")}>
+                        <button className="px-4 py-1.5 border border-black rounded" onClick={() => { setIsOpen(false); authNavigate("signup"); }}>
                             Sign Up
                         </button>
                     </div>

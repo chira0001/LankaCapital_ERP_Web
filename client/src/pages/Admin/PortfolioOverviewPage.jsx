@@ -160,28 +160,28 @@ const PortfolioOverviewPage = () => {
        {/* <Sidebar />*/}
         
         <div className="flex-1 overflow-auto">
-          <div className="p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-black mb-2">Portfolio Overview</h1>
+          <div className="p-3 sm:p-4 lg:p-8">
+            <div className="mb-4 sm:mb-6 lg:mb-8">
+              <h1 className="mb-2 text-2xl font-bold text-black sm:text-3xl">Portfolio Overview</h1>
               <p className="text-gray-600">Complete view of your loan portfolio</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <p className="text-gray-600 text-sm font-medium mb-2">Total Portfolio Value</p>
-                <p className="text-3xl font-bold text-black">{formatLKR(summary.totalValue)}</p>
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4 lg:mb-8 lg:gap-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
+                <p className="mb-2 text-sm font-medium text-gray-600">Total Portfolio Value</p>
+                <p className="text-2xl font-bold text-black sm:text-3xl">{formatLKR(summary.totalValue)}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <p className="text-gray-600 text-sm font-medium mb-2">Active Loans</p>
-                <p className="text-3xl font-bold text-black">{summary.activeCount}</p>
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
+                <p className="mb-2 text-sm font-medium text-gray-600">Active Loans</p>
+                <p className="text-2xl font-bold text-black sm:text-3xl">{summary.activeCount}</p>
               </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <p className="text-gray-600 text-sm font-medium mb-2">Converted Loans</p>
-                <p className="text-3xl font-bold text-gray-600">{summary.convertedCount}</p>
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
+                <p className="mb-2 text-sm font-medium text-gray-600">Converted Loans</p>
+                <p className="text-2xl font-bold text-gray-600 sm:text-3xl">{summary.convertedCount}</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
@@ -194,7 +194,7 @@ const PortfolioOverviewPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
