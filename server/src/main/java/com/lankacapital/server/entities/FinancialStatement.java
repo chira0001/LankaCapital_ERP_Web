@@ -24,10 +24,6 @@ public class FinancialStatement {
     @Column(name = "report_date", unique=true )
     private LocalDate reportDate;
 
-    // =========================
-    // ASSETS
-    // =========================
-
     @Column(precision = 14, scale = 2)
     private BigDecimal receivables = BigDecimal.ZERO;
 
