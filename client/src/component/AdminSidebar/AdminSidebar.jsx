@@ -2,14 +2,17 @@ import React, { useState } from "react";
 import {
   LayoutDashboard,
   FileText,
-  BarChart2,
   Users,
   UserPlus,
-  CreditCard,
+  WalletMinimal,
   Settings,
   X,
   LogOut,
   UserCheck,
+  Summary,
+  CircleUser,
+  Files,
+  Binoculars,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import CompanyLogo from "../ComapnyLogo/CompanyLogo";
@@ -17,12 +20,12 @@ import CompanyLogo from "../ComapnyLogo/CompanyLogo";
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
   { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
-  { name: "Loan Summary", icon: FileText, path: "/ad/loan-summary" },
+  { name: "Loan Summary", icon: Summary, path: "/ad/loan-summary" },
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
-  { name: "User Management", icon: UserPlus, path: "/ad/users" },
-  { name: "Petty Cash", icon: CreditCard, path: "/ad/petty-cash" },
-  { name: "Financial Reports", icon: BarChart2, path: "/ad/reports" },
-  { name: "Field Officer Collection", icon: BarChart2, path: "/ad/officers" },
+  { name: "User Management", icon: CircleUser, path: "/ad/users" },
+  { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
+  { name: "Financial Reports", icon: Files, path: "/ad/reports" },
+  { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 ];
 
