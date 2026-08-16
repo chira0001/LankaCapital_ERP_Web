@@ -34,16 +34,16 @@ const Contact = () => {
     return (
         <>
             <CommonNavbar />
-            <div className='text-black bg-white flex flex-col items-center px-4 md:px-24 gap-8 pt-30 pb-15'>
-                <h1 className='text-5xl font-bold'>Contact Us</h1>
-                <p className='md:pb-4 text-center font-light'>We’re here to help with all your lending needs and we’ll respond as quickly as possible to provide reliable and friendly assistance.
+            <div className='text-black bg-white flex flex-col items-center px-4 sm:px-6 md:px-12 lg:px-24 gap-8 pt-28 pb-12'>
+                <h1 className='text-3xl font-bold sm:text-4xl md:text-5xl'>Contact Us</h1>
+                <p className='max-w-4xl text-center font-light md:pb-4'>We’re here to help with all your lending needs and we’ll respond as quickly as possible to provide reliable and friendly assistance.
                     Contact us for inquiries about loans, applications, or account support.
                 </p>
-                <div className='w-full flex gap-4 flex-col md:flex-row justify-evenly'>
-                    <form action="">
+                <div className='w-full flex flex-col gap-6 md:flex-row md:items-start md:justify-evenly'>
+                    <form className="w-full md:max-w-2xl">
                         <div className='flex flex-col gap-4'>
-                            <div className='flex flex-col md:flex-row gap-4 md:items-center'>
-                                <div className='flex flex-col gap-2'>
+                            <div className='flex flex-col gap-4 md:flex-row md:items-center'>
+                                <div className='flex flex-col gap-2 md:flex-1'>
                                     <label htmlFor="">Name :</label>
                                     <div className="relative w-full">
                                         <input
@@ -214,11 +214,13 @@ const Contact = () => {
                                     )}
                                 </div>
                             </div>
-                            <button className='border md:w-1/2 md:self-end px-4 py-1.5 bg-black text-white rounded' onClick={sendMessage}>SUBMIT</button>
+                            <button className='border w-full md:w-1/2 md:self-end px-4 py-1.5 bg-black text-white rounded' onClick={sendMessage}>SUBMIT</button>
                         </div>
                     </form>
                     <hr className='md:hidden my-4 w-3/4 border-gray-200 self-center' />
-                    <ContactInfo />
+                    <div className="w-full md:max-w-md">
+                        <ContactInfo />
+                    </div>
                 </div>
             </div>
             <Footer />

@@ -6,7 +6,6 @@ import axiosAPI from '@/api/axiosAPI';
 import * as XLSX from 'xlsx';
 import CreatableSelect from "react-select/creatable";
 
-
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
     style: 'currency',
@@ -160,10 +159,40 @@ const PettyCashPage = () => {
     XLSX.writeFile(wb, `PettyCash_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const openDetails = (record) => {
+    setPettyCashInfo(record);
+    setPettyCashUpdatePayload({
+      amount: record.amount,
+      narration: record.narration,
+      categoryId: record.pettyCashCategory?.id
+    });
+    setIsRowClicked(true);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Loading Petty Cash Information
+              </p>
+              <p className="text-xs text-gray-500">
+                Please wait while we fetch the latest data...
+              </p>
+            </div>
+          </div>
+
+          {/* simple skeleton */}
+          <div className="mt-6 space-y-3">
+            <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+            <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -174,26 +203,104 @@ const PettyCashPage = () => {
         <title>Petty Cash Management</title>
       </Helmet>
 
-      <div className="min-h-screen bg-slate-50 p-6">
-
+      <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
         {/* HEADER */}
-        <header className="max-w-7xl mx-auto mb-6 flex justify-between items-end border-b pb-4">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="w-6 h-6 text-blue-600" />
+        <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             Petty Cash Requests
           </h1>
 
           <Button
             onClick={handleExportExcel}
-            className="bg-white border border-slate-300 hover:bg-slate-100"
+            className="w-full sm:w-auto bg-blue-600 border border-slate-300 hover:bg-slate-100"
           >
             <Download className="w-4 h-4 mr-2" />
             Export Excel
           </Button>
         </header>
 
-        {/* TABLE */}
-        <div className="max-w-7xl mx-auto bg-white rounded-xl shadow border overflow-hidden">
+        {/* ===================== MOBILE LIST (cards) ===================== */}
+        <div className="lg:mx-auto lg:max-w-7xl md:hidden space-y-3">
+          {pettyCashData.map((record) => (
+            <div
+              key={record.id}
+              className="rounded-xl border border-gray-200 bg-white shadow p-3"
+              onClick={() => openDetails(record)}
+              role="button"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span>{new Date(record.dateTime).toLocaleDateString()}</span>
+                  </div>
+
+                  <p className="mt-1 text-sm font-semibold text-slate-900 truncate">
+                    {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-600 break-words">
+                    {record.narration}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Category:{" "}
+                    <span className="text-slate-800 font-medium">
+                      {record.pettyCashCategory?.categoryName || "—"}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <p className="font-mono font-semibold text-sm sm:text-base">
+                    {formatLKR(record.amount)}
+                  </p>
+                  <div className="mt-1 flex justify-end">
+                    <StatusBadge status={record.request} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-3 flex justify-end gap-2">
+                {record.request === "PENDING" ? (
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); approve(record.id); }}
+                      className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 rounded"
+                    >
+                      {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
+                        ? "Approving..."
+                        : "Approve"}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); reject(record.id); }}
+                      className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded"
+                    >
+                      {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
+                        ? "Rejecting..."
+                        : "Reject"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); undo(record.id); }}
+                    className="px-3 py-1.5 text-xs bg-slate-100 rounded"
+                  >
+                    <Undo2 className="w-3 h-3 inline mr-1" />
+                    {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
+                      ? "Undoing..."
+                      : "Undo"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ===================== TABLE (md+) ===================== */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow lg:mx-auto lg:max-w-7xl">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
@@ -213,15 +320,7 @@ const PettyCashPage = () => {
                   <tr
                     key={record.id}
                     className="hover:bg-slate-100 cursor-pointer"
-                    onClick={() => {
-                      setPettyCashInfo(record);
-                      setPettyCashUpdatePayload({
-                        amount: record.amount,
-                        narration: record.narration,
-                        categoryId: record.pettyCashCategory?.id
-                      });
-                      setIsRowClicked(true);
-                    }}
+                    onClick={() => openDetails(record)}
                   >
                     <td className="px-6 py-4 flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-slate-400" />
@@ -249,22 +348,28 @@ const PettyCashPage = () => {
                     <td className="px-6 py-4 text-right">
                       {record.request === "PENDING" ? (
                         <div className="flex justify-end gap-2">
-                          <button onClick={(e) => { e.stopPropagation(); approve(record.id); }}
-                            className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); approve(record.id); }}
+                            className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded"
+                          >
                             {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
                               ? "Approving..."
                               : "Approve"}
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); reject(record.id); }}
-                            className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); reject(record.id); }}
+                            className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded"
+                          >
                             {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
                               ? "Rejecting..."
                               : "Reject"}
                           </button>
                         </div>
                       ) : (
-                        <button onClick={(e) => { e.stopPropagation(); undo(record.id); }}
-                          className="px-3 py-1 text-xs bg-slate-100 rounded">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); undo(record.id); }}
+                          className="px-3 py-1 text-xs bg-slate-100 rounded"
+                        >
                           <Undo2 className="w-3 h-3 inline mr-1" />
                           {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
                             ? "Undoing..."
@@ -278,6 +383,7 @@ const PettyCashPage = () => {
             </table>
           </div>
         </div>
+
         {/* DETAILS DRAWER */}
         {isRowClicked && pettyCashInfo && (
           <div
@@ -285,7 +391,7 @@ const PettyCashPage = () => {
             onClick={() => setIsRowClicked(false)}
           >
             <div
-              className="w-full max-w-md bg-white h-full shadow-2xl p-6 overflow-y-auto animate-slide-in"
+              className="w-full max-w-none sm:max-w-md bg-white h-full shadow-2xl p-4 sm:p-6 overflow-y-auto animate-slide-in"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between mb-6">
@@ -314,9 +420,7 @@ const PettyCashPage = () => {
                   <p>
                     {pettyCashInfo.requestEmployee.firstName} {pettyCashInfo.requestEmployee.lastName}
                     <br />
-                    <span>
-                      {pettyCashInfo.requestEmployee.nic}
-                    </span>
+                    <span>{pettyCashInfo.requestEmployee.nic}</span>
                   </p>
                 </div>
 
@@ -326,9 +430,7 @@ const PettyCashPage = () => {
                     <p>
                       {pettyCashInfo.updatedEmployee.firstName} {pettyCashInfo.updatedEmployee.lastName}
                       <br />
-                      <span>
-                        {pettyCashInfo.updatedEmployee.nic}
-                      </span>
+                      <span>{pettyCashInfo.updatedEmployee.nic}</span>
                     </p>
                   </div>
                 }
@@ -341,9 +443,7 @@ const PettyCashPage = () => {
                     <p>
                       {pettyCashInfo.approvedEmployee.firstName} {pettyCashInfo.approvedEmployee.lastName}
                       <br />
-                      <span>
-                        {pettyCashInfo.approvedEmployee.nic}
-                      </span>
+                      <span>{pettyCashInfo.approvedEmployee.nic}</span>
                     </p>
                   </div>
                 }
@@ -370,14 +470,12 @@ const PettyCashPage = () => {
 
         {/* EDIT MODAL */}
         {isEdit && pettyCashInfo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-semibold mb-4">Edit Petty Cash</h2>
 
               <div className="space-y-4">
-                <span className='text-sm text-slate-400'>
-                  Amount
-                </span>
+                <span className='text-sm text-slate-400'>Amount</span>
                 <input
                   type="number"
                   value={pettyCashUpdatePayload.amount}
@@ -387,9 +485,7 @@ const PettyCashPage = () => {
                   className="w-full border rounded px-3 py-2"
                 />
 
-                <span className='text-sm text-slate-400'>
-                  Narration
-                </span>
+                <span className='text-sm text-slate-400'>Narration</span>
                 <textarea
                   value={pettyCashUpdatePayload.narration}
                   onChange={(e) =>
@@ -399,7 +495,10 @@ const PettyCashPage = () => {
                 />
 
                 <span className='text-sm text-slate-400'>
-                  Current Category : <span className='text-slate-700 font-bold'>{pettyCashCategoryDetails.find(cat => cat.id === pettyCashUpdatePayload.categoryId)?.categoryName}</span>
+                  Current Category :{" "}
+                  <span className='text-slate-700 font-bold'>
+                    {pettyCashCategoryDetails.find(cat => cat.id === pettyCashUpdatePayload.categoryId)?.categoryName}
+                  </span>
                 </span>
 
                 <CreatableSelect
@@ -422,17 +521,20 @@ const PettyCashPage = () => {
                   placeholder="Select or type category"
                 />
 
-                <div className="flex justify-end gap-3 pt-4">
-                  <button onClick={() => setIsEdit(false)}
-                    className="px-4 py-2 border rounded">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+                  <button
+                    onClick={() => setIsEdit(false)}
+                    className="px-4 py-2 border rounded w-full sm:w-auto"
+                  >
                     Cancel
                   </button>
                   <button
                     onClick={() => updatePettyCashRequest(pettyCashInfo.id)}
-                    className="px-4 py-2 bg-slate-800 text-white rounded">
+                    className="px-4 py-2 bg-slate-800 text-white rounded w-full sm:w-auto"
+                  >
                     {actionLoadingId?.action === "save"
-                            ? "Saving..."
-                            : "Save Changes"}
+                      ? "Saving..."
+                      : "Save Changes"}
                   </button>
                 </div>
               </div>

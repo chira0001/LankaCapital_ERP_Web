@@ -112,7 +112,7 @@ const Signup = () => {
 
             <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
                 <div className="flex justify-center px-4 py-16">
-                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-3">
+                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-3">
 
                         {/* LEFT SIDE - Branding */}
                         <div className="hidden md:flex flex-col justify-center items-center bg-gray-100 text-white p-12">
@@ -124,7 +124,7 @@ const Signup = () => {
                         </div>
 
                         {/* RIGHT SIDE - FORM */}
-                        <div className="p-8 md:p-12 col-span-2">
+                        <div className="p-6 sm:p-8 md:p-12 md:col-span-2">
 
                             <div className="flex flex-col items-center mb-8">
                                 {/* <CompanyLogo /> */}
@@ -137,7 +137,7 @@ const Signup = () => {
                             <form onSubmit={signup} className="space-y-6">
 
                                 {/* GRID FIELDS */}
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                                     {/* NIC */}
                                     <div className="flex flex-col gap-2">
