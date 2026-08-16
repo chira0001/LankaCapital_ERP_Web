@@ -13,14 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.lankacapital.server.services.ReportService;
 
-import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -235,9 +229,7 @@ public class AdminController {
             @RequestParam String startDate,
             @RequestParam String endDate
     ) {
-        return ResponseEntity.ok(
-                financialStatementService.getFinancialStatement(month)
-        );
+        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
     }
 
     //revenue tracking

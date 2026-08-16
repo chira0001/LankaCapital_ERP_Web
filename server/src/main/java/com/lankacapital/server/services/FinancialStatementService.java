@@ -3,9 +3,6 @@ package com.lankacapital.server.services;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.FinancialStatement;
 
-import java.time.LocalDate;
-import java.util.List;
-
 public interface FinancialStatementService {
 
 //    FinancialStatement generateFinancialStatement(String month);
@@ -13,7 +10,6 @@ public interface FinancialStatementService {
 //    FinancialStatement updateFinancialStatement(Long id, FinancialStatementDto dto);
 //    List<FinancialStatement> getByDateRange(LocalDate start, LocalDate end);
 //    FinancialDashboardDto getFinancialDashboard(String month);
-//    List<MonthlyTrendDto> getMonthlyTrend(String month);
 //    ProfitLossDto getProfitLoss(String month);
 //    byte[] generateFinancialReportPdf(String month);
 //    CashFlowDto getCashFlow(String month);
@@ -24,6 +20,6 @@ public interface FinancialStatementService {
 //    BalanceSheetDto getAnnualBalanceSheet(String year);
 //    CashFlowDto getAnnualCashFlow(String year);
 
-    FinancialStatement getFinancialStatement(String month);
+    FinancialStatement generateReports(String reportType,String startDate, String endDate);
     String addFinancials(String username, FinancialRequestDto financialRequestDto);
 }

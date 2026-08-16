@@ -114,7 +114,6 @@ const ReceptionistMonthlyExpense = () => {
         <div className="min-h-full flex flex-col gap-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
-            {/* EXPENSE FORM */}
             <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-3">
 
                 <div>
