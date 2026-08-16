@@ -11,4 +11,5 @@ public class CollectionRequestDto {
     private Integer installmentNumber;
     private BigDecimal paidAmount;
     private BigDecimal dueAmount;
+    private LocalDateTime paidAt;
 }

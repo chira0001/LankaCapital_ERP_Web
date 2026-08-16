@@ -3,6 +3,7 @@ package com.lankacapital.server.dtos;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class CustomerAddDto {
@@ -16,4 +17,5 @@ public class CustomerAddDto {
     private Integer installment;
     private Long employeeId;
     private String loanType;
+    private LocalDateTime createdAt;
 }
