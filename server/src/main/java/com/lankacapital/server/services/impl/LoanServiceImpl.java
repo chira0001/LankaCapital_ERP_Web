@@ -491,7 +491,7 @@ public class LoanServiceImpl implements LoanService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 50);
+        Pageable pageable = PageRequest.of(page, 25);
 
         return loanRepository.findAll(pageable)
                 .getContent()
