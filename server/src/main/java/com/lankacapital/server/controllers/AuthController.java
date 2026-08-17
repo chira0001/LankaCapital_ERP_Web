@@ -1,9 +1,6 @@
 package com.lankacapital.server.controllers;
 
-import com.lankacapital.server.dtos.JwtAuthenticationResponse;
-import com.lankacapital.server.dtos.RefreshTokenRequest;
-import com.lankacapital.server.dtos.SignInRequest;
-import com.lankacapital.server.dtos.SignUpRequest;
+import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.services.AuthService;
 import jakarta.servlet.http.Cookie;
@@ -11,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -62,4 +60,9 @@ public class AuthController {
         response.addCookie(cookie);
         return ResponseEntity.ok().build();
     }
+
+//    @PostMapping("/credential")
+//    public ResponseEntity<?> pinAuthentication(Authentication authentication,@RequestBody credentialVerifyDto dto){
+//        return ResponseEntity.ok(authService.verifyPassword(authentication.getName(), dto.getPassword()));
+//    }
 }
