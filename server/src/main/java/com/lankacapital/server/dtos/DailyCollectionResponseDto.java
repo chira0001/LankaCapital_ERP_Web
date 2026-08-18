@@ -12,6 +12,6 @@ public class DailyCollectionResponseDto {
     private Integer installmentNumber;
     private BigDecimal paidAmount;
     private LocalDateTime paidAt;
-    private Long employeeId;
+    private EmployeeResponseDto employee;
     private String fileNumber;
 }

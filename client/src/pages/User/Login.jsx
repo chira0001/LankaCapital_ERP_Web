@@ -56,13 +56,9 @@ const Login = () => {
 
                     localStorage.setItem("token", response.data.token);
 
-                    // decode JWT payload to extract the email (sub claim)
                     const payload = JSON.parse(atob(response.data.token.split('.')[1]));
                     localStorage.setItem("username", payload.sub);
-
-                    // console.log("Saved Token:", localStorage.getItem("token"));
-                    // console.log("Saved Username:", localStorage.getItem("username"));
-
+                    localStorage.setItem("role", payload.role.slice(0, 5).toLowerCase());
                     const role = response.data.role.slice(0, 2).toLowerCase();
 
                     navigate(`/${role}`);
@@ -89,7 +85,7 @@ const Login = () => {
                 {/* CENTER AREA */}
                 <div className="flex flex-1 items-center justify-center px-4 py-16">
 
-                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-2">
+                    <div className="w-full max-w-5xl bg-white shadow-2xl rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
                         {/* LEFT SIDE - Branding */}
                         <div className="hidden md:flex flex-col justify-center items-center bg-gray-100 text-white p-12 gap-5">
@@ -156,7 +152,7 @@ const Login = () => {
                                             onClick={() => setIsClicked(prev => !prev)}
                                         >
                                             {isClicked ? eyeOpen : eyeClose}
-                                        </span> 
+                                        </span>
                                     </div>
                                 </div>
 

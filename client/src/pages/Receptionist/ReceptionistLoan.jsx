@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DatePicker from "react-datepicker";
+
 import axiosAPI from '../../api/axiosAPI'
 
 const ReceptionistLoan = () => {
@@ -21,6 +23,7 @@ const ReceptionistLoan = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -43,6 +46,7 @@ const ReceptionistLoan = () => {
         documentCharge: '100',
         numberOfInstallments: '',
         loanType: "",
+        endAt: "",
         customerId: '',
         name: '',
         email: '',
@@ -60,6 +64,7 @@ const ReceptionistLoan = () => {
             documentCharge: '100',
             numberOfInstallments: '',
             loanType: "DAILY",
+            endAt: "",
             name: '',
             email: '',
             address: '',
@@ -77,7 +82,6 @@ const ReceptionistLoan = () => {
             toast.error('Please enter a customer NIC');
             return;
         }
-
         try {
             const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
             if (response.status === 200) {
@@ -129,30 +133,26 @@ const ReceptionistLoan = () => {
 
     const handleLoanSubmit = async (e) => {
         e.preventDefault();
-
         if (!loanForm.customerId) {
             toast.error('Please search and select a customer first');
             return;
         }
-
         if (isEmployee) {
             if (!loanForm.name || !loanForm.address || !loanForm.phoneNumber) {
                 toast.error('Please fill in all customer details');
                 return;
             }
         }
-
-        console.log("Form : ", loanForm)
-
         try {
+            setIsCreating(true);
             const response = await axiosAPI.post('/recep/loans', loanForm);
             toast.success('Loan created successfully!');
             clearLoanForm();
+            setIsCreating(false);
         } catch (error) {
             if (error.response) {
                 const status = error.response.status;
                 const message = error.response.data?.message;
-
                 if (status === 409 && message) {
                     toast.error(message);
                 } else {
@@ -161,11 +161,11 @@ const ReceptionistLoan = () => {
             } else {
                 toast.error('Failed to connect to server');
             }
+            setIsCreating(false);
         }
     };
 
     const fetchlastFileNumber = async (loanType) => {
-        console.log("Type : ", loanType);
         try {
             const res = await axiosAPI.get(`/recep/loans/lastFileNumber/${loanType}`);
             console.log("Result : ", res.data);
@@ -192,16 +192,13 @@ const ReceptionistLoan = () => {
                 setShowSuggestions(false);
             }
         }, 400);
-
         return () => clearTimeout(delayDebounce);
     }, [searchCustomer]);
 
     const fetchSuggestions = async () => {
         try {
             setLoading(true);
-            const res = await axiosAPI.get(
-                `/recep/customers/search?nic=${searchCustomer}`
-            );
+            const res = await axiosAPI.get(`/recep/customers/search?nic=${searchCustomer}`);
             setSuggestions(res.data);
             setShowSuggestions(true);
         } catch (err) {
@@ -212,55 +209,52 @@ const ReceptionistLoan = () => {
     };
 
     return (
-        <div className='p-3'>
+        <div className='p-3 sm:p-4'>
             <ToastContainer position="top-right" autoClose={3000} />
-            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    <h1 className="mb-2 text-2xl font-bold text-gray-800 sm:text-3xl">
                         Create New Loan
                     </h1>
                     <p className="text-gray-600">
                         Create new loan accounts and track their progress
                     </p>
                 </div>
-                <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
-                    <div className='w-1/2 flex flex-col relative'>
-                        <div className='flex justify-between items-center gap-4'>
-                            <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
-                                Search Customer
-                            </span>
+                <div className='w-full md:w-auto'>
+                    <div className='relative flex w-full flex-col gap-3 sm:flex-row sm:items-center md:min-w-[420px]'>
+                        <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
+                            Search Customer
+                        </span>
 
-                            <input
-                                type="text"
-                                value={searchCustomer}
-                                className='border border-gray-300 rounded-lg px-4 py-2 flex-1 
+                        <input
+                            type="text"
+                            value={searchCustomer}
+                            className='w-full border border-gray-300 rounded-lg px-4 py-2 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
                        focus:border-transparent'
-                                placeholder="Enter NIC"
-                                onChange={(e) => setSearchCustomer(e.target.value)}
-                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                            />
+                            placeholder="Enter NIC"
+                            onChange={(e) => setSearchCustomer(e.target.value)}
+                            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                        />
 
-                            <button
-                                onClick={async () => {
-                                    setShowSuggestions(false);
-                                    await checkCustomerExists();
-                                }}
-                                className='bg-blue-600 text-white px-6 py-2 rounded-lg 
+                        <button
+                            onClick={async () => {
+                                setShowSuggestions(false);
+                                await checkCustomerExists();
+                            }}
+                            className='bg-blue-600 text-white px-6 py-2 rounded-lg 
                        whitespace-nowrap hover:bg-blue-700 
                        transition-colors shadow-md 
                        disabled:bg-gray-400 disabled:cursor-not-allowed'
-                                disabled={!searchCustomer.trim()}
-                            >
-                                Search
-                            </button>
-                        </div>
+                            disabled={!searchCustomer.trim()}
+                        >
+                            Search
+                        </button>
 
                         {/* Suggestions Dropdown */}
                         {showSuggestions && (
-                            <div className="absolute top-full mt-2 bg-white border 
-                        border-gray-200 rounded-lg shadow-lg z-50 
-                        max-h-60 overflow-y-auto">
+                            <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-y-auto rounded-lg border 
+                        border-gray-200 bg-white shadow-lg sm:left-auto sm:right-0 sm:w-64">
 
                                 {loading && (
                                     <div className="px-4 py-2 text-sm text-gray-500">
@@ -294,9 +288,7 @@ const ReceptionistLoan = () => {
                 </div>
             </div>
 
-            <div className='shadow-2xl p-6 mt-6 rounded-2xl'>
-                {/* Existing Customer Loans Table */}
-
+            <div className='mt-6 rounded-2xl p-4 shadow-2xl sm:p-6'>
                 {existCustomer && existCustomer.loans?.length > 0 ? (
                     <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
 
@@ -338,14 +330,16 @@ const ReceptionistLoan = () => {
                                     </tr>
                                 </thead>
 
+                                {console.log("Exist Customer : ", existCustomer)}
+
                                 <tbody className="divide-y divide-gray-200">
                                     {existCustomer.loans.map((loan, key) => (
                                         <tr
-                                            key={loan.fileNumber}
+                                            key={key}
                                             className={`${key % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors text-center`}
                                         >
                                             <td className="px-6 py-4 text-sm font-semibold text-gray-800 whitespace-nowrap text-center">
-                                                {loan.fileNumber}
+                                                {loan.fileNumber == "" ? "Not Assigned" : loan.fileNumber}
                                             </td>
 
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
@@ -370,7 +364,7 @@ const ReceptionistLoan = () => {
 
                                             <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                                                 {loan.enteredBy.firstName} {loan.enteredBy.lastName}
-                                                <br /> Id : {loan.enteredBy.id}
+                                                <br /> NIC : {loan.enteredBy.nic}
                                             </td>
 
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -403,18 +397,18 @@ const ReceptionistLoan = () => {
 
                 <form onSubmit={handleLoanSubmit}>
                     {loanForm.customerId ?
-                        <div className='flex justify-between'>
-                            <div className="mb-6 flex items-center gap-3">
+                        <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                            <div className="flex items-center gap-3">
                                 <span className="text-md text-gray-500">Customer ID:</span>
-                                <span className="px-3 py-1 bg-blue-600 text-white text-md font-medium rounded-md">
+                                <span className="rounded-md bg-blue-600 px-3 py-1 text-md font-medium text-white">
                                     {loanForm.customerId}
                                 </span>
                             </div>
                             {lastFileNumber ?
-                                <div className='mb-6 flex items-center gap-3'>
+                                <div className='flex items-center gap-3'>
                                     <span className='text-md text-gray-500'>Last File Number:</span>
-                                    <span className="px-3 py-1 bg-linear-to-r from-gray-700 to-gray-800 text-white text-md font-medium rounded-md">
-                                        {lastFileNumber}
+                                    <span className="rounded-md bg-gradient-to-r from-gray-700 to-gray-800 px-3 py-1 text-md font-medium text-white">
+                                        {lastFileNumber} + 1
                                     </span>
                                 </div>
                                 :
@@ -472,16 +466,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.loanAmount}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, loanAmount: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, loanAmount: value }));
                                     }
@@ -506,16 +495,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.interestRate}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, interestRate: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, interestRate: value }));
                                     }
@@ -538,16 +522,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.documentCharge}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty (so user can delete)
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, documentCharge: "" }));
                                         return;
                                     }
-
-                                    // Regex: numbers with optional 2 decimal places
                                     const regex = /^\d+(\.\d{0,2})?$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({ ...prev, documentCharge: value }));
                                     }
@@ -573,16 +552,11 @@ const ReceptionistLoan = () => {
                                 value={loanForm.numberOfInstallments}
                                 onChange={(e) => {
                                     const value = e.target.value;
-
-                                    // Allow empty for backspace
                                     if (value === "") {
                                         setLoanForm(prev => ({ ...prev, numberOfInstallments: "" }));
                                         return;
                                     }
-
-                                    // Allow only positive whole numbers
                                     const regex = /^[1-9]\d*$/;
-
                                     if (regex.test(value)) {
                                         setLoanForm(prev => ({
                                             ...prev,
@@ -596,6 +570,31 @@ const ReceptionistLoan = () => {
                                 className='w-full px-4 py-3 border border-gray-300 rounded-lg 
     focus:outline-none focus:ring-2 focus:ring-blue-500 
     focus:border-transparent transition-all'
+                            />
+                        </div>
+
+                        <div className='flex flex-col'>
+                            <span className='mb-2 text-sm font-medium text-gray-700'>
+                                Loan End Date <span className='text-red-500'>*</span>
+                            </span>
+
+                            <DatePicker
+                                selected={loanForm.endAt ? new Date(loanForm.endAt) : null}
+                                onChange={(date) => {
+                                    // Format to YYYY-MM-DD for storage
+                                    const formatted = date ? date.toISOString().split('T')[0] : "";
+                                    setLoanForm(prev => ({
+                                        ...prev,
+                                        endAt: formatted
+                                    }));
+                                }}
+                                dateFormat="yyyy/MM/dd"
+                                placeholderText="Select loan end date"
+                                required
+                                minDate={new Date()} // optional: prevent past dates
+                                className='w-full px-4 py-3 border border-gray-300 rounded-lg 
+        focus:outline-none focus:ring-2 focus:ring-blue-500 
+        focus:border-transparent transition-all text-sm text-gray-700'
                             />
                         </div>
                     </div>
@@ -715,7 +714,7 @@ const ReceptionistLoan = () => {
                         </div>
                     )}
 
-                    <div className='w-full flex justify-end gap-4 mt-6'>
+                    <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end'>
                         <button
                             type="button"
                             onClick={clearLoanForm}
@@ -725,10 +724,26 @@ const ReceptionistLoan = () => {
                         </button>
                         <button
                             type="submit"
-                            className='bg-blue-600 text-white px-6 py-2 rounded-lg w-full md:w-fit hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed'
-                            disabled={!loanForm.customerId}
+                            disabled={!loanForm.customerId || isCreating}
+                            className={`
+    inline-flex items-center justify-center gap-2
+    w-full sm:w-auto
+    px-6 py-2.5 rounded-lg font-semibold
+    transition-all duration-200
+    shadow-sm
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
+    active:scale-[0.98]
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+    ${isCreating
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-blue-600 text-white hover:bg-blue-700"
+                                }
+  `}
                         >
-                            Create Loan
+                            {isCreating && (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                            )}
+                            {isCreating ? "Creating..." : "Create Loan"}
                         </button>
                     </div>
                 </form>

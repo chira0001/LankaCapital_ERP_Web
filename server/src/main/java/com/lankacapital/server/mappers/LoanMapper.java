@@ -7,6 +7,10 @@ import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.utils.UtilityFunctions;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 public class LoanMapper {
@@ -20,6 +24,7 @@ public class LoanMapper {
             loan.setFileNumber(loanCreateDto.getFileNumber());
         }
 
+        loan.setEndAt(LocalDate.parse(loanCreateDto.getEndAt()));
         loan.setInstallment(loanCreateDto.getNumberOfInstallments());
         loan.setInterestRate(loanCreateDto.getInterestRate());
         loan.setStatus(LoanStatus.PENDING);
@@ -29,12 +34,11 @@ public class LoanMapper {
         return loan;
     }
 
-
     public static LoanResponseDto mapToLoanResponseDto(Loan loan) {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
-
+        responseDto.setEndAt(loan.getEndAt());
         responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
@@ -92,21 +96,6 @@ public class LoanMapper {
 
         return responseDto;
     }
-
-//    public static Customer mapToCustomer(LoanCreateDto loanCreateDto){
-//        Customer customer = new Customer();
-//
-//        customer.setNic(loanCreateDto.getCustomerId());
-//        customer.setName(loanCreateDto.getName());
-//        customer.setEmail(loanCreateDto.getEmail());
-//        customer.setAddress(loanCreateDto.getAddress());
-//        customer.setPhoneNumber(loanCreateDto.getPhoneNumber());
-//
-//        customer.setBank(loanCreateDto.getBank());
-//        customer.setBankAccount(loanCreateDto.getBankAccount());
-//
-//        return customer;
-//    }
 
     public static LoanResAsyncDto mapToCustomerAsyncDto(Loan loan) {
         LoanResAsyncDto dto = new LoanResAsyncDto();
@@ -176,6 +165,81 @@ public class LoanMapper {
         dto.setCustomerNic(loan.getCustomer().getNic());
         dto.setCustomerName(loan.getCustomer().getName());
         dto.setCustomerAddress(loan.getCustomer().getAddress());
+
+        return dto;
+    }
+
+    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(Loan loan){
+
+        LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
+
+        dto.setAmount(loan.getAmount());
+        dto.setCreatedAt(loan.getCreatedAt());
+        dto.setFileNumber(loan.getFileNumber());
+        dto.setInstallment(loan.getInstallment());
+        dto.setInterestRate(loan.getInterestRate());
+        dto.setApprovedEmployee(
+                EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
+        );
+        dto.setCustomer(
+                CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
+        );
+        dto.setLoanType(loan.getLoanType());
+        dto.setEndAt(loan.getEndAt());
+
+        // ✅ Safe interest calculation
+        BigDecimal interestRate = loan.getInterestRate() != null
+                ? BigDecimal.valueOf(loan.getInterestRate())
+                : BigDecimal.ZERO;
+
+        BigDecimal totalWithInterest = loan.getAmount()
+                .add(loan.getAmount()
+                        .multiply(interestRate)
+                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+
+        // ✅ Installment value
+        if (loan.getInstallment() != null && loan.getInstallment() > 0) {
+            dto.setInstallmentValue(
+                    totalWithInterest.divide(
+                            BigDecimal.valueOf(loan.getInstallment()),
+                            2,
+                            RoundingMode.HALF_UP
+                    )
+            );
+        }
+
+        // ✅ Handle Daily Collections safely
+        List<DailyCollection> collections = loan.getDailyCollections();
+        if (collections != null && !collections.isEmpty()) {
+
+            // ✅ Sort by installment number (important!)
+            collections.sort(Comparator.comparing(DailyCollection::getInstallmentNumber));
+
+            // ✅ Get max installment number
+            Integer maxInstallmentNumber = collections.stream()
+                    .map(DailyCollection::getInstallmentNumber)
+                    .max(Integer::compareTo)
+                    .orElse(0);
+
+            // ✅ Sum of all due amounts
+            BigDecimal totalDueAmount = collections.stream()
+                    .map(dc -> dc.getDueAmount() != null ? dc.getDueAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            if (dto.getInstallmentValue() != null) {
+                dto.setArrearsAmount(totalDueAmount);
+            }else{
+                dto.setInstallmentValue(BigDecimal.ZERO);
+            }
+
+            dto.setDailyCollection(
+                    collections.stream()
+                            .map(DailyCollectionMapper::mapToDailyCollectionResponseDto)
+                            .toList()
+            );
+        } else {
+            dto.setArrearsAmount(BigDecimal.ZERO);
+        }
 
         return dto;
     }

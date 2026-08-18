@@ -208,8 +208,8 @@ const LoanPerformancePage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-6 sm:mb-8 lg:mb-8">
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
                 <h3 className="font-bold text-black mb-4">1-7 Days Late</h3>
                 <p className="text-4xl font-bold text-gray-800 mb-2">{agingBreakdown.early}</p>
                 <p className="text-sm text-gray-600">Early stage overdue</p>

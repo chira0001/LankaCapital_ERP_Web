@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosAPI from '@/api/axiosAPI';
 import { DollarSign, Calendar, Filter } from 'lucide-react';
 import { Input } from '@/component/ui/input';
 import { Label } from '@/component/ui/label';
@@ -31,23 +31,9 @@ const RevenueTrackingPage = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
+      const summaryRes = await axiosAPI.get("/admin/revenue/summary");
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-
-      const summaryRes = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/summary`,
-        config
-      );
-
-      const tableRes = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/revenue/collections`,
-        config
-      );
+      const tableRes = await axiosAPI.get("/admin/revenue/collections");
 
       setTodayCollection(summaryRes.data.today || 0);
       setWeeklyCollection(summaryRes.data.week || 0);
@@ -111,12 +97,12 @@ const RevenueTrackingPage = () => {
   // LOADING
   // ===============================
   if (loading) {
-    return <div className="p-6">Loading revenue data...</div>;
+    return <div className="p-3 sm:p-4 lg:p-6">Loading revenue data...</div>;
   }
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
+      <div className="p-3 sm:p-4 lg:p-8">
 
         {/* HEADER */}
         <div className="mb-8">
@@ -129,9 +115,9 @@ const RevenueTrackingPage = () => {
         </div>
 
         {/* SUMMARY */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4 lg:gap-6">
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 lg:p-6">
             <div className="flex justify-between mb-4">
               <DollarSign className="w-6 h-6 text-black" />
               <Calendar className="w-5 h-5 text-gray-400" />
@@ -156,7 +142,7 @@ const RevenueTrackingPage = () => {
         </div>
 
         {/* FILTERS */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-6">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
 
           <div className="flex items-center justify-between mb-4">
 
@@ -205,7 +191,7 @@ const RevenueTrackingPage = () => {
         {/* TABLE */}
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
 
-          <div className="p-6 border-b">
+          <div className="border-b p-3 sm:p-4 lg:p-6">
             <h3 className="font-bold text-lg">
               Transaction History
             </h3>

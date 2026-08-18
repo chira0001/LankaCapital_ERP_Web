@@ -117,30 +117,30 @@ const AdminProfile = () => {
   }, []);
 
   return (
-    <div className="min-h-full bg-slate-100 p-8">
+    <div className="min-h-full bg-slate-100 p-4 sm:p-6 lg:p-8">
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
+      <div className="mb-6 sm:mb-8 lg:mb-10">
+        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight sm:text-3xl">
           Admin Profile
         </h1>
-        <p className="text-slate-500 mt-2 text-sm">
+        <p className="mt-2 text-sm text-slate-500">
           Manage your personal information and security settings
         </p>
       </div>
 
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
 
         {/* PERSONAL INFO */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col gap-8">
-          <div className="flex justify-between items-center">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8 flex flex-col gap-6 sm:gap-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold text-slate-800">
               Personal Information
             </h2>
 
             {isEdit ? (
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setIsEdit(false)}
                   disabled={isUpdating}
@@ -171,7 +171,7 @@ const AdminProfile = () => {
             )}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {[
               { label: "First Name", name: "firstName" },
               { label: "Last Name", name: "lastName" },
@@ -218,8 +218,8 @@ const AdminProfile = () => {
         </div>
 
         {/* ADDRESS */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
-          <h2 className="text-lg font-semibold text-slate-800 mb-6">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8">
+          <h2 className="mb-4 text-lg font-semibold text-slate-800 sm:mb-6">
             Address
           </h2>
 
@@ -242,13 +242,13 @@ const AdminProfile = () => {
         </div>
 
         {/* SECURITY */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col gap-8">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8 flex flex-col gap-6 sm:gap-8">
           <h2 className="text-lg font-semibold text-slate-800">
             Security
           </h2>
 
           {isPasswordEdit && (
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[
                 { label: "Old Password", name: "oldPassword" },
                 { label: "New Password", name: "newPassword" },
@@ -278,7 +278,7 @@ const AdminProfile = () => {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             {isPasswordEdit ? (
               <>
                 <button
