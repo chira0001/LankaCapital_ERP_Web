@@ -251,7 +251,7 @@ public class FieldOfficerController {
     }
 
     @PostMapping("/credential")
-    public ResponseEntity<?> pinAuthentication(Authentication authentication,@RequestBody credentialVerifyDto dto){
+    public ResponseEntity<?> verifyAuthentication(Authentication authentication,@RequestBody credentialVerifyDto dto){
         return ResponseEntity.ok(authService.verifyPassword(authentication.getName(), dto.getPassword()));
     }
 }
