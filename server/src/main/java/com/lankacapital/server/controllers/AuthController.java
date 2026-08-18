@@ -1,5 +1,7 @@
 package com.lankacapital.server.controllers;
 
+import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.dtos.JwtAuthenticationResponse;
 import com.lankacapital.server.dtos.SignInRequest;
 import com.lankacapital.server.dtos.SignUpRequest;
@@ -10,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,7 +77,6 @@ public class AuthController {
         response.addHeader("Set-Cookie", cookie.toString());
         return ResponseEntity.ok().build();
     }
-
     private boolean isSecureRequest(HttpServletRequest request) {
         return request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
