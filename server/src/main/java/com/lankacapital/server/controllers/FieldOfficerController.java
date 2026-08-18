@@ -23,6 +23,7 @@ public class FieldOfficerController {
     private final CustomerService customerService;
     private final EmployeeService employeeService;
     private final DailyCollectionService dailyCollectionService;
+    private final AuthService authService;
 
     @GetMapping("/ping")
     public ResponseEntity<?> ping(Authentication authentication) {
@@ -251,5 +252,10 @@ public class FieldOfficerController {
         }catch (Exception e){
             return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/credential")
+    public ResponseEntity<?> pinAuthentication(Authentication authentication,@RequestBody credentialVerifyDto dto){
+        return ResponseEntity.ok(authService.verifyPassword(authentication.getName(), dto.getPassword()));
     }
 }
