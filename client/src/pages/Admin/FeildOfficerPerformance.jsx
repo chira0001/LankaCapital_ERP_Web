@@ -68,12 +68,12 @@ const FieldOfficerPerformancePage = () => {
         <title>Field Officer Performance - LendPro</title>
       </Helmet>
 
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
 
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold text-black mb-2">
+            <h1 className="mb-2 text-2xl font-bold text-black sm:text-3xl">
               Field Officer Collections
             </h1>
             <p className="text-gray-600">
@@ -82,9 +82,9 @@ const FieldOfficerPerformancePage = () => {
           </div>
 
           {/* Date Filter */}
-          <div className="bg-white p-6 rounded-xl shadow border flex gap-6 items-end">
-            <div>
-              <label className="block text-sm font-medium">Start Date</label>
+          <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow sm:flex-row sm:items-end sm:gap-4 sm:p-4 lg:gap-6 lg:p-6">
+            <div className="flex-1">
+              <label className="mb-2 block text-sm font-medium">Start Date</label>
               <input
                 type="date"
                 name="startDate"
@@ -99,8 +99,8 @@ const FieldOfficerPerformancePage = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium">End Date</label>
+            <div className="flex-1">
+              <label className="mb-2 block text-sm font-medium">End Date</label>
               <input
                 type="date"
                 name="endDate"
@@ -117,7 +117,7 @@ const FieldOfficerPerformancePage = () => {
 
             <button
               onClick={fetchDailyCollectionDetails}
-              className="px-5 py-2 bg-black text-white rounded"
+              className="w-full rounded bg-black px-5 py-2 text-white sm:w-auto"
             >
               Search
             </button>

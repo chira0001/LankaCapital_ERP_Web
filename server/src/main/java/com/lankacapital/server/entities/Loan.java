@@ -1,16 +1,17 @@
 package com.lankacapital.server.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.LoanType;
-import com.lankacapital.server.enums.RiskLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Random;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -46,8 +47,7 @@ public class Loan {
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP()")
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    private RiskLevel risk;
+    private LocalDate endAt;
 
     @Enumerated(EnumType.STRING)
     private LoanStatus status=LoanStatus.PENDING;
@@ -72,6 +72,9 @@ public class Loan {
     @JoinColumn(name = "approved_by")
     private Employee approvedEmployee;
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "loan")
+    private List<DailyCollection> dailyCollections;
 
     @PrePersist
     public void update(){

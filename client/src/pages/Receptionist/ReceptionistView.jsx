@@ -295,57 +295,54 @@ const ReceptionistView = () => {
     const totalPages = Math.ceil(loanDetails.length / rowsPerPage);
 
     return (
-        <div className="p-3">
+        <div className="p-3 sm:p-4">
             <ToastContainer position="top-right" autoClose={3000} />
 
             {/* Header Section */}
-            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                    <h1 className="mb-2 text-2xl font-bold text-gray-800 sm:text-3xl">
                         View Customer
                     </h1>
                     <p className="text-gray-600">
                         Access and review customer information
                     </p>
                 </div>
-                <div className='w-fit flex flex-col sm:flex-row sm:items-center gap-2'>
-                    <div className='w-1/2 flex flex-col relative'>
-                        <div className='flex justify-between items-center gap-4'>
-                            <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
-                                Search Customer
-                            </span>
+                <div className='w-full md:w-auto'>
+                    <div className='relative flex w-full flex-col gap-3 sm:flex-row sm:items-center md:min-w-[420px]'>
+                        <span className='text-sm font-medium whitespace-nowrap text-gray-700'>
+                            Search Customer
+                        </span>
 
-                            <input
-                                type="text"
-                                value={searchCustomer}
-                                className='border border-gray-300 rounded-lg px-4 py-2 flex-1 
+                        <input
+                            type="text"
+                            value={searchCustomer}
+                            className='w-full border border-gray-300 rounded-lg px-4 py-2 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 
                        focus:border-transparent'
-                                placeholder="Enter NIC"
-                                onChange={(e) => setSearchCustomer(e.target.value)}
-                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                            />
+                            placeholder="Enter NIC"
+                            onChange={(e) => setSearchCustomer(e.target.value)}
+                            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                        />
 
-                            <button
-                                onClick={async () => {
-                                    setShowSuggestions(false);
-                                    await checkCustomerExists();
-                                }}
-                                className='bg-blue-600 text-white px-6 py-2 rounded-lg 
+                        <button
+                            onClick={async () => {
+                                setShowSuggestions(false);
+                                await checkCustomerExists();
+                            }}
+                            className='bg-blue-600 text-white px-6 py-2 rounded-lg 
                        whitespace-nowrap hover:bg-blue-700 
                        transition-colors shadow-md 
                        disabled:bg-gray-400 disabled:cursor-not-allowed'
-                                disabled={!searchCustomer.trim()}
-                            >
-                                Search
-                            </button>
-                        </div>
+                            disabled={!searchCustomer.trim()}
+                        >
+                            Search
+                        </button>
 
                         {/* Suggestions Dropdown */}
                         {showSuggestions && (
-                            <div className="absolute top-full mt-2 bg-white border 
-                        border-gray-200 rounded-lg shadow-lg z-50 
-                        max-h-60 overflow-y-auto">
+                            <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-y-auto rounded-lg border 
+                        border-gray-200 bg-white shadow-lg sm:left-auto sm:right-0 sm:w-64">
 
                                 {loading && (
                                     <div className="px-4 py-2 text-sm text-gray-500">
@@ -380,20 +377,20 @@ const ReceptionistView = () => {
             </div>
 
             {/* Customer Information Form */}
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="mb-6 rounded-xl bg-white p-4 shadow-lg sm:p-6">
 
-                <div className='flex justify-between'>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                    <h2 className="text-xl font-semibold text-gray-800">
                         Customer Information
                     </h2>
                     {/* Edit Button */}
                     {existCustomer && (
-                        <div className='w-1/2 flex justify-end gap-4 mb-6'>
+                        <div className='w-full sm:w-auto'>
                             {isEdit ? (
-                                <div className='flex gap-2'>
+                                <div className='flex flex-col gap-2 sm:flex-row'>
                                     <button
                                         onClick={handleCancelEdit}
-                                        className='bg-gray-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-600 transition-colors shadow-md'
+                                        className='bg-gray-500 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-600 transition-colors shadow-md'
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -402,7 +399,7 @@ const ReceptionistView = () => {
                                     </button>
                                     <button
                                         onClick={saveCustomer}
-                                        className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-md'
+                                        className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-md'
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -413,7 +410,7 @@ const ReceptionistView = () => {
                             ) : (
                                 <button
                                     onClick={() => setIsEdit(true)}
-                                    className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
+                                    className='bg-gray-800 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors shadow-md'
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M5 21h14c1.1 0 2-.9 2-2v-7h-2v7H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2"></path>

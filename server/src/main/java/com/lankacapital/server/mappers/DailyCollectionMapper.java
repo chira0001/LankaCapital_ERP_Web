@@ -18,7 +18,7 @@ public class DailyCollectionMapper {
         dto.setInstallmentNumber(collection.getInstallmentNumber());
         dto.setPaidAmount(collection.getPaidAmount());
         dto.setPaidAt(collection.getPaidAt());
-        dto.setEmployeeId(collection.getEmployee().getId());
+        dto.setEmployee(EmployeeMapper.mapToEmployeeResponseDto(collection.getEmployee()));
         dto.setFileNumber(collection.getLoan().getFileNumber());
 
         return dto;

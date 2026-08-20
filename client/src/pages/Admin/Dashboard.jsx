@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axiosAPI from "@/api/axiosAPI";
 
 import {
   DollarSign,
@@ -93,14 +93,7 @@ const DashboardPage = () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/financial-dashboard/summary`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axiosAPI.get("/admin/financial-dashboard/summary");
 
       const data = res.data;
 
@@ -166,16 +159,16 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, []);
 
-  if (loading) return <div className="p-6">Loading dashboard...</div>;
-  if (!metrics) return <div className="p-6">No data found</div>;
+  if (loading) return <div className="p-3 sm:p-4 lg:p-6">Loading dashboard...</div>;
+  if (!metrics) return <div className="p-3 sm:p-4 lg:p-6">No data found</div>;
 
   return (
-    <div className="p-6">
+    <div className="p-3 sm:p-4 lg:p-6">
 
-      <h1 className="text-2xl font-bold">Executive Dashboard</h1>
+      <h1 className="mb-4 text-xl font-bold sm:text-2xl">Executive Dashboard</h1>
 
       {/* METRICS */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="mb-6 grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 sm:mb-8">
         <Card icon={<DollarSign />} label="Total Income" value={formatLKR(metrics.totalIncome)} />
         <Card icon={<DollarSign />} label="Total Expense" value={formatLKR(metrics.totalExpense)} />
         <Card icon={<TrendingUp />} label="Net Profit" value={formatLKR(metrics.netProfit)} />
@@ -183,10 +176,10 @@ const DashboardPage = () => {
       </div>
 
       {/* CHARTS */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-2">
 
         {/* LINE */}
-        <div className="border p-4 rounded">
+        <div className="rounded border border-gray-200 p-3 sm:p-4">
           <h2 className="font-bold mb-4">Monthly Income</h2>
 
           <ResponsiveContainer width="100%" height={300}>
@@ -202,10 +195,10 @@ const DashboardPage = () => {
         </div>
 
         {/* PIE */}
-        <div className="border p-4 rounded">
-          <h2 className="font-bold mb-4">Loan Distribution</h2>
+        <div className="rounded border border-gray-200 p-3 sm:p-4">
+          <h2 className="mb-3 text-sm font-bold sm:text-base sm:mb-4">Loan Distribution</h2>
 
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={loanDistribution}

@@ -32,6 +32,15 @@ const ReceptionistDashboard = () => {
             func: 'loan'
         },
         {
+            name: "Loan Summary",
+            icon: (
+                <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72M20 9v6h-7V9zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2z"></path><circle cx="16" cy="12" r="1.5"></circle></svg>
+            ),
+            css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'loan-summary' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
+                }`,
+            func: 'loan-summary'
+        },
+        {
             name: "View Customer",
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill={"currentColor"} viewBox={"0 0 24 24"}><path d="M4 8c0 2.28 1.72 4 4 4s4-1.72 4-4-1.72-4-4-4-4 1.72-4 4m6 0c0 1.18-.82 2-2 2s-2-.82-2-2 .82-2 2-2 2 .82 2 2M3 20h10c.55 0 1-.45 1-1v-1c0-2.76-2.24-5-5-5H7c-2.76 0-5 2.24-5 5v1c0 .55.45 1 1 1m4-5h2c1.65 0 3 1.35 3 3H4c0-1.65 1.35-3 3-3m14-3.5c0-2-1.5-3.5-3.5-3.5S14 9.5 14 11.5s1.5 3.5 3.5 3.5c.62 0 1.18-.16 1.67-.42l2.12 2.12 1.41-1.41-2.12-2.12c.26-.49.42-1.05.42-1.67M17.5 13c-.88 0-1.5-.62-1.5-1.5s.62-1.5 1.5-1.5 1.5.62 1.5 1.5-.62 1.5-1.5 1.5"></path></svg>
@@ -107,13 +116,13 @@ const ReceptionistDashboard = () => {
         <>
             <ToastContainer position="top-right" autoClose={3000} />
 
-            <div className='bg-gray-100 w-full text-black flex gap-1 md:gap-8 h-screen md:p-6 overflow-hidden'>
+            <div className='bg-gray-100 w-full text-black flex h-screen flex-col gap-3 overflow-hidden p-3 md:flex-row md:gap-8 md:p-6'>
                 {/* Sidebar */}
-                <div className='bg-white w-fit overflow-auto overflow-x-hidden px-1 md:px-3 py-6 rounded-2xl shadow-xl md:flex md:flex-col gap-6'>
+                <div className='flex gap-2 overflow-x-auto overflow-y-hidden rounded-2xl bg-white p-2 shadow-xl md:w-fit md:flex-col md:overflow-auto md:overflow-x-hidden md:px-3 md:py-6'>
                     {panelNames.map((value, key) => (
                         <button
                             key={key}
-                            className={value.css}
+                            className={`${value.css} shrink-0 rounded-xl px-3 py-3 md:px-4`}
                             onClick={() => {
                                 value.func === 'logout'
                                     ? setShowLogoutModal(true)
@@ -127,7 +136,7 @@ const ReceptionistDashboard = () => {
                 </div>
 
                 {/* Main Content */}
-                <div className='flex-1 bg-white p-6 rounded-2xl shadow-xl overflow-y-auto'>
+                <div className='flex-1 overflow-y-auto rounded-2xl bg-white p-3 shadow-xl sm:p-4 md:p-6'>
                     <Outlet />
                 </div>
 

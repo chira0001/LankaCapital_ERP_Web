@@ -3,10 +3,10 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.entities.Employee;
-import com.lankacapital.server.entities.Loan;
 
 import com.lankacapital.server.entities.SalaryMetaData;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
+import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -133,12 +133,13 @@ public class AdminController {
     }
 
     @PostMapping("/loans")
-    public ResponseEntity<Loan> addLoan(
+    public ResponseEntity<LoanResponseDto> addLoan(
             @RequestBody LoanCreateDto dto,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(
-                loanService.addLoan(dto, authentication.getName())
+        return new ResponseEntity<>(
+                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
+                HttpStatus.CREATED
         );
     }
 
@@ -498,6 +499,15 @@ public class AdminController {
         }
         
         return new ResponseEntity<>(pettyCashCategoryService.createNewCategory(newCategory, authentication.getName()), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/loan-summary")
+    public ResponseEntity<?> fetchLoanSummary(Authentication authentication){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
     }
 
 

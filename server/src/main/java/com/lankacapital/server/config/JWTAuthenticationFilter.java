@@ -55,8 +55,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtService.extractUserName(jwt);
         } catch (Exception e) {
             System.out.println("JWT ERROR: " + e.getMessage());
-
-            filterChain.doFilter(request, response);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
             return;
         }
 
@@ -81,6 +80,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
             } else {
                 System.out.println("Token invalid or expired");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+                return;
             }
         }
         filterChain.doFilter(request,response);

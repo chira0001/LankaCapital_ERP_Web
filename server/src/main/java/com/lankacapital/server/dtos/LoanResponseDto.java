@@ -2,12 +2,12 @@ package com.lankacapital.server.dtos;
 
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.enums.LoanStatus;
-import com.lankacapital.server.enums.RiskLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,6 +19,7 @@ public class LoanResponseDto {
     private Double interestRate;
     private BigDecimal amount;
     private LocalDateTime createdAt;
+    private LocalDate endAt;
     private Integer noOfInstallments;
     private Double documentCharge;
     private EmployeeResponseDto enteredBy;

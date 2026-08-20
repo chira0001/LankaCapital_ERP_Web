@@ -85,11 +85,13 @@ public class AuthServiceImpl implements AuthService {
                 jwtAuthenticationResponse.setRefreshToken(refreshToken);
                 return jwtAuthenticationResponse;
             }
-            return null;
+            throw new com.lankacapital.server.exceptions.InvalidRefreshTokenException("Invalid refresh token. Please login");
         }catch (ExpiredJwtException e) {
-            throw new RuntimeException("Refresh token expired. Please login again");
+            throw new com.lankacapital.server.exceptions.InvalidRefreshTokenException("Refresh token expired. Please login again");
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new com.lankacapital.server.exceptions.InvalidRefreshTokenException("Refresh token expired. Please login again");
         } catch (Exception e) {
-            throw new RuntimeException("Invalid refresh token. Please login");
+            throw new com.lankacapital.server.exceptions.InvalidRefreshTokenException("Invalid refresh token. Please login");
         }
     }
 

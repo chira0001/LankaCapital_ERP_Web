@@ -189,64 +189,64 @@ public class LoanServiceImpl implements LoanService {
         return LoanMapper.mapToLoanResponseDto(loan);
     }
 
-    @Transactional
-    @Override
-    public Loan approveLoan(LoanActionDto dto) {
-        //find loan from DB
-        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
+//    @Transactional
+//    @Override
+//    public Loan approveLoan(LoanActionDto dto) {
+//        //find loan from DB
+//        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+//                .orElseThrow(() -> new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
+//
+//        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
+//
+////        loan.setEmployee(employee);
+//        //update status
+//        loan.setStatus(LoanStatus.APPROVED);
+//
+//        //clear rejection note
+////        loan.setRejectionNote(null);
+//        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+//        loan.setDecisionNote(dto.getDecisionNote());
+//        //save and return
+//        return loanRepository.save(loan);
+//    }
 
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
+//    @Transactional
+//    @Override
+//    public Loan rejectLoan(LoanActionDto dto) {
+//        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+//                .orElseThrow(() -> new ResourceNotFoundException("Loan not found:" + dto.getFileNumber()));
+//        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
+//        loan.setUpdatedEmployee(employee);
+//        loan.setStatus(LoanStatus.REJECTED);
+////        loan.setRejectionNote(dto.getRejectionNote());
+//        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+//        return loanRepository.save(loan);
+//    }
 
-//        loan.setEmployee(employee);
-        //update status
-        loan.setStatus(LoanStatus.APPROVED);
-
-        //clear rejection note
-//        loan.setRejectionNote(null);
-        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
-        loan.setDecisionNote(dto.getDecisionNote());
-        //save and return
-        return loanRepository.save(loan);
-    }
-
-    @Transactional
-    @Override
-    public Loan rejectLoan(LoanActionDto dto) {
-        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found:" + dto.getFileNumber()));
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not founded" + dto.getEmployeeId()));
-        loan.setUpdatedEmployee(employee);
-        loan.setStatus(LoanStatus.REJECTED);
-//        loan.setRejectionNote(dto.getRejectionNote());
-        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
-        return loanRepository.save(loan);
-    }
-
-    @Override
-    public Loan resetLoan(LoanActionDto dto) {
-        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
-
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found: " + dto.getEmployeeId()));
-
-        loan.setUpdatedEmployee(employee);
-
-        // RESET BACK TO PENDING
-        loan.setStatus(LoanStatus.PENDING);
-
-        // clear rejection note
-//        loan.setRejectionNote(null);
-        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
-        loan.setDecisionNote(null);
-
-        return loanRepository.save(loan);
-    }
+//    @Override
+//    public Loan resetLoan(LoanActionDto dto) {
+//        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Loan not found: " + dto.getFileNumber()));
+//
+//        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Employee not found: " + dto.getEmployeeId()));
+//
+//        loan.setUpdatedEmployee(employee);
+//
+//        // RESET BACK TO PENDING
+//        loan.setStatus(LoanStatus.PENDING);
+//
+//        // clear rejection note
+////        loan.setRejectionNote(null);
+//        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
+//        loan.setDecisionNote(null);
+//
+//        return loanRepository.save(loan);
+//    }
 
     @Override
     public LoanResponseDto updateLoan(String username,
@@ -474,17 +474,17 @@ public class LoanServiceImpl implements LoanService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    @Override
-    public CustomerResponseDto getCustomerWithLoans(String id) {
-
-//        Long customerId = Long.parseLong(id);
-
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Customer not found with id " + id));
-
-        return CustomerMapper.mapToCustomerResponseDto(customer);
-    }
+//    @Override
+//    public CustomerResponseDto getCustomerWithLoans(String id) {
+//
+////        Long customerId = Long.parseLong(id);
+//
+//        Customer customer = customerRepository.findById(id)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Customer not found with id " + id));
+//
+//        return CustomerMapper.mapToCustomerResponseDto(customer);
+//    }
 
     public List<LoanManageDto> manageLoans(String username, int page){
         Employee authEmployee = employeeRepository.findByEmail(username);
@@ -594,28 +594,12 @@ public class LoanServiceImpl implements LoanService {
         }
     }
 
-//    @Transactional
-//    @Override
-//    public Loan completeLoan(LoanActionDto dto) {
-//
-//        Loan loan = loanRepository.findById(dto.getFileNumber())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException(
-//                                "Loan not found : " + dto.getFileNumber()));
-//
-//        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-//                .orElseThrow(() ->
-//                        new ResourceNotFoundException(
-//                                "Employee not found : " + dto.getEmployeeId()));
-//
-//        loan.setEmployee(employee);
-//
-//        loan.setStatus(LoanStatus.COMPLETED);
-//
-//        loan.setUpdateStatus(loan.getUpdateStatus() + 1);
-//
-//        return loanRepository.save(loan);
-//    }
+    @Override
+    public List<LoanSummaryResponseDto> fetchLoanSummary() {
+
+        List<Loan> loanList = loanRepository.fetchApprovedLoansWithCollections();
+        return loanList.stream().map(LoanMapper::mapToLoanSummaryResponseDto).toList();
+    }
 }
 
 
