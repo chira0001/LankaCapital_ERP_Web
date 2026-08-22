@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { toast } from "sonner";
 import axiosAPI from '@/api/axiosAPI';
+import { ToastContainer } from 'react-toastify';
 
 const roles = ["ADMIN", "RECEPTIONIST", "FO"];
 
@@ -103,10 +104,7 @@ const SystemConfigurationPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>System Configuration - LendPro</title>
-      </Helmet>
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-8">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6">
           System Configuration
@@ -145,9 +143,8 @@ const SystemConfigurationPage = () => {
                         type="number"
                         disabled={!isEdit}
                         value={groupedData[condition][role] || ""}
-                        className={`w-28 rounded border bg-white px-2 py-1 text-right text-sm ${
-                          isEdit ? "text-gray-800" : "text-gray-400"
-                        }`}
+                        className={`w-28 rounded border bg-white px-2 py-1 text-right text-sm ${isEdit ? "text-gray-800" : "text-gray-400"
+                          }`}
                         onChange={(e) => updateValue(condition, role, e.target.value)}
                       />
                     </div>
@@ -185,9 +182,8 @@ const SystemConfigurationPage = () => {
                             type="number"
                             disabled={!isEdit}
                             value={groupedData[condition][role] || ""}
-                            className={`w-24 border rounded px-2 py-1 text-center ${
-                              isEdit ? "text-gray-800" : "text-gray-400"
-                            }`}
+                            className={`w-24 border rounded px-2 py-1 text-center ${isEdit ? "text-gray-800" : "text-gray-400"
+                              }`}
                             onChange={(e) => updateValue(condition, role, e.target.value)}
                           />
                         </td>
@@ -216,10 +212,9 @@ const SystemConfigurationPage = () => {
                 onClick={handleSave}
                 disabled={saveLoading}
                 className={`text-white px-5 sm:px-6 py-2 rounded transition
-                  ${
-                    saveLoading
-                      ? "bg-blue-800 cursor-not-allowed opacity-70 pointer-events-none"
-                      : "bg-blue-500 hover:bg-blue-800"
+                  ${saveLoading
+                    ? "bg-blue-800 cursor-not-allowed opacity-70 pointer-events-none"
+                    : "bg-blue-500 hover:bg-blue-800"
                   }`}
               >
                 {saveLoading ? "Saving..." : "Save Changes"}

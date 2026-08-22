@@ -5,6 +5,7 @@ import { Button } from '@/component/ui/button';
 import axiosAPI from '@/api/axiosAPI';
 import * as XLSX from 'xlsx';
 import CreatableSelect from "react-select/creatable";
+import { ToastContainer } from 'react-toastify';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -199,9 +200,10 @@ const PettyCashPage = () => {
 
   return (
     <>
-      <Helmet>
+      <ToastContainer position="top-right" autoClose={3000} />
+      {/* <Helmet>
         <title>Petty Cash Management</title>
-      </Helmet>
+      </Helmet> */}
 
       <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
         {/* HEADER */}

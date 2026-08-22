@@ -88,7 +88,6 @@ const ReceptionistHome = () => {
             toast.error("Interest rate is required to assign the loan.");
             return;
         }
-
         try {
             setSubmitting(true);
             await axiosAPI.put("/recep/loans", pendingLoanUpdatePayload, {
@@ -108,6 +107,15 @@ const ReceptionistHome = () => {
             setSubmitting(false);
         }
     };
+
+    function isValidUUID(str) {
+        if (typeof str !== "string") return false;
+
+        const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+        return uuidRegex.test(str.trim());
+    }
 
     const stats = [
         { title: "Total Customers", value: "1,240", growth: "+8 this week", bg: "bg-blue-50", text: "text-blue-600" },
@@ -288,7 +296,9 @@ const ReceptionistHome = () => {
                                             <input
                                                 type="text"
                                                 name="fileNumber"
-                                                value={pendingLoanUpdatePayload.fileNumber}
+                                                value={
+                                                    isValidUUID(pendingLoanUpdatePayload.fileNumber) ? "Assign a file number" : pendingLoanUpdatePayload.fileNumber
+                                                }
                                                 onChange={handleInputChange}
                                                 placeholder="e.g., LN-2023-001"
                                                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"

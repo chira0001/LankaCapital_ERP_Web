@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/component/ui/dialog";
+import { ToastContainer } from "react-toastify";
 
 const emptyCustomer = {
   nic: "",
@@ -241,6 +242,7 @@ const CustomerManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* HEADER */}
       <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between lg:mb-8">
         <div>

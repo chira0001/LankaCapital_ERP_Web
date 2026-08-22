@@ -348,6 +348,14 @@ public class AdminController {
         return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
     }
 
+    @GetMapping(path = "/assets")
+    public ResponseEntity<?> getFromAssetsRegistry(Authentication authentication){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(assetsRegistryService.getAllAssets(), HttpStatus.CREATED);
+    }
+
     @PostMapping(path = "/assets")
     public ResponseEntity<?> addToAssetsRegistry(
             Authentication authentication,
@@ -358,6 +366,7 @@ public class AdminController {
         }
         return new ResponseEntity<>(assetsRegistryService.addAssetToRegistry(assetsDto), HttpStatus.CREATED);
     }
+
 
     //revenue tracking
     @GetMapping("/revenue/summary")
