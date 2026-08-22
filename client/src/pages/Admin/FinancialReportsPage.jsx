@@ -7,12 +7,11 @@ import api from "@/lib/api";
 import axiosApi from "../../api/axiosAPI.js"
 import * as XLSX from "xlsx";
 
-import MonthPicker from "@/components/reports/MonthPicker";
-import YearPicker from "@/components/reports/YearPicker";
 import dayjs from "dayjs";
+import { ToastContainer } from "react-toastify";
 
 const FinancialReportsPage = () => {
-  const [reportType, setReportType] = useState("loans");
+  const [reportType, setReportType] = useState("");
 
   const [month, setMonth] = useState(dayjs());
   const [year, setYear] = useState(dayjs());
@@ -25,79 +24,58 @@ const FinancialReportsPage = () => {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
-  // ============================
-  // FORMATTERS
-  // ============================
-  const formatMonth = (value) =>
-    value ? value.format("YYYY-MM") : "";
+  const [isSaving, setIsSaving] = useState(false);
 
-  const formatYear = (value) =>
-    value ? value.format("YYYY") : "";
+  const [isAddingAsset, setIsAddingAsset] = useState(false);
+  const [assetsPayload, setAssetsPayload] = useState({
+    assetName: "",
+    purchasedMonth: "",
+    rate: "",
+    amount: "",
+  });
 
-  // ============================
-  // ENDPOINTS
-  // ============================
-  const getEndpoint = (type) => {
-    switch (type) {
-      case "loans":
-        return "/admin/reports/loans/monthly";
-      case "expenses":
-        return "/admin/reports/expenses/monthly";
-      //case "dashboard":
-      //return "/admin/financial-dashboard";
-      case "cashflow":
-        return "/admin/financial-cashflow";
-      case "balance":
-        return "/admin/financial-balance-sheet";
-      case "profitloss":
-        return "/admin/financial-profit-loss";
-      case "statement":
-        return "/admin/financial-report";
-      case "annual-report":
-        return "/admin/annual-report";
-      case "annual-balance":
-        return "/admin/annual-balance-sheet";
-      case "annual-cashflow":
-        return "/admin/annual-cash-flow";
-      default:
-        return "/admin/reports/loans/monthly";
+  const saveAssetToRegistry = async () => {
+    try {
+      setIsSaving(true);
+      const res = await axiosApi.post("/admin/assetss", assetsPayload);
+      toast.success("Asset successfully added");
+      setIsSaving(false);
+    } catch (e) {
+      toast.error("Error adding asset. Try again...");
+      setIsSaving(false);
+      console.log(e);
     }
-  };
+  }
 
-  // ============================
-  // GENERATE
-  // ============================
+  const reportTypes = [
+    { value: "PPE", name: "PPE" },
+    { value: "Working", name: "Working" },
+    { value: "TB", name: "TB" },
+    { value: "BS", name: "BS" },
+    { value: "CE", name: "CE" },
+    { value: "CF", name: "CF" },
+    { value: "BS", name: "BS" },
+    { value: "CE", name: "CE" },
+    { value: "CF", name: "CF" },
+    { value: "P09", name: "P09" },
+    { value: "P10", name: "P10" },
+    { value: "P11", name: "P11" },
+    { value: "PL", name: "PL" },
+    { value: "Income Tax", name: "Income Tax" },
+    { value: "Statement", name: "Complete Report" },
+  ];
+
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      let res;
-
-      const monthlyTypes = [
-        // "dashboard",
-        "cashflow",
-        "balance",
-        "profitloss",
-        "statement",
-        "loans",
-        "expenses",
-      ];
-
-      if (monthlyTypes.includes(reportType)) {
-        res = await axiosApi.get(getEndpoint(reportType), {
-          params: { month: formatMonth(month) },
-        });
-      } else {
-        res = await axiosApi.get(getEndpoint(reportType), {
-          params: { year: formatYear(year) },
-        });
-      }
-
-      // console.log("REPORT TYPE:", reportType);
-      // console.log("RAW RESPONSE:", res?.data);
-      // console.log("TYPE:", typeof res?.data);
-
+      let res = await axiosApi.get(`/admin/reports`, {
+        params: {
+          reportType: reportType,
+          startDate: formatMonth(month),
+          endDate: formatMonth(month)
+        },
+      });
       setData(res.data);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
@@ -107,9 +85,6 @@ const FinancialReportsPage = () => {
     }
   };
 
-  // ============================
-  // EXPORT EXCEL
-  // ============================
   const handleExportExcel = () => {
     if (!data) return;
 
@@ -124,9 +99,6 @@ const FinancialReportsPage = () => {
     );
   };
 
-  // ============================
-  // PDF DOWNLOAD
-  // ============================
   const handleDownloadPDF = async () => {
     try {
       const res = await axiosApi.get("/admin/financial-report/pdf", {
@@ -148,53 +120,6 @@ const FinancialReportsPage = () => {
     }
   };
 
-  // // ============================
-  // // IMPORT EXCEL
-  // // ============================
-  // const handleImportExcel = async () => {
-  //   if (!importFile) return;
-
-  //   setImporting(true);
-  //   setImportResult(null);
-
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("file", importFile);
-
-  //     // const res = await api.post(
-  //     //   "/admin/financial-statement/import",
-  //     //   formData,
-  //     //   {
-  //     //   headers: {
-  //     //     "Content-Type": "multipart/form-data",
-  //     //     Authorization: `Bearer ${localStorage.getItem("token")}`,
-  //     //   },
-  //     // }
-  //     // );
-
-  //     api.interceptors.request.use((config) => {
-  //       const token = localStorage.getItem("token");
-
-  //       if (token) {
-  //         config.headers.Authorization = `Bearer ${token}`;
-  //       }
-
-  //       return config;
-  //     });
-
-
-
-  //     setImportResult(`Imported ${res.data.length} month(s) successfully.`);
-  //   } catch (err) {
-  //     setImportResult(err.response?.data?.message || "Import failed");
-  //   } finally {
-  //     setImporting(false);
-  //   }
-  // };
-
-  // ============================
-  // TABLE RENDER
-  // ============================
   const renderTable = () => {
     if (!data) return null;
 
@@ -260,22 +185,96 @@ const FinancialReportsPage = () => {
     );
   };
 
-  // ============================
-  // UI
-  // ============================
   return (
     <>
-      <Helmet>
-        <title>Financial Reports</title>
-      </Helmet>
+      <ToastContainer position="top-right" autoClose={3000} />
 
       <h1 className="text-2xl font-bold mb-6">
-        Financial Reports Dashboard
+        Financials Dashboard
       </h1>
+
+      <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
+
+        {isAddingAsset ?
+          <>
+            <h3>Add new asset</h3>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Asset Name</Label>
+                <input
+                  type="text"
+                  name="assetName"
+                  className="w-full border p-2 rounded"
+                  onChange={(e) => {
+                    setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                  }}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label>Purchased Date</Label>
+                  <input
+                    type="date"
+                    name="purchasedMonth"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Rate</Label>
+                  <input
+                    type="text"
+                    name="rate"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Amount</Label>
+                  <input
+                    type="text"
+                    name="amount"
+                    className="w-full border p-2 rounded"
+                    onChange={(e) => {
+                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => saveAssetToRegistry()}>
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+              <button onClick={() => setIsAddingAsset(false)}>Cancel</button>
+            </div>
+          </>
+          :
+          <button onClick={() => setIsAddingAsset(true)}>Add an asset</button>
+        }
+
+
+      </div>
 
       {/* FILTER */}
       <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
+        <h3>Generate report</h3>
         <div className="grid md:grid-cols-3 gap-4">
+
+          <div>
+            <Label>Start Date</Label>
+            <input type="date" name="" id="" className="w-full border p-2 rounded" />
+          </div>
+
+          <div>
+            <Label>End Date</Label>
+            <input type="date" name="" id="" className="w-full border p-2 rounded" />
+          </div>
+
           <div>
             <Label>Report Type</Label>
             <select
@@ -283,34 +282,16 @@ const FinancialReportsPage = () => {
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
-              {/* <option value="dashboard">Dashboard</option> */}
-              <option value="loans">Loans</option>
-              <option value="expenses">Expenses</option>
-              <option value="statement">Statement</option>
-              <option value="cashflow">Cash Flow</option>
-              <option value="balance">Balance Sheet</option>
-              <option value="profitloss">Profit & Loss</option>
-              <option value="annual-report">Annual Report</option>
-              <option value="annual-balance">Annual Balance Sheet</option>
-              <option value="annual-cashflow">Annual Cash Flow</option>
+              <option value="">Select Report Type</option>
+              {reportTypes.map((type, key) => {
+                return (
+                  <option value={type.value} key={key}>{type.name}</option>
+                )
+              })}
             </select>
           </div>
 
-          {!reportType.includes("annual") && (
-            <div>
-              <Label>Month</Label>
-              <MonthPicker value={month} onChange={setMonth} />
-            </div>
-          )}
-
-          {reportType.includes("annual") && (
-            <div>
-              <Label>Year</Label>
-              <YearPicker value={year} onChange={setYear} />
-            </div>
-          )}
         </div>
-
         {error && (
           <p className="text-red-600 mt-3 text-sm">{error}</p>
         )}
@@ -329,26 +310,6 @@ const FinancialReportsPage = () => {
             <Download className="w-4 h-4 mr-2" />
             PDF
           </Button>
-
-          {/* IMPORT */}
-          {/* <input
-            type="file"
-            accept=".xlsx"
-            onChange={(e) => setImportFile(e.target.files[0])}
-          />
-
-          <Button
-            onClick={handleImportExcel}
-            disabled={!importFile || importing}
-          >
-            {importing ? "Importing..." : "Import Excel"}
-          </Button>
-
-          {importResult && (
-            <span className="text-sm text-gray-600">
-              {importResult}
-            </span>
-          )} */}
         </div>
       </div>
 

@@ -24,7 +24,7 @@ const menuItems = [
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
   { name: "User Management", icon: CircleUser, path: "/ad/users" },
   { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
-  { name: "Financial Reports", icon: Files, path: "/ad/reports" },
+  { name: "Financials", icon: Files, path: "/ad/financials" },
   { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 ];
@@ -129,6 +129,7 @@ const Sidebar = () => {
 
               return (
                 <li key={index}>
+
                   <NavLink
                     to={item.path}
                     className={({ isActive }) =>

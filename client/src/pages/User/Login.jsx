@@ -22,14 +22,14 @@ const Login = () => {
         password: false
     });
 
+    const [isLogging, setIsLogging] = useState(false);
+
     const navigateHome = () => {
         navigate('/');
     }
 
-    const login = async (/*e*/) => {
-        ////////////////////////
-        // console.log("LOGIN BUTTON CLICKED");
-        //  e.preventDefault();
+    const login = async () => {
+
         const newErrors = {
             email: !email || email.trim() === "",
             password: !password || password.trim() === ""
@@ -37,37 +37,29 @@ const Login = () => {
         setErrors(newErrors);
         if (!newErrors.email && !newErrors.password) {
             try {
+                setIsLogging(true);
                 const response = await loginFunc({
                     email,
                     password
                 });
 
-                //  console.log("LOGIN RESPONSE =", response.data);
-                // if (response.status == 200) {
-                //     toast.success("Loggin Successfull. Redirecting...")
-                //     localStorage.setItem("token", response.data.token);
-                //     const role = response.data.role.slice(0, 2).toLowerCase()
-                //     navigate(`/${role}`)
-                // } 
-
                 if (response.status == 200) {
-
                     toast.success("Loggin Successfull. Redirecting...");
-
                     localStorage.setItem("token", response.data.token);
-
                     const payload = JSON.parse(atob(response.data.token.split('.')[1]));
                     localStorage.setItem("username", payload.sub);
                     localStorage.setItem("role", payload.role.slice(0, 5).toLowerCase());
                     const role = response.data.role.slice(0, 2).toLowerCase();
-
+                    setIsLogging(false);
                     navigate(`/${role}`);
                 }
 
                 else {
+                    setIsLogging(false);
                     console.log(response);
                 }
             } catch (e) {
+                setIsLogging(false);
                 console.log(e);
                 toast.error(e.response?.data?.message || "Failed to Login");
             }
@@ -159,10 +151,20 @@ const Login = () => {
                                 {/* Login Button */}
                                 <button
                                     onClick={login}
-                                    onKeyDown={(e) => e.key === 'Enter' && login()}
-                                    className="w-full bg-black text-white py-3 rounded-lg font-semibold tracking-wide hover:bg-gray-800 transition duration-300"
+                                    onKeyDown={(e) => e.key === "Enter" && login()}
+                                    disabled={isLogging}
+                                    className="w-full flex items-center justify-center gap-2 
+                                        bg-black text-white py-3 rounded-xl 
+                                        font-semibold tracking-wide 
+                                        transition-all duration-300 
+                                        hover:bg-gray-900 hover:scale-[1.02] 
+                                        active:scale-[0.98] 
+                                        disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    Login
+                                    {isLogging && (
+                                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    )}
+                                    {isLogging ? "Logging..." : "Login"}
                                 </button>
 
                                 {/* Signup Link */}
