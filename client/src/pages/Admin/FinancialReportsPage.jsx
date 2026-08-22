@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Download } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
-import api from "@/lib/api";
-import axiosApi from "../../api/axiosAPI.js"
+import axiosApi from "../../api/axiosAPI.js";
 import * as XLSX from "xlsx";
-
 import dayjs from "dayjs";
-import { ToastContainer } from "react-toastify";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const FinancialReportsPage = () => {
   const [reportType, setReportType] = useState("");
@@ -34,18 +34,37 @@ const FinancialReportsPage = () => {
     amount: "",
   });
 
+  const [assetsList, setAssetsList] = useState([]); // intended to be list
+  const [isAssetsListLoading, setIsAssetsListLoading] = useState(false);
+
+  const formatMonth = (d) => dayjs(d).format("YYYY-MM");
+
   const saveAssetToRegistry = async () => {
     try {
       setIsSaving(true);
-      const res = await axiosApi.post("/admin/assetss", assetsPayload);
+      const res = await axiosApi.post("/admin/assets", assetsPayload);
       toast.success("Asset successfully added");
       setIsSaving(false);
+      fetchAssets();
     } catch (e) {
       toast.error("Error adding asset. Try again...");
       setIsSaving(false);
       console.log(e);
     }
-  }
+  };
+
+  const fetchAssets = async () => {
+    try {
+      setIsAssetsListLoading(true);
+      const res = await axiosApi.get("/admin/assets");
+      setAssetsList(res.data);
+      console.log("assetsList : ", res.data);
+      setIsAssetsListLoading(false);
+    } catch (e) {
+      setIsAssetsListLoading(false);
+      toast.error("Error loading asset. Try again...");
+    }
+  };
 
   const reportTypes = [
     { value: "PPE", name: "PPE" },
@@ -73,7 +92,7 @@ const FinancialReportsPage = () => {
         params: {
           reportType: reportType,
           startDate: formatMonth(month),
-          endDate: formatMonth(month)
+          endDate: formatMonth(month),
         },
       });
       setData(res.data);
@@ -93,10 +112,7 @@ const FinancialReportsPage = () => {
 
     XLSX.utils.book_append_sheet(wb, ws, "Report");
 
-    XLSX.writeFile(
-      wb,
-      `${reportType}_${formatMonth(month)}.xlsx`
-    );
+    XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
   };
 
   const handleDownloadPDF = async () => {
@@ -109,10 +125,7 @@ const FinancialReportsPage = () => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(
-        "download",
-        `financial-report_${formatMonth(month)}.pdf`
-      );
+      link.setAttribute("download", `financial-report_${formatMonth(month)}.pdf`);
       document.body.appendChild(link);
       link.click();
     } catch {
@@ -138,190 +151,443 @@ const FinancialReportsPage = () => {
       };
 
       return (
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-100">
-              {allKeys.map((key) => (
-                <th key={key} className="p-2 border text-left">
-                  {key}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {data.map((row, i) => (
-              <tr key={i} className="border-t">
+        <div className="w-full overflow-x-auto rounded-lg border">
+          <table className="min-w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-gray-50">
+              <tr>
                 {allKeys.map((key) => (
-                  <td key={`${i}-${key}`} className="p-2 border">
-                    {renderCell(row[key])}
-                  </td>
+                  <th
+                    key={key}
+                    className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800"
+                  >
+                    {key}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="bg-white">
+              {data.map((row, i) => (
+                <tr key={i} className="border-t">
+                  {allKeys.map((key) => (
+                    <td
+                      key={`${i}-${key}`}
+                      className="align-top whitespace-nowrap px-3 py-2 text-gray-700"
+                    >
+                      {renderCell(row[key])}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
     }
 
     return (
-      <table className="w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 border">Field</th>
-            <th className="p-2 border">Value</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {Object.entries(data).map(([key, value]) => (
-            <tr key={key}>
-              <td className="p-2 border font-medium">{key}</td>
-              <td className="p-2 border">{String(value)}</td>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
+                Field
+              </th>
+              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
+                Value
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody className="bg-white">
+            {Object.entries(data).map(([key, value]) => (
+              <tr key={key} className="border-t">
+                <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-800">
+                  {key}
+                </td>
+                <td className="px-3 py-2 text-gray-700">{String(value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
+  const assetsCount = useMemo(() => {
+    return Array.isArray(assetsList) ? assetsList.length : 0;
+  }, [assetsList]);
+
   return (
     <>
+      <Helmet>
+        <title>Financials Dashboard</title>
+      </Helmet>
+
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <h1 className="text-2xl font-bold mb-6">
-        Financials Dashboard
-      </h1>
-
-      <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
-
-        {isAddingAsset ?
-          <>
-            <h3>Add new asset</h3>
-            <div className="flex flex-col gap-3">
-              <div>
-                <Label>Asset Name</Label>
-                <input
-                  type="text"
-                  name="assetName"
-                  className="w-full border p-2 rounded"
-                  onChange={(e) => {
-                    setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Purchased Date</Label>
-                  <input
-                    type="date"
-                    name="purchasedMonth"
-                    className="w-full border p-2 rounded"
-                    onChange={(e) => {
-                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label>Rate</Label>
-                  <input
-                    type="text"
-                    name="rate"
-                    className="w-full border p-2 rounded"
-                    onChange={(e) => {
-                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label>Amount</Label>
-                  <input
-                    type="text"
-                    name="amount"
-                    className="w-full border p-2 rounded"
-                    onChange={(e) => {
-                      setAssetsPayload((prev) => ({ ...prev, [e.target.name]: e.target.value }))
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button onClick={() => saveAssetToRegistry()}>
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-              <button onClick={() => setIsAddingAsset(false)}>Cancel</button>
-            </div>
-          </>
-          :
-          <button onClick={() => setIsAddingAsset(true)}>Add an asset</button>
-        }
-
-
-      </div>
-
-      {/* FILTER */}
-      <div className="mb-4 rounded-xl bg-white p-3 shadow sm:mb-6 sm:p-4 lg:p-6 lg:mb-6">
-        <h3>Generate report</h3>
-        <div className="grid md:grid-cols-3 gap-4">
-
-          <div>
-            <Label>Start Date</Label>
-            <input type="date" name="" id="" className="w-full border p-2 rounded" />
-          </div>
-
-          <div>
-            <Label>End Date</Label>
-            <input type="date" name="" id="" className="w-full border p-2 rounded" />
-          </div>
-
-          <div>
-            <Label>Report Type</Label>
-            <select
-              className="w-full border p-2 rounded"
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-            >
-              <option value="">Select Report Type</option>
-              {reportTypes.map((type, key) => {
-                return (
-                  <option value={type.value} key={key}>{type.name}</option>
-                )
-              })}
-            </select>
-          </div>
-
-        </div>
-        {error && (
-          <p className="text-red-600 mt-3 text-sm">{error}</p>
-        )}
-
-        {/* ACTION BUTTONS */}
-        <div className="flex flex-wrap gap-3 mt-4">
-          <Button onClick={handleGenerate} disabled={loading}>
-            {loading ? "Loading..." : "Generate"}
-          </Button>
-
-          <Button onClick={handleExportExcel}>
-            Export Excel
-          </Button>
-
-          <Button onClick={handleDownloadPDF} className="bg-red-600 text-white">
-            <Download className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
-        </div>
-      </div>
-
-      {/* OUTPUT */}
-      <div className="rounded-xl bg-white p-3 shadow sm:p-4 lg:p-6">
-        {!data ? (
-          <p className="text-gray-500">
-            Select report type and generate
+      <div className="mx-auto w-full max-w-7xl space-y-6">
+        {/* Header */}
+        <header className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Financials Dashboard
+          </h1>
+          <p className="text-sm text-gray-600">
+            Generate reports, export to Excel, and download PDFs.
           </p>
-        ) : (
-          renderTable()
-        )}
+        </header>
+
+        {/* Asset Registry */}
+        <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-gray-900">
+                Asset Registry
+              </h2>
+              <p className="mt-0.5 text-sm text-gray-600">
+                View or Add new fixed assets to your registry.
+              </p>
+            </div>
+
+            {!isAddingAsset ? (
+              <Button
+                onClick={() => {
+                  setIsAddingAsset(true);
+                  fetchAssets();
+                }}
+              >
+                Add an asset
+              </Button>
+            ) : (
+              <div className="flex flex-col items-start gap-1 sm:items-end">
+                <div className="text-xs text-gray-500">
+                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {isAddingAsset ? (
+            <div className="mt-4 rounded-lg ">
+              <div className="grid gap-3 lg:grid-cols-12">
+                {/* Form */}
+                <div className="lg:col-span-6">
+                  <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Add new assets
+                      </h3>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        Enter new assets to registry entries
+                      </p>
+                    </div>
+
+                    <div className="mt-4 grid gap-4">
+                      <div>
+                        <Label htmlFor="assetName">Asset Name<span className="text-red-500">*</span></Label>
+                        <input
+                          id="assetName"
+                          type="text"
+                          name="assetName"
+                          className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                          onChange={(e) => {
+                            setAssetsPayload((prev) => ({
+                              ...prev,
+                              [e.target.name]: e.target.value,
+                            }));
+                          }}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="sm:col-span-1">
+                          <Label htmlFor="purchasedMonth">Purchased Date<span className="text-red-500">*</span></Label>
+                          <input
+                            id="purchasedMonth"
+                            type="date"
+                            name="purchasedMonth"
+                            className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                            onChange={(e) => {
+                              setAssetsPayload((prev) => ({
+                                ...prev,
+                                [e.target.name]: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="sm:col-span-1">
+                          <Label htmlFor="rate">Rate (%)<span className="text-red-500">*</span></Label>
+                          <input
+                            id="rate"
+                            type="text"
+                            name="rate"
+                            className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                            onChange={(e) => {
+                              setAssetsPayload((prev) => ({
+                                ...prev,
+                                [e.target.name]: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="sm:col-span-1">
+                          <Label htmlFor="amount">Amount(LKR)<span className="text-red-500">*</span></Label>
+                          <input
+                            id="amount"
+                            type="text"
+                            name="amount"
+                            className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                            onChange={(e) => {
+                              setAssetsPayload((prev) => ({
+                                ...prev,
+                                [e.target.name]: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsAddingAsset(false)}
+                          className="w-full sm:w-auto"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => saveAssetToRegistry()}
+                          className="w-full sm:w-auto"
+                          disabled={isSaving}
+                        >
+                          {isSaving ? "Saving..." : "Save"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assets List */}
+                <div className="lg:col-span-6">
+                  <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          Existing assets
+                        </h3>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          Review the current registry entries.
+                        </p>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        onClick={fetchAssets}
+                        disabled={isAssetsListLoading}
+                      >
+                        {isAssetsListLoading ? "Refreshing..." : "Refresh"}
+                      </Button>
+                    </div>
+
+                    <div className="mt-4">
+                      {assetsCount > 0 ? (
+                        <div className="max-h-44 overflow-y-auto rounded-lg border">
+                          <table className="min-w-full text-sm">
+                            <thead className="sticky top-0 z-10 bg-gray-50 shadow-sm">
+                              <tr>
+                                <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
+                                  Asset Name
+                                </th>
+                                <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
+                                  Purchased Date
+                                </th>
+                                <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
+                                  Rate(%)
+                                </th>
+                                <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
+                                  Amount(LKR)
+                                </th>
+                              </tr>
+                            </thead>
+
+                            <tbody className="bg-white">
+                              {assetsList.map((asset, key) => {
+                                const dateStr = asset?.purchasedMonth
+                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
+                                  : "-";
+
+                                return (
+                                  <tr key={key} className="border-t hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-3 py-2 text-gray-800">
+                                      {asset?.assetName ?? "-"}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {dateStr}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {asset?.rate ?? "-"}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {asset?.amount ?? "-"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : isAssetsListLoading ? (
+                        <div className="rounded-lg border bg-gray-50 p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900">
+                                Loading Assets Details
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Please wait while we fetch the latest data...
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 space-y-2">
+                            <div className="h-8 w-full rounded bg-white/70 ring-1 ring-gray-100 animate-pulse" />
+                            <div className="h-8 w-full rounded bg-white/70 ring-1 ring-gray-100 animate-pulse" />
+                            <div className="h-8 w-full rounded bg-white/70 ring-1 ring-gray-100 animate-pulse" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
+                          <p className="font-medium text-gray-800">
+                            No assets are available
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Add a new asset using the form to start building your registry.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        {/* Report Generator */}
+        <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-gray-900">
+                Generate report
+              </h2>
+              <p className="mt-0.5 text-sm text-gray-600">
+                Choose a date range and report type, then export or download.
+              </p>
+            </div>
+
+            <div className="text-xs text-gray-500">
+              Current month:{" "}
+              <span className="font-medium text-gray-700">
+                {formatMonth(month)}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
+              <input
+                id="startDate"
+                type="date"
+                name=""
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
+              <input
+                id="endDate"
+                type="date"
+                name=""
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="reportType">Report Type</Label>
+              <select
+                id="reportType"
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+              >
+                <option value="">Select Report Type</option>
+                {reportTypes.map((type, key) => {
+                  return (
+                    <option value={type.value} key={key}>
+                      {type.name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          {error ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <Button onClick={handleGenerate} disabled={loading}>
+              {loading ? "Loading..." : "Generate"}
+            </Button>
+
+            <Button onClick={handleExportExcel} variant="outline">
+              Export Excel
+            </Button>
+
+            <Button
+              onClick={handleDownloadPDF}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
+          </div>
+        </section>
+
+        {/* Output */}
+        <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Output</h2>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Results appear here after generating a report.
+              </p>
+            </div>
+            <div className="text-xs text-gray-500">
+              {data ? "Report loaded" : "No data"}
+            </div>
+          </div>
+
+          {!data ? (
+            <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
+              Select report type and generate
+            </div>
+          ) : (
+            renderTable()
+          )}
+        </section>
       </div>
     </>
   );

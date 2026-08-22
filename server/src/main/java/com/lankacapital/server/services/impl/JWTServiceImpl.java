@@ -76,11 +76,6 @@ public class JWTServiceImpl implements JWTService {
                 .compact();
     }
 
-//    private Key getSignKey(){
-//        byte[] key = Decoders.BASE64.decode(secretKey);
-//        return Keys.hmacShaKeyFor(key);
-//    }
-
     private Key getSignKey() {
         byte[] key = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(key);

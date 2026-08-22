@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axiosAPI from "@/api/axiosAPI";
+import { ToastContainer } from "react-toastify";
 
 const formatLKR = (amount) =>
     new Intl.NumberFormat("en-LK", {
@@ -155,6 +156,7 @@ const LoanSummary = () => {
 
     return (
         <div className="min-h-screen w-full p-3">
+            <ToastContainer position="top-right" autoClose={3000} />
             <div className="mx-auto max-w-[1600px]">
                 {/* Page header */}
                 <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4">

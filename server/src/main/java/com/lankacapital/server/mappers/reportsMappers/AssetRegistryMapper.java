@@ -18,4 +18,14 @@ public class AssetRegistryMapper {
         return assetsRegistry;
     }
 
+    public static AssetsDto mapToAssetsDto(AssetsRegistry assetsRegistry){
+        AssetsDto dto = new AssetsDto();
+
+        dto.setAssetName(assetsRegistry.getAssetName());
+        dto.setPurchasedMonth(assetsRegistry.getPurchasedDate().toString());
+        dto.setRate(assetsRegistry.getRate().toString());
+        dto.setAmount(assetsRegistry.getAmount());
+
+        return dto;
+    }
 }
