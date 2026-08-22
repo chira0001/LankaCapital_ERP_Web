@@ -39,7 +39,8 @@ public class LoanMapper {
         LoanResponseDto responseDto = new LoanResponseDto();
 
         responseDto.setEndAt(loan.getEndAt());
-        responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
+//        responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
+        responseDto.setFileNumber(loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
         responseDto.setLoanType(loan.getLoanType().toString());
