@@ -117,7 +117,7 @@ const ReceptionistHome = () => {
     ];
 
     return (
-        <div className="flex flex-col gap-6 px-6 py-6 min-h-screen bg-gray-50">
+        <div className="flex flex-col gap-3 min-h-screen">
             <ToastContainer position="top-right" autoClose={3000} />
             <h1 className='text-2xl md:text-3xl font-bold text-gray-800'>Receptionist Dashboard</h1>
 
@@ -136,7 +136,7 @@ const ReceptionistHome = () => {
             <div className="grid lg:grid-cols-3 gap-6 flex-1">
 
                 {/* ================= LOAN APPLICATIONS ================= */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden max-h-[75vh]">
                     <div className="flex justify-between items-center p-6 border-b bg-gray-50">
                         <h2 className="font-semibold text-lg text-gray-800">
                             Field Officer's New Loan Collections
@@ -144,7 +144,7 @@ const ReceptionistHome = () => {
                         <span className="text-sm text-gray-500">{pendingLoans.length} Pending</span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4">
+                    <div className="flex-1 min-h-0 overflow-y-auto p-4">
                         {loading ? (
                             <div className="flex items-center justify-center h-64">
                                 <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
