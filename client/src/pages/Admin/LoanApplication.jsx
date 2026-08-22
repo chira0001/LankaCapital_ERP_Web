@@ -5,6 +5,7 @@ import { Label } from '@/component/ui/label';
 import { Textarea } from '@/component/ui/textarea';
 import axiosAPI from '@/api/axiosAPI';
 import { Helmet } from 'react-helmet';
+import { ToastContainer } from 'react-toastify';
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
@@ -282,6 +283,7 @@ const LoanApplication = () => {
   return (
     <>
       <div className="flex w-full min-h-screen bg-gray-50">
+        <ToastContainer position="top-right" autoClose={3000} />
         <div className="flex-1">
           <div className="p-3 sm:p-4 lg:p-6">
             <h1 className="mb-4 text-2xl font-bold text-black sm:text-3xl sm:mb-6 lg:mb-6">
