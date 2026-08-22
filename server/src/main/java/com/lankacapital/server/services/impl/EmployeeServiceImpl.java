@@ -86,7 +86,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<EmployeeResponseDto> getAllEmployees(String username) {
         List<Employee> employeeList = employeeRepository.findAll();
         employeeList.remove(employeeRepository.findByEmail(username));
-        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+        return employeeList
+                .stream()
+                .filter(e -> !e.getDeleted())
+                .map(EmployeeMapper::mapToEmployeeResponseDto)
+                .toList();
     }
 
     @Override
@@ -192,10 +196,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(Long id) {
 
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
-        employeeRepository.delete(employee);
+        employee.setDeleted(true);
+        employee.setAccountStatus("Deleted");
+        employeeRepository.save(employee);
     }
 
     @Override
