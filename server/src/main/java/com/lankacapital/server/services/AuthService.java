@@ -6,4 +6,5 @@ public interface AuthService {
     EmployeeResponseDto signUp(SignUpRequest signUpRequest);
     JwtAuthenticationResponse signIn(SignInRequest signInRequest);
     JwtAuthenticationResponse refreshToken(String refreshToken);
+    String verifyPassword(String username, String password);
 }

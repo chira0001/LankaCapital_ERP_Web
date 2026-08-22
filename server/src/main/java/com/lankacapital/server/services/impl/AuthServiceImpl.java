@@ -94,4 +94,24 @@ public class AuthServiceImpl implements AuthService {
             throw new com.lankacapital.server.exceptions.InvalidRefreshTokenException("Invalid refresh token. Please login");
         }
     }
+
+    @Override
+    public String verifyPassword(String username, String password){
+        try{
+            Employee authEmployee = employeeRepository.findByEmail(username);
+            if (authEmployee == null) {
+                throw new ResourceNotFoundException("Employee not found with verification");
+            }
+
+            if(passwordEncoder.matches(password, authEmployee.getPassword())){
+                return "";
+            }
+
+            return "Invalid password, please try again";
+        }catch (ExpiredJwtException e) {
+            throw new RuntimeException("Refresh token expired. Please login again");
+        }catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 }

@@ -413,6 +413,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setCustomer(customer);
         loan.setStatus(LoanStatus.PENDING);
         loan.setUpdateStatus(loan.getUpdateStatus());
+        loan.setCreatedAt(customerAddDto.getCreatedAt());
         if(customerAddDto.getLoanType().equalsIgnoreCase("DAILY")){
             loan.setLoanType(LoanType.DAILY);
         } else if (customerAddDto.getLoanType().equalsIgnoreCase("WEEKLY")) {
@@ -487,7 +488,7 @@ public class LoanServiceImpl implements LoanService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 50);
+        Pageable pageable = PageRequest.of(page, 25);
 
         return loanRepository.findAll(pageable)
                 .getContent()
