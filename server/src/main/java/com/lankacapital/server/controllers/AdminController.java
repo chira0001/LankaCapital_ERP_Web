@@ -2,25 +2,21 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
 import com.lankacapital.server.entities.Employee;
 
 import com.lankacapital.server.entities.SalaryMetaData;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
+import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.lankacapital.server.services.ReportService;
 
-import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -34,9 +30,9 @@ public class AdminController {
     private final EmployeeService employeeService;
     private final LoanService loanService;
     private final PettyCashService pettyCashService;
-    private final MonthlyExpenseService monthlyExpenseService;
+//    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
-    private final ReportService reportService;
+    private final AssetsRegistryService assetsRegistryService;
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
     private final DashboardService dashboardService;
@@ -228,174 +224,6 @@ public class AdminController {
         return pettyCashService.undoStatus(id, adminUsername);
     }
 
-
-    //reports
-    @GetMapping("/reports/loans/monthly")
-    public ResponseEntity<?> getMonthlyLoanReport(@RequestParam String month) {
-//        public ResponseEntity<?> getMonthlyLoanReport(@RequestParam String month) {
-        try {
-            YearMonth ym = YearMonth.parse(month);
-            System.out.println("184 : "+ym);
-            return ResponseEntity.ok(loanService.getMonthlyLoanReport(ym));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    @GetMapping("/reports/expenses/monthly")
-    public ResponseEntity<?> getMonthlyExpenseReport(@RequestParam String month) {
-        Optional<MonthlyExpenseReportRow> report =
-                monthlyExpenseService.getMonthlyExpenseReport(month);
-
-        if (report.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return ResponseEntity.ok(report.get());
-    }
-
-    @GetMapping("/financial-statement")
-    public ResponseEntity<?> getFinancialStatement(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getFinancialStatement(month)
-        );
-    }
-
-    @GetMapping("/financial-dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getFinancialDashboard(month)
-        );
-    }
-
-    @GetMapping("/financial-trend")
-    public ResponseEntity<?> getTrend(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getMonthlyTrend(month)
-        );
-    }
-
-    @GetMapping("/financial-profit-loss")
-    public ResponseEntity<?> getProfitLoss(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getProfitLoss(month)
-        );
-    }
-
-    @GetMapping("/financial-report/pdf")
-    public ResponseEntity<byte[]> downloadPdf(
-            @RequestParam String month
-    ) {
-
-        byte[] pdf = financialStatementService.generateFinancialReportPdf(month);
-
-        return ResponseEntity.ok()
-                .header("Content-Type", "application/pdf")
-                .header("Content-Disposition", "attachment; filename=financial-report.pdf")
-                .body(pdf);
-    }
-
-    @GetMapping("/financial-cashflow")
-    public ResponseEntity<?> getCashFlow(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getCashFlow(month)
-        );
-    }
-
-    @GetMapping("/financial-balance-sheet")
-    public ResponseEntity<?> getBalanceSheet(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getBalanceSheet(month)
-        );
-    }
-
-    @GetMapping("/financial-report")
-    public ResponseEntity<?> getFinancialReport(
-            @RequestParam String month
-    ) {
-        return ResponseEntity.ok(
-                financialStatementService.getFinancialReport(month)
-        );
-    }
-
-    //daily collection
-    @GetMapping("/admin/reports/collections/daily/details")
-    public ResponseEntity<?> getDetails(@RequestParam String date) {
-
-        return ResponseEntity.ok(
-                reportService.getDailyCollectionDetails(LocalDate.parse(date))
-        );
-    }
-
-    @GetMapping("/reports/collections/daily")
-    public ResponseEntity<?> getDailySummary(@RequestParam String date) {
-
-        return ResponseEntity.ok(
-                reportService.getDailyCollectionSummary(LocalDate.parse(date))
-        );
-    }
-
-
-    @GetMapping("/annual-report")
-    public FinancialReportDto annualReport(@RequestParam String year) {
-        return financialStatementService.getAnnualFinancialReport(year);
-    }
-
-    @GetMapping("/annual-balance-sheet")
-    public BalanceSheetDto annualBalanceSheet(@RequestParam String year) {
-        return financialStatementService.getAnnualBalanceSheet(year);
-    }
-
-    @GetMapping("/annual-cash-flow")
-    public CashFlowDto annualCashFlow(@RequestParam String year) {
-        return financialStatementService.getAnnualCashFlow(year);
-    }
-
-    @PostMapping(path = "/financial-statement/import", consumes = "multipart/form-data")
-    public ResponseEntity<?> importAssetsLiabilities(
-            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
-        return ResponseEntity.ok(
-                financialStatementService.importAssetsLiabilities(file)
-        );
-    }
-
-    //revenue tracking
-    @GetMapping("/revenue/summary")
-    public ResponseEntity<?> getRevenueSummary() {
-
-        var today = dailyCollectionService.getTodayCollection();
-        var week = dailyCollectionService.getWeeklyCollection();
-
-        return ResponseEntity.ok(
-                new RevenueSummary(today, week)
-        );
-    }
-
-    @GetMapping("/revenue/collections")
-    public ResponseEntity<?> getRevenueCollections() {
-
-        return ResponseEntity.ok(
-                dailyCollectionService.getAllCollections()
-        );
-    }
-
-    record RevenueSummary(
-            java.math.BigDecimal today,
-            java.math.BigDecimal week
-    ) {}
-
     // ================= CUSTOMER MANAGEMENT =================
 
     @GetMapping("/customers")
@@ -510,6 +338,51 @@ public class AdminController {
         return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
     }
 
+    //reports
+    @GetMapping("/reports")
+    public ResponseEntity<?> generateReport(
+            @RequestParam String reportType,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+    }
+
+    @PostMapping(path = "/assets")
+    public ResponseEntity<?> addToAssetsRegistry(
+            Authentication authentication,
+            @RequestBody AssetsDto assetsDto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(assetsRegistryService.addAssetToRegistry(assetsDto), HttpStatus.CREATED);
+    }
+
+    //revenue tracking
+    @GetMapping("/revenue/summary")
+    public ResponseEntity<?> getRevenueSummary() {
+
+        var today = dailyCollectionService.getTodayCollection();
+        var week = dailyCollectionService.getWeeklyCollection();
+
+        return ResponseEntity.ok(
+                new RevenueSummary(today, week)
+        );
+    }
+
+    @GetMapping("/revenue/collections")
+    public ResponseEntity<?> getRevenueCollections() {
+
+        return ResponseEntity.ok(
+                dailyCollectionService.getAllCollections()
+        );
+    }
+
+    record RevenueSummary(
+            java.math.BigDecimal today,
+            java.math.BigDecimal week
+    ) {}
 
 
 

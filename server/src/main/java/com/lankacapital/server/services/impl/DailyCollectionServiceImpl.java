@@ -7,6 +7,7 @@ import com.lankacapital.server.entities.DailyCollection;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.DailyCollectionMapper;
@@ -180,6 +181,29 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Loan not found")
                 );
+
+        if (loan.getStatus() != LoanStatus.APPROVED) {
+            throw new ResourceExistException("This loan is currently: " + loan.getStatus());
+        }
+
+        Optional<DailyCollection> lastDailyCollection =
+                dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber());
+
+        if (lastDailyCollection.isPresent()) {
+            LocalDate lastDate = lastDailyCollection.get().getPaidAt().toLocalDate();
+            LocalDate newDate = collectionSyncDto.getPaidAt().toLocalDate();
+
+            if (loan.getLoanType().equals(LoanType.DAILY)) {
+                if (!newDate.isAfter(lastDate)) {
+                    throw new ResourceExistException("Daily collection date must be after " + lastDate + ", received: " + newDate);
+                }
+            } else if (loan.getLoanType().equals(LoanType.WEEKLY)) {
+                if (newDate.isBefore(lastDate.plusWeeks(1))) {
+                    throw new ResourceExistException("Weekly collection must be on or after " + lastDate.plusWeeks(1) + ", received: " + newDate);
+                }
+            }
+        }
+
         collection.setLoan(loan);
 
         DailyCollection saved = dailyCollectionRepository.save(collection);
@@ -197,6 +221,24 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
 
         if (loan.getStatus() != LoanStatus.APPROVED) {
             throw new ResourceExistException("This loan is currently: " + loan.getStatus());
+        }
+
+        Optional<DailyCollection> lastDailyCollection =
+                dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber());
+
+        if (lastDailyCollection.isPresent()) {
+            LocalDate lastDate = lastDailyCollection.get().getPaidAt().toLocalDate();
+            LocalDate newDate = collectionDto.getPaidAt().toLocalDate();
+
+            if (loan.getLoanType().equals(LoanType.DAILY)) {
+                if (!newDate.isAfter(lastDate)) {
+                    throw new ResourceExistException("Daily collection date must be after " + lastDate + ", received: " + newDate);
+                }
+            } else if (loan.getLoanType().equals(LoanType.WEEKLY)) {
+                if (newDate.isBefore(lastDate.plusWeeks(1))) {
+                    throw new ResourceExistException("Weekly collection must be on or after " + lastDate.plusWeeks(1) + ", received: " + newDate);
+                }
+            }
         }
 
         dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber())
@@ -280,6 +322,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
             collectionResDto.setTotalPaid(scaledTotalPaid.doubleValue());
             collectionResDto.setInstallmentNo(lastCollection.getInstallmentNumber());
             collectionResDto.setFileNumber(lastCollection.getLoan().getFileNumber());
+            collectionResDto.setPaidAt(lastCollection.getPaidAt());
 
             dtoList.add(collectionResDto);
         }
