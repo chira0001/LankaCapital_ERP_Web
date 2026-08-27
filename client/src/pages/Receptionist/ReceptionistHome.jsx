@@ -34,6 +34,7 @@ const ReceptionistHome = () => {
             setLoading(false);
         } catch (e) {
             console.log(e);
+            setLastFileNumber("No previous file numbers");
         }
     }
 
@@ -52,7 +53,6 @@ const ReceptionistHome = () => {
 
     const handleOpenModal = (loan) => {
         setSelectedPendingLoan(loan);
-        // Pre-fill the form with existing data if any
         setPendingLoanUpdatePayload({
             fileNumber: loan.fileNumber || "",
             documentCharge: loan.documentCharge || "",
@@ -301,7 +301,7 @@ const ReceptionistHome = () => {
                                                 }
                                                 onChange={handleInputChange}
                                                 placeholder="e.g., LN-2023-001"
-                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                                className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isValidUUID(pendingLoanUpdatePayload.fileNumber) ? "text-red-500" : "text-black"}`}
                                             />
                                         </div>
 
