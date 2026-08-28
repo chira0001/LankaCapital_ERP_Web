@@ -16,6 +16,9 @@ const FinancialReportsPage = () => {
   const [month, setMonth] = useState(dayjs());
   const [year, setYear] = useState(dayjs());
 
+  const [startDate, setStartDate] = useState();
+  const [endDate, setEndDate] = useState();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,6 +35,7 @@ const FinancialReportsPage = () => {
     transactionType: "",
     accountType: "",
     amount: "",
+    financialDate: endDate, // will be kept in sync with endDate input
   });
   const [isEditTrialBalanceData, setIsEditTrialBalanceData] = useState(false);
 
@@ -52,6 +56,22 @@ const FinancialReportsPage = () => {
 
   const formatMonth = (d) => dayjs(d).format("YYYY-MM");
 
+  // Date inputs
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleEndDateChange = (e) => {
+    const val = e.target.value;
+    setEndDate(val);
+
+    // Ensure TB "financialDate" stays in sync with selected endDate for new rows
+    setTrialBalanceArrayData((prev) => ({
+      ...prev,
+      financialDate: val,
+    }));
+  };
+
   // -------------------- Trial Balance handlers --------------------
   const resetTBForm = () => {
     setTrialBalanceArrayData({
@@ -59,6 +79,7 @@ const FinancialReportsPage = () => {
       transactionType: "",
       accountType: "",
       amount: "",
+      financialDate: endDate,
     });
   };
 
@@ -71,11 +92,19 @@ const FinancialReportsPage = () => {
   };
 
   const handleAddTBRow = () => {
+    // REQUIRE start/end dates before adding
+    if (!startDate || !endDate) {
+      toast.error("Please select Start Date and End Date before adding Trial Balance data.");
+      return;
+    }
+
     const row = {
       accountName: TrialBalanceArrayData.accountName?.trim(),
       transactionType: TrialBalanceArrayData.transactionType,
       accountType: TrialBalanceArrayData.accountType,
       amount: TrialBalanceArrayData.amount,
+      // financialDate should be the selected endDate for each row
+      financialDate: endDate,
     };
 
     if (
@@ -106,6 +135,10 @@ const FinancialReportsPage = () => {
       transactionType: TrialBalanceArrayData.transactionType,
       accountType: TrialBalanceArrayData.accountType,
       amount: TrialBalanceArrayData.amount,
+      // keep row financialDate aligned to selected endDate (if provided),
+      // otherwise preserve the row's existing financialDate
+      financialDate:
+        endDate || TrialBalanceArrayData.financialDate || dayjs().format("YYYY-MM-DD"),
     };
 
     if (
@@ -141,6 +174,10 @@ const FinancialReportsPage = () => {
   const handleSaveTBData = async () => {
     try {
       setIsSavingTB(true);
+
+      const res = await axiosApi.post("/admin/trialBalance",trialBalanceArray);
+      toast.success("Trial balance data successfully added");
+
       // Hook your API call here when ready.
       // await axiosApi.post("/admin/trial-balance", { items: trialBalanceArray });
     } catch (e) {
@@ -171,7 +208,6 @@ const FinancialReportsPage = () => {
       setIsAssetsListLoading(true);
       const res = await axiosApi.get("/admin/assets");
       setAssetsList(res.data);
-      console.log("assetsList : ", res.data);
       setIsAssetsListLoading(false);
     } catch (e) {
       setIsAssetsListLoading(false);
@@ -374,9 +410,7 @@ const FinancialReportsPage = () => {
             ) : (
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="text-xs text-gray-500">
-                  {isAssetsListLoading
-                    ? "Loading assets..."
-                    : `${assetsCount} assets`}
+                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
                 </div>
               </div>
             )}
@@ -538,9 +572,7 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(
-                                    asset.purchasedMonth
-                                  ).toLocaleDateString("en-LK", {
+                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
                                     day: "2-digit",
                                     month: "short",
                                     year: "numeric",
@@ -596,8 +628,7 @@ const FinancialReportsPage = () => {
                             No assets are available
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building
-                            your registry.
+                            Add a new asset using the form to start building your registry.
                           </p>
                         </div>
                       )}
@@ -629,10 +660,32 @@ const FinancialReportsPage = () => {
             </div>
           </div>
 
-          {/* Trial Balance Data Section (fixed) */}
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
+              <input
+                id="startDate"
+                type="date"
+                name=""
+                onChange={handleStartDateChange}
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
+              <input
+                id="endDate"
+                type="date"
+                name=""
+                onChange={handleEndDateChange}
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+          </div>
+
           <div className="mt-3 border p-4 rounded-lg">
             <h3>Trial Balance Data</h3>
-
             <div className="grid grid-cols-2 gap-4 mt-3">
               <div>
                 <Label htmlFor="tb_accountName">
@@ -719,43 +772,39 @@ const FinancialReportsPage = () => {
             </div>
 
             <div className="mt-3">
-              <table className="min-w-full text-sm border">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="border px-2 py-1 text-left">Account Name</th>
-                    <th className="border px-2 py-1 text-left">
-                      Transaction Type
-                    </th>
-                    <th className="border px-2 py-1 text-left">Account Type</th>
-                    <th className="border px-2 py-1 text-left">Amount</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {trialBalanceArray.map((row, key) => {
-                    return (
-                      <tr
-                        key={key}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleEditTBRow(key)}
-                      >
-                        <td className="border px-2 py-1">{row.accountName}</td>
-                        <td className="border px-2 py-1">
-                          {row.transactionType}
-                        </td>
-                        <td className="border px-2 py-1">{row.accountType}</td>
-                        <td className="border px-2 py-1">{row.amount}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {trialBalanceArray.length > 0 && (
+                <table className="min-w-full text-sm border">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="border px-2 py-1 text-left">Account Name</th>
+                      <th className="border px-2 py-1 text-left">Transaction Type</th>
+                      <th className="border px-2 py-1 text-left">Account Type</th>
+                      <th className="border px-2 py-1 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trialBalanceArray.map((row, key) => {
+                      return (
+                        <tr
+                          key={key}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleEditTBRow(key)}
+                        >
+                          <td className="border px-2 py-1">{row.accountName}</td>
+                          <td className="border px-2 py-1">{row.transactionType}</td>
+                          <td className="border px-2 py-1">{row.accountType}</td>
+                          <td className="border px-2 py-1">{row.amount}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             {isEditTrialBalanceData && (
               <div className="mt-3 border p-4 rounded-lg">
                 <h3>Edit Trial Balance Data</h3>
-
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div>
                     <Label htmlFor="tb_edit_accountName">
@@ -854,27 +903,13 @@ const FinancialReportsPage = () => {
             )}
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="startDate">Start Date</Label>
-              <input
-                id="startDate"
-                type="date"
-                name=""
-                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-              />
+          {error ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
             </div>
+          ) : null}
 
-            <div>
-              <Label htmlFor="endDate">End Date</Label>
-              <input
-                id="endDate"
-                type="date"
-                name=""
-                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-              />
-            </div>
-
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <div>
               <Label htmlFor="reportType">Report Type</Label>
               <select
@@ -893,15 +928,7 @@ const FinancialReportsPage = () => {
                 })}
               </select>
             </div>
-          </div>
 
-          {error ? (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <Button onClick={handleGenerate} disabled={loading}>
               {loading ? "Loading..." : "Generate"}
             </Button>

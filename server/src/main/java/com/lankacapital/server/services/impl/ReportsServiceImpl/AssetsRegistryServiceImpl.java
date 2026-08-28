@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl.ReportsServiceImpl;
 
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.entities.reports.AssetsRegistry;
 import com.lankacapital.server.mappers.reportsMappers.AssetRegistryMapper;
 import com.lankacapital.server.repositories.ReportsRepository.AssetsRegistryRepository;

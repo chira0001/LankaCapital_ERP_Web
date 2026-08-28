@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.entities.Employee;
 
 import com.lankacapital.server.entities.SalaryMetaData;
@@ -10,6 +11,7 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
+import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +41,7 @@ public class AdminController {
     private final SalaryConditionService salaryConditionService;
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
+    private final TrialBalanceDataService trialBalanceDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -365,6 +368,17 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
         return new ResponseEntity<>(assetsRegistryService.addAssetToRegistry(assetsDto), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/trialBalance")
+    public ResponseEntity<?> addToTrialBalance(
+            Authentication authentication,
+            @RequestBody List<TrialBalanceDataDto> trialBalanceDataDto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(trialBalanceDataService.addToTrialBalance(trialBalanceDataDto), HttpStatus.CREATED);
     }
 
 
