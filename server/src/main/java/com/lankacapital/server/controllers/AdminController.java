@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
@@ -379,6 +380,18 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
         return new ResponseEntity<>(trialBalanceDataService.addToTrialBalance(trialBalanceDataDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/trialBalance")
+    public ResponseEntity<?> fetchTrialBalances(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(trialBalanceDataService.fetchTrialBalances(startDate,endDate), HttpStatus.CREATED);
     }
 
 

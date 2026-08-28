@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Download } from "lucide-react";
 import { Button } from "@/component/ui/button";
@@ -35,11 +35,14 @@ const FinancialReportsPage = () => {
     transactionType: "",
     accountType: "",
     amount: "",
-    financialDate: endDate, // will be kept in sync with endDate input
+    financialDate: endDate, // kept in sync with endDate input
   });
+
+  // Must be an array because you use .length and .map in UI
+  const [existingTrialBalance, setExistingTrialBalance] = useState([]);
+
   const [isEditTrialBalanceData, setIsEditTrialBalanceData] = useState(false);
 
-  // Trial Balance helpers (focused changes)
   const [tbEditIndex, setTbEditIndex] = useState(null);
   const [isSavingTB, setIsSavingTB] = useState(false);
 
@@ -51,29 +54,76 @@ const FinancialReportsPage = () => {
     amount: "",
   });
 
-  const [assetsList, setAssetsList] = useState([]); // intended to be list
+  const [assetsList, setAssetsList] = useState([]);
   const [isAssetsListLoading, setIsAssetsListLoading] = useState(false);
 
-  const formatMonth = (d) => dayjs(d).format("YYYY-MM");
+  const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
 
-  // Date inputs
-  const handleStartDateChange = (e) => {
+  // Memoize reportTypes so it is not recreated on every render
+  const reportTypes = useMemo(
+    () => [
+      { value: "PPE", name: "PPE" },
+      { value: "Working", name: "Working" },
+      { value: "TB", name: "TB" },
+      { value: "BS", name: "BS" },
+      { value: "CE", name: "CE" },
+      { value: "CF", name: "CF" },
+      { value: "BS", name: "BS" },
+      { value: "CE", name: "CE" },
+      { value: "CF", name: "CF" },
+      { value: "P09", name: "P09" },
+      { value: "P10", name: "P10" },
+      { value: "P11", name: "P11" },
+      { value: "PL", name: "PL" },
+      { value: "Income Tax", name: "Income Tax" },
+      { value: "Statement", name: "Complete Report" },
+    ],
+    []
+  );
+
+  // -------------------- Dates --------------------
+  const handleStartDateChange = useCallback((e) => {
     setStartDate(e.target.value);
-  };
+  }, []);
 
-  const handleEndDateChange = (e) => {
+  const handleEndDateChange = useCallback((e) => {
     const val = e.target.value;
     setEndDate(val);
 
-    // Ensure TB "financialDate" stays in sync with selected endDate for new rows
+    // keep TB financialDate synced for NEW rows
     setTrialBalanceArrayData((prev) => ({
       ...prev,
       financialDate: val,
     }));
-  };
+  }, []);
+
+  // -------------------- Existing Trial Balance Fetch (optimized) --------------------
+  const fetchExistingTrialBalance = useCallback(async (sDate, eDate) => {
+    try {
+      const res = await axiosApi.get("/admin/trialBalance", {
+        params: {
+          startDate: sDate,
+          endDate: eDate,
+        },
+      });
+      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      toast.error("Failed to fetch Trial Balance data.");
+      console.log(err);
+    }
+  }, []);
+
+  // Fetch only once per date change (previous code triggered duplicate fetches)
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setExistingTrialBalance([]);
+      return;
+    }
+    fetchExistingTrialBalance(startDate, endDate);
+  }, [startDate, endDate, fetchExistingTrialBalance]);
 
   // -------------------- Trial Balance handlers --------------------
-  const resetTBForm = () => {
+  const resetTBForm = useCallback(() => {
     setTrialBalanceArrayData({
       accountName: "",
       transactionType: "",
@@ -81,20 +131,22 @@ const FinancialReportsPage = () => {
       amount: "",
       financialDate: endDate,
     });
-  };
+  }, [endDate]);
 
-  const handleTBChange = (e) => {
+  const handleTBChange = useCallback((e) => {
     const { name, value } = e.target;
     setTrialBalanceArrayData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const handleAddTBRow = () => {
+  const handleAddTBRow = useCallback(() => {
     // REQUIRE start/end dates before adding
     if (!startDate || !endDate) {
-      toast.error("Please select Start Date and End Date before adding Trial Balance data.");
+      toast.error(
+        "Please select Start Date and End Date before adding Trial Balance data."
+      );
       return;
     }
 
@@ -103,8 +155,7 @@ const FinancialReportsPage = () => {
       transactionType: TrialBalanceArrayData.transactionType,
       accountType: TrialBalanceArrayData.accountType,
       amount: TrialBalanceArrayData.amount,
-      // financialDate should be the selected endDate for each row
-      financialDate: endDate,
+      financialDate: endDate, // must be endDate for each row
     };
 
     if (
@@ -119,15 +170,18 @@ const FinancialReportsPage = () => {
 
     setTrialBalanceArray((prev) => [...prev, row]);
     resetTBForm();
-  };
+  }, [TrialBalanceArrayData, startDate, endDate, resetTBForm]);
 
-  const handleEditTBRow = (index) => {
-    setTbEditIndex(index);
-    setIsEditTrialBalanceData(true);
-    setTrialBalanceArrayData(trialBalanceArray[index]);
-  };
+  const handleEditTBRow = useCallback(
+    (index) => {
+      setTbEditIndex(index);
+      setIsEditTrialBalanceData(true);
+      setTrialBalanceArrayData(trialBalanceArray[index]);
+    },
+    [trialBalanceArray]
+  );
 
-  const handleUpdateTBRow = () => {
+  const handleUpdateTBRow = useCallback(() => {
     if (tbEditIndex === null) return;
 
     const updated = {
@@ -135,10 +189,11 @@ const FinancialReportsPage = () => {
       transactionType: TrialBalanceArrayData.transactionType,
       accountType: TrialBalanceArrayData.accountType,
       amount: TrialBalanceArrayData.amount,
-      // keep row financialDate aligned to selected endDate (if provided),
-      // otherwise preserve the row's existing financialDate
+      // keep aligned to selected endDate if provided; else preserve existing row date
       financialDate:
-        endDate || TrialBalanceArrayData.financialDate || dayjs().format("YYYY-MM-DD"),
+        endDate ||
+        TrialBalanceArrayData.financialDate ||
+        dayjs().format("YYYY-MM-DD"),
     };
 
     if (
@@ -158,9 +213,9 @@ const FinancialReportsPage = () => {
     setTbEditIndex(null);
     setIsEditTrialBalanceData(false);
     resetTBForm();
-  };
+  }, [tbEditIndex, TrialBalanceArrayData, endDate, resetTBForm]);
 
-  const handleDeleteTBRow = () => {
+  const handleDeleteTBRow = useCallback(() => {
     if (tbEditIndex === null) return;
 
     setTrialBalanceArray((prev) => prev.filter((_, i) => i !== tbEditIndex));
@@ -168,42 +223,25 @@ const FinancialReportsPage = () => {
     setTbEditIndex(null);
     setIsEditTrialBalanceData(false);
     resetTBForm();
-  };
+  }, [tbEditIndex, resetTBForm]);
 
-  // Keep "Save Data" non-breaking: previously it had invalid onClick and effectively did nothing.
-  const handleSaveTBData = async () => {
+  const handleSaveTBData = useCallback(async () => {
     try {
       setIsSavingTB(true);
 
-      const res = await axiosApi.post("/admin/trialBalance",trialBalanceArray);
+      const res = await axiosApi.post("/admin/trialBalance", trialBalanceArray);
+      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
       toast.success("Trial balance data successfully added");
-
-      // Hook your API call here when ready.
-      // await axiosApi.post("/admin/trial-balance", { items: trialBalanceArray });
     } catch (e) {
       toast.error("Failed to save Trial Balance data.");
       console.log(e);
     } finally {
       setIsSavingTB(false);
     }
-  };
-  // ---------------------------------------------------------------
+  }, [trialBalanceArray]);
 
-  const saveAssetToRegistry = async () => {
-    try {
-      setIsSaving(true);
-      const res = await axiosApi.post("/admin/assets", assetsPayload);
-      toast.success("Asset successfully added");
-      setIsSaving(false);
-      fetchAssets();
-    } catch (e) {
-      toast.error("Error adding asset. Try again...");
-      setIsSaving(false);
-      console.log(e);
-    }
-  };
-
-  const fetchAssets = async () => {
+  // -------------------- Assets --------------------
+  const fetchAssets = useCallback(async () => {
     try {
       setIsAssetsListLoading(true);
       const res = await axiosApi.get("/admin/assets");
@@ -213,27 +251,24 @@ const FinancialReportsPage = () => {
       setIsAssetsListLoading(false);
       toast.error("Error loading asset. Try again...");
     }
-  };
+  }, []);
 
-  const reportTypes = [
-    { value: "PPE", name: "PPE" },
-    { value: "Working", name: "Working" },
-    { value: "TB", name: "TB" },
-    { value: "BS", name: "BS" },
-    { value: "CE", name: "CE" },
-    { value: "CF", name: "CF" },
-    { value: "BS", name: "BS" },
-    { value: "CE", name: "CE" },
-    { value: "CF", name: "CF" },
-    { value: "P09", name: "P09" },
-    { value: "P10", name: "P10" },
-    { value: "P11", name: "P11" },
-    { value: "PL", name: "PL" },
-    { value: "Income Tax", name: "Income Tax" },
-    { value: "Statement", name: "Complete Report" },
-  ];
+  const saveAssetToRegistry = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      await axiosApi.post("/admin/assets", assetsPayload);
+      toast.success("Asset successfully added");
+      setIsSaving(false);
+      fetchAssets();
+    } catch (e) {
+      toast.error("Error adding asset. Try again...");
+      setIsSaving(false);
+      console.log(e);
+    }
+  }, [assetsPayload, fetchAssets]);
 
-  const handleGenerate = async () => {
+  // -------------------- Reports --------------------
+  const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -251,9 +286,9 @@ const FinancialReportsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportType, month, formatMonth]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(() => {
     if (!data) return;
 
     const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
@@ -262,9 +297,9 @@ const FinancialReportsPage = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Report");
 
     XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
-  };
+  }, [data, reportType, month, formatMonth]);
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = useCallback(async () => {
     try {
       const res = await axiosApi.get("/admin/financial-report/pdf", {
         params: { month: formatMonth(month) },
@@ -280,7 +315,7 @@ const FinancialReportsPage = () => {
     } catch {
       alert("PDF download failed");
     }
-  };
+  }, [month, formatMonth]);
 
   const renderTable = () => {
     if (!data) return null;
@@ -410,7 +445,9 @@ const FinancialReportsPage = () => {
             ) : (
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="text-xs text-gray-500">
-                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
+                  {isAssetsListLoading
+                    ? "Loading assets..."
+                    : `${assetsCount} assets`}
                 </div>
               </div>
             )}
@@ -572,11 +609,14 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                  })
+                                  ? new Date(asset.purchasedMonth).toLocaleDateString(
+                                      "en-LK",
+                                      {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                      }
+                                    )
                                   : "-";
 
                                 return (
@@ -628,7 +668,8 @@ const FinancialReportsPage = () => {
                             No assets are available
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building your registry.
+                            Add a new asset using the form to start building your
+                            registry.
                           </p>
                         </div>
                       )}
@@ -686,6 +727,7 @@ const FinancialReportsPage = () => {
 
           <div className="mt-3 border p-4 rounded-lg">
             <h3>Trial Balance Data</h3>
+
             <div className="grid grid-cols-2 gap-4 mt-3">
               <div>
                 <Label htmlFor="tb_accountName">
@@ -777,30 +819,64 @@ const FinancialReportsPage = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="border px-2 py-1 text-left">Account Name</th>
-                      <th className="border px-2 py-1 text-left">Transaction Type</th>
+                      <th className="border px-2 py-1 text-left">
+                        Transaction Type
+                      </th>
                       <th className="border px-2 py-1 text-left">Account Type</th>
                       <th className="border px-2 py-1 text-left">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trialBalanceArray.map((row, key) => {
-                      return (
-                        <tr
-                          key={key}
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditTBRow(key)}
-                        >
-                          <td className="border px-2 py-1">{row.accountName}</td>
-                          <td className="border px-2 py-1">{row.transactionType}</td>
-                          <td className="border px-2 py-1">{row.accountType}</td>
-                          <td className="border px-2 py-1">{row.amount}</td>
-                        </tr>
-                      );
-                    })}
+                    {trialBalanceArray.map((row, key) => (
+                      <tr
+                        key={key}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditTBRow(key)}
+                      >
+                        <td className="border px-2 py-1">{row.accountName}</td>
+                        <td className="border px-2 py-1">{row.transactionType}</td>
+                        <td className="border px-2 py-1">{row.accountType}</td>
+                        <td className="border px-2 py-1">{row.amount}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               )}
             </div>
+
+            {existingTrialBalance.length > 0 && (
+              <div className="mt-3">
+                Existing trial balance inputs
+                <table className="min-w-full text-sm border">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="border px-2 py-1 text-left">Account Name</th>
+                      <th className="border px-2 py-1 text-left">
+                        Transaction Type
+                      </th>
+                      <th className="border px-2 py-1 text-left">Account Type</th>
+                      <th className="border px-2 py-1 text-left">
+                        Financial Period
+                      </th>
+                      <th className="border px-2 py-1 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingTrialBalance.map((row, key) => (
+                      <tr key={key} className="cursor-pointer hover:bg-gray-50">
+                        <td className="border px-2 py-1">{row.accountName}</td>
+                        <td className="border px-2 py-1">
+                          {row.transactionType}
+                        </td>
+                        <td className="border px-2 py-1">{row.accountType}</td>
+                        <td className="border px-2 py-1">{row.financialDate}</td>
+                        <td className="border px-2 py-1">{row.amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {isEditTrialBalanceData && (
               <div className="mt-3 border p-4 rounded-lg">
@@ -919,13 +995,11 @@ const FinancialReportsPage = () => {
                 onChange={(e) => setReportType(e.target.value)}
               >
                 <option value="">Select Report Type</option>
-                {reportTypes.map((type, key) => {
-                  return (
-                    <option value={type.value} key={key}>
-                      {type.name}
-                    </option>
-                  );
-                })}
+                {reportTypes.map((type, key) => (
+                  <option value={type.value} key={key}>
+                    {type.name}
+                  </option>
+                ))}
               </select>
             </div>
 

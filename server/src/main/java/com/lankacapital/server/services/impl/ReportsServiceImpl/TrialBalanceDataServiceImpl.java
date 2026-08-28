@@ -8,6 +8,7 @@ import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -25,6 +26,14 @@ public class TrialBalanceDataServiceImpl implements TrialBalanceDataService {
                 .toList();
 
         return trialBalanceDataRepository.saveAll(balanceDataList)
+                .stream()
+                .map(TrialBalanceDataMapper::mapToTrialBalanceDataDto)
+                .toList();
+    }
+
+    @Override
+    public List<TrialBalanceDataDto> fetchTrialBalances(LocalDate startDate, LocalDate endDate) {
+        return trialBalanceDataRepository.findByFinancialDateBetween(startDate,endDate)
                 .stream()
                 .map(TrialBalanceDataMapper::mapToTrialBalanceDataDto)
                 .toList();
