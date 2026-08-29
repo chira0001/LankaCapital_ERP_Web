@@ -172,10 +172,14 @@ public class LoanMapper {
         return dto;
     }
 
-    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(Loan loan) {
+    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(
+            Loan loan,
+            BigDecimal totalPaid,
+            long paidPeriods
+    ) {
         LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
 
-        // Basic fields
+        dto.setId(loan.getId());
         dto.setAmount(loan.getAmount());
         dto.setCreatedAt(loan.getCreatedAt());
         dto.setFileNumber(loan.getFileNumber());
@@ -186,82 +190,58 @@ public class LoanMapper {
         dto.setLoanType(loan.getLoanType());
         dto.setEndAt(loan.getEndAt());
 
-        // Interest and total amount with interest
+        BigDecimal amount = loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO;
         BigDecimal interestRate = loan.getInterestRate() != null
                 ? BigDecimal.valueOf(loan.getInterestRate())
                 : BigDecimal.ZERO;
 
-        BigDecimal amount = loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO;
-        BigDecimal totalWithInterest = amount
-                .add(amount.multiply(interestRate)
-                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+        BigDecimal totalWithInterest = amount.add(
+                amount.multiply(interestRate)
+                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
 
-        // Total paid from daily collections
-        List<DailyCollection> collections = loan.getDailyCollections();
-        collections = collections != null ? collections : List.of();
+        int installmentCount = (loan.getInstallment() != null && loan.getInstallment() > 0)
+                ? loan.getInstallment()
+                : 0;
 
-        BigDecimal totalPaid = collections.stream()
-                .map(DailyCollection::getPaidAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        dto.setRemainingBalance(totalWithInterest.subtract(totalPaid));
-
-        // Installment value
         BigDecimal installmentValue = BigDecimal.ZERO;
-        if (loan.getInstallment() != null && loan.getInstallment() > 0) {
+        if (installmentCount > 0) {
             installmentValue = totalWithInterest.divide(
-                    BigDecimal.valueOf(loan.getInstallment()),
+                    BigDecimal.valueOf(installmentCount),
                     2,
                     RoundingMode.HALF_UP
             );
         }
         dto.setInstallmentValue(installmentValue);
 
-        // Sort collections by installment number (required for mapping order)
-        List<DailyCollection> sortedCollections = collections.stream()
-                .sorted(Comparator.comparing(DailyCollection::getInstallmentNumber,
-                        Comparator.nullsLast(Comparator.naturalOrder())))
-                .toList();
+        BigDecimal paid = totalPaid != null ? totalPaid : BigDecimal.ZERO;
+        dto.setRemainingBalance(totalWithInterest.subtract(paid));
 
-        dto.setDailyCollection(sortedCollections.stream()
-                .map(DailyCollectionMapper::mapToDailyCollectionResponseDto)
-                .toList());
-
-        // ------------------ Arrears Calculation (Optimised) ------------------
-        // Count how many installments have actually been paid (paidAt != null)
-        long paidPeriods = collections.stream()
-                .filter(dc -> dc.getPaidAt() != null)
-                .count();
-
-        BigDecimal dueAmountTotal = collections.stream()
-                .map(dc -> dc.getDueAmount() == null ? BigDecimal.ZERO : dc.getDueAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Determine elapsed periods (days for DAILY, weeks for WEEKLY)
+        // ✅ Arrears: unpaid periods since createdAt * installmentValue
         long elapsedPeriods = 0;
-        LocalDate startDate = loan.getCreatedAt() != null
+        LocalDate start = (loan.getCreatedAt() != null)
                 ? loan.getCreatedAt().toLocalDate()
                 : LocalDate.now();
+        LocalDate today = LocalDate.now();
 
-        if (loan.getLoanType() != null) {
-            switch (loan.getLoanType()) {
-                case DAILY:
-                    elapsedPeriods = ChronoUnit.DAYS.between(startDate, LocalDate.now());
-                    break;
-                case WEEKLY:
-                    elapsedPeriods = ChronoUnit.WEEKS.between(startDate, LocalDate.now());
-                    break;
-                default:
-                    // No periodic arrears for other loan types
-                    break;
-            }
+        LoanType type = loan.getLoanType();
+        if (type == LoanType.DAILY) {
+            elapsedPeriods = ChronoUnit.DAYS.between(start, today);
+        } else if (type == LoanType.WEEKLY) {
+            elapsedPeriods = ChronoUnit.WEEKS.between(start, today);
+        } else {
+            elapsedPeriods = 0;
         }
 
-        // Arrears = (elapsed - paid) * installmentValue, but never negative
-        BigDecimal unpaidPeriods = BigDecimal.valueOf(Math.max(0, elapsedPeriods - paidPeriods));
-        BigDecimal arrearsAmount = unpaidPeriods.multiply(installmentValue).subtract(dueAmountTotal);
-        dto.setArrearsAmount(arrearsAmount);
+        // Optional safety clamp: arrears should not exceed total installments schedule
+        if (installmentCount > 0) {
+            elapsedPeriods = Math.min(elapsedPeriods, (long) installmentCount);
+        }
+
+        long paidClamped = Math.min(paidPeriods, elapsedPeriods);
+        long unpaidPeriods = Math.max(0, elapsedPeriods - paidClamped);
+
+        dto.setArrearsAmount(installmentValue.multiply(BigDecimal.valueOf(unpaidPeriods)));
 
         return dto;
     }

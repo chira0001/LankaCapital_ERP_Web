@@ -5,8 +5,10 @@ import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.LoanType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.lankacapital.server.enums.LoanStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,6 +49,22 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     );
 
     List<Loan> findByLoanTypeOrderByIdDesc(LoanType loanType);
+
+    @EntityGraph(attributePaths = {"customer", "approvedEmployee"})
+    @Query("""
+        select l from Loan l
+        join l.customer c
+        where l.status = :status
+          and (
+                :search is null or :search = '' or
+                lower(l.fileNumber) like lower(concat('%', :search, '%')) or
+                lower(c.name) like lower(concat('%', :search, '%')) or
+                lower(c.nic) like lower(concat('%', :search, '%'))
+          )
+    """)
+    Page<Loan> searchLoans(@Param("status") LoanStatus status,
+                           @Param("search") String search,
+                           Pageable pageable);
 
 //    @Query("""
 //    SELECT new com.lankacapital.server.dtos.LoanSummaryProjectionDto(
