@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.entities.Employee;
 
 import com.lankacapital.server.entities.SalaryMetaData;
@@ -10,12 +11,14 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
+import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
@@ -39,6 +42,7 @@ public class AdminController {
     private final SalaryConditionService salaryConditionService;
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
+    private final TrialBalanceDataService trialBalanceDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -124,19 +128,28 @@ public class AdminController {
     }
 
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans(Authentication authentication) {
-        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+    public ResponseEntity<?> getAllLoans(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.getAllLoans(authentication.getName(), page, size, search)
+        );
     }
 
     @PostMapping("/loans")
-    public ResponseEntity<LoanResponseDto> addLoan(
+    public ResponseEntity<?> addLoan(
             @RequestBody LoanCreateDto dto,
             Authentication authentication
     ) {
-        return new ResponseEntity<>(
-                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
-                HttpStatus.CREATED
-        );
+        loanService.addLoan(dto, authentication.getName());
+//        return new ResponseEntity<>(
+//                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
+//                HttpStatus.CREATED
+//        );
+        return new ResponseEntity<>("Loan Created", HttpStatus.CREATED);
     }
 
     @GetMapping("/loans/customer/{id}")
@@ -330,12 +343,31 @@ public class AdminController {
     }
 
     @GetMapping(path = "/loan-summary")
-    public ResponseEntity<?> fetchLoanSummary(Authentication authentication){
-        if(authentication == null || authentication.getName().isEmpty()){
+    public ResponseEntity<?> fetchLoanSummary(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
             throw new ResourceNotFoundException("Token is invalid");
         }
 
-        return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
+        return new ResponseEntity<>(loanService.fetchLoanSummary(page, size, search), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/loan-summary/{loanId}/payments")
+    public ResponseEntity<?> fetchLoanPayments(
+            @PathVariable Long loanId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "15") int size,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return new ResponseEntity<>(loanService.fetchLoanPayments(loanId, page, size), HttpStatus.OK);
     }
 
     //reports
@@ -365,6 +397,29 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
         return new ResponseEntity<>(assetsRegistryService.addAssetToRegistry(assetsDto), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/trialBalance")
+    public ResponseEntity<?> addToTrialBalance(
+            Authentication authentication,
+            @RequestBody List<TrialBalanceDataDto> trialBalanceDataDto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(trialBalanceDataService.addToTrialBalance(trialBalanceDataDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/trialBalance")
+    public ResponseEntity<?> fetchTrialBalances(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(trialBalanceDataService.fetchTrialBalances(startDate,endDate), HttpStatus.CREATED);
     }
 
 

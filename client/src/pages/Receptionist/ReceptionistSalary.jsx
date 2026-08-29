@@ -8,23 +8,8 @@ const ReceptionistSalary = () => {
 
     const [employees, setEmployees] = useState([]);
     const [employeeSalaries, setEmployeeSalaries] = useState({});
-    const [displayInstallments, setDisplayInstallments] = useState([]);
-    const [salaryAdvance, setSalaryAdvance] = useState();
 
-    const [isBulkSalary, setIsBulkSalary] = useState();
-    const [workingDays, setWorkingDays] = useState();
-    const [otHours, setOtHours] = useState();
-    const [unpaidLeaves, setUnpaidLeaves] = useState();
-    const [loans, setLoans] = useState();
-
-    const [salaryData, setSalaryData] = useState({
-        employeeId: "",
-        workingDays: "",
-        otHours: "",
-        unpaidLeaves: "",
-        loans: "",
-        salaryAdvance: ""
-    });
+    const [submitting, setIsSubmitting] = useState(false);
 
     const handleSalaryChange = (employeeId, field, value) => {
 
@@ -60,33 +45,28 @@ const ReceptionistSalary = () => {
 
     const submitSalaries = async (e) => {
         try {
+            setIsSubmitting(true);
             e.preventDefault();
             const payload = employees.map(employee => ({
                 employeeId: employee.id,
                 workingDays: parseFloat(employeeSalaries[employee.id]?.workingDays) || 0,
                 otHours: parseFloat(employeeSalaries[employee.id]?.otHours) || 0,
                 unpaidLeaves: parseFloat(employeeSalaries[employee.id]?.unpaidLeaves) || 0,
-                loans: parseFloat(employeeSalaries[employee.id]?.loans) || 0,
+                travel: parseFloat(employeeSalaries[employee.id]?.travel) || 0,
                 salaryAdvance: parseFloat(employeeSalaries[employee.id]?.salaryAdvance) || 0
             }));
 
             const response = await axiosAPI.post('/recep/employees/salary', payload);
+            setIsSubmitting(false);
             toast.success('Salaries submitted successfully!');
             clearAllSalaries();
         } catch (error) {
+            setIsSubmitting(false);
             console.error('Error submitting salaries:', error);
             toast.error('Failed to submit salaries: ' + (error.response?.data?.message || error.message));
         }
     };
-    const fetchInstallments = async () => {
-        try {
-            const response = await axiosAPI.get('/recep/installments');
-            setDisplayInstallments(response.data);
-        } catch (e) {
-            console.log(e);
-            toast.error('Failed to fetch installment options');
-        }
-    };
+    
     const fetchEmployees = async () => {
         try {
             const response = await axiosAPI.get('/recep/employees');
@@ -98,7 +78,7 @@ const ReceptionistSalary = () => {
                     workingDays: 0,
                     otHours: 0,
                     unpaidLeaves: 0,
-                    loans: 0,
+                    travel: 0,
                     salaryAdvance: 0
                 };
             });
@@ -114,7 +94,7 @@ const ReceptionistSalary = () => {
                 workingDays: 0,
                 otHours: 0,
                 unpaidLeaves: 0,
-                loans: 0,
+                travel: 0,
                 salaryAdvance: 0
             };
         });
@@ -133,7 +113,7 @@ const ReceptionistSalary = () => {
                     workingDays: 0,
                     otHours: 0,
                     unpaidLeaves: 0,
-                    loans: 0,
+                    travel: 0,
                     salaryAdvance: 0
                 };
             });
@@ -187,7 +167,7 @@ const ReceptionistSalary = () => {
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Working <br /> Days</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">OT <br /> Hours</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Unpaid</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Loans</th>
+                                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Travel & Fuel</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Salary <br /> Advance</th>
                             </tr>
                         </thead>
@@ -216,7 +196,7 @@ const ReceptionistSalary = () => {
                                         { key: "workingDays", type: "number", min: 0, max: 31 },
                                         { key: "otHours", type: "number", step: "0.5", min: 0, max: 24 },
                                         { key: "unpaidLeaves", type: "number", step: "0.5", min: 0 },
-                                        { key: "loans", type: "number", step: "0.01", min: 0 },
+                                        { key: "travel", type: "number", step: "0.01", min: 0 },
                                         { key: "salaryAdvance", type: "number", step: "0.01", min: 0 },
                                     ].map((field) => (
                                         <td key={field.key} className="px-6 py-4 text-center">
@@ -252,9 +232,10 @@ const ReceptionistSalary = () => {
 
                         <button
                             onClick={submitSalaries}
-                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+                            disabled={submitting}
+                            className={`px-6 py-3 rounded-lg text-sm font-medium hover:bg-blue-800 transition-all shadow-md hover:shadow-lg ${submitting ? "bg-blue-200 text-gray-600" : "bg-blue-600 text-white"}`}
                         >
-                            Submit All Salaries
+                            {submitting ? "Submitting..." : "Submit All Salaries"}
                         </button>
                     </div>
                 )}
