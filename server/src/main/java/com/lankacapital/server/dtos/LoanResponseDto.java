@@ -29,4 +29,5 @@ public class LoanResponseDto {
     private String decisionNote;
     private CustomerResponseDto customer;
     private String loanType;
+    private BigDecimal installmentValue;
 }

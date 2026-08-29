@@ -82,8 +82,15 @@ public class ReceptionistController {
     }
 
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans(Authentication authentication) {
-        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+    public ResponseEntity<?> getAllLoans(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.getAllLoans(authentication.getName(), page, size, search)
+        );
     }
 
     @GetMapping("/loans/lastFileNumber/{loanType}")
@@ -129,8 +136,15 @@ public class ReceptionistController {
     }
 
     @PostMapping(path = "/employees/salary")
-    public ResponseEntity<?> addSalary(@RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList){
-        salaryService.addSalaryToEmployee(salaryAddDtoList);
+    public ResponseEntity<?> addSalary(
+            @RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        salaryService.addSalaryToEmployee(salaryAddDtoList, authentication.getName());
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
     }
 
@@ -213,11 +227,30 @@ public class ReceptionistController {
     }
 
     @GetMapping(path = "/loan-summary")
-    public ResponseEntity<?> fetchLoanSummary(Authentication authentication){
-        if(authentication == null || authentication.getName().isEmpty()){
+    public ResponseEntity<?> fetchLoanSummary(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
             throw new ResourceNotFoundException("Token is invalid");
         }
 
-        return new ResponseEntity<>(loanService.fetchLoanSummary(), HttpStatus.OK);
+        return new ResponseEntity<>(loanService.fetchLoanSummary(page, size, search), HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/loan-summary/{loanId}/payments")
+    public ResponseEntity<?> fetchLoanPayments(
+            @PathVariable Long loanId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "15") int size,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return new ResponseEntity<>(loanService.fetchLoanPayments(loanId, page, size), HttpStatus.OK);
     }
 }

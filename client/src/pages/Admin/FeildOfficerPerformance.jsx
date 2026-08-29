@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import axiosAPI from '@/api/axiosAPI';
 import { UserCheck } from 'lucide-react';
+import { ToastContainer } from 'react-toastify';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -64,10 +65,7 @@ const FieldOfficerPerformancePage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Field Officer Performance - LendPro</title>
-      </Helmet>
-
+    <ToastContainer position="top-right" autoClose={3000} />
       <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
 

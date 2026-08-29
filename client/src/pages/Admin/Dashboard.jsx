@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Helmet } from "react-helmet";
+import { ToastContainer } from "react-toastify";
 
 // =========================
 // FORMAT CURRENCY
@@ -165,6 +166,7 @@ const DashboardPage = () => {
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">
+      <ToastContainer position="top-right" autoClose={3000} />
       <h1 className="mb-4 text-xl font-bold sm:text-2xl">Executive Dashboard</h1>
 
       {/* METRICS */}

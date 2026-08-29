@@ -3,6 +3,7 @@ import { UserPlus, X } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
+import { ToastContainer } from "react-toastify";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -155,6 +156,7 @@ const UserManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
