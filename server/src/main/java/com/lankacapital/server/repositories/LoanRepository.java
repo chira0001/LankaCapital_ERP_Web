@@ -66,31 +66,6 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
                            @Param("search") String search,
                            Pageable pageable);
 
-//    @Query("""
-//    SELECT new com.lankacapital.server.dtos.LoanSummaryProjectionDto(
-//        l.amount,
-//        l.createdAt,
-//        l.fileNumber,
-//        l.installment,
-//        l.interestRate,
-//        l.loanType,
-//        l.endAt,
-//        COALESCE(SUM(dc.paidAmount), 0)
-//    )
-//    FROM Loan l
-//    LEFT JOIN DailyCollection dc ON dc.loan = l
-//    GROUP BY
-//        l.id,
-//        l.amount,
-//        l.createdAt,
-//        l.fileNumber,
-//        l.installment,
-//        l.interestRate,
-//        l.loanType,
-//        l.endAt
-//""")
-//    List<LoanSummaryProjectionDto> fetchLoanSummary();
-
     @Query("""
     SELECT DISTINCT l
     FROM Loan l
@@ -98,4 +73,27 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     WHERE l.status = com.lankacapital.server.enums.LoanStatus.APPROVED
 """)
     List<Loan> fetchApprovedLoansWithCollections();
+
+    @EntityGraph(attributePaths = {"customer", "createdEmployee", "updatedEmployee", "approvedEmployee"})
+    @Query("""
+        select l
+        from Loan l
+        left join l.customer c
+        where l.fileNumber is not null
+          and (
+                (:isReceptionist = true and l.fileNumber like '________-____-____-____-____________')
+             or (:isReceptionist = false and l.fileNumber not like '________-____-____-____-____________')
+          )
+          and (
+                :search is null or :search = '' or
+                lower(l.fileNumber) like lower(concat('%', :search, '%')) or
+                lower(c.nic) like lower(concat('%', :search, '%')) or
+                lower(c.name) like lower(concat('%', :search, '%'))
+          )
+    """)
+    Page<Loan> findLoansForRoleWithSearch(
+            @Param("isReceptionist") boolean isReceptionist,
+            @Param("search") String search,
+            Pageable pageable
+    );
 }

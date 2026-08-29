@@ -128,8 +128,15 @@ public class AdminController {
     }
 
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans(Authentication authentication) {
-        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+    public ResponseEntity<?> getAllLoans(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.getAllLoans(authentication.getName(), page, size, search)
+        );
     }
 
     @PostMapping("/loans")

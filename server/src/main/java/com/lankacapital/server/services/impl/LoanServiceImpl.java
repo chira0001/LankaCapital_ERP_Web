@@ -162,24 +162,26 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResponseDto> getAllLoans(String username) {
+    public PageResponse<LoanResponseDto> getAllLoans(String username, int page, int size, String search) {
 
         Employee employee = employeeRepository.findByEmail(username);
         String role = employee.getRole().getRoleName();
 
-        return loanRepository.findAll()
-                .stream()
-                .filter(loan -> {
-                    if ("ADMIN".equals(role)) {
-                        return !isValidUUID(loan.getFileNumber());
-                    }
-                    if ("RECEPTIONIST".equals(role)) {
-                        return isValidUUID(loan.getFileNumber());
-                    }
-                    return false; // other roles see nothing
-                })
-                .map(LoanMapper::mapToLoanResponseDto)
-                .toList();
+        boolean isReceptionist = "RECEPTIONIST".equalsIgnoreCase(role);
+
+        int pageIndex = Math.max(page, 1) - 1;
+
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<Loan> loanPage = loanRepository.findLoansForRoleWithSearch(isReceptionist, search, pageable);
+
+        Page<LoanResponseDto> dtoPage = loanPage.map(LoanMapper::mapToLoanResponseDto);
+
+        return PageResponse.from(dtoPage, page);
     }
 
     @Override

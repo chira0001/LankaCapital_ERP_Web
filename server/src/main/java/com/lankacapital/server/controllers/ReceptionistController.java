@@ -81,9 +81,20 @@ public class ReceptionistController {
         return new ResponseEntity<>(customerService.getCustomerInfoById(id), HttpStatus.OK);
     }
 
+//    @GetMapping("/loans")
+//    public ResponseEntity<?> getAllLoans(Authentication authentication) {
+//        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+//    }
     @GetMapping("/loans")
-    public ResponseEntity<?> getAllLoans(Authentication authentication) {
-        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
+    public ResponseEntity<?> getAllLoans(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                loanService.getAllLoans(authentication.getName(), page, size, search)
+        );
     }
 
     @GetMapping("/loans/lastFileNumber/{loanType}")

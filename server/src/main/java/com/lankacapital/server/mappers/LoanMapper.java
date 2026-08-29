@@ -41,7 +41,6 @@ public class LoanMapper {
         LoanResponseDto responseDto = new LoanResponseDto();
 
         responseDto.setEndAt(loan.getEndAt());
-//        responseDto.setFileNumber(UtilityFunctions.isValidUUID(loan.getFileNumber()) ? "File Number Pending" : loan.getFileNumber());
         responseDto.setFileNumber(loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
         responseDto.setCreatedAt(loan.getCreatedAt());
@@ -78,7 +77,6 @@ public class LoanMapper {
 
         responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
 
-//        responseDto.setInterestRate(loan.getInterestRate().getRate());
         responseDto.setStatus(loan.getStatus());
         responseDto.setDecisionNote(loan.getDecisionNote());
         responseDto.setCustomer(
