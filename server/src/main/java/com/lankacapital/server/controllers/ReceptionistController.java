@@ -129,8 +129,15 @@ public class ReceptionistController {
     }
 
     @PostMapping(path = "/employees/salary")
-    public ResponseEntity<?> addSalary(@RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList){
-        salaryService.addSalaryToEmployee(salaryAddDtoList);
+    public ResponseEntity<?> addSalary(
+            @RequestBody List<EmployeeSalaryAddDto> salaryAddDtoList,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        salaryService.addSalaryToEmployee(salaryAddDtoList, authentication.getName());
         return new ResponseEntity<>("Salaries added successfully", HttpStatus.CREATED);
     }
 

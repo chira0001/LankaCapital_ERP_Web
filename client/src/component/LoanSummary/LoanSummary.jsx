@@ -953,11 +953,9 @@ const LoanSummary = () => {
                                     >
                                         Previous
                                     </button>
-
                                     <span className="min-w-[80px] text-center text-xs font-medium text-gray-600">
                                         Page {paymentPage} of {totalPaymentPages}
                                     </span>
-
                                     <button
                                         type="button"
                                         onClick={() =>

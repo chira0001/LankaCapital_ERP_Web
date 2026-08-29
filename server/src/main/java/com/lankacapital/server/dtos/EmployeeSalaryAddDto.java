@@ -12,6 +12,6 @@ public class EmployeeSalaryAddDto {
     private Integer workingDays;
     private Double otHours;
     private Double unpaidLeaves;
-    private Double loans;
+    private Double travel;
     private Double salaryAdvance;
 }
