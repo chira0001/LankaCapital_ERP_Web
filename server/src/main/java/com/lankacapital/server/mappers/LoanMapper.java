@@ -9,6 +9,7 @@ import com.lankacapital.server.utils.UtilityFunctions;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -171,86 +172,199 @@ public class LoanMapper {
         return dto;
     }
 
-    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(Loan loan){
-
+    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(Loan loan) {
         LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
 
+        // Basic fields
         dto.setAmount(loan.getAmount());
         dto.setCreatedAt(loan.getCreatedAt());
         dto.setFileNumber(loan.getFileNumber());
         dto.setInstallment(loan.getInstallment());
         dto.setInterestRate(loan.getInterestRate());
-        dto.setApprovedEmployee(
-                EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
-        );
-        dto.setCustomer(
-                CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
-        );
+        dto.setApprovedEmployee(EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee()));
+        dto.setCustomer(CustomerMapper.mapToCustomerResponseDto(loan.getCustomer()));
         dto.setLoanType(loan.getLoanType());
         dto.setEndAt(loan.getEndAt());
 
-        // ✅ Safe interest calculation
+        // Interest and total amount with interest
         BigDecimal interestRate = loan.getInterestRate() != null
                 ? BigDecimal.valueOf(loan.getInterestRate())
                 : BigDecimal.ZERO;
 
-        BigDecimal totalWithInterest = loan.getAmount()
-                .add(loan.getAmount()
-                        .multiply(interestRate)
+        BigDecimal amount = loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO;
+        BigDecimal totalWithInterest = amount
+                .add(amount.multiply(interestRate)
                         .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
 
-        BigDecimal totalPaid = loan.getDailyCollections().stream()
+        // Total paid from daily collections
+        List<DailyCollection> collections = loan.getDailyCollections();
+        collections = collections != null ? collections : List.of();
+
+        BigDecimal totalPaid = collections.stream()
                 .map(DailyCollection::getPaidAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        dto.setRemainingBalance(totalWithInterest.subtract(totalPaid)); // <--- require sum of all collections
+        dto.setRemainingBalance(totalWithInterest.subtract(totalPaid));
 
-        // ✅ Installment value
+        // Installment value
+        BigDecimal installmentValue = BigDecimal.ZERO;
         if (loan.getInstallment() != null && loan.getInstallment() > 0) {
-            dto.setInstallmentValue(
-                    totalWithInterest.divide(
-                            BigDecimal.valueOf(loan.getInstallment()),
-                            2,
-                            RoundingMode.HALF_UP
-                    )
+            installmentValue = totalWithInterest.divide(
+                    BigDecimal.valueOf(loan.getInstallment()),
+                    2,
+                    RoundingMode.HALF_UP
             );
         }
+        dto.setInstallmentValue(installmentValue);
 
-        // ✅ Handle Daily Collections safely
-        List<DailyCollection> collections = loan.getDailyCollections();
-        if (collections != null && !collections.isEmpty()) {
+        // Sort collections by installment number (required for mapping order)
+        List<DailyCollection> sortedCollections = collections.stream()
+                .sorted(Comparator.comparing(DailyCollection::getInstallmentNumber,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
 
-            // ✅ Sort by installment number (important!)
-            collections.sort(Comparator.comparing(DailyCollection::getInstallmentNumber));
+        dto.setDailyCollection(sortedCollections.stream()
+                .map(DailyCollectionMapper::mapToDailyCollectionResponseDto)
+                .toList());
 
-            // ✅ Get max installment number
-            Integer maxInstallmentNumber = collections.stream()
-                    .map(DailyCollection::getInstallmentNumber)
-                    .max(Integer::compareTo)
-                    .orElse(0);
+        // ------------------ Arrears Calculation (Optimised) ------------------
+        // Count how many installments have actually been paid (paidAt != null)
+        long paidPeriods = collections.stream()
+                .filter(dc -> dc.getPaidAt() != null)
+                .count();
 
-            // ✅ Sum of all due amounts
-            BigDecimal totalDueAmount = collections.stream()
-                    .map(dc -> dc.getDueAmount() != null ? dc.getDueAmount() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal dueAmountTotal = collections.stream()
+                .map(dc -> dc.getDueAmount() == null ? BigDecimal.ZERO : dc.getDueAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            if (dto.getInstallmentValue() != null) {
-                dto.setArrearsAmount(totalDueAmount);
-            }else{
-                dto.setInstallmentValue(BigDecimal.ZERO);
+        // Determine elapsed periods (days for DAILY, weeks for WEEKLY)
+        long elapsedPeriods = 0;
+        LocalDate startDate = loan.getCreatedAt() != null
+                ? loan.getCreatedAt().toLocalDate()
+                : LocalDate.now();
+
+        if (loan.getLoanType() != null) {
+            switch (loan.getLoanType()) {
+                case DAILY:
+                    elapsedPeriods = ChronoUnit.DAYS.between(startDate, LocalDate.now());
+                    break;
+                case WEEKLY:
+                    elapsedPeriods = ChronoUnit.WEEKS.between(startDate, LocalDate.now());
+                    break;
+                default:
+                    // No periodic arrears for other loan types
+                    break;
             }
-
-            dto.setDailyCollection(
-                    collections.stream()
-                            .map(DailyCollectionMapper::mapToDailyCollectionResponseDto)
-                            .toList()
-            );
-        } else {
-            dto.setArrearsAmount(BigDecimal.ZERO);
         }
+
+        // Arrears = (elapsed - paid) * installmentValue, but never negative
+        BigDecimal unpaidPeriods = BigDecimal.valueOf(Math.max(0, elapsedPeriods - paidPeriods));
+        BigDecimal arrearsAmount = unpaidPeriods.multiply(installmentValue).subtract(dueAmountTotal);
+        dto.setArrearsAmount(arrearsAmount);
 
         return dto;
     }
+
+//    public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(Loan loan){
+//
+//        LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
+//
+//        dto.setAmount(loan.getAmount());
+//        dto.setCreatedAt(loan.getCreatedAt());
+//        dto.setFileNumber(loan.getFileNumber());
+//        dto.setInstallment(loan.getInstallment());
+//        dto.setInterestRate(loan.getInterestRate());
+//        dto.setApprovedEmployee(
+//                EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
+//        );
+//        dto.setCustomer(
+//                CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
+//        );
+//        dto.setLoanType(loan.getLoanType());
+//        dto.setEndAt(loan.getEndAt());
+//
+//        // ✅ Safe interest calculation
+//        BigDecimal interestRate = loan.getInterestRate() != null
+//                ? BigDecimal.valueOf(loan.getInterestRate())
+//                : BigDecimal.ZERO;
+//
+//        BigDecimal totalWithInterest = loan.getAmount()
+//                .add(loan.getAmount()
+//                        .multiply(interestRate)
+//                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+//
+//        BigDecimal totalPaid = loan.getDailyCollections().stream()
+//                .map(DailyCollection::getPaidAmount)
+//                .filter(Objects::nonNull)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//        dto.setRemainingBalance(totalWithInterest.subtract(totalPaid)); // <--- require sum of all collections
+//
+//        // ✅ Installment value
+//        if (loan.getInstallment() != null && loan.getInstallment() > 0) {
+//            dto.setInstallmentValue(
+//                    totalWithInterest.divide(
+//                            BigDecimal.valueOf(loan.getInstallment()),
+//                            2,
+//                            RoundingMode.HALF_UP
+//                    )
+//            );
+//        }
+//
+//        // ✅ Handle Daily Collections safely
+//        List<DailyCollection> collections = loan.getDailyCollections();
+//        if (collections != null && !collections.isEmpty()) {
+//
+//            // ✅ Sort by installment number (important!)
+//            collections.sort(Comparator.comparing(DailyCollection::getInstallmentNumber));
+//
+//            // ✅ Get max installment number
+//            Integer maxInstallmentNumber = collections.stream()
+//                    .map(DailyCollection::getInstallmentNumber)
+//                    .max(Integer::compareTo)
+//                    .orElse(0);
+//
+//            // ✅ Sum of all due amounts
+//            BigDecimal totalDueAmount = collections.stream()
+//                    .map(dc -> dc.getDueAmount() != null ? dc.getDueAmount() : BigDecimal.ZERO)
+//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//            if (dto.getInstallmentValue() != null) {
+//                dto.setArrearsAmount(totalDueAmount);
+//            }else{
+//                dto.setInstallmentValue(BigDecimal.ZERO);
+//            }
+//
+//            dto.setDailyCollection(
+//                    collections.stream()
+//                            .map(DailyCollectionMapper::mapToDailyCollectionResponseDto)
+//                            .toList()
+//            );
+//        }
+//        BigDecimal installmentValue = totalWithInterest.divide(
+//                BigDecimal.valueOf(loan.getInstallment()),
+//                2,
+//                RoundingMode.HALF_UP
+//        );
+//
+//        if(loan.getLoanType().equals("DAILY")){
+//            int totalDays = LocalDate.now() - loan.getCreatedAt();
+//            int totalPaidDays = collections.stream().map(dailyCollection -> dailyCollection.getPaidAt().count);
+//
+//            BigDecimal arrearsAmount = BigDecimal.valueOf(totalDays).subtract(BigDecimal.valueOf(totalPaidDays)).multiply(installmentValue);
+//            dto.setArrearsAmount(arrearsAmount);
+//        } else if (loan.getLoanType().equals("WEEKLY")) {
+//            int totalWeeks = LocalDate.now() - loan.getCreatedAt();
+//            int totalPaidWeeks = collections.stream().map(dailyCollection -> dailyCollection.getPaidAt().count);
+//
+//            BigDecimal arrearsAmount = BigDecimal.valueOf(totalWeeks).subtract(BigDecimal.valueOf(totalPaidWeeks)).multiply(installmentValue);
+//            dto.setArrearsAmount(arrearsAmount);
+//        }
+//        else {
+//            dto.setArrearsAmount(BigDecimal.ZERO);
+//        }
+//        return dto;
+//    }
 }
 

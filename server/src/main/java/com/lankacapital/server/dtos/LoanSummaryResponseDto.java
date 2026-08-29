@@ -22,5 +22,6 @@ public class LoanSummaryResponseDto {
     private BigDecimal installmentValue;
     private BigDecimal remainingBalance;
     private BigDecimal arrearsAmount;
+    private BigDecimal dueAmount;
     private List<DailyCollectionResponseDto> dailyCollection;
 }

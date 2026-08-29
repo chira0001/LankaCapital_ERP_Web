@@ -12,9 +12,14 @@ const formatDate = (date) => {
     if (!date) return "—";
 
     const parsedDate = new Date(date);
+
     return Number.isNaN(parsedDate.getTime())
         ? "—"
-        : parsedDate.toLocaleDateString("en-LK");
+        : parsedDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        });
 };
 
 const LoanSummary = () => {
@@ -78,8 +83,19 @@ const LoanSummary = () => {
         const numericAmount = Number(amount) || 0;
 
         if (numericAmount === 0) return "text-amber-600";
-        if (numericAmount < 0) return "text-red-600";
+        if (numericAmount < 0) return "text-emerald-600";
+        if (numericAmount > 0) return "text-red-600";
+        // if (numericAmount > 0) return "text-emerald-600";
+
+        return "text-gray-600";
+    };
+
+    const styleDueAmount = (amount) => {
+        const numericAmount = Number(amount) || 0;
+
+        if (numericAmount === 0) return "text-amber-600";
         if (numericAmount > 0) return "text-emerald-600";
+        if (numericAmount < 0) return "text-red-600";
 
         return "text-gray-600";
     };
@@ -276,12 +292,20 @@ const LoanSummary = () => {
                                         <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
                                             Loan ID
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
+
+
+                                        {/* <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
                                             Loan Date
                                         </th>
                                         <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
                                             Complete Date
+                                        </th> */}
+
+                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
+                                            Loan Date
                                         </th>
+
+
                                         <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
                                             Applicant
                                         </th>
@@ -333,12 +357,18 @@ const LoanSummary = () => {
                                                 </span>
                                             </td>
 
-                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 md:table-cell sm:px-5 sm:py-4">
+                                            {/* <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 md:table-cell sm:px-5 sm:py-4">
                                                 {formatDate(app.createdAt)}
                                             </td>
 
                                             <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 lg:table-cell sm:px-5 sm:py-4">
                                                 {formatDate(app.endAt)}
+                                            </td> */}
+
+                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 lg:table-cell sm:px-5 sm:py-4">
+                                                <span className="font-bold text-black">{formatDate(app.createdAt)}</span>
+                                                <br />
+                                                <span>{formatDate(app.endAt)}</span>
                                             </td>
 
                                             <td className="px-3 py-3 sm:px-5 sm:py-4">
@@ -794,7 +824,7 @@ const LoanSummary = () => {
 
                                                 <td className="px-3 py-3 sm:px-6 sm:py-4">
                                                     <span
-                                                        className={`inline-flex rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 sm:px-3 ${styleArrearsAmount(
+                                                        className={`inline-flex rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 sm:px-3 ${styleDueAmount(
                                                             (value.paidAmount || 0) -
                                                             (selectedLoan?.installmentValue || 0)
                                                         )}`}
@@ -846,7 +876,7 @@ const LoanSummary = () => {
                                                     </p>
                                                 </div>
                                                 <span
-                                                    className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${styleArrearsAmount(
+                                                    className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${styleDueAmount(
                                                         (value.paidAmount || 0) -
                                                         (selectedLoan?.installmentValue || 0)
                                                     )}`}
