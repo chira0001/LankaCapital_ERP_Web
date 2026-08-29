@@ -10,6 +10,7 @@ import java.util.List;
 
 @Data
 public class LoanSummaryResponseDto {
+    private Long id;
     private BigDecimal amount;
     private LocalDateTime createdAt;
     private String fileNumber;
@@ -20,6 +21,8 @@ public class LoanSummaryResponseDto {
     private LoanType loanType;
     private LocalDate endAt;
     private BigDecimal installmentValue;
+    private BigDecimal remainingBalance;
     private BigDecimal arrearsAmount;
-    private List<DailyCollectionResponseDto> dailyCollection;
+    private BigDecimal dueAmount;
+//    private List<DailyCollectionResponseDto> dailyCollection;
 }

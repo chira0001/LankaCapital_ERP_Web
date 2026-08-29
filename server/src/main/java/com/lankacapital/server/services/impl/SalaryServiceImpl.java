@@ -31,11 +31,13 @@ public class SalaryServiceImpl implements SalaryService {
     private static final int SCALE = 2;
 
     @Override
-    public void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList) {
+    public void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList, String username) {
 
         if (dtoList == null || dtoList.isEmpty()) {
             throw new IllegalArgumentException("Salary DTO list cannot be null or empty");
         }
+
+        Employee enteredEmployee = employeeRepository.findByEmail(username);
 
         String currentMonth = LocalDate.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM"));
@@ -58,6 +60,7 @@ public class SalaryServiceImpl implements SalaryService {
             Salary salary = SalaryMapper.mapToSalary(dto);
             salary.setEmployee(employee);
             salary.setMonth(currentMonth);
+            salary.setEnteredEmployee(enteredEmployee);
 
             SalaryMetaData incentiveMeta = getMeta("IncentiveRate", role);
             SalaryMetaData salesMeta = getMeta("SalesRate", role);
@@ -73,18 +76,18 @@ public class SalaryServiceImpl implements SalaryService {
             BigDecimal sales = percentage(basic, salesMeta.getValue());
             BigDecimal attendance = multiply(dto.getWorkingDays(), attendanceMeta.getValue());
             BigDecimal otAmount = multiply(dto.getOtHours(), otMeta.getValue());
+            BigDecimal travel = toBigDecimal(dto.getTravel());
 
-            BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount);
+            BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount, travel);
 
             BigDecimal employeeEPF = percentage(basic, employeeEPFMeta.getValue());
             BigDecimal companyEPF = percentage(basic, companyEPFMeta.getValue());
             BigDecimal companyETF = percentage(basic, companyETFMeta.getValue());
 
             BigDecimal unpaidLeave = toBigDecimal(dto.getUnpaidLeaves());
-            BigDecimal loans = toBigDecimal(dto.getLoans());
             BigDecimal advance = toBigDecimal(dto.getSalaryAdvance());
 
-            BigDecimal totalDeduction = sum(unpaidLeave, loans, advance, employeeEPF);
+            BigDecimal totalDeduction = sum(unpaidLeave, advance, employeeEPF);
 
             BigDecimal net = gross.subtract(totalDeduction)
                     .setScale(SCALE, RoundingMode.HALF_UP);
@@ -98,7 +101,7 @@ public class SalaryServiceImpl implements SalaryService {
             salary.setGrossSalary(gross);
 
             salary.setUnpaidLeave(unpaidLeave);
-            salary.setLoans(loans);
+            salary.setTravel(travel);
             salary.setSalaryAdvance(advance);
 
             salary.setEmployeeEPF(employeeEPF);

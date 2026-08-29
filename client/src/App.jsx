@@ -38,6 +38,7 @@ import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 import { useEffect, useState } from "react";
 import ReceptionistFinancials from "./pages/Receptionist/ReceptionistFinancials";
 import LoanSummary from "./component/LoanSummary/LoanSummary";
+import Salary from "./pages/Admin/Salary";
 
 const getUser = () => {
   const token = localStorage.getItem("token");
@@ -121,6 +122,7 @@ const App = () => {
           {/* <Route path="portfolio" element={<PortfolioOverview />} /> */}
           {/* <Route path="performance" element={<LoanPerformance />} /> */}
           {/* <Route path="revenue" element={<RevenueTracking />} /> */}
+          <Route path="salary" element={<Salary />} />
           <Route path="customers" element={<CustomerManagementPage />} />
           <Route path="officers" element={<FieldOfficerPerformancePage />} />
           <Route path="petty-cash" element={<PettyCashPage />} />

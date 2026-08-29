@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface SalaryService {
 
-    void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList);
+    void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList, String username);
 
 }

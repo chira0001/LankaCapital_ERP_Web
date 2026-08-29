@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { Download } from "lucide-react";
 import { Button } from "@/component/ui/button";
@@ -16,6 +16,9 @@ const FinancialReportsPage = () => {
   const [month, setMonth] = useState(dayjs());
   const [year, setYear] = useState(dayjs());
 
+  const [startDate, setStartDate] = useState();
+  const [endDate, setEndDate] = useState();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,6 +29,23 @@ const FinancialReportsPage = () => {
 
   const [isSaving, setIsSaving] = useState(false);
 
+  const [trialBalanceArray, setTrialBalanceArray] = useState([]);
+  const [TrialBalanceArrayData, setTrialBalanceArrayData] = useState({
+    accountName: "",
+    transactionType: "",
+    accountType: "",
+    amount: "",
+    financialDate: endDate, // kept in sync with endDate input
+  });
+
+  // Must be an array because you use .length and .map in UI
+  const [existingTrialBalance, setExistingTrialBalance] = useState([]);
+
+  const [isEditTrialBalanceData, setIsEditTrialBalanceData] = useState(false);
+
+  const [tbEditIndex, setTbEditIndex] = useState(null);
+  const [isSavingTB, setIsSavingTB] = useState(false);
+
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [assetsPayload, setAssetsPayload] = useState({
     assetName: "",
@@ -34,15 +54,209 @@ const FinancialReportsPage = () => {
     amount: "",
   });
 
-  const [assetsList, setAssetsList] = useState([]); // intended to be list
+  const [assetsList, setAssetsList] = useState([]);
   const [isAssetsListLoading, setIsAssetsListLoading] = useState(false);
 
-  const formatMonth = (d) => dayjs(d).format("YYYY-MM");
+  const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
 
-  const saveAssetToRegistry = async () => {
+  // Memoize reportTypes so it is not recreated on every render
+  const reportTypes = useMemo(
+    () => [
+      { value: "PPE", name: "PPE" },
+      { value: "Working", name: "Working" },
+      { value: "TB", name: "TB" },
+      { value: "BS", name: "BS" },
+      { value: "CE", name: "CE" },
+      { value: "CF", name: "CF" },
+      { value: "BS", name: "BS" },
+      { value: "CE", name: "CE" },
+      { value: "CF", name: "CF" },
+      { value: "P09", name: "P09" },
+      { value: "P10", name: "P10" },
+      { value: "P11", name: "P11" },
+      { value: "PL", name: "PL" },
+      { value: "Income Tax", name: "Income Tax" },
+      { value: "Statement", name: "Complete Report" },
+    ],
+    []
+  );
+
+  // -------------------- Dates --------------------
+  const handleStartDateChange = useCallback((e) => {
+    setStartDate(e.target.value);
+  }, []);
+
+  const handleEndDateChange = useCallback((e) => {
+    const val = e.target.value;
+    setEndDate(val);
+
+    // keep TB financialDate synced for NEW rows
+    setTrialBalanceArrayData((prev) => ({
+      ...prev,
+      financialDate: val,
+    }));
+  }, []);
+
+  // -------------------- Existing Trial Balance Fetch (optimized) --------------------
+  const fetchExistingTrialBalance = useCallback(async (sDate, eDate) => {
+    try {
+      const res = await axiosApi.get("/admin/trialBalance", {
+        params: {
+          startDate: sDate,
+          endDate: eDate,
+        },
+      });
+      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      toast.error("Failed to fetch Trial Balance data.");
+      console.log(err);
+    }
+  }, []);
+
+  // Fetch only once per date change (previous code triggered duplicate fetches)
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setExistingTrialBalance([]);
+      return;
+    }
+    fetchExistingTrialBalance(startDate, endDate);
+  }, [startDate, endDate, fetchExistingTrialBalance]);
+
+  // -------------------- Trial Balance handlers --------------------
+  const resetTBForm = useCallback(() => {
+    setTrialBalanceArrayData({
+      accountName: "",
+      transactionType: "",
+      accountType: "",
+      amount: "",
+      financialDate: endDate,
+    });
+  }, [endDate]);
+
+  const handleTBChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setTrialBalanceArrayData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
+
+  const handleAddTBRow = useCallback(() => {
+    // REQUIRE start/end dates before adding
+    if (!startDate || !endDate) {
+      toast.error(
+        "Please select Start Date and End Date before adding Trial Balance data."
+      );
+      return;
+    }
+
+    const row = {
+      accountName: TrialBalanceArrayData.accountName?.trim(),
+      transactionType: TrialBalanceArrayData.transactionType,
+      accountType: TrialBalanceArrayData.accountType,
+      amount: TrialBalanceArrayData.amount,
+      financialDate: endDate, // must be endDate for each row
+    };
+
+    if (
+      !row.accountName ||
+      !row.transactionType ||
+      !row.accountType ||
+      row.amount === ""
+    ) {
+      toast.error("Please fill all Trial Balance fields.");
+      return;
+    }
+
+    setTrialBalanceArray((prev) => [...prev, row]);
+    resetTBForm();
+  }, [TrialBalanceArrayData, startDate, endDate, resetTBForm]);
+
+  const handleEditTBRow = useCallback(
+    (index) => {
+      setTbEditIndex(index);
+      setIsEditTrialBalanceData(true);
+      setTrialBalanceArrayData(trialBalanceArray[index]);
+    },
+    [trialBalanceArray]
+  );
+
+  const handleUpdateTBRow = useCallback(() => {
+    if (tbEditIndex === null) return;
+
+    const updated = {
+      accountName: TrialBalanceArrayData.accountName?.trim(),
+      transactionType: TrialBalanceArrayData.transactionType,
+      accountType: TrialBalanceArrayData.accountType,
+      amount: TrialBalanceArrayData.amount,
+      // keep aligned to selected endDate if provided; else preserve existing row date
+      financialDate:
+        endDate ||
+        TrialBalanceArrayData.financialDate ||
+        dayjs().format("YYYY-MM-DD"),
+    };
+
+    if (
+      !updated.accountName ||
+      !updated.transactionType ||
+      !updated.accountType ||
+      updated.amount === ""
+    ) {
+      toast.error("Please fill all Trial Balance fields before updating.");
+      return;
+    }
+
+    setTrialBalanceArray((prev) =>
+      prev.map((row, i) => (i === tbEditIndex ? updated : row))
+    );
+
+    setTbEditIndex(null);
+    setIsEditTrialBalanceData(false);
+    resetTBForm();
+  }, [tbEditIndex, TrialBalanceArrayData, endDate, resetTBForm]);
+
+  const handleDeleteTBRow = useCallback(() => {
+    if (tbEditIndex === null) return;
+
+    setTrialBalanceArray((prev) => prev.filter((_, i) => i !== tbEditIndex));
+
+    setTbEditIndex(null);
+    setIsEditTrialBalanceData(false);
+    resetTBForm();
+  }, [tbEditIndex, resetTBForm]);
+
+  const handleSaveTBData = useCallback(async () => {
+    try {
+      setIsSavingTB(true);
+
+      const res = await axiosApi.post("/admin/trialBalance", trialBalanceArray);
+      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
+      toast.success("Trial balance data successfully added");
+    } catch (e) {
+      toast.error("Failed to save Trial Balance data.");
+      console.log(e);
+    } finally {
+      setIsSavingTB(false);
+    }
+  }, [trialBalanceArray]);
+
+  // -------------------- Assets --------------------
+  const fetchAssets = useCallback(async () => {
+    try {
+      setIsAssetsListLoading(true);
+      const res = await axiosApi.get("/admin/assets");
+      setAssetsList(res.data);
+      setIsAssetsListLoading(false);
+    } catch (e) {
+      setIsAssetsListLoading(false);
+      toast.error("Error loading asset. Try again...");
+    }
+  }, []);
+
+  const saveAssetToRegistry = useCallback(async () => {
     try {
       setIsSaving(true);
-      const res = await axiosApi.post("/admin/assets", assetsPayload);
+      await axiosApi.post("/admin/assets", assetsPayload);
       toast.success("Asset successfully added");
       setIsSaving(false);
       fetchAssets();
@@ -51,40 +265,10 @@ const FinancialReportsPage = () => {
       setIsSaving(false);
       console.log(e);
     }
-  };
+  }, [assetsPayload, fetchAssets]);
 
-  const fetchAssets = async () => {
-    try {
-      setIsAssetsListLoading(true);
-      const res = await axiosApi.get("/admin/assets");
-      setAssetsList(res.data);
-      console.log("assetsList : ", res.data);
-      setIsAssetsListLoading(false);
-    } catch (e) {
-      setIsAssetsListLoading(false);
-      toast.error("Error loading asset. Try again...");
-    }
-  };
-
-  const reportTypes = [
-    { value: "PPE", name: "PPE" },
-    { value: "Working", name: "Working" },
-    { value: "TB", name: "TB" },
-    { value: "BS", name: "BS" },
-    { value: "CE", name: "CE" },
-    { value: "CF", name: "CF" },
-    { value: "BS", name: "BS" },
-    { value: "CE", name: "CE" },
-    { value: "CF", name: "CF" },
-    { value: "P09", name: "P09" },
-    { value: "P10", name: "P10" },
-    { value: "P11", name: "P11" },
-    { value: "PL", name: "PL" },
-    { value: "Income Tax", name: "Income Tax" },
-    { value: "Statement", name: "Complete Report" },
-  ];
-
-  const handleGenerate = async () => {
+  // -------------------- Reports --------------------
+  const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -102,9 +286,9 @@ const FinancialReportsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportType, month, formatMonth]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(() => {
     if (!data) return;
 
     const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
@@ -113,9 +297,9 @@ const FinancialReportsPage = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Report");
 
     XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
-  };
+  }, [data, reportType, month, formatMonth]);
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = useCallback(async () => {
     try {
       const res = await axiosApi.get("/admin/financial-report/pdf", {
         params: { month: formatMonth(month) },
@@ -131,7 +315,7 @@ const FinancialReportsPage = () => {
     } catch {
       alert("PDF download failed");
     }
-  };
+  }, [month, formatMonth]);
 
   const renderTable = () => {
     if (!data) return null;
@@ -261,7 +445,9 @@ const FinancialReportsPage = () => {
             ) : (
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="text-xs text-gray-500">
-                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
+                  {isAssetsListLoading
+                    ? "Loading assets..."
+                    : `${assetsCount} assets`}
                 </div>
               </div>
             )}
@@ -284,7 +470,9 @@ const FinancialReportsPage = () => {
 
                     <div className="mt-4 grid gap-4">
                       <div>
-                        <Label htmlFor="assetName">Asset Name<span className="text-red-500">*</span></Label>
+                        <Label htmlFor="assetName">
+                          Asset Name<span className="text-red-500">*</span>
+                        </Label>
                         <input
                           id="assetName"
                           type="text"
@@ -301,7 +489,9 @@ const FinancialReportsPage = () => {
 
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div className="sm:col-span-1">
-                          <Label htmlFor="purchasedMonth">Purchased Date<span className="text-red-500">*</span></Label>
+                          <Label htmlFor="purchasedMonth">
+                            Purchased Date<span className="text-red-500">*</span>
+                          </Label>
                           <input
                             id="purchasedMonth"
                             type="date"
@@ -317,7 +507,9 @@ const FinancialReportsPage = () => {
                         </div>
 
                         <div className="sm:col-span-1">
-                          <Label htmlFor="rate">Rate (%)<span className="text-red-500">*</span></Label>
+                          <Label htmlFor="rate">
+                            Rate (%)<span className="text-red-500">*</span>
+                          </Label>
                           <input
                             id="rate"
                             type="text"
@@ -333,7 +525,9 @@ const FinancialReportsPage = () => {
                         </div>
 
                         <div className="sm:col-span-1">
-                          <Label htmlFor="amount">Amount(LKR)<span className="text-red-500">*</span></Label>
+                          <Label htmlFor="amount">
+                            Amount(LKR)<span className="text-red-500">*</span>
+                          </Label>
                           <input
                             id="amount"
                             type="text"
@@ -415,15 +609,21 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                  })
+                                  ? new Date(asset.purchasedMonth).toLocaleDateString(
+                                      "en-LK",
+                                      {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "numeric",
+                                      }
+                                    )
                                   : "-";
 
                                 return (
-                                  <tr key={key} className="border-t hover:bg-gray-50/50 transition-colors">
+                                  <tr
+                                    key={key}
+                                    className="border-t hover:bg-gray-50/50 transition-colors"
+                                  >
                                     <td className="px-3 py-2 text-gray-800">
                                       {asset?.assetName ?? "-"}
                                     </td>
@@ -468,7 +668,8 @@ const FinancialReportsPage = () => {
                             No assets are available
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building your registry.
+                            Add a new asset using the form to start building your
+                            registry.
                           </p>
                         </div>
                       )}
@@ -507,6 +708,7 @@ const FinancialReportsPage = () => {
                 id="startDate"
                 type="date"
                 name=""
+                onChange={handleStartDateChange}
                 className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
@@ -517,28 +719,264 @@ const FinancialReportsPage = () => {
                 id="endDate"
                 type="date"
                 name=""
+                onChange={handleEndDateChange}
                 className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="reportType">Report Type</Label>
-              <select
-                id="reportType"
-                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value)}
-              >
-                <option value="">Select Report Type</option>
-                {reportTypes.map((type, key) => {
-                  return (
-                    <option value={type.value} key={key}>
-                      {type.name}
-                    </option>
-                  );
-                })}
-              </select>
+          <div className="mt-3 border p-4 rounded-lg">
+            <h3>Trial Balance Data</h3>
+
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              <div>
+                <Label htmlFor="tb_accountName">
+                  Account Name<span className="text-red-500">*</span>
+                </Label>
+                <input
+                  id="tb_accountName"
+                  type="text"
+                  name="accountName"
+                  value={TrialBalanceArrayData.accountName}
+                  onChange={handleTBChange}
+                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tb_transactionType">
+                  Transaction Type<span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="tb_transactionType"
+                  name="transactionType"
+                  value={TrialBalanceArrayData.transactionType}
+                  onChange={handleTBChange}
+                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                  <option value="">Select type</option>
+                  <option value="DR">Debit</option>
+                  <option value="CR">Credit</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="tb_accountType">
+                  Account Type<span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="tb_accountType"
+                  name="accountType"
+                  value={TrialBalanceArrayData.accountType}
+                  onChange={handleTBChange}
+                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                  <option value="">Select account type</option>
+                  <option value="ASSET">Asset</option>
+                  <option value="LIABILITY">Liability</option>
+                  <option value="EQUITY">Equity</option>
+                  <option value="EXPENSE">Expense</option>
+                  <option value="INCOME">Income</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="tb_amount">
+                  Amount<span className="text-red-500">*</span>
+                </Label>
+                <input
+                  id="tb_amount"
+                  type="text"
+                  name="amount"
+                  value={TrialBalanceArrayData.amount}
+                  onChange={handleTBChange}
+                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                />
+              </div>
             </div>
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-3">
+              <Button
+                onClick={handleAddTBRow}
+                className="w-full sm:w-auto bg-white text-black border border-black"
+                disabled={isSavingTB}
+              >
+                {isSavingTB ? "Data Adding..." : "Add Data"}
+              </Button>
+
+              <Button
+                onClick={handleSaveTBData}
+                className="w-full sm:w-auto"
+                disabled={isSavingTB}
+              >
+                {isSavingTB ? "Data Saving..." : "Save Data"}
+              </Button>
+            </div>
+
+            <div className="mt-3">
+              {trialBalanceArray.length > 0 && (
+                <table className="min-w-full text-sm border">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="border px-2 py-1 text-left">Account Name</th>
+                      <th className="border px-2 py-1 text-left">
+                        Transaction Type
+                      </th>
+                      <th className="border px-2 py-1 text-left">Account Type</th>
+                      <th className="border px-2 py-1 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trialBalanceArray.map((row, key) => (
+                      <tr
+                        key={key}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditTBRow(key)}
+                      >
+                        <td className="border px-2 py-1">{row.accountName}</td>
+                        <td className="border px-2 py-1">{row.transactionType}</td>
+                        <td className="border px-2 py-1">{row.accountType}</td>
+                        <td className="border px-2 py-1">{row.amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {existingTrialBalance.length > 0 && (
+              <div className="mt-3">
+                Existing trial balance inputs
+                <table className="min-w-full text-sm border">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="border px-2 py-1 text-left">Account Name</th>
+                      <th className="border px-2 py-1 text-left">
+                        Transaction Type
+                      </th>
+                      <th className="border px-2 py-1 text-left">Account Type</th>
+                      <th className="border px-2 py-1 text-left">
+                        Financial Period
+                      </th>
+                      <th className="border px-2 py-1 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingTrialBalance.map((row, key) => (
+                      <tr key={key} className="cursor-pointer hover:bg-gray-50">
+                        <td className="border px-2 py-1">{row.accountName}</td>
+                        <td className="border px-2 py-1">
+                          {row.transactionType}
+                        </td>
+                        <td className="border px-2 py-1">{row.accountType}</td>
+                        <td className="border px-2 py-1">{row.financialDate}</td>
+                        <td className="border px-2 py-1">{row.amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {isEditTrialBalanceData && (
+              <div className="mt-3 border p-4 rounded-lg">
+                <h3>Edit Trial Balance Data</h3>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <Label htmlFor="tb_edit_accountName">
+                      Account Name<span className="text-red-500">*</span>
+                    </Label>
+                    <input
+                      id="tb_edit_accountName"
+                      type="text"
+                      name="accountName"
+                      value={TrialBalanceArrayData.accountName}
+                      onChange={handleTBChange}
+                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tb_edit_transactionType">
+                      Transaction Type<span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      id="tb_edit_transactionType"
+                      name="transactionType"
+                      value={TrialBalanceArrayData.transactionType}
+                      onChange={handleTBChange}
+                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    >
+                      <option value="">Select type</option>
+                      <option value="DR">Debit</option>
+                      <option value="CR">Credit</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tb_edit_accountType">
+                      Account Type<span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      id="tb_edit_accountType"
+                      name="accountType"
+                      value={TrialBalanceArrayData.accountType}
+                      onChange={handleTBChange}
+                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    >
+                      <option value="">Select account type</option>
+                      <option value="ASSET">Asset</option>
+                      <option value="LIABILITY">Liability</option>
+                      <option value="EQUITY">Equity</option>
+                      <option value="EXPENSE">Expense</option>
+                      <option value="INCOME">Income</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tb_edit_amount">
+                      Amount<span className="text-red-500">*</span>
+                    </Label>
+                    <input
+                      id="tb_edit_amount"
+                      type="text"
+                      name="amount"
+                      value={TrialBalanceArrayData.amount}
+                      onChange={handleTBChange}
+                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditTrialBalanceData(false);
+                      setTbEditIndex(null);
+                      resetTBForm();
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDeleteTBRow}
+                    className="w-full sm:w-auto bg-red-600 text-white hover:bg-red-700"
+                    disabled={isSavingTB}
+                  >
+                    {isSavingTB ? "Removing..." : "Remove Data"}
+                  </Button>
+                  <Button
+                    onClick={handleUpdateTBRow}
+                    className="w-full sm:w-auto"
+                    disabled={isSavingTB}
+                  >
+                    {isSavingTB ? "Updating..." : "Update Data"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {error ? (
@@ -548,6 +986,23 @@ const FinancialReportsPage = () => {
           ) : null}
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div>
+              <Label htmlFor="reportType">Report Type</Label>
+              <select
+                id="reportType"
+                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+              >
+                <option value="">Select Report Type</option>
+                {reportTypes.map((type, key) => (
+                  <option value={type.value} key={key}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Button onClick={handleGenerate} disabled={loading}>
               {loading ? "Loading..." : "Generate"}
             </Button>

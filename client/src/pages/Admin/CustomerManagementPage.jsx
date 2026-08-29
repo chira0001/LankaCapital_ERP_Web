@@ -186,7 +186,6 @@ const CustomerManagementPage = () => {
         customerId: Number(loanForm.customerId),
       };
 
-      console.log("Create Payload : ", payload);
       await axiosAPI.post(`admin/loans`, payload);
 
       setShowLoanForm(false);
