@@ -84,6 +84,28 @@ public class LoanMapper {
                         ? CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
                         : null
         );
+        BigDecimal amount = loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO;
+
+        int installmentCount = (loan.getInstallment() != null && loan.getInstallment() > 0)
+                ? loan.getInstallment()
+                : 0;
+
+        BigDecimal interestRate = loan.getInterestRate() != null
+                ? BigDecimal.valueOf(loan.getInterestRate())
+                : BigDecimal.ZERO;
+
+        BigDecimal totalWithInterest = amount.add(
+                amount.multiply(interestRate)
+                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
+
+        BigDecimal installmentValue = totalWithInterest.divide(
+                BigDecimal.valueOf(installmentCount),
+                2,
+                RoundingMode.HALF_UP
+        );
+
+        responseDto.setInstallmentValue(installmentValue);
 
         if (loan.getCustomer() != null) {
             CustomerInfoDto customerDto = new CustomerInfoDto();
