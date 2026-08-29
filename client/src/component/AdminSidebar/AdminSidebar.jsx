@@ -21,11 +21,11 @@ const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
   { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
   { name: "Loan Summary", icon: Summary, path: "/ad/loan-summary" },
+  { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
+  { name: "Financials", icon: Files, path: "/ad/financials" },
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
   { name: "User Management", icon: CircleUser, path: "/ad/users" },
-  { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
   { name: "Salary Management", icon: WalletMinimal, path: "/ad/salary" },
-  { name: "Financials", icon: Files, path: "/ad/financials" },
   { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 ];
