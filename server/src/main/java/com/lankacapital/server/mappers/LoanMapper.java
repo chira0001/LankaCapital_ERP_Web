@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class LoanMapper {
@@ -197,6 +198,13 @@ public class LoanMapper {
                 .add(loan.getAmount()
                         .multiply(interestRate)
                         .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+
+        BigDecimal totalPaid = loan.getDailyCollections().stream()
+                .map(DailyCollection::getPaidAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        dto.setRemainingBalance(totalWithInterest.subtract(totalPaid)); // <--- require sum of all collections
 
         // ✅ Installment value
         if (loan.getInstallment() != null && loan.getInstallment() > 0) {

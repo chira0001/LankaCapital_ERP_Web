@@ -297,7 +297,7 @@ const ReceptionistHome = () => {
                                                 type="text"
                                                 name="fileNumber"
                                                 value={
-                                                    isValidUUID(pendingLoanUpdatePayload.fileNumber) ? "Assign a file number" : pendingLoanUpdatePayload.fileNumber
+                                                    isValidUUID(pendingLoanUpdatePayload.fileNumber) ? "" : pendingLoanUpdatePayload.fileNumber
                                                 }
                                                 onChange={handleInputChange}
                                                 placeholder="e.g., LN-2023-001"

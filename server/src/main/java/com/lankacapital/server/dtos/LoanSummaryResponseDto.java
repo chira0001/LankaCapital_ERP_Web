@@ -20,6 +20,7 @@ public class LoanSummaryResponseDto {
     private LoanType loanType;
     private LocalDate endAt;
     private BigDecimal installmentValue;
+    private BigDecimal remainingBalance;
     private BigDecimal arrearsAmount;
     private List<DailyCollectionResponseDto> dailyCollection;
 }
