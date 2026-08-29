@@ -24,6 +24,7 @@ const menuItems = [
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
   { name: "User Management", icon: CircleUser, path: "/ad/users" },
   { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
+  { name: "Salary Management", icon: WalletMinimal, path: "/ad/salary" },
   { name: "Financials", icon: Files, path: "/ad/financials" },
   { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },

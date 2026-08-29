@@ -81,10 +81,6 @@ public class ReceptionistController {
         return new ResponseEntity<>(customerService.getCustomerInfoById(id), HttpStatus.OK);
     }
 
-//    @GetMapping("/loans")
-//    public ResponseEntity<?> getAllLoans(Authentication authentication) {
-//        return ResponseEntity.ok(loanService.getAllLoans(authentication.getName()));
-//    }
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans(
             @RequestParam(defaultValue = "1") int page,

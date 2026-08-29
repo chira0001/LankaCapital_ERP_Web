@@ -140,14 +140,16 @@ public class AdminController {
     }
 
     @PostMapping("/loans")
-    public ResponseEntity<LoanResponseDto> addLoan(
+    public ResponseEntity<?> addLoan(
             @RequestBody LoanCreateDto dto,
             Authentication authentication
     ) {
-        return new ResponseEntity<>(
-                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
-                HttpStatus.CREATED
-        );
+        loanService.addLoan(dto, authentication.getName());
+//        return new ResponseEntity<>(
+//                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
+//                HttpStatus.CREATED
+//        );
+        return new ResponseEntity<>("Loan Created", HttpStatus.CREATED);
     }
 
     @GetMapping("/loans/customer/{id}")

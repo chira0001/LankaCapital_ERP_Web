@@ -9,6 +9,7 @@ import com.lankacapital.server.utils.UtilityFunctions;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
@@ -16,24 +17,64 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class LoanMapper {
-    public static Loan mapToLoan(LoanCreateDto loanCreateDto){
+
+    public static Loan mapToLoan(LoanCreateDto loanCreateDto) {
 
         Loan loan = new Loan();
 
-        if (loanCreateDto.getFileNumber().isEmpty()) {
+        // File number
+        String fileNumber = loanCreateDto.getFileNumber();
+        if (fileNumber == null || fileNumber.trim().isEmpty()) {
             loan.setFileNumber(UUID.randomUUID().toString());
         } else {
-            loan.setFileNumber(loanCreateDto.getFileNumber());
+            loan.setFileNumber(fileNumber.trim());
         }
 
-        loan.setEndAt(LocalDate.parse(loanCreateDto.getEndAt()));
-        loan.setInstallment(loanCreateDto.getNumberOfInstallments());
+        // Loan type (safe)
+        LoanType loanType = LoanType.DAILY; // default
+        if (loanCreateDto.getLoanType() != null && !loanCreateDto.getLoanType().trim().isEmpty()) {
+            loanType = LoanType.valueOf(loanCreateDto.getLoanType().trim().toUpperCase());
+        }
+        loan.setLoanType(loanType);
+
+        // Installments (safe)
+        Integer installments = loanCreateDto.getNumberOfInstallments();
+        int numberOfInstallments = (installments != null && installments > 0) ? installments : 0;
+        loan.setInstallment(numberOfInstallments);
+
+        // End date
+        // If DTO has endAt -> use it, otherwise calculate from today based on loanType and numberOfInstallments.
+        // (Assumes LoanCreateDto#getEndAt() returns a String like "2026-08-29".)
+        String endAtStr = loanCreateDto.getEndAt();
+        if (endAtStr != null && !endAtStr.isBlank()) {
+            try {
+                loan.setEndAt(LocalDate.parse(endAtStr.trim())); // ISO_LOCAL_DATE expected
+            } catch (DateTimeParseException ex) {
+                // If invalid date string, fallback to calculated end date (if possible)
+                loan.setEndAt(calculateEndDate(loanType, numberOfInstallments));
+            }
+        } else {
+            loan.setEndAt(calculateEndDate(loanType, numberOfInstallments));
+        }
+
+        // Other fields
         loan.setInterestRate(loanCreateDto.getInterestRate());
         loan.setStatus(LoanStatus.PENDING);
         loan.setAmount(loanCreateDto.getLoanAmount());
         loan.setDocumentCharge(loanCreateDto.getDocumentCharge());
-        loan.setLoanType(LoanType.valueOf(loanCreateDto.getLoanType()));
+
         return loan;
+    }
+
+    private static LocalDate calculateEndDate(LoanType loanType, int numberOfInstallments) {
+        if (numberOfInstallments <= 0) return null;
+
+        LocalDate today = LocalDate.now();
+        if (loanType == LoanType.WEEKLY) {
+            return today.plusWeeks(numberOfInstallments);
+        }
+        // DAILY (default)
+        return today.plusDays(numberOfInstallments);
     }
 
     public static LoanResponseDto mapToLoanResponseDto(Loan loan) {
