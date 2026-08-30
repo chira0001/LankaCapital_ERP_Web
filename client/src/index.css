@@ -237,3 +237,9 @@ input[type=number]::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield; /* Firefox */
 }
+
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* black */
+  opacity: 0.8;
+  cursor: pointer;
+}
