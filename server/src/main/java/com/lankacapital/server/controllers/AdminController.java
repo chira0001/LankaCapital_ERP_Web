@@ -13,6 +13,7 @@ import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
 import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(path = "/api/v1/admin")
@@ -43,6 +45,7 @@ public class AdminController {
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
     private final TrialBalanceDataService trialBalanceDataService;
+    private final SalaryService salaryService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -59,6 +62,31 @@ public class AdminController {
         return new ResponseEntity<>(roleService.getAllRoles(), HttpStatus.OK);
     }
 
+    @GetMapping("/salary")
+    public ResponseEntity<?> fetchSalaryDetails(
+            Authentication authentication,
+            @RequestParam String yearMonth
+    ){
+        if(authentication.getName() == null){
+            throw new ResourceNotFoundException("Invalid token");
+        }
+
+        return new ResponseEntity<>(salaryService.fetchSalaryDetails(yearMonth),HttpStatus.OK);
+    }
+
+    @PutMapping("/salary")
+    public ResponseEntity<?> approveSalaryDetails(
+            Authentication authentication,
+            @RequestParam String yearMonth) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new ResourceNotFoundException("Invalid token");
+        }
+        System.out.println("yearMonth : " + yearMonth);
+        return new ResponseEntity<>(
+                salaryService.approveSalaryDetails(yearMonth, authentication.getName()),
+                HttpStatus.OK
+        );
+    }
 
     @PostMapping(path = "/salary-condition")
     public ResponseEntity<?> addNewSalaryCondition(@RequestBody ConditionRegisterDto dto){
@@ -144,12 +172,12 @@ public class AdminController {
             @RequestBody LoanCreateDto dto,
             Authentication authentication
     ) {
-        loanService.addLoan(dto, authentication.getName());
-//        return new ResponseEntity<>(
-//                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
-//                HttpStatus.CREATED
-//        );
-        return new ResponseEntity<>("Loan Created", HttpStatus.CREATED);
+//        loanService.addLoan(dto, authentication.getName());
+//        return new ResponseEntity<>("Loan Created", HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                LoanMapper.mapToLoanResponseDto(loanService.addLoan(dto, authentication.getName())),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping("/loans/customer/{id}")
@@ -447,7 +475,6 @@ public class AdminController {
             java.math.BigDecimal today,
             java.math.BigDecimal week
     ) {}
-
 
 
 
