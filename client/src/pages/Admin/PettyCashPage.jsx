@@ -146,13 +146,24 @@ const PettyCashPage = () => {
   };
 
   const handleExportExcel = () => {
-    const exportData = pettyCashData.map((item) => ({
-      Date: new Date(item.dateTime).toLocaleDateString(),
-      Employee: item.requestEmployee?.firstName || 'N/A',
-      Amount: item.amount,
-      Narration: item.narration || '',
-      Status: item.request
-    }));
+    const exportData = pettyCashData
+      .filter(item => item.request === "APPROVED")
+      .map(item => ({
+        Date: new Date(item.dateTime).toLocaleDateString(),
+        Amount: item.amount,
+        Narration: item.narration || '',
+        Category: item.pettyCashCategory?.categoryName || '',
+        Requested_By: item.requestEmployee
+          ? `${item.requestEmployee.firstName} ${item.requestEmployee.lastName}`
+          : 'N/A',
+        Updated_By: item.updatedEmployee
+          ? `${item.updatedEmployee.firstName} ${item.updatedEmployee.lastName}`
+          : 'N/A',
+        Approved_By: item.approvedEmployee
+          ? `${item.approvedEmployee.firstName} ${item.approvedEmployee.lastName}`
+          : 'N/A',
+        Status: item.request
+      }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -170,43 +181,11 @@ const PettyCashPage = () => {
     setIsRowClicked(true);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900">
-                Loading Petty Cash Information
-              </p>
-              <p className="text-xs text-gray-500">
-                Please wait while we fetch the latest data...
-              </p>
-            </div>
-          </div>
-
-          {/* simple skeleton */}
-          <div className="mt-6 space-y-3">
-            <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
-            <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      {/* <Helmet>
-        <title>Petty Cash Management</title>
-      </Helmet> */}
 
       <div className="min-h-screen bg-slate-50 p-3 sm:p-4 lg:p-6">
-        {/* HEADER */}
         <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
@@ -222,88 +201,112 @@ const PettyCashPage = () => {
           </Button>
         </header>
 
-        {/* ===================== MOBILE LIST (cards) ===================== */}
         <div className="lg:mx-auto lg:max-w-7xl md:hidden space-y-3">
-          {pettyCashData.map((record) => (
-            <div
-              key={record.id}
-              className="rounded-xl border border-gray-200 bg-white shadow p-3"
-              onClick={() => openDetails(record)}
-              role="button"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>{new Date(record.dateTime).toLocaleDateString()}</span>
-                  </div>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-900 truncate">
-                    {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-600 break-words">
-                    {record.narration}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Category:{" "}
-                    <span className="text-slate-800 font-medium">
-                      {record.pettyCashCategory?.categoryName || "—"}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="shrink-0 text-right">
-                  <p className="font-mono font-semibold text-sm sm:text-base">
-                    {formatLKR(record.amount)}
-                  </p>
-                  <div className="mt-1 flex justify-end">
-                    <StatusBadge status={record.request} />
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">
+                      Loading Petty Cash Information
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Please wait while we fetch the latest data...
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Actions */}
-              <div className="mt-3 flex justify-end gap-2">
-                {record.request === "PENDING" ? (
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); approve(record.id); }}
-                      className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 rounded"
-                    >
-                      {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
-                        ? "Approving..."
-                        : "Approve"}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); reject(record.id); }}
-                      className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded"
-                    >
-                      {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
-                        ? "Rejecting..."
-                        : "Reject"}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); undo(record.id); }}
-                    className="px-3 py-1.5 text-xs bg-slate-100 rounded"
-                  >
-                    <Undo2 className="w-3 h-3 inline mr-1" />
-                    {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
-                      ? "Undoing..."
-                      : "Undo"}
-                  </button>
-                )}
+                {/* simple skeleton */}
+                <div className="mt-6 space-y-3">
+                  <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
+                </div>
               </div>
             </div>
-          ))}
+          ) : (
+            pettyCashData.map((record) => (
+              <div
+                key={record.id}
+                className="rounded-xl border border-gray-200 bg-white shadow p-3"
+                onClick={() => openDetails(record)}
+                role="button"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span>{new Date(record.dateTime).toLocaleDateString()}</span>
+                    </div>
+
+                    <p className="mt-1 text-sm font-semibold text-slate-900 truncate">
+                      {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-600 break-words">
+                      {record.narration}
+                    </p>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Category:{" "}
+                      <span className="text-slate-800 font-medium">
+                        {record.pettyCashCategory?.categoryName || "—"}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono font-semibold text-sm sm:text-base">
+                      {formatLKR(record.amount)}
+                    </p>
+                    <div className="mt-1 flex justify-end">
+                      <StatusBadge status={record.request} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-3 flex justify-end gap-2">
+                  {record.request === "PENDING" ? (
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); approve(record.id); }}
+                        className="px-3 py-1.5 text-xs bg-emerald-50 text-emerald-700 rounded"
+                      >
+                        {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
+                          ? "Approving..."
+                          : "Approve"}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); reject(record.id); }}
+                        className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded"
+                      >
+                        {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
+                          ? "Rejecting..."
+                          : "Reject"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); undo(record.id); }}
+                      className="px-3 py-1.5 text-xs bg-slate-100 rounded"
+                    >
+                      <Undo2 className="w-3 h-3 inline mr-1" />
+                      {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
+                        ? "Undoing..."
+                        : "Undo"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )))
+          }
         </div>
 
-        {/* ===================== TABLE (md+) ===================== */}
         <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow lg:mx-auto lg:max-w-7xl">
-          <div className="overflow-x-auto">
+          {loading ? (
             <table className="w-full">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
                 <tr>
@@ -318,73 +321,117 @@ const PettyCashPage = () => {
               </thead>
 
               <tbody className="divide-y">
-                {pettyCashData.map((record) => (
-                  <tr
-                    key={record.id}
-                    className="hover:bg-slate-100 cursor-pointer"
-                    onClick={() => openDetails(record)}
-                  >
-                    <td className="px-6 py-4 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      {new Date(record.dateTime).toLocaleDateString()}
-                    </td>
-
-                    <td className="px-6 py-4 text-xs font-medium">
-                      {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
-                    </td>
-
-                    <td className="px-6 py-4 text-right font-mono font-semibold">
-                      {formatLKR(record.amount)}
-                    </td>
-
-                    <td className="px-6 py-4">{record.narration}</td>
-
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index} className="animate-pulse">
                     <td className="px-6 py-4">
-                      {record.pettyCashCategory?.categoryName || "—"}
+                      <div className="h-4 w-24 rounded bg-gray-100" />
                     </td>
-
-                    <td className="px-6 py-4 text-center">
-                      <StatusBadge status={record.request} />
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-32 rounded bg-gray-100" />
                     </td>
-
-                    <td className="px-6 py-4 text-right">
-                      {record.request === "PENDING" ? (
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); approve(record.id); }}
-                            className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded"
-                          >
-                            {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
-                              ? "Approving..."
-                              : "Approve"}
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); reject(record.id); }}
-                            className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded"
-                          >
-                            {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
-                              ? "Rejecting..."
-                              : "Reject"}
-                          </button>
-                        </div>
-                      ) : (
-                        record.request != "APPROVED" &&
-                        <button
-                          onClick={(e) => { e.stopPropagation(); undo(record.id); }}
-                          className="px-3 py-1 text-xs bg-slate-100 rounded"
-                        >
-                          <Undo2 className="w-3 h-3 inline mr-1" />
-                          {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
-                            ? "Undoing..."
-                            : "Undo"}
-                        </button>
-                      )}
+                    <td className="px-6 py-4">
+                      <div className="ml-auto h-4 w-24 rounded bg-gray-100" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-48 rounded bg-gray-100" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-28 rounded bg-gray-100" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="mx-auto h-6 w-20 rounded-full bg-gray-100" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="ml-auto h-8 w-24 rounded bg-gray-100" />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          ) : (
+            <div>
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="px-6 py-3">Date</th>
+                    <th className="px-6 py-3">Requester</th>
+                    <th className="px-6 py-3 text-right">Amount</th>
+                    <th className="px-6 py-3">Narration</th>
+                    <th className="px-6 py-3">Category</th>
+                    <th className="px-6 py-3 text-center">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y">
+                  {pettyCashData.map((record) => (
+                    <tr
+                      key={record.id}
+                      className="hover:bg-slate-100 cursor-pointer"
+                      onClick={() => openDetails(record)}
+                    >
+                      <td className="px-6 py-4 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        {new Date(record.dateTime).toLocaleDateString()}
+                      </td>
+
+                      <td className="px-6 py-4 text-xs font-medium">
+                        {record.requestEmployee?.firstName} {record.requestEmployee?.lastName}
+                      </td>
+
+                      <td className="px-6 py-4 text-right font-mono font-semibold">
+                        {formatLKR(record.amount)}
+                      </td>
+
+                      <td className="px-6 py-4">{record.narration}</td>
+
+                      <td className="px-6 py-4">
+                        {record.pettyCashCategory?.categoryName || "—"}
+                      </td>
+
+                      <td className="px-6 py-4 text-center">
+                        <StatusBadge status={record.request} />
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        {record.request === "PENDING" ? (
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); approve(record.id); }}
+                              className="px-3 py-1 text-xs bg-emerald-50 text-emerald-700 rounded"
+                            >
+                              {actionLoadingId?.action === "approve" && actionLoadingId?.id === record.id
+                                ? "Approving..."
+                                : "Approve"}
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); reject(record.id); }}
+                              className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded"
+                            >
+                              {actionLoadingId?.action === "reject" && actionLoadingId?.id === record.id
+                                ? "Rejecting..."
+                                : "Reject"}
+                            </button>
+                          </div>
+                        ) : (
+                          record.request != "APPROVED" &&
+                          <button
+                            onClick={(e) => { e.stopPropagation(); undo(record.id); }}
+                            className="px-3 py-1 text-xs bg-slate-100 rounded"
+                          >
+                            <Undo2 className="w-3 h-3 inline mr-1" />
+                            {actionLoadingId?.action === "undo" && actionLoadingId?.id === record.id
+                              ? "Undoing..."
+                              : "Undo"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* DETAILS DRAWER */}

@@ -529,8 +529,6 @@ const LoanApplication = () => {
                         </button>
                       </div>
 
-                      {console.log("selectedApp : ", selectedApp)}
-
                       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
                         <Info label="Loan Date">
                           {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
