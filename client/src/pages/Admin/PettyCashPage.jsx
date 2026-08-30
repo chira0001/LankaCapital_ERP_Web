@@ -368,6 +368,7 @@ const PettyCashPage = () => {
                           </button>
                         </div>
                       ) : (
+                        record.request != "APPROVED" &&
                         <button
                           onClick={(e) => { e.stopPropagation(); undo(record.id); }}
                           className="px-3 py-1 text-xs bg-slate-100 rounded"
@@ -458,13 +459,14 @@ const PettyCashPage = () => {
                 <div>
                   <StatusBadge status={pettyCashInfo.request} />
                 </div>
-
-                <button
-                  onClick={() => setIsEdit(true)}
-                  className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-900"
-                >
-                  Edit Request
-                </button>
+                {pettyCashInfo.request != "APPROVED" &&
+                  <button
+                    onClick={() => setIsEdit(true)}
+                    className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-900"
+                  >
+                    Edit Request
+                  </button>
+                }
               </div>
             </div>
           </div>
