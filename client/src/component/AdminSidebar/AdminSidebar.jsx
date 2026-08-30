@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   FileText,
   Users,
-  UserPlus,
+  CircleDollarSign,
   WalletMinimal,
   Settings,
   X,
@@ -15,7 +15,6 @@ import {
   Binoculars,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import CompanyLogo from "../ComapnyLogo/CompanyLogo";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
@@ -25,7 +24,7 @@ const menuItems = [
   { name: "Financials", icon: Files, path: "/ad/financials" },
   { name: "Customer Management", icon: Users, path: "/ad/customers" },
   { name: "User Management", icon: CircleUser, path: "/ad/users" },
-  { name: "Salary Management", icon: WalletMinimal, path: "/ad/salary" },
+  { name: "Salary Management", icon: CircleDollarSign, path: "/ad/salary" },
   { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
   { name: "System Configuration", icon: Settings, path: "/ad/settings" },
 ];

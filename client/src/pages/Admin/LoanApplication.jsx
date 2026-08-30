@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { XCircle } from 'lucide-react';
-import { Input } from '@/component/ui/input';
-import { Label } from '@/component/ui/label';
-import { Textarea } from '@/component/ui/textarea';
-import axiosAPI from '@/api/axiosAPI';
-import { ToastContainer } from 'react-toastify';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { XCircle } from "lucide-react";
+import { Input } from "@/component/ui/input";
+import { Label } from "@/component/ui/label";
+import { Textarea } from "@/component/ui/textarea";
+import axiosAPI from "@/api/axiosAPI";
+import { ToastContainer } from "react-toastify";
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
 };
 
 const formatLKR = (amount) =>
-  new Intl.NumberFormat('en-LK', {
-    style: 'currency',
-    currency: 'LKR'
+  new Intl.NumberFormat("en-LK", {
+    style: "currency",
+    currency: "LKR",
   }).format(Number(amount) || 0);
 
 const LoanApplication = () => {
   const toast = useToast();
 
-  const rowsPerPage = 20;
+  const rowsPerPage = 10;
 
   const [applicationData, setApplicationData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,20 @@ const LoanApplication = () => {
     documentCharge: "",
     interestRate: "",
     installment: "",
-    status: ""
+    status: "",
   });
+
+  // ✅ caching like Salary component (in-memory Map + abort inflight)
+  const cacheRef = useRef(new Map()); // key -> { content, totalPages, totalElements }
+  const abortRef = useRef(null);
+
+  const cacheKey = useMemo(() => {
+    return `${page}:${rowsPerPage}:${debouncedSearch || ""}`;
+  }, [page, rowsPerPage, debouncedSearch]);
+
+  const clearLoanCache = useCallback(() => {
+    cacheRef.current.clear();
+  }, []);
 
   // debounce search input
   useEffect(() => {
@@ -62,11 +74,6 @@ const LoanApplication = () => {
   }, [debouncedSearch]);
 
   useEffect(() => {
-    fetchApplications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch]);
-
-  useEffect(() => {
     if (showLoan || isEdit) {
       document.body.style.overflow = "hidden";
     } else {
@@ -74,38 +81,78 @@ const LoanApplication = () => {
     }
   }, [showLoan, isEdit]);
 
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
+  const fetchApplications = useCallback(
+    async ({ force = false } = {}) => {
+      // ✅ Cache hit -> return immediately unless forced refresh
+      if (!force && cacheRef.current.has(cacheKey)) {
+        const cached = cacheRef.current.get(cacheKey) || {};
+        const cachedContent = Array.isArray(cached.content) ? cached.content : [];
+        setApplicationData(cachedContent);
+        setTotalPages(Number(cached.totalPages) || 1);
+        setTotalElements(Number(cached.totalElements) || 0);
+        setLoading(false);
+        return;
+      }
 
-      const res = await axiosAPI.get("/admin/loans", {
-        params: {
-          page,
-          size: rowsPerPage,
-          search: debouncedSearch || ""
-        }
-      });
+      // ✅ cancel previous request if user changes search/page quickly
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-      const data = res.data || {};
-      const content = Array.isArray(data.content) ? data.content : [];
+      try {
+        setLoading(true);
 
-      setApplicationData(content);
-      setTotalPages(Number(data.totalPages) || 1);
-      setTotalElements(Number(data.totalElements) || 0);
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-      setApplicationData([]);
-      setTotalPages(1);
-      setTotalElements(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const res = await axiosAPI.get("/admin/loans", {
+          params: {
+            page,
+            size: rowsPerPage,
+            search: debouncedSearch || "",
+          },
+          signal: controller.signal,
+        });
+
+        const data = res.data || {};
+        const content = Array.isArray(data.content) ? data.content : [];
+
+        setApplicationData(content);
+        setTotalPages(Number(data.totalPages) || 1);
+        setTotalElements(Number(data.totalElements) || 0);
+
+        // cache full response meta
+        cacheRef.current.set(cacheKey, {
+          content,
+          totalPages: Number(data.totalPages) || 1,
+          totalElements: Number(data.totalElements) || 0,
+        });
+      } catch (error) {
+        if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+
+        console.error("Error fetching applications:", error);
+        setApplicationData([]);
+        setTotalPages(1);
+        setTotalElements(0);
+      } finally {
+        if (abortRef.current === controller) setLoading(false);
+      }
+    },
+    [cacheKey, debouncedSearch, page, rowsPerPage]
+  );
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  // cleanup inflight request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
 
   const handleAction = (app, action) => {
     setSelectedApp(app);
     setActionType(action);
-    setDecisionNote('');
+    setDecisionNote("");
     setShowDialog(true);
   };
 
@@ -115,12 +162,12 @@ const LoanApplication = () => {
     try {
       setLoading(true);
 
-      if (actionType === 'approve') {
+      if (actionType === "approve") {
         if (!decisionNote.trim()) {
           toast({
-            title: 'Error',
-            description: 'Decision note is required',
-            variant: 'destructive'
+            title: "Error",
+            description: "Decision note is required",
+            variant: "destructive",
           });
           return;
         }
@@ -128,58 +175,58 @@ const LoanApplication = () => {
         await axiosAPI.put("/admin/approve", {
           fileNumber: selectedApp.fileNumber,
           employeeId: currentEmployeeId,
-          decisionNote
+          decisionNote,
         });
-      } else if (actionType === 'reject') {
+      } else if (actionType === "reject") {
         await axiosAPI.put("/admin/reject", {
           fileNumber: selectedApp.fileNumber,
           decisionNote,
-          employeeId: currentEmployeeId
+          employeeId: currentEmployeeId,
         });
-      } else if (actionType === 'reset') {
+      } else if (actionType === "reset") {
         await axiosAPI.put("/admin/reset", {
           fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId
+          employeeId: currentEmployeeId,
         });
-      } else if (actionType === 'incomplete') {
+      } else if (actionType === "incomplete") {
         await axiosAPI.put("/admin/incomplete", {
           fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId
+          employeeId: currentEmployeeId,
         });
       }
 
-      // refresh current page using current search
-      await fetchApplications();
+      // ✅ ensure refreshed data is not served from stale cache
+      clearLoanCache();
+      await fetchApplications({ force: true });
 
       toast({
-        title: 'Success',
-        description: `Application ${actionType} successfully`
+        title: "Success",
+        description: `Application ${actionType} successfully`,
       });
-
     } catch (error) {
-      console.error('Failed to update application:', error);
+      console.error("Failed to update application:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to update application',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to update application",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
       setShowDialog(false);
       setSelectedApp(null);
       setActionType(null);
-      setDecisionNote('');
+      setDecisionNote("");
     }
   };
 
   const getStatusBadge = (status) => {
-    const normalized = (status ?? '').toUpperCase();
+    const normalized = (status ?? "").toUpperCase();
 
     const styles = {
-      PENDING: 'bg-gray-100 text-gray-700 border-gray-200',
-      APPROVED: 'bg-black text-white border-black',
-      COMPLETED: 'bg-green-100 text-green-700 border-green-200',
-      REJECTED: 'bg-red-100 text-red-700 border-red-200'
+      PENDING: "bg-gray-100 text-gray-700 border-gray-200",
+      APPROVED: "bg-black text-white border-black",
+      COMPLETED: "bg-green-100 text-green-700 border-green-200",
+      REJECTED: "bg-red-100 text-red-700 border-red-200",
     };
 
     return styles[normalized] || styles.PENDING;
@@ -196,26 +243,24 @@ const LoanApplication = () => {
 
   const handleUpdateLoan = async () => {
     try {
-      await axiosAPI.put(
-        `/admin/loans/${selectedApp.fileNumber}`,
-        loanUpdatePayload
-      );
+      await axiosAPI.put(`/admin/loans/${selectedApp.fileNumber}`, loanUpdatePayload);
 
       toast({
         title: "Success",
-        description: "Loan updated successfully"
+        description: "Loan updated successfully",
       });
 
-      await fetchApplications();
+      // ✅ ensure refreshed data is not served from stale cache
+      clearLoanCache();
+      await fetchApplications({ force: true });
 
       setIsEdit(false);
-
     } catch (error) {
       console.error("Update failed:", error);
       toast({
         title: "Error",
         description: "Failed to update loan",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -297,8 +342,12 @@ const LoanApplication = () => {
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${getStatusBadge(app.status)}`}>
-                          {(app.status || '').toUpperCase()}
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${getStatusBadge(
+                            app.status
+                          )}`}
+                        >
+                          {(app.status || "").toUpperCase()}
                         </span>
                         <p className="mt-2 text-xs font-semibold text-gray-900">
                           {formatLKR(app.amount)}
@@ -307,7 +356,7 @@ const LoanApplication = () => {
                           {new Date(app.createdAt).toLocaleDateString("en-LK", {
                             day: "2-digit",
                             month: "short",
-                            year: "numeric"
+                            year: "numeric",
                           })}
                         </p>
                       </div>
@@ -333,13 +382,27 @@ const LoanApplication = () => {
                   <table className="w-full min-w-[600px]">
                     <thead className="border-b border-gray-200 bg-gray-50">
                       <tr className="text-xs uppercase tracking-wide text-gray-600">
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Loan ID</th>
-                        <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">Loan Date</th>
-                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Applicant NIC</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Name</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Amount</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Status</th>
-                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Entered By</th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Loan ID
+                        </th>
+                        <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">
+                          Loan Date
+                        </th>
+                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">
+                          Applicant NIC
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Name
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Amount
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Status
+                        </th>
+                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">
+                          Entered By
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -376,13 +439,27 @@ const LoanApplication = () => {
                   <table className="w-full min-w-[600px]">
                     <thead className="border-b border-gray-200 bg-gray-50">
                       <tr className="text-xs uppercase tracking-wide text-gray-600">
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Loan ID</th>
-                        <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">Loan Date</th>
-                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Applicant NIC</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Name</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Amount</th>
-                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">Status</th>
-                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">Entered By</th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Loan ID
+                        </th>
+                        <th className="hidden px-3 py-3 text-left sm:table-cell sm:px-4 md:px-6 md:py-4">
+                          Loan Date
+                        </th>
+                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">
+                          Applicant NIC
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Name
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Amount
+                        </th>
+                        <th className="px-3 py-3 text-left sm:px-4 md:px-6 md:py-4">
+                          Status
+                        </th>
+                        <th className="hidden px-3 py-3 text-left lg:table-cell lg:px-6 lg:py-4">
+                          Entered By
+                        </th>
                       </tr>
                     </thead>
 
@@ -403,7 +480,7 @@ const LoanApplication = () => {
                             {new Date(app.createdAt).toLocaleDateString("en-LK", {
                               day: "2-digit",
                               month: "short",
-                              year: "numeric"
+                              year: "numeric",
                             })}
                           </td>
                           <td className="hidden px-3 py-3 lg:table-cell lg:px-6 lg:py-4 text-xs sm:text-sm">
@@ -416,8 +493,12 @@ const LoanApplication = () => {
                             {formatLKR(app.amount)}
                           </td>
                           <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
-                            <span className={`inline-flex rounded-full border px-2 py-1 text-xs ${getStatusBadge(app.status)}`}>
-                              {(app.status || '').toUpperCase()}
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-1 text-xs ${getStatusBadge(
+                                app.status
+                              )}`}
+                            >
+                              {(app.status || "").toUpperCase()}
                             </span>
                           </td>
                           <td className="hidden px-3 py-3 lg:table-cell lg:px-6 lg:py-4 text-xs sm:text-sm">
@@ -519,7 +600,7 @@ const LoanApplication = () => {
                               documentCharge: selectedApp.documentCharge || "",
                               interestRate: selectedApp.interestRate || "",
                               installment: selectedApp.noOfInstallments || "",
-                              status: selectedApp.status || "PENDING"
+                              status: selectedApp.status || "PENDING",
                             });
                             setIsEdit(true);
                           }}
@@ -529,8 +610,6 @@ const LoanApplication = () => {
                         </button>
                       </div>
 
-                      {console.log("selectedApp : ", selectedApp)}
-
                       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
                         <Info label="Loan Date">
                           {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
@@ -539,13 +618,11 @@ const LoanApplication = () => {
                             year: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
-                            second: "2-digit"
+                            second: "2-digit",
                           })}
                         </Info>
 
-                        <Info label="Amount">
-                          Rs. {selectedApp.amount}
-                        </Info>
+                        <Info label="Amount">Rs. {selectedApp.amount}</Info>
 
                         <Info label="Installment Value">
                           Rs. {selectedApp.installmentValue}
@@ -563,9 +640,7 @@ const LoanApplication = () => {
                           {selectedApp.interestRate}%
                         </Info>
 
-                        <Info label="Status">
-                          {selectedApp.status || "Not available"}
-                        </Info>
+                        <Info label="Status">{selectedApp.status || "Not available"}</Info>
 
                         <Info label="Entered By">
                           Id: {selectedApp.enteredBy?.nic} <br />
@@ -573,42 +648,44 @@ const LoanApplication = () => {
                         </Info>
 
                         <Info label="Updated By">
-                          {selectedApp.updatedBy?.id
-                            ? <>
+                          {selectedApp.updatedBy?.id ? (
+                            <>
                               Id: {selectedApp.updatedBy.nic} <br />
                               {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
                             </>
-                            : "No updates made"}
+                          ) : (
+                            "No updates made"
+                          )}
                         </Info>
 
                         <Info label="Approved By">
-                          {selectedApp.approvedBy?.id
-                            ? <>
+                          {selectedApp.approvedBy?.id ? (
+                            <>
                               Id: {selectedApp.approvedBy.nic} <br />
                               {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
                             </>
-                            : "Approval Pending"}
+                          ) : (
+                            "Approval Pending"
+                          )}
                         </Info>
 
-                        <Info label="Loan Type">
-                          {selectedApp.loanType || "Not available"}
-                        </Info>
+                        <Info label="Loan Type">{selectedApp.loanType || "Not available"}</Info>
 
                         <div className="col-span-1 md:col-span-2">
                           <Info label="Loan End Date">
-                            {selectedApp.endAt ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric"
-                            }) : "Not Entered"}
+                            {selectedApp.endAt
+                              ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "Not Entered"}
                           </Info>
                         </div>
 
                         {selectedApp.decisionNote ? (
                           <div className="col-span-1 md:col-span-2 lg:col-span-3 border border-gray-200 p-3 sm:p-4 rounded-md bg-white">
-                            <Info label="Decision Note">
-                              {selectedApp.decisionNote}
-                            </Info>
+                            <Info label="Decision Note">{selectedApp.decisionNote}</Info>
                           </div>
                         ) : null}
                       </div>
@@ -658,7 +735,7 @@ const LoanApplication = () => {
                   </h2>
 
                   <div className="space-y-4">
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Loan Amount</Label>
                       <Input
                         type="number"
@@ -666,13 +743,13 @@ const LoanApplication = () => {
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            amount: e.target.value
+                            amount: e.target.value,
                           })
                         }
                       />
                     </div>
 
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Document Charge</Label>
                       <Input
                         type="number"
@@ -680,13 +757,13 @@ const LoanApplication = () => {
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            documentCharge: e.target.value
+                            documentCharge: e.target.value,
                           })
                         }
                       />
                     </div>
 
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Interest Rate (%)</Label>
                       <Input
                         type="number"
@@ -694,13 +771,13 @@ const LoanApplication = () => {
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            interestRate: e.target.value
+                            interestRate: e.target.value,
                           })
                         }
                       />
                     </div>
 
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Installments</Label>
                       <Input
                         type="number"
@@ -708,13 +785,13 @@ const LoanApplication = () => {
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            installment: e.target.value
+                            installment: e.target.value,
                           })
                         }
                       />
                     </div>
 
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Status</Label>
                       <select
                         className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
@@ -724,7 +801,7 @@ const LoanApplication = () => {
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            status: e.target.value
+                            status: e.target.value,
                           })
                         }
                       >
@@ -734,14 +811,14 @@ const LoanApplication = () => {
                       </select>
                     </div>
 
-                    <div className='flex flex-col gap-2'>
+                    <div className="flex flex-col gap-2">
                       <Label>Decision Note (Optional)</Label>
                       <Textarea
                         value={loanUpdatePayload.decisionNote}
                         onChange={(e) =>
                           setLoanUpdatePayload({
                             ...loanUpdatePayload,
-                            decisionNote: e.target.value
+                            decisionNote: e.target.value,
                           })
                         }
                       />
@@ -766,7 +843,6 @@ const LoanApplication = () => {
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>
