@@ -2,6 +2,7 @@ package com.lankacapital.server.repositories;
 
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,18 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
     List<Customer> findCustomersByNics(@Param("nics") List<String> nics);
 
     List<Customer> findTop10ByNicStartingWith(String nic);
+
+    @Query("""
+        select c
+        from Customer c
+        where c.deleted = false
+          and (
+                :search is null or :search = '' or
+                lower(c.name) like lower(concat('%', :search, '%')) or
+                lower(c.email) like lower(concat('%', :search, '%')) or
+                c.phoneNumber like concat('%', :search, '%') or
+                c.nic like concat('%', :search, '%')
+          )
+    """)
+    Page<Customer> findActiveCustomers(@Param("search") String search, Pageable pageable);
 }

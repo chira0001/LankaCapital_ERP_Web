@@ -4,6 +4,7 @@ import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
 
 import com.lankacapital.server.entities.SalaryMetaData;
@@ -267,9 +268,18 @@ public class AdminController {
 
     // ================= CUSTOMER MANAGEMENT =================
 
+//    @GetMapping("/customers")
+//    public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
+//        return ResponseEntity.ok(customerService.getAllActiveCustomers());
+//    }
+
     @GetMapping("/customers")
-    public ResponseEntity<List<CustomerResponseDto>> getAllCustomers() {
-        return ResponseEntity.ok(customerService.getAllActiveCustomers());
+    public ResponseEntity<PageResponse<CustomerResponseDto>> getAllCustomers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(customerService.getAllActiveCustomers(page, size, search));
     }
 
     @GetMapping("/customers/{nic}")
