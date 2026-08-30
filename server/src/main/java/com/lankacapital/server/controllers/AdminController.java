@@ -129,9 +129,21 @@ public class AdminController {
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
 
+//    @GetMapping("/employees")
+//    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees(Authentication authentication) {
+//        return ResponseEntity.ok(employeeService.getAllEmployees(authentication.getName()));
+//    }
+
     @GetMapping("/employees")
-    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees(Authentication authentication) {
-        return ResponseEntity.ok(employeeService.getAllEmployees(authentication.getName()));
+    public ResponseEntity<?> getAllEmployees(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                employeeService.getAllEmployees(authentication.getName(), page, size, search)
+        );
     }
 
     @PutMapping("/employees/{id}")
