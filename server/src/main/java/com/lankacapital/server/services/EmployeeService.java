@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.dtos.EmployeeAddDto;
 import com.lankacapital.server.dtos.EmployeeRequestDto;
 import com.lankacapital.server.dtos.EmployeeResponseDto;
@@ -15,8 +16,9 @@ public interface EmployeeService {
     UserDetailsService userDetailsService();
 
     Employee addNewEmployee(String username, EmployeeAddDto dto);
-    List<EmployeeResponseDto> getAllEmployees(String username);
-    
+//    List<EmployeeResponseDto> getAllEmployees(String username);
+    PageResponse<EmployeeResponseDto> getAllEmployees(String username, int page, int size, String search);
+
     EmployeeResponseDto getEmployeeDetailByUsername(String username);
     String updatePasswordByUsername(String username, PasswordRequestDto dto);
     EmployeeResponseDto updateEmployeeInfo(String username, EmployeeResponseDto dto);
