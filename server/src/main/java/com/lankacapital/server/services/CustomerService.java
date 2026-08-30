@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Customer;
 
 import java.util.List;
@@ -16,7 +17,8 @@ public interface CustomerService {
 
     List<CustomerManageDto> manageCustomers(String username, int page);
 
-    List<CustomerResponseDto> getAllActiveCustomers();
+//    List<CustomerResponseDto> getAllActiveCustomers();
+    PageResponse<CustomerResponseDto> getAllActiveCustomers(int page, int size, String search);
 
     CustomerResponseDto getActiveCustomerById(String nic);
 

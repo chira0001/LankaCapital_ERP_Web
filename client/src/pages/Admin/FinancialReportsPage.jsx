@@ -709,7 +709,7 @@ const FinancialReportsPage = () => {
                 type="date"
                 name=""
                 onChange={handleStartDateChange}
-                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
 
@@ -720,7 +720,7 @@ const FinancialReportsPage = () => {
                 type="date"
                 name=""
                 onChange={handleEndDateChange}
-                className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
           </div>

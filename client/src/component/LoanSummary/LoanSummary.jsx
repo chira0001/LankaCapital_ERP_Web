@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
 
@@ -23,10 +23,10 @@ const formatDate = (date) => {
 };
 
 const LoanSummary = () => {
-    const role = localStorage.getItem("role");
+    const role = localStorage.getItem("role") || "";
 
-    const mainRowsPerPage = 20;
-    const paymentRowsPerPage = 15;
+    const mainRowsPerPage = 10;
+    const paymentRowsPerPage = 10;
 
     const [currentPage, setCurrentPage] = useState(1);
     const [paymentPage, setPaymentPage] = useState(1);
@@ -50,6 +50,22 @@ const LoanSummary = () => {
     const [paymentsTotalPages, setPaymentsTotalPages] = useState(1);
     const [paymentsTotalElements, setPaymentsTotalElements] = useState(0);
 
+    // ✅ In-memory caching + abort controllers (like LoanApplication)
+    const appsCacheRef = useRef(new Map()); // key -> { content, totalElements, totalPages }
+    const appsAbortRef = useRef(null);
+
+    const paymentsCacheRef = useRef(new Map()); // key -> { content, totalElements, totalPages }
+    const paymentsAbortRef = useRef(null);
+
+    const appsCacheKey = useMemo(() => {
+        return `${role}:${currentPage}:${mainRowsPerPage}:${debouncedSearch || ""}`;
+    }, [role, currentPage, mainRowsPerPage, debouncedSearch]);
+
+    const paymentsCacheKey = useMemo(() => {
+        const loanId = selectedLoan?.id ?? "";
+        return `${role}:${loanId}:${paymentPage}:${paymentRowsPerPage}`;
+    }, [role, selectedLoan?.id, paymentPage, paymentRowsPerPage]);
+
     useEffect(() => {
         const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
         return () => clearTimeout(t);
@@ -61,15 +77,8 @@ const LoanSummary = () => {
     }, [debouncedSearch]);
 
     useEffect(() => {
-        fetchApplications();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, debouncedSearch]);
-
-    useEffect(() => {
         const handleEscape = (event) => {
-            if (event.key === "Escape") {
-                closeModal();
-            }
+            if (event.key === "Escape") closeModal();
         };
 
         if (selectedLoan) {
@@ -81,65 +90,149 @@ const LoanSummary = () => {
             document.removeEventListener("keydown", handleEscape);
             document.body.style.overflow = "auto";
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLoan]);
 
-    const fetchApplications = async () => {
-        setLoading(true);
-        try {
-            const res = await axiosAPI.get(`/${role}/loan-summary`, {
-                params: {
-                    page: currentPage,
-                    size: mainRowsPerPage,
-                    search: debouncedSearch || "",
-                },
-            });
+    const fetchApplications = useCallback(
+        async ({ force = false } = {}) => {
+            // ✅ cache hit
+            if (!force && appsCacheRef.current.has(appsCacheKey)) {
+                const cached = appsCacheRef.current.get(appsCacheKey) || {};
+                setApplicationData(Array.isArray(cached.content) ? cached.content : []);
+                setTotalLoans(Number(cached.totalElements) || 0);
+                setTotalMainPages(Number(cached.totalPages) || 1);
+                setLoading(false);
+                return;
+            }
 
-            const data = res.data || {};
-            setApplicationData(Array.isArray(data.content) ? data.content : []);
-            setTotalLoans(Number(data.totalElements) || 0);
-            setTotalMainPages(Number(data.totalPages) || 1);
-        } catch (error) {
-            console.error("Error fetching applications:", error);
-            setApplicationData([]);
-            setTotalLoans(0);
-            setTotalMainPages(1);
-        } finally {
-            setLoading(false);
-        }
-    };
+            // ✅ cancel previous in-flight request
+            if (appsAbortRef.current) appsAbortRef.current.abort();
+            const controller = new AbortController();
+            appsAbortRef.current = controller;
 
-    const fetchPayments = async (loanId, page) => {
-        if (!loanId) return;
+            setLoading(true);
+            try {
+                const res = await axiosAPI.get(`/${role}/loan-summary`, {
+                    params: {
+                        page: currentPage,
+                        size: mainRowsPerPage,
+                        search: debouncedSearch || "",
+                    },
+                    signal: controller.signal,
+                });
 
-        setPaymentsLoading(true);
-        try {
-            const res = await axiosAPI.get(`/${role}/loan-summary/${loanId}/payments`, {
-                params: {
-                    page,
-                    size: paymentRowsPerPage,
-                },
-            });
+                const data = res.data || {};
+                const content = Array.isArray(data.content) ? data.content : [];
 
-            const data = res.data || {};
-            setSelectedApp(Array.isArray(data.content) ? data.content : []);
-            setPaymentsTotalPages(Number(data.totalPages) || 1);
-            setPaymentsTotalElements(Number(data.totalElements) || 0);
-        } catch (error) {
-            console.error("Error fetching payments:", error);
-            setSelectedApp([]);
-            setPaymentsTotalPages(1);
-            setPaymentsTotalElements(0);
-        } finally {
-            setPaymentsLoading(false);
-        }
-    };
+                setApplicationData(content);
 
+                const totalElements = Number(data.totalElements) || 0;
+                const totalPages = Number(data.totalPages) || 1;
+
+                setTotalLoans(totalElements);
+                setTotalMainPages(totalPages);
+
+                appsCacheRef.current.set(appsCacheKey, {
+                    content,
+                    totalElements,
+                    totalPages,
+                });
+            } catch (error) {
+                if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+
+                console.error("Error fetching applications:", error);
+                setApplicationData([]);
+                setTotalLoans(0);
+                setTotalMainPages(1);
+            } finally {
+                if (appsAbortRef.current === controller) setLoading(false);
+            }
+        },
+        [appsCacheKey, currentPage, debouncedSearch, mainRowsPerPage, role]
+    );
+
+    const fetchPayments = useCallback(
+        async (loanId, page, { force = false } = {}) => {
+            if (!loanId) return;
+
+            const key = `${role}:${loanId}:${page}:${paymentRowsPerPage}`;
+
+            // ✅ cache hit
+            if (!force && paymentsCacheRef.current.has(key)) {
+                const cached = paymentsCacheRef.current.get(key) || {};
+                setSelectedApp(Array.isArray(cached.content) ? cached.content : []);
+                setPaymentsTotalPages(Number(cached.totalPages) || 1);
+                setPaymentsTotalElements(Number(cached.totalElements) || 0);
+                setPaymentsLoading(false);
+                return;
+            }
+
+            // ✅ cancel previous in-flight request
+            if (paymentsAbortRef.current) paymentsAbortRef.current.abort();
+            const controller = new AbortController();
+            paymentsAbortRef.current = controller;
+
+            setPaymentsLoading(true);
+            try {
+                const res = await axiosAPI.get(
+                    `/${role}/loan-summary/${loanId}/payments`,
+                    {
+                        params: {
+                            page,
+                            size: paymentRowsPerPage,
+                        },
+                        signal: controller.signal,
+                    }
+                );
+
+                const data = res.data || {};
+                const content = Array.isArray(data.content) ? data.content : [];
+
+                const totalElements = Number(data.totalElements) || 0;
+                const totalPages = Number(data.totalPages) || 1;
+
+                setSelectedApp(content);
+                setPaymentsTotalPages(totalPages);
+                setPaymentsTotalElements(totalElements);
+
+                paymentsCacheRef.current.set(key, {
+                    content,
+                    totalElements,
+                    totalPages,
+                });
+            } catch (error) {
+                if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+
+                console.error("Error fetching payments:", error);
+                setSelectedApp([]);
+                setPaymentsTotalPages(1);
+                setPaymentsTotalElements(0);
+            } finally {
+                if (paymentsAbortRef.current === controller) setPaymentsLoading(false);
+            }
+        },
+        [paymentRowsPerPage, role]
+    );
+
+    // load applications on page/search change
+    useEffect(() => {
+        fetchApplications();
+    }, [fetchApplications]);
+
+    // load payments when payment page changes (modal open)
     useEffect(() => {
         if (selectedLoan?.id) {
             fetchPayments(selectedLoan.id, paymentPage);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [paymentPage, selectedLoan?.id]);
+    }, [fetchPayments, paymentPage, selectedLoan?.id]);
+
+    // cleanup aborts on unmount
+    useEffect(() => {
+        return () => {
+            if (appsAbortRef.current) appsAbortRef.current.abort();
+            if (paymentsAbortRef.current) paymentsAbortRef.current.abort();
+        };
+    }, []);
 
     const closeModal = () => {
         setSelectedLoan(null);
@@ -148,6 +241,9 @@ const LoanSummary = () => {
         setPaymentsTotalPages(1);
         setPaymentsTotalElements(0);
         setPaymentsLoading(false);
+
+        // optional: cancel in-flight payment request when closing
+        if (paymentsAbortRef.current) paymentsAbortRef.current.abort();
     };
 
     const styleArrearsAmount = (amount) => {
@@ -189,7 +285,8 @@ const LoanSummary = () => {
     };
 
     // For "Showing X-Y of Z"
-    const startIndex = totalLoans === 0 ? 0 : (currentPage - 1) * mainRowsPerPage + 1;
+    const startIndex =
+        totalLoans === 0 ? 0 : (currentPage - 1) * mainRowsPerPage + 1;
     const endIndex = Math.min(currentPage * mainRowsPerPage, totalLoans);
 
     const paymentRecords = Array.isArray(selectedApp) ? selectedApp : [];
@@ -338,7 +435,10 @@ const LoanSummary = () => {
                                             role="button"
                                             onClick={() => openLoanDetails(app)}
                                             onKeyDown={(event) => {
-                                                if (event.key === "Enter" || event.key === " ") {
+                                                if (
+                                                    event.key === "Enter" ||
+                                                    event.key === " "
+                                                ) {
                                                     event.preventDefault();
                                                     openLoanDetails(app);
                                                 }
@@ -447,7 +547,7 @@ const LoanSummary = () => {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setCurrentPage((page) => Math.max(page - 1, 1))
+                                        setCurrentPage((p) => Math.max(p - 1, 1))
                                     }
                                     disabled={currentPage === 1}
                                     className="rounded-lg border border-black bg-white px-3 py-2 text-xs font-medium text-black transition hover:bg-gray-100 disabled:border-gray-400 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
@@ -458,8 +558,8 @@ const LoanSummary = () => {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setCurrentPage((page) =>
-                                            Math.min(page + 1, totalMainPages)
+                                        setCurrentPage((p) =>
+                                            Math.min(p + 1, totalMainPages)
                                         )
                                     }
                                     disabled={currentPage === totalMainPages}
@@ -606,24 +706,22 @@ const LoanSummary = () => {
                                                     {value.paidAt ? (
                                                         <>
                                                             <div>
-                                                                {new Date(value.paidAt).toLocaleDateString(
-                                                                    "en-LK",
-                                                                    {
-                                                                        day: "numeric",
-                                                                        month: "short",
-                                                                        year: "numeric",
-                                                                    }
-                                                                )}
+                                                                {new Date(
+                                                                    value.paidAt
+                                                                ).toLocaleDateString("en-LK", {
+                                                                    day: "numeric",
+                                                                    month: "short",
+                                                                    year: "numeric",
+                                                                })}
                                                             </div>
                                                             <div className="mt-1 text-[9px] text-gray-400 sm:text-xs">
-                                                                {new Date(value.paidAt).toLocaleTimeString(
-                                                                    "en-LK",
-                                                                    {
-                                                                        hour: "2-digit",
-                                                                        minute: "2-digit",
-                                                                        hour12: true,
-                                                                    }
-                                                                )}
+                                                                {new Date(
+                                                                    value.paidAt
+                                                                ).toLocaleTimeString("en-LK", {
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit",
+                                                                    hour12: true,
+                                                                })}
                                                             </div>
                                                         </>
                                                     ) : (
@@ -687,7 +785,7 @@ const LoanSummary = () => {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setPaymentPage((page) => Math.max(page - 1, 1))
+                                            setPaymentPage((p) => Math.max(p - 1, 1))
                                         }
                                         disabled={paymentPage === 1}
                                         className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -702,8 +800,8 @@ const LoanSummary = () => {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setPaymentPage((page) =>
-                                                Math.min(page + 1, paymentsTotalPages)
+                                            setPaymentPage((p) =>
+                                                Math.min(p + 1, paymentsTotalPages)
                                             )
                                         }
                                         disabled={paymentPage === paymentsTotalPages}
