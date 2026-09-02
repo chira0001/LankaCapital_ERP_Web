@@ -182,10 +182,9 @@ const ReceptionistPettyCash = () => {
     };
 
     return (
-    <div className="min-h-full p-6 bg-gray-50">
+    <div className="min-h-full">
         <ToastContainer position="top-right" autoClose={3000} />
 
-        {/* ================= HEADER ================= */}
         <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">
                 Petty Cash Management
@@ -195,7 +194,6 @@ const ReceptionistPettyCash = () => {
             </p>
         </div>
 
-        {/* ================= ADD FORM ================= */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-8 border border-gray-100">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
                 Add New Expense

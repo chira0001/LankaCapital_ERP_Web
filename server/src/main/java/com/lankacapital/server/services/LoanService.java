@@ -1,6 +1,7 @@
 package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.entities.Loan;
 import jakarta.transaction.Transactional;
@@ -18,7 +19,9 @@ public interface LoanService {
 
     Loan addLoanToExistingCustomer(String username, FieldOfficerLoanCreateDto loanCreateDto);
 
-    List<LoanResponseDto> getAllLoans(String username);
+//    List<LoanResponseDto> getAllLoans(String username);
+    PageResponse<LoanResponseDto> getAllLoans(String username, int page, int size, String search);
+
 
     LoanResponseDto getLoan(String fileNumber);
 
@@ -46,7 +49,12 @@ public interface LoanService {
 
     LoanCollectionDto getLoanInfoByFileNumber(String username, String fileNumber);
 
-    List<LoanSummaryResponseDto> fetchLoanSummary();
+//    List<LoanSummaryResponseDto> fetchLoanSummary();
+
+    PageResponse<LoanSummaryResponseDto> fetchLoanSummary(int page, int size, String search);
+    PageResponse<DailyCollectionResponseDto> fetchLoanPayments(Long loanId, int page, int size);
+
+
 }
 
 

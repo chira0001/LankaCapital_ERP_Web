@@ -14,16 +14,16 @@ import Signup from "./pages/User/Signup";
 import AdminLayout from "./component/AdminLayout";
 import LoanApplications from "./pages/Admin/LoanApplication";
 import Dashboard from "./pages/Admin/Dashboard";
-import PortfolioOverview from "./pages/Admin/PortfolioOverviewPage";
-import LoanPerformance from "./pages/Admin/LoanPerformancePage";
-import RevenueTracking from "./pages/Admin/RevenueTrackingPage";
+// import PortfolioOverview from "./pages/Admin/PortfolioOverviewPage";
+// import LoanPerformance from "./pages/Admin/LoanPerformancePage";
+// import RevenueTracking from "./pages/Admin/RevenueTrackingPage";
 import CustomerManagementPage from "./pages/Admin/CustomerManagementPage";
 import FieldOfficerPerformancePage from "./pages/Admin/FeildOfficerPerformance";
 import PettyCashPage from "./pages/Admin/PettyCashPage";
 import FinancialReportsPage from "./pages/Admin/FinancialReportsPage";
-import PerformanceTargetsPages from "./pages/Admin/PerformanceTargetsPages";
+// import PerformanceTargetsPages from "./pages/Admin/PerformanceTargetsPages";
 import UserManagementPage from "./pages/Admin/UserManagementPage";
-import AuditLogsPage from "./pages/Admin/AuditLogsPage";
+// import AuditLogsPage from "./pages/Admin/AuditLogsPage";
 import SystemConfigurationPage from "./pages/Admin/SystemConfigurationPage";
 import AdminProfile from "./pages/Admin/AdminProfile";
 
@@ -38,10 +38,7 @@ import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
 import { useEffect, useState } from "react";
 import ReceptionistFinancials from "./pages/Receptionist/ReceptionistFinancials";
 import LoanSummary from "./component/LoanSummary/LoanSummary";
-
-
-
-
+import Salary from "./pages/Admin/Salary";
 
 const getUser = () => {
   const token = localStorage.getItem("token");
@@ -55,25 +52,6 @@ const getUser = () => {
     return null;
   }
 };
-
-// const ProtectedRoute = ({ children, role }) => {
-//   const user = getUser();
-//   if (!user) {
-//     return <Navigate to="/login" replace />;
-//   }
-
-//   if (user.role !== role) {
-//     if (user.role === "ADMIN") {
-//       return <Navigate to="/ad/dashboard" replace />;
-//     }
-
-//     if (user.role === "RECEPTIONIST") {
-//       return <Navigate to="/re/home" replace />;
-//     }
-//     return <Navigate to="/login" replace />;
-//   }
-//   return children;
-// };
 
 const ProtectedRoute = ({ children, role }) => {
   const user = getUser();
@@ -100,20 +78,6 @@ const ProtectedRoute = ({ children, role }) => {
   // Correct role
   return children;
 };
-
-// const PublicRoute = ({ children }) => {
-//   const user = getUser();
-//   if (!user) {
-//     return children;
-//   }
-//   if (user.role === "ADMIN") {
-//     return <Navigate to="/ad/dashboard" replace />;
-//   }
-//   if (user.role === "RECEPTIONIST") {
-//     return <Navigate to="/re/home" replace />;
-//   }
-//   return children;
-// };
 
 const PublicRoute = ({ children }) => {
   const user = getUser();
@@ -155,16 +119,17 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="loan-applications" element={<LoanApplications />} />
           <Route path="loan-summary" element={<LoanSummary />} />
-          <Route path="portfolio" element={<PortfolioOverview />} />
-          <Route path="performance" element={<LoanPerformance />} />
-          <Route path="revenue" element={<RevenueTracking />} />
+          {/* <Route path="portfolio" element={<PortfolioOverview />} /> */}
+          {/* <Route path="performance" element={<LoanPerformance />} /> */}
+          {/* <Route path="revenue" element={<RevenueTracking />} /> */}
+          <Route path="salary" element={<Salary />} />
           <Route path="customers" element={<CustomerManagementPage />} />
           <Route path="officers" element={<FieldOfficerPerformancePage />} />
           <Route path="petty-cash" element={<PettyCashPage />} />
-          <Route path="reports" element={<FinancialReportsPage />} />
-          <Route path="targets" element={<PerformanceTargetsPages />} />
+          <Route path="financials" element={<FinancialReportsPage />} />
+          {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
           <Route path="users" element={<UserManagementPage />} />
-          <Route path="audit" element={<AuditLogsPage />} />
+          {/* <Route path="audit" element={<AuditLogsPage />} /> */}
           <Route path="settings" element={<SystemConfigurationPage />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>

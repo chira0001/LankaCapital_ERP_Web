@@ -66,6 +66,9 @@ public class Employee implements UserDetails {
     @Column(nullable = false)
     private String accountStatus = "Active";
 
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(this.getRole().getRoleName()));
