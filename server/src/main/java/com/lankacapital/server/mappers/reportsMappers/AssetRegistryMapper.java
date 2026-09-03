@@ -21,6 +21,7 @@ public class AssetRegistryMapper {
     public static AssetsDto mapToAssetsDto(AssetsRegistry assetsRegistry){
         AssetsDto dto = new AssetsDto();
 
+        dto.setId(assetsRegistry.getId());
         dto.setAssetName(assetsRegistry.getAssetName());
         dto.setPurchasedMonth(assetsRegistry.getPurchasedDate().toString());
         dto.setRate(assetsRegistry.getRate().toString());

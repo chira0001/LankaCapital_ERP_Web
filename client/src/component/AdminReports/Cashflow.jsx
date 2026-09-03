@@ -4,7 +4,6 @@ import { Label } from "@/component/ui/label";
 import axiosApi from "@/api/axiosAPI";
 
 const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
-    // keep compatibility with both prop styles
     const rangeStart = periodStartDate ?? startDate;
     const rangeEnd = periodEndDate ?? endDate;
 
@@ -17,13 +16,11 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
 
     const [isSaving, setIsSaving] = useState(false);
 
-    // ✅ new: fetch-existing state + locking
     const [isCheckingExisting, setIsCheckingExisting] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
 
     const abortRef = useRef(null);
 
-    // keep financialDate synced when end date changes
     useEffect(() => {
         setCashFlow((prev) => {
             if (prev.financialDate === rangeEnd) return prev;
@@ -48,15 +45,12 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
         }));
     }, []);
 
-    // ✅ new: GET existing cash flow for the period (same endpoint)
     const fetchExistingCashFlow = useCallback(async () => {
-        // If dates are not selected, unlock and clear existing indicators
         if (!rangeStart || !rangeEnd) {
             setIsLocked(false);
             return;
         }
 
-        // cancel previous request if user changes dates quickly
         if (abortRef.current) abortRef.current.abort();
         const controller = new AbortController();
         abortRef.current = controller;
@@ -69,7 +63,6 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
                 signal: controller.signal,
             });
 
-            // Accept either array or object response formats safely
             const payload = res.data;
 
             const hasExisting =
@@ -81,7 +74,6 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
 
                 setIsLocked(true);
 
-                // Populate inputs with existing (so user can view, but not edit)
                 setCashFlow((prev) => ({
                     ...prev,
                     financialDate: existing.financialDate ?? rangeEnd,
@@ -90,10 +82,8 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
                     openingCashBalance: existing.openingCashBalance ?? "",
                 }));
             } else {
-                // No existing data -> allow entry
                 setIsLocked(false);
 
-                // Keep UX predictable: clear inputs when switching to an empty period
                 setCashFlow((prev) => ({
                     ...prev,
                     financialDate: rangeEnd,
@@ -106,7 +96,6 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
             if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
 
             console.log(error);
-            // On error, do not lock; allow user to proceed (non-breaking)
             setIsLocked(false);
             toast.error(
                 error?.response?.data?.message ||
@@ -118,12 +107,10 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
         }
     }, [rangeStart, rangeEnd]);
 
-    // ✅ fetch existing whenever the period changes
     useEffect(() => {
         fetchExistingCashFlow();
     }, [fetchExistingCashFlow]);
 
-    // cleanup inflight request on unmount
     useEffect(() => {
         return () => {
             if (abortRef.current) abortRef.current.abort();
@@ -131,7 +118,6 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
     }, []);
 
     const canSubmit = useMemo(() => {
-        // If locked (existing data) -> user cannot save
         if (isLocked) return false;
 
         return (
@@ -171,7 +157,6 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
 
             toast.success("Cash Flow data successfully saved");
 
-            // After save: lock UI by refetching existing (source of truth)
             await fetchExistingCashFlow();
         } catch (error) {
             console.log(error);

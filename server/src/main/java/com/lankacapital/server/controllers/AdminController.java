@@ -2,10 +2,7 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.CashFlowDataDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.EquityChangeDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.*;
 import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
 
@@ -13,10 +10,7 @@ import com.lankacapital.server.entities.SalaryMetaData;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
-import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
-import com.lankacapital.server.services.ReportsService.CashFlowDataService;
-import com.lankacapital.server.services.ReportsService.EquityChangeService;
-import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
+import com.lankacapital.server.services.ReportsService.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -53,6 +47,7 @@ public class AdminController {
     private final EquityChangeService equityChangeService;
     private final SalaryService salaryService;
     private final CashFlowDataService cashFlowDataService;
+    private final FinancialNoteDataService financialNoteDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -523,6 +518,20 @@ public class AdminController {
         }
         return new ResponseEntity<>(cashFlowDataService.fetchCashFlow(startDate,endDate), HttpStatus.CREATED);
     }
+
+    @PostMapping(path = "/financialNotes")
+    public ResponseEntity<?> addToFinancialNotes(
+            Authentication authentication,
+            @RequestBody List<FinancialNoteDataDto> dto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(financialNoteDataService.addFinancialNoteData(dto), HttpStatus.CREATED);
+    }
+
+
+
 
     //revenue tracking
     @GetMapping("/revenue/summary")
