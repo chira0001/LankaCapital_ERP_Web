@@ -570,7 +570,7 @@ const FinancialReportsPage = () => {
           </div>
 
           <TrialBalance periodStartDate={startDate} periodEndDate={endDate} />
-          {/* <EquityChanges startDate={startDate} endDate={endDate} /> */}
+          <EquityChanges periodStartDate={startDate} periodEndDate={endDate} />
 
           {error ? (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

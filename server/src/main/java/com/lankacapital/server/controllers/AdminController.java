@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.EquityChangeDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
@@ -12,6 +13,7 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
+import com.lankacapital.server.services.ReportsService.EquityChangeService;
 import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,7 @@ public class AdminController {
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
     private final TrialBalanceDataService trialBalanceDataService;
+    private final EquityChangeService equityChangeService;
     private final SalaryService salaryService;
 
     @PostMapping(path = "/role")
@@ -470,6 +473,29 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
         return new ResponseEntity<>(trialBalanceDataService.fetchTrialBalances(startDate,endDate), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/equityChange")
+    public ResponseEntity<?> addToEquityChange(
+            Authentication authentication,
+            @RequestBody List<EquityChangeDto> equityChangeDtos
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(equityChangeService.addEquityChange(equityChangeDtos), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/equityChange")
+    public ResponseEntity<?> fetchEquityChanges(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(equityChangeService.fetchEquityChange(startDate,endDate), HttpStatus.CREATED);
     }
 
 
