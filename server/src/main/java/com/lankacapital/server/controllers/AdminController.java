@@ -3,6 +3,7 @@ package com.lankacapital.server.controllers;
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.CashFlowDataDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.EquityChangeDto;
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.dtos.Common.PageResponse;
@@ -13,6 +14,7 @@ import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
+import com.lankacapital.server.services.ReportsService.CashFlowDataService;
 import com.lankacapital.server.services.ReportsService.EquityChangeService;
 import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
 import lombok.AllArgsConstructor;
@@ -50,6 +52,7 @@ public class AdminController {
     private final TrialBalanceDataService trialBalanceDataService;
     private final EquityChangeService equityChangeService;
     private final SalaryService salaryService;
+    private final CashFlowDataService cashFlowDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -498,6 +501,28 @@ public class AdminController {
         return new ResponseEntity<>(equityChangeService.fetchEquityChange(startDate,endDate), HttpStatus.CREATED);
     }
 
+    @PostMapping(path = "/cashFlow")
+    public ResponseEntity<?> addToCashFlow(
+            Authentication authentication,
+            @RequestBody CashFlowDataDto dto
+            ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(cashFlowDataService.addCashFlow(dto), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/cashFlow")
+    public ResponseEntity<?> fetchCashFlowData(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(cashFlowDataService.fetchCashFlow(startDate,endDate), HttpStatus.CREATED);
+    }
 
     //revenue tracking
     @GetMapping("/revenue/summary")
