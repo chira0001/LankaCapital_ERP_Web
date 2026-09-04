@@ -165,7 +165,7 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
     }, [trialBalanceArray, resetTBForm, fetchExistingTrialBalance, startDate, endDate]);
 
     return (
-        <div className="mt-3 border p-4 rounded-lg">
+        <div className="mt-3 border p-4 rounded-lg bg-white">
             <ToastContainer position="top-right" autoClose={3000} />
             <h3>Trial Balance Data</h3>
 

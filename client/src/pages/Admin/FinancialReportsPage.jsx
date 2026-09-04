@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Download } from "lucide-react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Download, ChevronDown } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
 import axiosApi from "../../api/axiosAPI.js";
@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import EquityChanges from "../../component/AdminReports/EquityChanges.jsx";
 import TrialBalance from "../../component/AdminReports/TrialBalance.jsx";
 import Cashflow from "../../component/AdminReports/Cashflow.jsx";
@@ -15,9 +16,54 @@ import FinancialStatementNotes from "../../component/AdminReports/FinancialState
 import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 
+const CollapsibleSection = memo(function CollapsibleSection({
+  id,
+  title,
+  description,
+  open,
+  onToggle,
+  children,
+}) {
+  return (
+    <section className="rounded-xl border bg-white shadow-sm overflow-hidden hover:bg-gray-100">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={id}
+        className="w-full text-left"
+      >
+        <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-5 lg:px-6 border-b">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900">
+              {title}
+            </h3>
+            {description ? (
+              <p className="mt-1 text-xs sm:text-sm text-gray-500">{description}</p>
+            ) : null}
+          </div>
+
+          <div className="shrink-0 pt-0.5">
+            <span
+              className={`inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 transition-transform ${open ? "rotate-180" : "rotate-0"
+                }`}
+              aria-hidden="true"
+            >
+              <ChevronDown className="h-4 w-4 text-gray-700" />
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <div id={id} className={open ? "block" : "hidden"}>
+        <div className="px-4 py-4 sm:px-5 lg:px-6">{children}</div>
+      </div>
+    </section>
+  );
+});
+
 const FinancialReportsPage = () => {
   const [reportType, setReportType] = useState("");
-
   const [month, setMonth] = useState(dayjs());
 
   const [startDate, setStartDate] = useState();
@@ -54,7 +100,6 @@ const FinancialReportsPage = () => {
 
   const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
 
-  // Memoize reportTypes so it is not recreated on every render
   const reportTypes = useMemo(
     () => [
       { value: "PPE", name: "PPE" },
@@ -124,7 +169,7 @@ const FinancialReportsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      let res = await axiosApi.get(`/admin/reports`, {
+      const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType: reportType,
           startDate: formatMonth(month),
@@ -145,9 +190,7 @@ const FinancialReportsPage = () => {
 
     const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
     const wb = XLSX.utils.book_new();
-
     XLSX.utils.book_append_sheet(wb, ws, "Report");
-
     XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
   }, [data, reportType, month, formatMonth]);
 
@@ -169,7 +212,7 @@ const FinancialReportsPage = () => {
     }
   }, [month, formatMonth]);
 
-  const renderTable = () => {
+  const renderTable = useCallback(() => {
     if (!data) return null;
 
     if (Array.isArray(data)) {
@@ -248,17 +291,30 @@ const FinancialReportsPage = () => {
         </table>
       </div>
     );
-  };
+  }, [data]);
 
-  const assetsCount = useMemo(() => {
-    return Array.isArray(assetsList) ? assetsList.length : 0;
-  }, [assetsList]);
+  const assetsCount = useMemo(() => (Array.isArray(assetsList) ? assetsList.length : 0), [assetsList]);
+
+  // -------------------- Collapsible states --------------------
+  // Default: keep everything collapsed except Trial Balance (you can change)
+  const [sectionsOpen, setSectionsOpen] = useState({
+    trialBalance: true,
+    equityChanges: false,
+    cashflow: false,
+    financialNotes: false,
+    noteShare: false,
+    incomeTax: false,
+  });
+
+  const toggleSection = useCallback((key) => {
+    setSectionsOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
 
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="mx-auto w-full max-w-7xl space-y-6">
+      <div className="mx-auto w-full max-w-7xl space-y-6 p-3 sm:p-4 lg:p-6">
         {/* Header */}
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -273,9 +329,7 @@ const FinancialReportsPage = () => {
         <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-gray-900">
-                Asset Registry
-              </h2>
+              <h2 className="text-base font-semibold text-gray-900">Asset Registry</h2>
               <p className="mt-0.5 text-sm text-gray-600">
                 View or Add new fixed assets to your registry.
               </p>
@@ -293,24 +347,20 @@ const FinancialReportsPage = () => {
             ) : (
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="text-xs text-gray-500">
-                  {isAssetsListLoading
-                    ? "Loading assets..."
-                    : `${assetsCount} assets`}
+                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
                 </div>
               </div>
             )}
           </div>
 
           {isAddingAsset ? (
-            <div className="mt-4 rounded-lg ">
+            <div className="mt-4 rounded-lg">
               <div className="grid gap-3 lg:grid-cols-12">
                 {/* Form */}
                 <div className="lg:col-span-6">
                   <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        Add new assets
-                      </h3>
+                      <h3 className="text-sm font-semibold text-gray-900">Add new assets</h3>
                       <p className="mt-0.5 text-xs text-gray-500">
                         Enter new assets to registry entries
                       </p>
@@ -416,19 +466,13 @@ const FinancialReportsPage = () => {
                   <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
-                          Existing assets
-                        </h3>
+                        <h3 className="text-sm font-semibold text-gray-900">Existing assets</h3>
                         <p className="mt-0.5 text-xs text-gray-500">
                           Review the current registry entries.
                         </p>
                       </div>
 
-                      <Button
-                        variant="outline"
-                        onClick={fetchAssets}
-                        disabled={isAssetsListLoading}
-                      >
+                      <Button variant="outline" onClick={fetchAssets} disabled={isAssetsListLoading}>
                         {isAssetsListLoading ? "Refreshing..." : "Refresh"}
                       </Button>
                     </div>
@@ -457,14 +501,11 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(asset.purchasedMonth).toLocaleDateString(
-                                    "en-LK",
-                                    {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    }
-                                  )
+                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                   : "-";
 
                                 return (
@@ -472,18 +513,10 @@ const FinancialReportsPage = () => {
                                     key={key}
                                     className="border-t hover:bg-gray-50/50 transition-colors"
                                   >
-                                    <td className="px-3 py-2 text-gray-800">
-                                      {asset?.assetName ?? "-"}
-                                    </td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                                      {dateStr}
-                                    </td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                                      {asset?.rate ?? "-"}
-                                    </td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
-                                      {asset?.amount ?? "-"}
-                                    </td>
+                                    <td className="px-3 py-2 text-gray-800">{asset?.assetName ?? "-"}</td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{dateStr}</td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{asset?.rate ?? "-"}</td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{asset?.amount ?? "-"}</td>
                                   </tr>
                                 );
                               })}
@@ -512,12 +545,9 @@ const FinancialReportsPage = () => {
                         </div>
                       ) : (
                         <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
-                          <p className="font-medium text-gray-800">
-                            No assets are available
-                          </p>
+                          <p className="font-medium text-gray-800">No assets are available</p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building your
-                            registry.
+                            Add a new asset using the form to start building your registry.
                           </p>
                         </div>
                       )}
@@ -529,13 +559,11 @@ const FinancialReportsPage = () => {
           ) : null}
         </section>
 
-        {/* Report Generator */}
+        {/* Report Generator + Notes sections (collapsible) */}
         <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-gray-900">
-                Generate report
-              </h2>
+              <h2 className="text-base font-semibold text-gray-900">Generate report</h2>
               <p className="mt-0.5 text-sm text-gray-600">
                 Choose a date range and report type, then export or download.
               </p>
@@ -543,9 +571,7 @@ const FinancialReportsPage = () => {
 
             <div className="text-xs text-gray-500">
               Current month:{" "}
-              <span className="font-medium text-gray-700">
-                {formatMonth(month)}
-              </span>
+              <span className="font-medium text-gray-700">{formatMonth(month)}</span>
             </div>
           </div>
 
@@ -555,7 +581,6 @@ const FinancialReportsPage = () => {
               <input
                 id="startDate"
                 type="date"
-                name=""
                 onChange={handleStartDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
@@ -566,19 +591,74 @@ const FinancialReportsPage = () => {
               <input
                 id="endDate"
                 type="date"
-                name=""
                 onChange={handleEndDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
           </div>
 
-          {/* <TrialBalance periodStartDate={startDate} periodEndDate={endDate} />
-          <EquityChanges periodStartDate={startDate} periodEndDate={endDate} />
-          <Cashflow periodStartDate={startDate} periodEndDate={endDate} />
-          <FinancialStatementNotes periodStartDate={startDate} periodEndDate={endDate} />
-          <NoteShare periodStartDate={startDate} periodEndDate={endDate} /> */}
-          <IncomeTax periodStartDate={startDate} periodEndDate={endDate} />
+          {/* Collapsible blocks */}
+          <div className="mt-5 space-y-3">
+            <CollapsibleSection
+              id="trial-balance"
+              title="Trial Balance"
+              description="Add trial balance lines and review existing inputs for the selected period."
+              open={sectionsOpen.trialBalance}
+              onToggle={() => toggleSection("trialBalance")}
+            >
+              <TrialBalance periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              id="equity-changes"
+              title="Equity Changes"
+              description="Enter equity movement values and save them for the period."
+              open={sectionsOpen.equityChanges}
+              onToggle={() => toggleSection("equityChanges")}
+            >
+              <EquityChanges periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              id="cashflow"
+              title="Cash Flow"
+              description="Enter cash flow values for the selected period."
+              open={sectionsOpen.cashflow}
+              onToggle={() => toggleSection("cashflow")}
+            >
+              <Cashflow periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              id="financial-notes"
+              title="Financial Statement Notes (Assets)"
+              description="Enter opening and depreciation balances per asset."
+              open={sectionsOpen.financialNotes}
+              onToggle={() => toggleSection("financialNotes")}
+            >
+              <FinancialStatementNotes periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              id="note-share"
+              title="Notes: Shares (P11)"
+              description="Enter number of shares for the period."
+              open={sectionsOpen.noteShare}
+              onToggle={() => toggleSection("noteShare")}
+            >
+              <NoteShare periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              id="income-tax"
+              title="Income Tax"
+              description="Enter income tax notes for the period (locked once saved)."
+              open={sectionsOpen.incomeTax}
+              onToggle={() => toggleSection("incomeTax")}
+            >
+              <IncomeTax periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
+          </div>
 
           {error ? (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -586,7 +666,7 @@ const FinancialReportsPage = () => {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <div>
               <Label htmlFor="reportType">Report Type</Label>
               <select
@@ -631,9 +711,7 @@ const FinancialReportsPage = () => {
                 Results appear here after generating a report.
               </p>
             </div>
-            <div className="text-xs text-gray-500">
-              {data ? "Report loaded" : "No data"}
-            </div>
+            <div className="text-xs text-gray-500">{data ? "Report loaded" : "No data"}</div>
           </div>
 
           {!data ? (
