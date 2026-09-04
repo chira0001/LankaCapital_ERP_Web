@@ -17,19 +17,12 @@ const FinancialStatementNotes = ({
     // assets list
     const [existingAssets, setExistingAssets] = useState([]);
     const [isAssetsLoading, setIsAssetsLoading] = useState(false);
-
-    // per-asset inputs (controlled)
-    // { [assetId]: { openingBalance: "", depreciationBalance: "" } }
     const [notesByAsset, setNotesByAsset] = useState({});
-
     const [isSaving, setIsSaving] = useState(false);
 
-    // in-memory cache + request cancel
     const assetsCacheRef = useRef({ timestamp: 0, data: null });
     const abortRef = useRef(null);
 
-    // Balance-at date: (endDate - 1 year + 1 day)
-    // Backend expects LocalDate => send "YYYY-MM-DD"
     const balanceAtISO = useMemo(() => {
         if (!rangeEnd) return "";
         return dayjs(rangeEnd).subtract(1, "year").add(1, "day").format("YYYY-MM-DD");
@@ -41,7 +34,6 @@ const FinancialStatementNotes = ({
     }, [rangeEnd]);
 
     const fetchAssets = useCallback(async ({ force = false } = {}) => {
-        // Serve from cache if valid
         if (!force && assetsCacheRef.current.data) {
             const isValid = Date.now() - assetsCacheRef.current.timestamp < ASSETS_CACHE_TTL;
             if (isValid) {
@@ -84,7 +76,9 @@ const FinancialStatementNotes = ({
 
     // Fetch assets on mount and when period changes (keeps your original intent)
     useEffect(() => {
-        fetchAssets();
+        if (rangeEnd != "" || rangeEnd != null & rangeStart != "" || rangeStart != null) {
+            fetchAssets();
+        }
     }, [fetchAssets, rangeStart, rangeEnd]);
 
     // cleanup
@@ -130,13 +124,11 @@ const FinancialStatementNotes = ({
                 return;
             }
 
-            // ✅ Build List<FinancialNoteDataDto> as backend expects
             const dtoList = Object.entries(notesByAsset)
                 .map(([assetId, values]) => {
                     const openingBalanceRaw = String(values?.openingBalance ?? "").trim();
                     const depreciationRaw = String(values?.depreciationBalance ?? "").trim();
 
-                    // skip assets with no values
                     if (!openingBalanceRaw && !depreciationRaw) return null;
 
                     return {
@@ -156,12 +148,9 @@ const FinancialStatementNotes = ({
 
             setIsSaving(true);
             console.log("dtoList : ", dtoList)
-            // ✅ Correct endpoint + correct payload type
             await axiosApi.post("/admin/financialNotes", dtoList);
 
             toast.success("Data saved successfully");
-
-            // clear inputs after save (improves UX; does not change backend behavior)
             clearInfo();
         } catch (error) {
             console.log(error);
@@ -300,7 +289,6 @@ const FinancialStatementNotes = ({
                 </table>
             </div>
 
-            {/* Actions */}
             <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                     type="button"

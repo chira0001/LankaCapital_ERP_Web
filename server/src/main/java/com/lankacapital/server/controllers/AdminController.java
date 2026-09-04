@@ -13,6 +13,7 @@ import com.lankacapital.server.services.*;
 import com.lankacapital.server.services.ReportsService.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -48,6 +49,7 @@ public class AdminController {
     private final SalaryService salaryService;
     private final CashFlowDataService cashFlowDataService;
     private final FinancialNoteDataService financialNoteDataService;
+    private final NoteSharesDataService noteSharesDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -530,7 +532,30 @@ public class AdminController {
         return new ResponseEntity<>(financialNoteDataService.addFinancialNoteData(dto), HttpStatus.CREATED);
     }
 
+    @PostMapping(path = "/shares")
+    public ResponseEntity<?> addToNoteShares(Authentication authentication,
+                                             @RequestBody NoteSharesDataDto dto) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                noteSharesDataService.addNoteSharesData(dto),
+                HttpStatus.CREATED
+        );
+    }
 
+    @GetMapping(path = "/shares")
+    public ResponseEntity<?> getNoteShares(Authentication authentication,
+                                           @RequestParam("financialDate")
+                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                           LocalDate financialDate) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        // returns NoteSharesDataDto or null
+        return ResponseEntity.ok(noteSharesDataService.getNoteSharesData(financialDate));
+    }
 
 
     //revenue tracking

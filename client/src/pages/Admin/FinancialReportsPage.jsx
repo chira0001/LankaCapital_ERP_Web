@@ -12,6 +12,7 @@ import EquityChanges from "../../component/AdminReports/EquityChanges.jsx";
 import TrialBalance from "../../component/AdminReports/TrialBalance.jsx";
 import Cashflow from "../../component/AdminReports/Cashflow.jsx";
 import FinancialStatementNotes from "../../component/AdminReports/FinancialStatementNotes.jsx";
+import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 
 const FinancialReportsPage = () => {
   const [reportType, setReportType] = useState("");
@@ -574,7 +575,8 @@ const FinancialReportsPage = () => {
           {/* <TrialBalance periodStartDate={startDate} periodEndDate={endDate} />
           <EquityChanges periodStartDate={startDate} periodEndDate={endDate} /> */}
           {/* <Cashflow periodStartDate={startDate} periodEndDate={endDate} /> */}
-          <FinancialStatementNotes periodStartDate={startDate} periodEndDate={endDate} />
+          {/* <FinancialStatementNotes periodStartDate={startDate} periodEndDate={endDate} /> */}
+          <NoteShare periodStartDate={startDate} periodEndDate={endDate} />
 
           {error ? (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
