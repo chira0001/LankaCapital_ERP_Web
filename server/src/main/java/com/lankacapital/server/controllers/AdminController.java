@@ -50,6 +50,7 @@ public class AdminController {
     private final CashFlowDataService cashFlowDataService;
     private final FinancialNoteDataService financialNoteDataService;
     private final NoteSharesDataService noteSharesDataService;
+    private final IncomeTaxDataService incomeTaxDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -555,6 +556,32 @@ public class AdminController {
 
         // returns NoteSharesDataDto or null
         return ResponseEntity.ok(noteSharesDataService.getNoteSharesData(financialDate));
+    }
+
+    @PostMapping(path = "/incomeTax")
+    public ResponseEntity<?> addToIncomeTax(
+            Authentication authentication,
+            @RequestBody IncomeTaxDataDto dto
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                incomeTaxDataService.addNoteIncomeTax(dto),
+                HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping(path = "/incomeTax")
+    public ResponseEntity<?> getIncomeTax(
+            Authentication authentication,
+            @RequestParam("financialDate")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate financialDate
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return ResponseEntity.ok(incomeTaxDataService.getIncomeTaxByFinancialDate(financialDate));
     }
 
 

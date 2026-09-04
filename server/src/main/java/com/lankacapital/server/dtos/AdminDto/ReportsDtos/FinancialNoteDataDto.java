@@ -11,5 +11,6 @@ public class FinancialNoteDataDto {
     private LocalDate balanceAtDate;
     private BigDecimal openingBalance;
     private BigDecimal depreciationBalance;
+    private Integer years;
     private Long assetId;
 }

@@ -14,6 +14,7 @@ public class FinancialNoteDataMapper {
         data.setOpeningBalance(dto.getOpeningBalance());
         data.setDepreciationBalance(dto.getDepreciationBalance());
         data.setAssetsRegistry(assetsRegistry);
+        data.setYears(dto.getYears());
 
         return data;
     }

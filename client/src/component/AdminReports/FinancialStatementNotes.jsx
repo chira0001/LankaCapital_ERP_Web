@@ -202,6 +202,7 @@ const FinancialStatementNotes = ({
                             <th className="border border-gray-200 px-4 py-3 text-left">Asset Name</th>
                             <th className="border border-gray-200 px-4 py-3 text-left">Purchased Date</th>
                             <th className="border border-gray-200 px-4 py-3 text-left">Value</th>
+                            <th className="border border-gray-200 px-4 py-3 text-left">Years <br /> (Income Tax)</th>
                             <th className="border border-gray-200 px-4 py-3 text-left">
                                 {`Balance at ${openingDateLabel}`}
                             </th>
@@ -235,6 +236,7 @@ const FinancialStatementNotes = ({
                                     asset?.purchasedDate || asset?.purchasedMonth || asset?.purchasedMonthDate;
 
                                 const openingBalance = notesByAsset?.[asset.id]?.openingBalance ?? "";
+                                const yearsValue = notesByAsset?.[asset.id]?.years ?? "";
                                 const depreciationBalance =
                                     notesByAsset?.[asset.id]?.depreciationBalance ?? "";
 
@@ -250,6 +252,18 @@ const FinancialStatementNotes = ({
 
                                         <td className="border border-gray-200 px-4 py-3 text-gray-700 whitespace-nowrap">
                                             {asset.amount ?? "—"}
+                                        </td>
+
+                                        <td className="border border-gray-200 px-4 py-3">
+                                            <input
+                                                type="number"
+                                                name="years"
+                                                value={yearsValue}
+                                                onChange={(e) => handleInputChange(e, asset.id)}
+                                                placeholder="0"
+                                                disabled={isSaving}
+                                                className="w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
+                                            />
                                         </td>
 
                                         <td className="border border-gray-200 px-4 py-3">

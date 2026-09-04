@@ -9,23 +9,19 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "financialNoteData")
+@Table(name = "incomeTax")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class FinancialNoteData {
-
+public class IncomeTaxData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private LocalDate financialDate;
-    private LocalDate balanceAtDate;
-    private BigDecimal openingBalance;
-    private BigDecimal depreciationBalance;
-    private Integer years;
-
-    @ManyToOne
-    @JoinColumn(name = "asset")
-    private AssetsRegistry assetsRegistry;
+    private BigDecimal withholdingAmount;
+    private LocalDate balanceBFDate;
+    private BigDecimal balanceBFAmount;
+    private BigDecimal investmentIncome;
+    private BigDecimal businessIncome;
 }
