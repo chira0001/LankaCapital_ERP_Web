@@ -684,7 +684,7 @@ const FinancialReportsPage = () => {
 
   // -------------------- Collapsible states --------------------
   const [sectionsOpen, setSectionsOpen] = useState({
-    trialBalance: true,
+    trialBalance: false,
     equityChanges: false,
     cashflow: false,
     financialNotes: false,
@@ -1192,13 +1192,13 @@ const FinancialReportsPage = () => {
               Export Excel
             </Button>
 
-            <Button
+            {/* <Button
               onClick={handleDownloadPDF}
               className="bg-red-600 text-white hover:bg-red-700"
             >
               <Download className="mr-2 h-4 w-4" />
               PDF
-            </Button>
+            </Button> */}
           </div>
         </section>
 
