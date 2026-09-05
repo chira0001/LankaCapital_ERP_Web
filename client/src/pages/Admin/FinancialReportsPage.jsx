@@ -661,26 +661,26 @@ const FinancialReportsPage = () => {
     }
   }, [data, month, formatMonth]);
 
-  const handleDownloadPDF = useCallback(async () => {
-    try {
-      const res = await axiosApi.get("/admin/financial-report/pdf", {
-        params: { month: formatMonth(month) },
-        responseType: "blob",
-      });
+  // const handleDownloadPDF = useCallback(async () => {
+  //   try {
+  //     const res = await axiosApi.get("/admin/financial-report/pdf", {
+  //       params: { month: formatMonth(month) },
+  //       responseType: "blob",
+  //     });
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `financial-report_${formatMonth(month)}.pdf`
-      );
-      document.body.appendChild(link);
-      link.click();
-    } catch {
-      alert("PDF download failed");
-    }
-  }, [month, formatMonth]);
+  //     const url = window.URL.createObjectURL(new Blob([res.data]));
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute(
+  //       "download",
+  //       `financial-report_${formatMonth(month)}.pdf`
+  //     );
+  //     document.body.appendChild(link);
+  //     link.click();
+  //   } catch {
+  //     alert("PDF download failed");
+  //   }
+  // }, [month, formatMonth]);
 
   // -------------------- Collapsible states --------------------
   const [sectionsOpen, setSectionsOpen] = useState({
