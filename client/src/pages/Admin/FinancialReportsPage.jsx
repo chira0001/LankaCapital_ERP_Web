@@ -58,9 +58,8 @@ const CollapsibleSection = memo(function CollapsibleSection({
 
           <div className="shrink-0 pt-0.5">
             <span
-              className={`inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 transition-transform ${
-                open ? "rotate-180" : "rotate-0"
-              }`}
+              className={`inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 transition-transform ${open ? "rotate-180" : "rotate-0"
+                }`}
               aria-hidden="true"
             >
               <ChevronDown className="h-4 w-4 text-gray-700" />
@@ -183,7 +182,21 @@ const ReportTables = memo(function ReportTables({ data }) {
     }
 
     // Preferred section order (others appended after)
-    const preferredOrder = ["ppe", "tb", "incometax", "incomeTax", "p10", "p09", "p11", "pl", "bs", "ce", "cf", "working", "statement"];
+    const preferredOrder = [
+      "ppe",
+      "tb",
+      "incometax",
+      "incomeTax",
+      "p10",
+      "p09",
+      "p11",
+      "pl",
+      "bs",
+      "ce",
+      "cf",
+      "working",
+      "statement",
+    ];
 
     const entries = Object.entries(data);
 
@@ -217,11 +230,13 @@ const ReportTables = memo(function ReportTables({ data }) {
               {humanTitle(key)}
             </h3>
 
-            {isArray
-              ? renderArrayTable(value)
-              : value && typeof value === "object"
-              ? renderObjectTable(value)
-              : renderObjectTable({ value })}
+            {isArray ? (
+              renderArrayTable(value)
+            ) : value && typeof value === "object" ? (
+              renderObjectTable(value)
+            ) : (
+              renderObjectTable({ value })
+            )}
           </section>
         );
       })}
@@ -330,11 +345,11 @@ const FinancialReportsPage = () => {
     console.log(
       "Generate Payload : ",
       "reportType - " +
-        reportType +
-        ", startDate - " +
-        startDate +
-        ", endDate - " +
-        endDate
+      reportType +
+      ", startDate - " +
+      startDate +
+      ", endDate - " +
+      endDate
     );
 
     try {
@@ -355,15 +370,296 @@ const FinancialReportsPage = () => {
     }
   }, [reportType, startDate, endDate]);
 
-  const handleExportExcel = useCallback(() => {
-    if (!data) return;
+  const handleExportExcel = useCallback(async () => {
+    if (!data || !Array.isArray(data.ppe)) return;
 
-    // keep existing behavior (single sheet)
-    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
-  }, [data, reportType, month, formatMonth]);
+    try {
+      const templateUrl = encodeURI("/templates/Audited Accounts 2425.xlsx");
+      const response = await fetch(templateUrl);
+      if (!response.ok) {
+        toast.error("Excel template not found");
+        return;
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
+      const date1904 = !!wb?.Workbook?.WBProps?.date1904;
+
+      const toExcelSerial = (jsDate) => {
+        if (!(jsDate instanceof Date) || Number.isNaN(jsDate.getTime())) return null;
+        const epoch = Date.UTC(jsDate.getFullYear(), jsDate.getMonth(), jsDate.getDate());
+        const excelEpoch = date1904 ? Date.UTC(1904, 0, 1) : Date.UTC(1899, 11, 30); // 1900 system base
+        return (epoch - excelEpoch) / 86400000;
+      };
+
+      const parseISOToSerial = (iso) => {
+        if (!iso) return null;
+        const d = dayjs(iso);
+        if (!d.isValid()) return null;
+        return toExcelSerial(d.toDate());
+      };
+
+      const ppeSheetName =
+        wb.SheetNames.find((n) => n?.trim?.().toLowerCase() === "ppe") || "PPE";
+      const ws = wb.Sheets[ppeSheetName];
+
+      if (!ws) {
+        toast.error("PPE sheet not found in template");
+        return;
+      }
+      const isBlank = (v) => v === null || v === undefined || String(v).trim() === "";
+      const addrOf = (r, c) => XLSX.utils.encode_cell({ r, c });
+      const getCell = (r, c) => ws[addrOf(r, c)];
+
+      const setCellValuePreserveStyle = (r, c, { t, v, z, numFmt }) => {
+        const a = addrOf(r, c);
+        const cell = ws[a];
+        if (!cell) return;
+
+        if (cell.f) return;
+
+        cell.t = t;
+        cell.v = v;
+
+        if (z) cell.z = z;
+        if (numFmt) {
+          cell.z = cell.z || numFmt;
+          cell.s = cell.s || {};
+          cell.s.numFmt = cell.s.numFmt || numFmt;
+        }
+      };
+
+      const cloneTemplateRowTo = (templateRow0, targetRow0, maxCol) => {
+        const fromRowNum1 = templateRow0 + 1;
+        const toRowNum1 = targetRow0 + 1;
+        for (let c = 0; c <= maxCol; c++) {
+          const srcAddr = addrOf(templateRow0, c);
+          const dstAddr = addrOf(targetRow0, c);
+
+          const src = ws[srcAddr];
+          if (!src) continue;
+          if (ws[dstAddr]) continue;
+          const cloned = { ...src };
+
+          if (cloned.f) {
+            cloned.f = String(cloned.f).replace(
+              /(\$?[A-Z]{1,3})(\$?)(\d+)/g,
+              (m, col, rowAbs, rowStr) => {
+                const rowNum = Number(rowStr);
+                if (rowAbs === "$") return m;
+                if (rowNum === fromRowNum1) return `${col}${rowAbs}${toRowNum1}`;
+                return m;
+              }
+            );
+            cloned.v = 0;
+            cloned.t = cloned.t || "n";
+          }
+
+          ws[dstAddr] = cloned;
+        }
+
+        if (Array.isArray(ws["!rows"]) && ws["!rows"][templateRow0] && !ws["!rows"][targetRow0]) {
+          ws["!rows"][targetRow0] = { ...ws["!rows"][templateRow0] };
+        }
+      };
+
+      const shiftRowsDown = (startRow0, delta) => {
+        if (delta <= 0) return;
+
+        const keys = Object.keys(ws).filter((k) => !k.startsWith("!"));
+        const decoded = keys.map((a) => {
+          const { r, c } = XLSX.utils.decode_cell(a);
+          return { a, r, c };
+        });
+
+        decoded.sort((x, y) => y.r - x.r || y.c - x.c);
+
+        for (const { a, r, c } of decoded) {
+          if (r < startRow0) continue;
+          const newAddr = addrOf(r + delta, c);
+          ws[newAddr] = ws[a];
+          delete ws[a];
+        }
+
+        if (Array.isArray(ws["!merges"])) {
+          ws["!merges"] = ws["!merges"].map((m) => {
+            const nm = { s: { ...m.s }, e: { ...m.e } };
+            if (nm.s.r >= startRow0) {
+              nm.s.r += delta;
+              nm.e.r += delta;
+            } else if (nm.e.r >= startRow0) {
+              nm.e.r += delta;
+            }
+            return nm;
+          });
+        }
+
+        if (Array.isArray(ws["!rows"])) {
+          const newRows = [];
+          for (let i = 0; i < ws["!rows"].length; i++) {
+            const rowObj = ws["!rows"][i];
+            if (!rowObj) continue;
+            if (i >= startRow0) newRows[i + delta] = rowObj;
+            else newRows[i] = rowObj;
+          }
+          ws["!rows"] = newRows;
+        }
+      };
+      const range0 = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+      let headerRow0 = null;
+      for (const a of Object.keys(ws)) {
+        if (a.startsWith("!")) continue;
+        const cell = ws[a];
+        if (!cell) continue;
+        if (typeof cell.v === "string" && cell.v.trim().toLowerCase() === "asset") {
+          const d = XLSX.utils.decode_cell(a);
+          if (d.c === 0) {
+            headerRow0 = d.r;
+            break;
+          }
+          if (headerRow0 === null) headerRow0 = d.r;
+        }
+      }
+      const startRow0 = headerRow0 !== null ? headerRow0 + 1 : 3;
+      const COLS = {
+        ASSET: 0,
+        PURCHASED: 1,
+        RATE: 2,
+        AMOUNT: 3,
+        DEP_START: 4,
+        DATE: 5,
+        DEP_AMOUNT: 6,
+      };
+      const maxCol = COLS.DEP_AMOUNT;
+      let dummyCount = 0;
+      let totalsRow0 = null;
+
+      for (let r = startRow0; r <= range0.e.r; r++) {
+        const assetVal = getCell(r, COLS.ASSET)?.v;
+        if (!isBlank(assetVal)) {
+          dummyCount++;
+          continue;
+        }
+        if (dummyCount > 0) {
+          totalsRow0 = r;
+          break;
+        }
+      }
+
+      if (dummyCount === 0) {
+        dummyCount = 2;
+        totalsRow0 = startRow0 + dummyCount;
+      }
+      if (totalsRow0 === null) totalsRow0 = startRow0 + dummyCount;
+
+      const templateRow0 = startRow0;
+      const templatePurchasedCell = getCell(templateRow0, COLS.PURCHASED);
+      const templateDepStartCell = getCell(templateRow0, COLS.DEP_START);
+
+      const dateNumFmt =
+        templatePurchasedCell?.z ||
+        templatePurchasedCell?.s?.numFmt ||
+        templateDepStartCell?.z ||
+        templateDepStartCell?.s?.numFmt ||
+        "mmm-yy";
+
+        const rows = data.ppe;
+      const desiredCount = rows.length;
+      const delta = desiredCount - dummyCount;
+
+      if (delta > 0) shiftRowsDown(totalsRow0, delta);
+      const newTotalsRow0 = totalsRow0 + Math.max(delta, 0);
+
+      for (let i = 0; i < desiredCount; i++) {
+        const r0 = startRow0 + i;
+
+        cloneTemplateRowTo(templateRow0, r0, maxCol);
+
+        const item = rows[i] || {};
+        const purchasedSerial = parseISOToSerial(item.monthOfPurchased);
+        const depStartSerial = parseISOToSerial(item.monthStartingDepreciation);
+        setCellValuePreserveStyle(r0, COLS.ASSET, { t: "s", v: item.asset ?? "" });
+        setCellValuePreserveStyle(r0, COLS.PURCHASED, {
+          t: "n",
+          v: purchasedSerial ?? "",
+          z: dateNumFmt,
+          numFmt: dateNumFmt,
+        });
+
+        setCellValuePreserveStyle(r0, COLS.RATE, {
+          t: "n",
+          v: Number(item.rate ?? 0) || 0,
+        });
+
+        setCellValuePreserveStyle(r0, COLS.AMOUNT, {
+          t: "n",
+          v: Number(item.amount ?? 0) || 0,
+        });
+
+        setCellValuePreserveStyle(r0, COLS.DEP_START, {
+          t: "n",
+          v: depStartSerial ?? "",
+          z: dateNumFmt,
+          numFmt: dateNumFmt,
+        });
+
+        setCellValuePreserveStyle(r0, COLS.DATE, {
+          t: "n",
+          v: Number(item.date ?? 0) || 0,
+        });
+      }
+
+      if (desiredCount < dummyCount) {
+        for (let r0 = startRow0 + desiredCount; r0 < startRow0 + dummyCount; r0++) {
+          cloneTemplateRowTo(templateRow0, r0, maxCol);
+          setCellValuePreserveStyle(r0, COLS.ASSET, { t: "s", v: "" });
+          setCellValuePreserveStyle(r0, COLS.PURCHASED, {
+            t: "s",
+            v: "",
+            z: dateNumFmt,
+            numFmt: dateNumFmt,
+          });
+          setCellValuePreserveStyle(r0, COLS.RATE, { t: "s", v: "" });
+          setCellValuePreserveStyle(r0, COLS.AMOUNT, { t: "s", v: "" });
+          setCellValuePreserveStyle(r0, COLS.DEP_START, {
+            t: "s",
+            v: "",
+            z: dateNumFmt,
+            numFmt: dateNumFmt,
+          });
+          setCellValuePreserveStyle(r0, COLS.DATE, { t: "s", v: "" });
+        }
+      }
+      const firstDataRowNum1 = startRow0 + 1;
+      const lastDataRowNum1 = startRow0 + desiredCount;
+
+      const updateSumIfFormula = (r0, c, colLetter) => {
+        const a = addrOf(r0, c);
+        const cell = ws[a];
+        if (!cell || !cell.f) return;
+        if (desiredCount <= 0) {
+          cell.f = "0";
+          cell.v = 0;
+          cell.t = "n";
+          return;
+        }
+        cell.f = `SUM(${colLetter}${firstDataRowNum1}:${colLetter}${lastDataRowNum1})`;
+        cell.v = 0;
+        cell.t = "n";
+      };
+
+      updateSumIfFormula(newTotalsRow0, COLS.AMOUNT, "D");
+      updateSumIfFormula(newTotalsRow0, COLS.DEP_AMOUNT, "G");
+      const newRange = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+      if (delta > 0 && totalsRow0 <= newRange.e.r) newRange.e.r += delta;
+      newRange.e.r = Math.max(newRange.e.r, newTotalsRow0, startRow0 + desiredCount);
+      ws["!ref"] = XLSX.utils.encode_range(newRange);
+
+      XLSX.writeFile(wb, `Audited Accounts ${formatMonth(month)}.xlsx`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Excel export failed");
+    }
+  }, [data, month, formatMonth]);
 
   const handleDownloadPDF = useCallback(async () => {
     try {
@@ -672,22 +968,22 @@ const FinancialReportsPage = () => {
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
                                   ? new Date(
-                                      asset.purchasedMonth
-                                    ).toLocaleDateString("en-LK", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
+                                    asset.purchasedMonth
+                                  ).toLocaleDateString("en-LK", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                   : "-";
 
                                 const depDateStr = asset?.depreciationMonth
                                   ? new Date(
-                                      asset.depreciationMonth
-                                    ).toLocaleDateString("en-LK", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
+                                    asset.depreciationMonth
+                                  ).toLocaleDateString("en-LK", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                   : "-";
 
                                 return (
