@@ -211,13 +211,13 @@ public class ReceptionistController {
         return new ResponseEntity<>(pettyCashCategoryService.getAllCategories(), HttpStatus.OK);
     }
 
-    @PostMapping("/financials")
-    public ResponseEntity<?> addBusinessFinancials(
-            Authentication authentication,
-            @RequestBody FinancialRequestDto financialRequestDto
-    ){
-        return new ResponseEntity<>(financialStatementService.addFinancials(authentication.getName(),financialRequestDto), HttpStatus.CREATED);
-    }
+//    @PostMapping("/financials")
+//    public ResponseEntity<?> addBusinessFinancials(
+//            Authentication authentication,
+//            @RequestBody FinancialRequestDto financialRequestDto
+//    ){
+//        return new ResponseEntity<>(financialStatementService.addFinancials(authentication.getName(),financialRequestDto), HttpStatus.CREATED);
+//    }
 
     @GetMapping("/customers/search")
     public ResponseEntity<List<?>> searchCustomers(

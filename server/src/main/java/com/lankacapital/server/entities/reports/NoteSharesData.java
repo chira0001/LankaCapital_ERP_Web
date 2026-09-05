@@ -5,22 +5,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "assets")
+@Table(name = "noteSharesData")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AssetsRegistry {
+public class NoteSharesData {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String assetName;
-    private LocalDate purchasedDate;
-    private LocalDate depreciatedDate;
-    private Double rate;
-    private BigDecimal amount;
+    private LocalDate financialDate;
+    private Long numberOfShares;
 }
