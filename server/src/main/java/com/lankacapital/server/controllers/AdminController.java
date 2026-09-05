@@ -424,16 +424,6 @@ public class AdminController {
         return new ResponseEntity<>(loanService.fetchLoanPayments(loanId, page, size), HttpStatus.OK);
     }
 
-    //reports
-    @GetMapping("/reports")
-    public ResponseEntity<?> generateReport(
-            @RequestParam String reportType,
-            @RequestParam String startDate,
-            @RequestParam String endDate
-    ) {
-        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
-    }
-
     @GetMapping(path = "/assets")
     public ResponseEntity<?> getFromAssetsRegistry(Authentication authentication){
         if(authentication == null || authentication.getName().isEmpty()){
@@ -582,6 +572,26 @@ public class AdminController {
         }
         return ResponseEntity.ok(incomeTaxDataService.getIncomeTaxByFinancialDate(financialDate));
     }
+
+
+    //reports
+    @GetMapping("/reports")
+    public ResponseEntity<?> generateReport(
+            @RequestParam String reportType,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        System.out.println(reportType + " - " + startDate + " - " + endDate);
+        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+    }
+
+
+
+
 
 
     //revenue tracking

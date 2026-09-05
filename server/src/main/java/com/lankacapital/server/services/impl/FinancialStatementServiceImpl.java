@@ -1,12 +1,15 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.StatementDto.PPE;
 import com.lankacapital.server.entities.Employee;
-import com.lankacapital.server.entities.FinancialStatement;
+//import com.lankacapital.server.entities.FinancialStatement;
+import com.lankacapital.server.entities.reports.AssetsRegistry;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
-import com.lankacapital.server.mappers.FinancialStatementMapper;
+//import com.lankacapital.server.mappers.FinancialStatementMapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
-import com.lankacapital.server.repositories.FinancialStatementRepository;
+//import com.lankacapital.server.repositories.FinancialStatementRepository;
+import com.lankacapital.server.repositories.ReportsRepository.*;
 import com.lankacapital.server.services.*;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -18,7 +21,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.itextpdf.text.*;
@@ -36,46 +41,89 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     private final MonthlyIncomeService monthlyIncomeService;
     private final MonthlyExpenseService monthlyExpenseService;
     private final PettyCashService pettyCashService;
-    private final FinancialStatementRepository financialStatementRepository;
+//    private final FinancialStatementRepository financialStatementRepository;
     private final EmployeeRepository employeeRepository;
+
+    private final AssetsRegistryRepository assetsRegistryRepository;
+    private final CashFlowDataRepository cashFlowDataRepository;
+    private final EquityChangeRepository equityChangeRepository;
+    private final FinancialNoteDataRepository financialNoteDataRepository;
+    private final IncomeTaxDataRepository incomeTaxDataRepository;
+    private final NoteSharesDataRepository noteSharesDataRepository;
+    private final TrialBalanceDataRepository trialBalanceDataRepository;
 
     private BigDecimal safe(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    @Override
-    public String addFinancials(String username, FinancialRequestDto financialRequestDto) {
-        try{
-            Employee employee = employeeRepository.findByEmail(username);
-            if(employee == null){
-                throw new ResourceNotFoundException("Employee username not defined");
-            }
+//    @Override
+//    public String addFinancials(String username, FinancialRequestDto financialRequestDto) {
+//        try{
+//            Employee employee = employeeRepository.findByEmail(username);
+//            if(employee == null){
+//                throw new ResourceNotFoundException("Employee username not defined");
+//            }
+//
+//            FinancialStatement financialStatement = FinancialStatementMapper.mapToFinancialStatement(financialRequestDto);
+//
+//            financialStatementRepository.save(financialStatement);
+//            return "Successfully entered details";
+//        }catch (Exception e){
+//            return "Error entering details";
+//        }
+//    }
 
-            FinancialStatement financialStatement = FinancialStatementMapper.mapToFinancialStatement(financialRequestDto);
+    private List<PPE> generatePPE() {
+        List<AssetsRegistry> assetsRegistries = assetsRegistryRepository.findAll();
+        List<PPE> ppeList = new ArrayList<>();
+        for (AssetsRegistry registry : assetsRegistries) {
+            PPE ppe = new PPE();
+            ppe.setAsset(registry.getAssetName());
+            ppe.setMonthOfPurchased(registry.getPurchasedDate());
+            ppe.setRate(registry.getRate());
+            ppe.setAmount(registry.getAmount());
+            ppe.setMonthStartingDepreciation(registry.getDepreciatedDate());
+            long days = ChronoUnit.DAYS.between(
+                    registry.getPurchasedDate(),
+                    registry.getDepreciatedDate()
+            );
+            ppe.setDate((int) days);
 
-            financialStatementRepository.save(financialStatement);
-            return "Successfully entered details";
-        }catch (Exception e){
-            return "Error entering details";
+            BigDecimal depAmount = registry.getAmount()
+                    .divide(BigDecimal.valueOf(registry.getRate()),2,RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(days)
+                            .divide(BigDecimal.valueOf(365),2, RoundingMode.HALF_UP));
+
+            ppe.setDepreciationAmount(depAmount);
+            ppeList.add(ppe);
         }
+        return ppeList;
     }
 
     @Override
     @Transactional
-    public FinancialStatement generateReports(String reportType,String startDate, String endDate) {
+    public HashMap<String, Object> generateReports(String reportType, String startDate, String endDate) {
+
+        HashMap<String, Object> data = new HashMap<>();
 
         LocalDate beginPeriod = LocalDate.parse(startDate);
         LocalDate endPeriod = LocalDate.parse(endDate);
 
-//        return financialStatementRepository
+        if(reportType.equalsIgnoreCase("ppe")){
+            data.put("ppe",generatePPE());
+        }
+
+
+
+        return data;
+    }
+
+    //        return financialStatementRepository
 //                .findByReportDate(reportDate)
 //                .orElseThrow(() ->
 //                        new ResourceNotFoundException(
 //                                "Financial statement not found for month: " + month
 //                        ));
-        return null;
-    }
-
 
 //
 //    @Override

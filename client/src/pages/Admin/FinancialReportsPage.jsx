@@ -76,6 +76,159 @@ const CollapsibleSection = memo(function CollapsibleSection({
   );
 });
 
+// -------------------- Report Output (multiple arrays -> multiple tables) --------------------
+
+const humanTitle = (key) =>
+  String(key)
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const ReportTables = memo(function ReportTables({ data }) {
+  const renderCell = useCallback((val) => {
+    if (val === null || val === undefined) return "-";
+    if (val instanceof Date) return val.toISOString();
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  }, []);
+
+  const renderArrayTable = useCallback(
+    (rows) => {
+      const safeRows = Array.isArray(rows) ? rows : [];
+
+      const allKeys = Array.from(
+        safeRows.reduce((set, row) => {
+          Object.keys(row || {}).forEach((k) => set.add(k));
+          return set;
+        }, new Set())
+      );
+
+      return (
+        <div className="w-full overflow-x-auto rounded-lg border">
+          <table className="min-w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-gray-50">
+              <tr>
+                {allKeys.map((key) => (
+                  <th
+                    key={key}
+                    className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800"
+                  >
+                    {key}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody className="bg-white">
+              {safeRows.map((row, i) => (
+                <tr key={i} className="border-t">
+                  {allKeys.map((key) => (
+                    <td
+                      key={`${i}-${key}`}
+                      className="align-top whitespace-nowrap px-3 py-2 text-gray-700"
+                    >
+                      {renderCell(row?.[key])}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    },
+    [renderCell]
+  );
+
+  const renderObjectTable = useCallback(
+    (obj) => (
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
+                Field
+              </th>
+              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white">
+            {Object.entries(obj || {}).map(([k, v]) => (
+              <tr key={k} className="border-t">
+                <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-800">
+                  {k}
+                </td>
+                <td className="px-3 py-2 text-gray-700">{renderCell(v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ),
+    [renderCell]
+  );
+
+  const sortedSections = useMemo(() => {
+    if (!data) return [];
+
+    // If API returns a top-level array, render it once as a single section.
+    if (Array.isArray(data)) {
+      return [{ key: "report", value: data }];
+    }
+
+    if (typeof data !== "object") {
+      return [{ key: "report", value: { value: data } }];
+    }
+
+    // Preferred section order (others appended after)
+    const preferredOrder = ["ppe", "tb", "incometax", "incomeTax", "p10", "p09", "p11", "pl", "bs", "ce", "cf", "working", "statement"];
+
+    const entries = Object.entries(data);
+
+    const preferred = preferredOrder
+      .filter((k) => Object.prototype.hasOwnProperty.call(data, k))
+      .map((k) => [k, data[k]]);
+
+    const rest = entries.filter(([k]) => !preferredOrder.includes(k));
+
+    return [...preferred, ...rest].map(([key, value]) => ({ key, value }));
+  }, [data]);
+
+  if (!data) return null;
+
+  // Single array response: show without heading (keeps old feel)
+  if (Array.isArray(data)) {
+    return renderArrayTable(data);
+  }
+
+  return (
+    <div className="space-y-6">
+      {sortedSections.map(({ key, value }) => {
+        const isArray = Array.isArray(value);
+
+        // Skip empty arrays (optional, same behavior as your earlier snippet)
+        if (isArray && value.length === 0) return null;
+
+        return (
+          <section key={key} className="space-y-2">
+            <h3 className="text-base font-semibold text-gray-900">
+              {humanTitle(key)}
+            </h3>
+
+            {isArray
+              ? renderArrayTable(value)
+              : value && typeof value === "object"
+              ? renderObjectTable(value)
+              : renderObjectTable({ value })}
+          </section>
+        );
+      })}
+    </div>
+  );
+});
+
 const FinancialReportsPage = () => {
   const [reportType, setReportType] = useState("");
   const [month, setMonth] = useState(dayjs());
@@ -94,14 +247,6 @@ const FinancialReportsPage = () => {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const [TrialBalanceArrayData, setTrialBalanceArrayData] = useState({
-    accountName: "",
-    transactionType: "",
-    accountType: "",
-    amount: "",
-    financialDate: endDate,
-  });
-
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [assetsPayload, setAssetsPayload] = useState({
     assetName: "",
@@ -119,22 +264,23 @@ const FinancialReportsPage = () => {
     [assetsList]
   );
 
+  // (was commented out; needed by export/pdf handlers)
   const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
 
   const reportTypes = useMemo(
     () => [
-      { value: "PPE", name: "PPE" },
-      { value: "Working", name: "Working" },
-      { value: "TB", name: "TB" },
-      { value: "BS", name: "BS" },
-      { value: "CE", name: "CE" },
-      { value: "CF", name: "CF" },
-      { value: "P09", name: "P09" },
-      { value: "P10", name: "P10" },
-      { value: "P11", name: "P11" },
-      { value: "PL", name: "PL" },
-      { value: "Income Tax", name: "Income Tax" },
-      { value: "Statement", name: "Complete Report" },
+      { value: "ppe", name: "PPE" },
+      { value: "working", name: "Working" },
+      { value: "tb", name: "TB" },
+      { value: "bs", name: "BS" },
+      { value: "ce", name: "CE" },
+      { value: "cf", name: "CF" },
+      { value: "p09", name: "P09" },
+      { value: "p10", name: "P10" },
+      { value: "p11", name: "P11" },
+      { value: "pl", name: "PL" },
+      { value: "incomeTax", name: "Income Tax" },
+      { value: "statement", name: "Complete Report" },
     ],
     []
   );
@@ -147,7 +293,6 @@ const FinancialReportsPage = () => {
   const handleEndDateChange = useCallback((e) => {
     const val = e.target.value;
     setEndDate(val);
-    setTrialBalanceArrayData((prev) => ({ ...prev, financialDate: val }));
   }, []);
 
   // -------------------- Assets --------------------
@@ -181,14 +326,26 @@ const FinancialReportsPage = () => {
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    console.log(
+      "Generate Payload : ",
+      "reportType - " +
+        reportType +
+        ", startDate - " +
+        startDate +
+        ", endDate - " +
+        endDate
+    );
+
     try {
       const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType,
-          startDate: formatMonth(month),
-          endDate: formatMonth(month),
+          startDate: startDate,
+          endDate: endDate,
         },
       });
+      console.log("res.data : ", res.data);
       setData(res.data);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
@@ -196,11 +353,12 @@ const FinancialReportsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [reportType, month, formatMonth]);
+  }, [reportType, startDate, endDate]);
 
   const handleExportExcel = useCallback(() => {
     if (!data) return;
 
+    // keep existing behavior (single sheet)
     const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
@@ -217,94 +375,16 @@ const FinancialReportsPage = () => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `financial-report_${formatMonth(month)}.pdf`);
+      link.setAttribute(
+        "download",
+        `financial-report_${formatMonth(month)}.pdf`
+      );
       document.body.appendChild(link);
       link.click();
     } catch {
       alert("PDF download failed");
     }
   }, [month, formatMonth]);
-
-  const renderTable = useCallback(() => {
-    if (!data) return null;
-
-    if (Array.isArray(data)) {
-      const allKeys = Array.from(
-        data.reduce((set, row) => {
-          Object.keys(row).forEach((k) => set.add(k));
-          return set;
-        }, new Set())
-      );
-
-      const renderCell = (val) => {
-        if (val === null || val === undefined) return "-";
-        if (typeof val === "object") return JSON.stringify(val);
-        return String(val);
-      };
-
-      return (
-        <div className="w-full overflow-x-auto rounded-lg border">
-          <table className="min-w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-gray-50">
-              <tr>
-                {allKeys.map((key) => (
-                  <th
-                    key={key}
-                    className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800"
-                  >
-                    {key}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="bg-white">
-              {data.map((row, i) => (
-                <tr key={i} className="border-t">
-                  {allKeys.map((key) => (
-                    <td
-                      key={`${i}-${key}`}
-                      className="align-top whitespace-nowrap px-3 py-2 text-gray-700"
-                    >
-                      {renderCell(row[key])}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-full overflow-x-auto rounded-lg border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
-                Field
-              </th>
-              <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">
-                Value
-              </th>
-            </tr>
-          </thead>
-
-        <tbody className="bg-white">
-            {Object.entries(data).map(([key, value]) => (
-              <tr key={key} className="border-t">
-                <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-800">
-                  {key}
-                </td>
-                <td className="px-3 py-2 text-gray-700">{String(value)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }, [data]);
 
   // -------------------- Collapsible states --------------------
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -347,7 +427,6 @@ const FinancialReportsPage = () => {
     measure();
 
     if (typeof ResizeObserver === "undefined") {
-      // fallback
       window.addEventListener("resize", measure);
       return () => window.removeEventListener("resize", measure);
     }
@@ -396,7 +475,9 @@ const FinancialReportsPage = () => {
             ) : (
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="text-xs text-gray-500">
-                  {isAssetsListLoading ? "Loading assets..." : `${assetsCount} assets`}
+                  {isAssetsListLoading
+                    ? "Loading assets..."
+                    : `${assetsCount} assets`}
                 </div>
               </div>
             )}
@@ -460,7 +541,8 @@ const FinancialReportsPage = () => {
 
                         <div>
                           <Label htmlFor="depreciationMonth">
-                            Depreciation Date<span className="text-red-500">*</span>
+                            Depreciation Date
+                            <span className="text-red-500">*</span>
                           </Label>
                           <input
                             id="depreciationMonth"
@@ -537,8 +619,11 @@ const FinancialReportsPage = () => {
                 <div className="lg:col-span-8">
                   <div
                     className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100 flex flex-col"
-                    // ✅ constrain height to form height on lg+
-                    style={isLgUp && formCardHeight ? { height: `${formCardHeight}px` } : undefined}
+                    style={
+                      isLgUp && formCardHeight
+                        ? { height: `${formCardHeight}px` }
+                        : undefined
+                    }
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -559,7 +644,6 @@ const FinancialReportsPage = () => {
                       </Button>
                     </div>
 
-                    {/* ✅ scroll area fills remaining height and won't exceed form */}
                     <div className="mt-4 flex-1 min-h-0">
                       {assetsCount > 0 ? (
                         <div className="h-full overflow-y-auto rounded-lg border">
@@ -587,7 +671,9 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(asset.purchasedMonth).toLocaleDateString("en-LK", {
+                                  ? new Date(
+                                      asset.purchasedMonth
+                                    ).toLocaleDateString("en-LK", {
                                       day: "2-digit",
                                       month: "short",
                                       year: "numeric",
@@ -595,7 +681,9 @@ const FinancialReportsPage = () => {
                                   : "-";
 
                                 const depDateStr = asset?.depreciationMonth
-                                  ? new Date(asset.depreciationMonth).toLocaleDateString("en-LK", {
+                                  ? new Date(
+                                      asset.depreciationMonth
+                                    ).toLocaleDateString("en-LK", {
                                       day: "2-digit",
                                       month: "short",
                                       year: "numeric",
@@ -603,12 +691,25 @@ const FinancialReportsPage = () => {
                                   : "-";
 
                                 return (
-                                  <tr key={key} className="border-t hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-3 py-2 text-gray-800">{asset?.assetName ?? "-"}</td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{dateStr}</td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{depDateStr}</td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{asset?.rate ?? "-"}</td>
-                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">{asset?.amount ?? "-"}</td>
+                                  <tr
+                                    key={key}
+                                    className="border-t hover:bg-gray-50/50 transition-colors"
+                                  >
+                                    <td className="px-3 py-2 text-gray-800">
+                                      {asset?.assetName ?? "-"}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {dateStr}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {depDateStr}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {asset?.rate ?? "-"}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {asset?.amount ?? "-"}
+                                    </td>
                                   </tr>
                                 );
                               })}
@@ -637,9 +738,12 @@ const FinancialReportsPage = () => {
                         </div>
                       ) : (
                         <div className="h-full rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
-                          <p className="font-medium text-gray-800">No assets are available</p>
+                          <p className="font-medium text-gray-800">
+                            No assets are available
+                          </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building your registry.
+                            Add a new asset using the form to start building
+                            your registry.
                           </p>
                         </div>
                       )}
@@ -655,7 +759,9 @@ const FinancialReportsPage = () => {
         <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-gray-900">Generate report</h2>
+              <h2 className="text-base font-semibold text-gray-900">
+                Generate report
+              </h2>
               <p className="mt-0.5 text-sm text-gray-600">
                 Choose a date range and report type, then export or download.
               </p>
@@ -692,7 +798,10 @@ const FinancialReportsPage = () => {
               open={sectionsOpen.trialBalance}
               onToggle={() => toggleSection("trialBalance")}
             >
-              <TrialBalance periodStartDate={startDate} periodEndDate={endDate} />
+              <TrialBalance
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
             </CollapsibleSection>
 
             <CollapsibleSection
@@ -702,7 +811,10 @@ const FinancialReportsPage = () => {
               open={sectionsOpen.equityChanges}
               onToggle={() => toggleSection("equityChanges")}
             >
-              <EquityChanges periodStartDate={startDate} periodEndDate={endDate} />
+              <EquityChanges
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
             </CollapsibleSection>
 
             <CollapsibleSection
@@ -722,7 +834,10 @@ const FinancialReportsPage = () => {
               open={sectionsOpen.financialNotes}
               onToggle={() => toggleSection("financialNotes")}
             >
-              <FinancialStatementNotes periodStartDate={startDate} periodEndDate={endDate} />
+              <FinancialStatementNotes
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
             </CollapsibleSection>
 
             <CollapsibleSection
@@ -742,7 +857,10 @@ const FinancialReportsPage = () => {
               open={sectionsOpen.incomeTax}
               onToggle={() => toggleSection("incomeTax")}
             >
-              <IncomeTax periodStartDate={startDate} periodEndDate={endDate} />
+              <IncomeTax
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
             </CollapsibleSection>
           </div>
 
@@ -797,7 +915,9 @@ const FinancialReportsPage = () => {
                 Results appear here after generating a report.
               </p>
             </div>
-            <div className="text-xs text-gray-500">{data ? "Report loaded" : "No data"}</div>
+            <div className="text-xs text-gray-500">
+              {data ? "Report loaded" : "No data"}
+            </div>
           </div>
 
           {!data ? (
@@ -805,7 +925,7 @@ const FinancialReportsPage = () => {
               Select report type and generate
             </div>
           ) : (
-            renderTable()
+            <ReportTables data={data} />
           )}
         </section>
       </div>
