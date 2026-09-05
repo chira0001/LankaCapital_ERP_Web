@@ -9,18 +9,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "assets")
+@Table(name = "equityChange")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AssetsRegistry {
+public class EquityChange {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String assetName;
-    private LocalDate purchasedDate;
-    private LocalDate depreciatedDate;
-    private Double rate;
-    private BigDecimal amount;
+    private LocalDate financialDate;
+    private String dataName;
+    private BigDecimal statedCapitalAmount;
+    private BigDecimal retainedEarningAmount;
 }

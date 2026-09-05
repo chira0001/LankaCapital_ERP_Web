@@ -1,6 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet";
-import { Download } from "lucide-react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Download, ChevronDown } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
 import axiosApi from "../../api/axiosAPI.js";
@@ -10,329 +17,91 @@ import dayjs from "dayjs";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const FinancialReportsPage = () => {
-  const [reportType, setReportType] = useState("");
+import EquityChanges from "../../component/AdminReports/EquityChanges.jsx";
+import TrialBalance from "../../component/AdminReports/TrialBalance.jsx";
+import Cashflow from "../../component/AdminReports/Cashflow.jsx";
+import FinancialStatementNotes from "../../component/AdminReports/FinancialStatementNotes.jsx";
+import NoteShare from "../../component/AdminReports/NoteShare.jsx";
+import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 
-  const [month, setMonth] = useState(dayjs());
-  const [year, setYear] = useState(dayjs());
+/**
+ * Collapsible section (keeps children mounted -> state preserved).
+ */
+const CollapsibleSection = memo(function CollapsibleSection({
+  id,
+  title,
+  description,
+  open,
+  onToggle,
+  children,
+}) {
+  return (
+    <section className="rounded-xl border bg-white shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={id}
+        className="w-full text-left"
+      >
+        <div className="flex items-start justify-between gap-4 px-4 py-4 sm:px-5 lg:px-6 bg-gray-50 border-b">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900">
+              {title}
+            </h3>
+            {description ? (
+              <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                {description}
+              </p>
+            ) : null}
+          </div>
 
-  const [startDate, setStartDate] = useState();
-  const [endDate, setEndDate] = useState();
+          <div className="shrink-0 pt-0.5">
+            <span
+              className={`inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 transition-transform ${
+                open ? "rotate-180" : "rotate-0"
+              }`}
+              aria-hidden="true"
+            >
+              <ChevronDown className="h-4 w-4 text-gray-700" />
+            </span>
+          </div>
+        </div>
+      </button>
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const [importFile, setImportFile] = useState(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState(null);
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  const [trialBalanceArray, setTrialBalanceArray] = useState([]);
-  const [TrialBalanceArrayData, setTrialBalanceArrayData] = useState({
-    accountName: "",
-    transactionType: "",
-    accountType: "",
-    amount: "",
-    financialDate: endDate, // kept in sync with endDate input
-  });
-
-  // Must be an array because you use .length and .map in UI
-  const [existingTrialBalance, setExistingTrialBalance] = useState([]);
-
-  const [isEditTrialBalanceData, setIsEditTrialBalanceData] = useState(false);
-
-  const [tbEditIndex, setTbEditIndex] = useState(null);
-  const [isSavingTB, setIsSavingTB] = useState(false);
-
-  const [isAddingAsset, setIsAddingAsset] = useState(false);
-  const [assetsPayload, setAssetsPayload] = useState({
-    assetName: "",
-    purchasedMonth: "",
-    rate: "",
-    amount: "",
-  });
-
-  const [assetsList, setAssetsList] = useState([]);
-  const [isAssetsListLoading, setIsAssetsListLoading] = useState(false);
-
-  const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
-
-  // Memoize reportTypes so it is not recreated on every render
-  const reportTypes = useMemo(
-    () => [
-      { value: "PPE", name: "PPE" },
-      { value: "Working", name: "Working" },
-      { value: "TB", name: "TB" },
-      { value: "BS", name: "BS" },
-      { value: "CE", name: "CE" },
-      { value: "CF", name: "CF" },
-      { value: "BS", name: "BS" },
-      { value: "CE", name: "CE" },
-      { value: "CF", name: "CF" },
-      { value: "P09", name: "P09" },
-      { value: "P10", name: "P10" },
-      { value: "P11", name: "P11" },
-      { value: "PL", name: "PL" },
-      { value: "Income Tax", name: "Income Tax" },
-      { value: "Statement", name: "Complete Report" },
-    ],
-    []
+      <div id={id} className={open ? "block" : "hidden"}>
+        <div className="px-4 py-4 sm:px-5 lg:px-6">{children}</div>
+      </div>
+    </section>
   );
+});
 
-  // -------------------- Dates --------------------
-  const handleStartDateChange = useCallback((e) => {
-    setStartDate(e.target.value);
+// -------------------- Report Output (multiple arrays -> multiple tables) --------------------
+
+const humanTitle = (key) =>
+  String(key)
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const ReportTables = memo(function ReportTables({ data }) {
+  const renderCell = useCallback((val) => {
+    if (val === null || val === undefined) return "-";
+    if (val instanceof Date) return val.toISOString();
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
   }, []);
 
-  const handleEndDateChange = useCallback((e) => {
-    const val = e.target.value;
-    setEndDate(val);
+  const renderArrayTable = useCallback(
+    (rows) => {
+      const safeRows = Array.isArray(rows) ? rows : [];
 
-    // keep TB financialDate synced for NEW rows
-    setTrialBalanceArrayData((prev) => ({
-      ...prev,
-      financialDate: val,
-    }));
-  }, []);
-
-  // -------------------- Existing Trial Balance Fetch (optimized) --------------------
-  const fetchExistingTrialBalance = useCallback(async (sDate, eDate) => {
-    try {
-      const res = await axiosApi.get("/admin/trialBalance", {
-        params: {
-          startDate: sDate,
-          endDate: eDate,
-        },
-      });
-      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      toast.error("Failed to fetch Trial Balance data.");
-      console.log(err);
-    }
-  }, []);
-
-  // Fetch only once per date change (previous code triggered duplicate fetches)
-  useEffect(() => {
-    if (!startDate || !endDate) {
-      setExistingTrialBalance([]);
-      return;
-    }
-    fetchExistingTrialBalance(startDate, endDate);
-  }, [startDate, endDate, fetchExistingTrialBalance]);
-
-  // -------------------- Trial Balance handlers --------------------
-  const resetTBForm = useCallback(() => {
-    setTrialBalanceArrayData({
-      accountName: "",
-      transactionType: "",
-      accountType: "",
-      amount: "",
-      financialDate: endDate,
-    });
-  }, [endDate]);
-
-  const handleTBChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setTrialBalanceArrayData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, []);
-
-  const handleAddTBRow = useCallback(() => {
-    // REQUIRE start/end dates before adding
-    if (!startDate || !endDate) {
-      toast.error(
-        "Please select Start Date and End Date before adding Trial Balance data."
-      );
-      return;
-    }
-
-    const row = {
-      accountName: TrialBalanceArrayData.accountName?.trim(),
-      transactionType: TrialBalanceArrayData.transactionType,
-      accountType: TrialBalanceArrayData.accountType,
-      amount: TrialBalanceArrayData.amount,
-      financialDate: endDate, // must be endDate for each row
-    };
-
-    if (
-      !row.accountName ||
-      !row.transactionType ||
-      !row.accountType ||
-      row.amount === ""
-    ) {
-      toast.error("Please fill all Trial Balance fields.");
-      return;
-    }
-
-    setTrialBalanceArray((prev) => [...prev, row]);
-    resetTBForm();
-  }, [TrialBalanceArrayData, startDate, endDate, resetTBForm]);
-
-  const handleEditTBRow = useCallback(
-    (index) => {
-      setTbEditIndex(index);
-      setIsEditTrialBalanceData(true);
-      setTrialBalanceArrayData(trialBalanceArray[index]);
-    },
-    [trialBalanceArray]
-  );
-
-  const handleUpdateTBRow = useCallback(() => {
-    if (tbEditIndex === null) return;
-
-    const updated = {
-      accountName: TrialBalanceArrayData.accountName?.trim(),
-      transactionType: TrialBalanceArrayData.transactionType,
-      accountType: TrialBalanceArrayData.accountType,
-      amount: TrialBalanceArrayData.amount,
-      // keep aligned to selected endDate if provided; else preserve existing row date
-      financialDate:
-        endDate ||
-        TrialBalanceArrayData.financialDate ||
-        dayjs().format("YYYY-MM-DD"),
-    };
-
-    if (
-      !updated.accountName ||
-      !updated.transactionType ||
-      !updated.accountType ||
-      updated.amount === ""
-    ) {
-      toast.error("Please fill all Trial Balance fields before updating.");
-      return;
-    }
-
-    setTrialBalanceArray((prev) =>
-      prev.map((row, i) => (i === tbEditIndex ? updated : row))
-    );
-
-    setTbEditIndex(null);
-    setIsEditTrialBalanceData(false);
-    resetTBForm();
-  }, [tbEditIndex, TrialBalanceArrayData, endDate, resetTBForm]);
-
-  const handleDeleteTBRow = useCallback(() => {
-    if (tbEditIndex === null) return;
-
-    setTrialBalanceArray((prev) => prev.filter((_, i) => i !== tbEditIndex));
-
-    setTbEditIndex(null);
-    setIsEditTrialBalanceData(false);
-    resetTBForm();
-  }, [tbEditIndex, resetTBForm]);
-
-  const handleSaveTBData = useCallback(async () => {
-    try {
-      setIsSavingTB(true);
-
-      const res = await axiosApi.post("/admin/trialBalance", trialBalanceArray);
-      setExistingTrialBalance(Array.isArray(res.data) ? res.data : []);
-      toast.success("Trial balance data successfully added");
-    } catch (e) {
-      toast.error("Failed to save Trial Balance data.");
-      console.log(e);
-    } finally {
-      setIsSavingTB(false);
-    }
-  }, [trialBalanceArray]);
-
-  // -------------------- Assets --------------------
-  const fetchAssets = useCallback(async () => {
-    try {
-      setIsAssetsListLoading(true);
-      const res = await axiosApi.get("/admin/assets");
-      setAssetsList(res.data);
-      setIsAssetsListLoading(false);
-    } catch (e) {
-      setIsAssetsListLoading(false);
-      toast.error("Error loading asset. Try again...");
-    }
-  }, []);
-
-  const saveAssetToRegistry = useCallback(async () => {
-    try {
-      setIsSaving(true);
-      await axiosApi.post("/admin/assets", assetsPayload);
-      toast.success("Asset successfully added");
-      setIsSaving(false);
-      fetchAssets();
-    } catch (e) {
-      toast.error("Error adding asset. Try again...");
-      setIsSaving(false);
-      console.log(e);
-    }
-  }, [assetsPayload, fetchAssets]);
-
-  // -------------------- Reports --------------------
-  const handleGenerate = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let res = await axiosApi.get(`/admin/reports`, {
-        params: {
-          reportType: reportType,
-          startDate: formatMonth(month),
-          endDate: formatMonth(month),
-        },
-      });
-      setData(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load report");
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [reportType, month, formatMonth]);
-
-  const handleExportExcel = useCallback(() => {
-    if (!data) return;
-
-    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
-    const wb = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-
-    XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
-  }, [data, reportType, month, formatMonth]);
-
-  const handleDownloadPDF = useCallback(async () => {
-    try {
-      const res = await axiosApi.get("/admin/financial-report/pdf", {
-        params: { month: formatMonth(month) },
-        responseType: "blob",
-      });
-
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `financial-report_${formatMonth(month)}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-    } catch {
-      alert("PDF download failed");
-    }
-  }, [month, formatMonth]);
-
-  const renderTable = () => {
-    if (!data) return null;
-
-    if (Array.isArray(data)) {
       const allKeys = Array.from(
-        data.reduce((set, row) => {
-          Object.keys(row).forEach((k) => set.add(k));
+        safeRows.reduce((set, row) => {
+          Object.keys(row || {}).forEach((k) => set.add(k));
           return set;
         }, new Set())
       );
-
-      const renderCell = (val) => {
-        if (val === null || val === undefined) return "-";
-        if (typeof val === "object") return JSON.stringify(val);
-        return String(val);
-      };
 
       return (
         <div className="w-full overflow-x-auto rounded-lg border">
@@ -351,14 +120,14 @@ const FinancialReportsPage = () => {
             </thead>
 
             <tbody className="bg-white">
-              {data.map((row, i) => (
+              {safeRows.map((row, i) => (
                 <tr key={i} className="border-t">
                   {allKeys.map((key) => (
                     <td
                       key={`${i}-${key}`}
                       className="align-top whitespace-nowrap px-3 py-2 text-gray-700"
                     >
-                      {renderCell(row[key])}
+                      {renderCell(row?.[key])}
                     </td>
                   ))}
                 </tr>
@@ -367,9 +136,12 @@ const FinancialReportsPage = () => {
           </table>
         </div>
       );
-    }
+    },
+    [renderCell]
+  );
 
-    return (
+  const renderObjectTable = useCallback(
+    (obj) => (
       <div className="w-full overflow-x-auto rounded-lg border">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
@@ -382,35 +154,293 @@ const FinancialReportsPage = () => {
               </th>
             </tr>
           </thead>
-
           <tbody className="bg-white">
-            {Object.entries(data).map(([key, value]) => (
-              <tr key={key} className="border-t">
+            {Object.entries(obj || {}).map(([k, v]) => (
+              <tr key={k} className="border-t">
                 <td className="whitespace-nowrap px-3 py-2 font-medium text-gray-800">
-                  {key}
+                  {k}
                 </td>
-                <td className="px-3 py-2 text-gray-700">{String(value)}</td>
+                <td className="px-3 py-2 text-gray-700">{renderCell(v)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    );
-  };
+    ),
+    [renderCell]
+  );
 
-  const assetsCount = useMemo(() => {
-    return Array.isArray(assetsList) ? assetsList.length : 0;
-  }, [assetsList]);
+  const sortedSections = useMemo(() => {
+    if (!data) return [];
+
+    // If API returns a top-level array, render it once as a single section.
+    if (Array.isArray(data)) {
+      return [{ key: "report", value: data }];
+    }
+
+    if (typeof data !== "object") {
+      return [{ key: "report", value: { value: data } }];
+    }
+
+    // Preferred section order (others appended after)
+    const preferredOrder = ["ppe", "tb", "incometax", "incomeTax", "p10", "p09", "p11", "pl", "bs", "ce", "cf", "working", "statement"];
+
+    const entries = Object.entries(data);
+
+    const preferred = preferredOrder
+      .filter((k) => Object.prototype.hasOwnProperty.call(data, k))
+      .map((k) => [k, data[k]]);
+
+    const rest = entries.filter(([k]) => !preferredOrder.includes(k));
+
+    return [...preferred, ...rest].map(([key, value]) => ({ key, value }));
+  }, [data]);
+
+  if (!data) return null;
+
+  // Single array response: show without heading (keeps old feel)
+  if (Array.isArray(data)) {
+    return renderArrayTable(data);
+  }
+
+  return (
+    <div className="space-y-6">
+      {sortedSections.map(({ key, value }) => {
+        const isArray = Array.isArray(value);
+
+        // Skip empty arrays (optional, same behavior as your earlier snippet)
+        if (isArray && value.length === 0) return null;
+
+        return (
+          <section key={key} className="space-y-2">
+            <h3 className="text-base font-semibold text-gray-900">
+              {humanTitle(key)}
+            </h3>
+
+            {isArray
+              ? renderArrayTable(value)
+              : value && typeof value === "object"
+              ? renderObjectTable(value)
+              : renderObjectTable({ value })}
+          </section>
+        );
+      })}
+    </div>
+  );
+});
+
+const FinancialReportsPage = () => {
+  const [reportType, setReportType] = useState("");
+  const [month, setMonth] = useState(dayjs());
+
+  const [startDate, setStartDate] = useState();
+  const [endDate, setEndDate] = useState();
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // kept (existing)
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [isAddingAsset, setIsAddingAsset] = useState(false);
+  const [assetsPayload, setAssetsPayload] = useState({
+    assetName: "",
+    purchasedMonth: "",
+    depreciationMonth: "",
+    rate: "",
+    amount: "",
+  });
+
+  const [assetsList, setAssetsList] = useState([]);
+  const [isAssetsListLoading, setIsAssetsListLoading] = useState(false);
+
+  const assetsCount = useMemo(
+    () => (Array.isArray(assetsList) ? assetsList.length : 0),
+    [assetsList]
+  );
+
+  // (was commented out; needed by export/pdf handlers)
+  const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
+
+  const reportTypes = useMemo(
+    () => [
+      { value: "ppe", name: "PPE" },
+      { value: "working", name: "Working" },
+      { value: "tb", name: "TB" },
+      { value: "bs", name: "BS" },
+      { value: "ce", name: "CE" },
+      { value: "cf", name: "CF" },
+      { value: "p09", name: "P09" },
+      { value: "p10", name: "P10" },
+      { value: "p11", name: "P11" },
+      { value: "pl", name: "PL" },
+      { value: "incomeTax", name: "Income Tax" },
+      { value: "statement", name: "Complete Report" },
+    ],
+    []
+  );
+
+  // -------------------- Date handlers --------------------
+  const handleStartDateChange = useCallback((e) => {
+    setStartDate(e.target.value);
+  }, []);
+
+  const handleEndDateChange = useCallback((e) => {
+    const val = e.target.value;
+    setEndDate(val);
+  }, []);
+
+  // -------------------- Assets --------------------
+  const fetchAssets = useCallback(async () => {
+    try {
+      setIsAssetsListLoading(true);
+      const res = await axiosApi.get("/admin/assets");
+      setAssetsList(res.data);
+    } catch (e) {
+      toast.error("Error loading asset. Try again...");
+    } finally {
+      setIsAssetsListLoading(false);
+    }
+  }, []);
+
+  const saveAssetToRegistry = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      await axiosApi.post("/admin/assets", assetsPayload);
+      toast.success("Asset successfully added");
+      fetchAssets();
+    } catch (e) {
+      toast.error("Error adding asset. Try again...");
+      console.log(e);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [assetsPayload, fetchAssets]);
+
+  // -------------------- Reports --------------------
+  const handleGenerate = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    console.log(
+      "Generate Payload : ",
+      "reportType - " +
+        reportType +
+        ", startDate - " +
+        startDate +
+        ", endDate - " +
+        endDate
+    );
+
+    try {
+      const res = await axiosApi.get(`/admin/reports`, {
+        params: {
+          reportType,
+          startDate: startDate,
+          endDate: endDate,
+        },
+      });
+      console.log("res.data : ", res.data);
+      setData(res.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load report");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [reportType, startDate, endDate]);
+
+  const handleExportExcel = useCallback(() => {
+    if (!data) return;
+
+    // keep existing behavior (single sheet)
+    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, `${reportType}_${formatMonth(month)}.xlsx`);
+  }, [data, reportType, month, formatMonth]);
+
+  const handleDownloadPDF = useCallback(async () => {
+    try {
+      const res = await axiosApi.get("/admin/financial-report/pdf", {
+        params: { month: formatMonth(month) },
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `financial-report_${formatMonth(month)}.pdf`
+      );
+      document.body.appendChild(link);
+      link.click();
+    } catch {
+      alert("PDF download failed");
+    }
+  }, [month, formatMonth]);
+
+  // -------------------- Collapsible states --------------------
+  const [sectionsOpen, setSectionsOpen] = useState({
+    trialBalance: true,
+    equityChanges: false,
+    cashflow: false,
+    financialNotes: false,
+    noteShare: false,
+    incomeTax: false,
+  });
+
+  const toggleSection = useCallback((key) => {
+    setSectionsOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  // -------------------- Height sync: form -> list (lg+) --------------------
+  const formCardRef = useRef(null);
+  const [formCardHeight, setFormCardHeight] = useState(null);
+  const [isLgUp, setIsLgUp] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setIsLgUp(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isAddingAsset || !isLgUp) return;
+
+    const el = formCardRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h) setFormCardHeight(Math.ceil(h));
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    }
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isAddingAsset, isLgUp]);
 
   return (
     <>
-      <Helmet>
-        <title>Financials Dashboard</title>
-      </Helmet>
-
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="mx-auto w-full max-w-7xl space-y-6">
+      <div className="mx-auto w-full max-w-7xl space-y-6 p-3 sm:p-4 lg:p-6">
         {/* Header */}
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -454,11 +484,14 @@ const FinancialReportsPage = () => {
           </div>
 
           {isAddingAsset ? (
-            <div className="mt-4 rounded-lg ">
-              <div className="grid gap-3 lg:grid-cols-12">
+            <div className="mt-4 rounded-lg">
+              <div className="grid gap-3 lg:grid-cols-12 lg:items-stretch">
                 {/* Form */}
-                <div className="lg:col-span-6">
-                  <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                <div className="lg:col-span-4">
+                  <div
+                    ref={formCardRef}
+                    className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100"
+                  >
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">
                         Add new assets
@@ -477,7 +510,7 @@ const FinancialReportsPage = () => {
                           id="assetName"
                           type="text"
                           name="assetName"
-                          className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                          className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
                           onChange={(e) => {
                             setAssetsPayload((prev) => ({
                               ...prev,
@@ -487,8 +520,8 @@ const FinancialReportsPage = () => {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div className="sm:col-span-1">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
                           <Label htmlFor="purchasedMonth">
                             Purchased Date<span className="text-red-500">*</span>
                           </Label>
@@ -506,7 +539,26 @@ const FinancialReportsPage = () => {
                           />
                         </div>
 
-                        <div className="sm:col-span-1">
+                        <div>
+                          <Label htmlFor="depreciationMonth">
+                            Depreciation Date
+                            <span className="text-red-500">*</span>
+                          </Label>
+                          <input
+                            id="depreciationMonth"
+                            type="date"
+                            name="depreciationMonth"
+                            className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                            onChange={(e) => {
+                              setAssetsPayload((prev) => ({
+                                ...prev,
+                                [e.target.name]: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div>
                           <Label htmlFor="rate">
                             Rate (%)<span className="text-red-500">*</span>
                           </Label>
@@ -524,7 +576,7 @@ const FinancialReportsPage = () => {
                           />
                         </div>
 
-                        <div className="sm:col-span-1">
+                        <div>
                           <Label htmlFor="amount">
                             Amount(LKR)<span className="text-red-500">*</span>
                           </Label>
@@ -564,8 +616,15 @@ const FinancialReportsPage = () => {
                 </div>
 
                 {/* Assets List */}
-                <div className="lg:col-span-6">
-                  <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                <div className="lg:col-span-8">
+                  <div
+                    className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100 flex flex-col"
+                    style={
+                      isLgUp && formCardHeight
+                        ? { height: `${formCardHeight}px` }
+                        : undefined
+                    }
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900">
@@ -585,9 +644,9 @@ const FinancialReportsPage = () => {
                       </Button>
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 flex-1 min-h-0">
                       {assetsCount > 0 ? (
-                        <div className="max-h-44 overflow-y-auto rounded-lg border">
+                        <div className="h-full overflow-y-auto rounded-lg border">
                           <table className="min-w-full text-sm">
                             <thead className="sticky top-0 z-10 bg-gray-50 shadow-sm">
                               <tr>
@@ -596,6 +655,9 @@ const FinancialReportsPage = () => {
                                 </th>
                                 <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
                                   Purchased Date
+                                </th>
+                                <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
+                                  Depreciated Date
                                 </th>
                                 <th className="whitespace-nowrap border-b px-3 py-2 text-left font-semibold text-gray-800">
                                   Rate(%)
@@ -609,14 +671,23 @@ const FinancialReportsPage = () => {
                             <tbody className="bg-white">
                               {assetsList.map((asset, key) => {
                                 const dateStr = asset?.purchasedMonth
-                                  ? new Date(asset.purchasedMonth).toLocaleDateString(
-                                      "en-LK",
-                                      {
-                                        day: "2-digit",
-                                        month: "short",
-                                        year: "numeric",
-                                      }
-                                    )
+                                  ? new Date(
+                                      asset.purchasedMonth
+                                    ).toLocaleDateString("en-LK", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "-";
+
+                                const depDateStr = asset?.depreciationMonth
+                                  ? new Date(
+                                      asset.depreciationMonth
+                                    ).toLocaleDateString("en-LK", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
                                   : "-";
 
                                 return (
@@ -631,6 +702,9 @@ const FinancialReportsPage = () => {
                                       {dateStr}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-2 text-gray-700">
+                                      {depDateStr}
+                                    </td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-gray-700">
                                       {asset?.rate ?? "-"}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-2 text-gray-700">
@@ -643,7 +717,7 @@ const FinancialReportsPage = () => {
                           </table>
                         </div>
                       ) : isAssetsListLoading ? (
-                        <div className="rounded-lg border bg-gray-50 p-4">
+                        <div className="h-full rounded-lg border bg-gray-50 p-4">
                           <div className="flex items-center gap-3">
                             <div className="h-5 w-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
                             <div className="min-w-0">
@@ -663,13 +737,13 @@ const FinancialReportsPage = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
+                        <div className="h-full rounded-lg border border-dashed bg-gray-50 p-6 text-sm text-gray-600">
                           <p className="font-medium text-gray-800">
                             No assets are available
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            Add a new asset using the form to start building your
-                            registry.
+                            Add a new asset using the form to start building
+                            your registry.
                           </p>
                         </div>
                       )}
@@ -681,7 +755,7 @@ const FinancialReportsPage = () => {
           ) : null}
         </section>
 
-        {/* Report Generator */}
+        {/* Report Generator + Collapsible notes */}
         <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-5 lg:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -692,13 +766,6 @@ const FinancialReportsPage = () => {
                 Choose a date range and report type, then export or download.
               </p>
             </div>
-
-            <div className="text-xs text-gray-500">
-              Current month:{" "}
-              <span className="font-medium text-gray-700">
-                {formatMonth(month)}
-              </span>
-            </div>
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -707,7 +774,6 @@ const FinancialReportsPage = () => {
               <input
                 id="startDate"
                 type="date"
-                name=""
                 onChange={handleStartDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
@@ -718,265 +784,84 @@ const FinancialReportsPage = () => {
               <input
                 id="endDate"
                 type="date"
-                name=""
                 onChange={handleEndDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
             </div>
           </div>
 
-          <div className="mt-3 border p-4 rounded-lg">
-            <h3>Trial Balance Data</h3>
+          <div className="mt-5 space-y-3">
+            <CollapsibleSection
+              id="trial-balance"
+              title="Trial Balance"
+              description="Add trial balance lines and review existing inputs for the selected period."
+              open={sectionsOpen.trialBalance}
+              onToggle={() => toggleSection("trialBalance")}
+            >
+              <TrialBalance
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
+            </CollapsibleSection>
 
-            <div className="grid grid-cols-2 gap-4 mt-3">
-              <div>
-                <Label htmlFor="tb_accountName">
-                  Account Name<span className="text-red-500">*</span>
-                </Label>
-                <input
-                  id="tb_accountName"
-                  type="text"
-                  name="accountName"
-                  value={TrialBalanceArrayData.accountName}
-                  onChange={handleTBChange}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
+            <CollapsibleSection
+              id="equity-changes"
+              title="Equity Changes"
+              description="Enter equity movement values and save them for the period."
+              open={sectionsOpen.equityChanges}
+              onToggle={() => toggleSection("equityChanges")}
+            >
+              <EquityChanges
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
+            </CollapsibleSection>
 
-              <div>
-                <Label htmlFor="tb_transactionType">
-                  Transaction Type<span className="text-red-500">*</span>
-                </Label>
-                <select
-                  id="tb_transactionType"
-                  name="transactionType"
-                  value={TrialBalanceArrayData.transactionType}
-                  onChange={handleTBChange}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  <option value="">Select type</option>
-                  <option value="DR">Debit</option>
-                  <option value="CR">Credit</option>
-                </select>
-              </div>
+            <CollapsibleSection
+              id="cashflow"
+              title="Cash Flow"
+              description="Enter cash flow values for the selected period."
+              open={sectionsOpen.cashflow}
+              onToggle={() => toggleSection("cashflow")}
+            >
+              <Cashflow periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
 
-              <div>
-                <Label htmlFor="tb_accountType">
-                  Account Type<span className="text-red-500">*</span>
-                </Label>
-                <select
-                  id="tb_accountType"
-                  name="accountType"
-                  value={TrialBalanceArrayData.accountType}
-                  onChange={handleTBChange}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  <option value="">Select account type</option>
-                  <option value="ASSET">Asset</option>
-                  <option value="LIABILITY">Liability</option>
-                  <option value="EQUITY">Equity</option>
-                  <option value="EXPENSE">Expense</option>
-                  <option value="INCOME">Income</option>
-                </select>
-              </div>
+            <CollapsibleSection
+              id="financial-notes"
+              title="Financial Statement Notes (Assets)"
+              description="Enter opening and depreciation balances per asset."
+              open={sectionsOpen.financialNotes}
+              onToggle={() => toggleSection("financialNotes")}
+            >
+              <FinancialStatementNotes
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
+            </CollapsibleSection>
 
-              <div>
-                <Label htmlFor="tb_amount">
-                  Amount<span className="text-red-500">*</span>
-                </Label>
-                <input
-                  id="tb_amount"
-                  type="text"
-                  name="amount"
-                  value={TrialBalanceArrayData.amount}
-                  onChange={handleTBChange}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
-            </div>
+            <CollapsibleSection
+              id="note-share"
+              title="Notes: Shares (P11)"
+              description="Enter number of shares for the period."
+              open={sectionsOpen.noteShare}
+              onToggle={() => toggleSection("noteShare")}
+            >
+              <NoteShare periodStartDate={startDate} periodEndDate={endDate} />
+            </CollapsibleSection>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-3">
-              <Button
-                onClick={handleAddTBRow}
-                className="w-full sm:w-auto bg-white text-black border border-black"
-                disabled={isSavingTB}
-              >
-                {isSavingTB ? "Data Adding..." : "Add Data"}
-              </Button>
-
-              <Button
-                onClick={handleSaveTBData}
-                className="w-full sm:w-auto"
-                disabled={isSavingTB}
-              >
-                {isSavingTB ? "Data Saving..." : "Save Data"}
-              </Button>
-            </div>
-
-            <div className="mt-3">
-              {trialBalanceArray.length > 0 && (
-                <table className="min-w-full text-sm border">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="border px-2 py-1 text-left">Account Name</th>
-                      <th className="border px-2 py-1 text-left">
-                        Transaction Type
-                      </th>
-                      <th className="border px-2 py-1 text-left">Account Type</th>
-                      <th className="border px-2 py-1 text-left">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trialBalanceArray.map((row, key) => (
-                      <tr
-                        key={key}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleEditTBRow(key)}
-                      >
-                        <td className="border px-2 py-1">{row.accountName}</td>
-                        <td className="border px-2 py-1">{row.transactionType}</td>
-                        <td className="border px-2 py-1">{row.accountType}</td>
-                        <td className="border px-2 py-1">{row.amount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {existingTrialBalance.length > 0 && (
-              <div className="mt-3">
-                Existing trial balance inputs
-                <table className="min-w-full text-sm border">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="border px-2 py-1 text-left">Account Name</th>
-                      <th className="border px-2 py-1 text-left">
-                        Transaction Type
-                      </th>
-                      <th className="border px-2 py-1 text-left">Account Type</th>
-                      <th className="border px-2 py-1 text-left">
-                        Financial Period
-                      </th>
-                      <th className="border px-2 py-1 text-left">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {existingTrialBalance.map((row, key) => (
-                      <tr key={key} className="cursor-pointer hover:bg-gray-50">
-                        <td className="border px-2 py-1">{row.accountName}</td>
-                        <td className="border px-2 py-1">
-                          {row.transactionType}
-                        </td>
-                        <td className="border px-2 py-1">{row.accountType}</td>
-                        <td className="border px-2 py-1">{row.financialDate}</td>
-                        <td className="border px-2 py-1">{row.amount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {isEditTrialBalanceData && (
-              <div className="mt-3 border p-4 rounded-lg">
-                <h3>Edit Trial Balance Data</h3>
-                <div className="grid grid-cols-2 gap-4 mt-3">
-                  <div>
-                    <Label htmlFor="tb_edit_accountName">
-                      Account Name<span className="text-red-500">*</span>
-                    </Label>
-                    <input
-                      id="tb_edit_accountName"
-                      type="text"
-                      name="accountName"
-                      value={TrialBalanceArrayData.accountName}
-                      onChange={handleTBChange}
-                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tb_edit_transactionType">
-                      Transaction Type<span className="text-red-500">*</span>
-                    </Label>
-                    <select
-                      id="tb_edit_transactionType"
-                      name="transactionType"
-                      value={TrialBalanceArrayData.transactionType}
-                      onChange={handleTBChange}
-                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                    >
-                      <option value="">Select type</option>
-                      <option value="DR">Debit</option>
-                      <option value="CR">Credit</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tb_edit_accountType">
-                      Account Type<span className="text-red-500">*</span>
-                    </Label>
-                    <select
-                      id="tb_edit_accountType"
-                      name="accountType"
-                      value={TrialBalanceArrayData.accountType}
-                      onChange={handleTBChange}
-                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                    >
-                      <option value="">Select account type</option>
-                      <option value="ASSET">Asset</option>
-                      <option value="LIABILITY">Liability</option>
-                      <option value="EQUITY">Equity</option>
-                      <option value="EXPENSE">Expense</option>
-                      <option value="INCOME">Income</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tb_edit_amount">
-                      Amount<span className="text-red-500">*</span>
-                    </Label>
-                    <input
-                      id="tb_edit_amount"
-                      type="text"
-                      name="amount"
-                      value={TrialBalanceArrayData.amount}
-                      onChange={handleTBChange}
-                      className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditTrialBalanceData(false);
-                      setTbEditIndex(null);
-                      resetTBForm();
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleDeleteTBRow}
-                    className="w-full sm:w-auto bg-red-600 text-white hover:bg-red-700"
-                    disabled={isSavingTB}
-                  >
-                    {isSavingTB ? "Removing..." : "Remove Data"}
-                  </Button>
-                  <Button
-                    onClick={handleUpdateTBRow}
-                    className="w-full sm:w-auto"
-                    disabled={isSavingTB}
-                  >
-                    {isSavingTB ? "Updating..." : "Update Data"}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <CollapsibleSection
+              id="income-tax"
+              title="Income Tax"
+              description="Enter income tax notes for the period (locked once saved)."
+              open={sectionsOpen.incomeTax}
+              onToggle={() => toggleSection("incomeTax")}
+            >
+              <IncomeTax
+                periodStartDate={startDate}
+                periodEndDate={endDate}
+              />
+            </CollapsibleSection>
           </div>
 
           {error ? (
@@ -985,7 +870,7 @@ const FinancialReportsPage = () => {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <div>
               <Label htmlFor="reportType">Report Type</Label>
               <select
@@ -1040,7 +925,7 @@ const FinancialReportsPage = () => {
               Select report type and generate
             </div>
           ) : (
-            renderTable()
+            <ReportTables data={data} />
           )}
         </section>
       </div>
