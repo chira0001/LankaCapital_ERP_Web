@@ -1,7 +1,9 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.AdminDto.SalaryResponseDto;
 import com.lankacapital.server.dtos.EmployeeSalaryAddDto;
 import com.lankacapital.server.entities.*;
+import com.lankacapital.server.enums.Request;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.SalaryMapper;
@@ -9,6 +11,7 @@ import com.lankacapital.server.repositories.*;
 import com.lankacapital.server.services.SalaryService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,24 +34,21 @@ public class SalaryServiceImpl implements SalaryService {
     private static final int SCALE = 2;
 
     @Override
-    public void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList) {
+    public void addSalaryToEmployee(List<EmployeeSalaryAddDto> dtoList, String username) {
 
         if (dtoList == null || dtoList.isEmpty()) {
             throw new IllegalArgumentException("Salary DTO list cannot be null or empty");
         }
 
-        String currentMonth = LocalDate.now()
-                .format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        Employee enteredEmployee = employeeRepository.findByEmail(username);
+        String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
         List<Salary> salaries = new ArrayList<>();
 
         for (EmployeeSalaryAddDto dto : dtoList) {
-
             validateDto(dto);
-
             Employee employee = getEmployee(dto.getEmployeeId());
             Role role = getRole(employee);
-
             if (salaryRepository.existsByEmployeeAndMonth(employee, currentMonth)) {
                 throw new ResourceExistException(
                         "Salary already exists for month " + currentMonth
@@ -58,6 +58,7 @@ public class SalaryServiceImpl implements SalaryService {
             Salary salary = SalaryMapper.mapToSalary(dto);
             salary.setEmployee(employee);
             salary.setMonth(currentMonth);
+            salary.setEnteredEmployee(enteredEmployee);
 
             SalaryMetaData incentiveMeta = getMeta("IncentiveRate", role);
             SalaryMetaData salesMeta = getMeta("SalesRate", role);
@@ -73,18 +74,18 @@ public class SalaryServiceImpl implements SalaryService {
             BigDecimal sales = percentage(basic, salesMeta.getValue());
             BigDecimal attendance = multiply(dto.getWorkingDays(), attendanceMeta.getValue());
             BigDecimal otAmount = multiply(dto.getOtHours(), otMeta.getValue());
+            BigDecimal travel = toBigDecimal(dto.getTravel());
 
-            BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount);
+            BigDecimal gross = sum(basic, incentive, sales, attendance, otAmount, travel);
 
             BigDecimal employeeEPF = percentage(basic, employeeEPFMeta.getValue());
             BigDecimal companyEPF = percentage(basic, companyEPFMeta.getValue());
             BigDecimal companyETF = percentage(basic, companyETFMeta.getValue());
 
             BigDecimal unpaidLeave = toBigDecimal(dto.getUnpaidLeaves());
-            BigDecimal loans = toBigDecimal(dto.getLoans());
             BigDecimal advance = toBigDecimal(dto.getSalaryAdvance());
 
-            BigDecimal totalDeduction = sum(unpaidLeave, loans, advance, employeeEPF);
+            BigDecimal totalDeduction = sum(unpaidLeave, advance, employeeEPF);
 
             BigDecimal net = gross.subtract(totalDeduction)
                     .setScale(SCALE, RoundingMode.HALF_UP);
@@ -98,7 +99,7 @@ public class SalaryServiceImpl implements SalaryService {
             salary.setGrossSalary(gross);
 
             salary.setUnpaidLeave(unpaidLeave);
-            salary.setLoans(loans);
+            salary.setTravel(travel);
             salary.setSalaryAdvance(advance);
 
             salary.setEmployeeEPF(employeeEPF);
@@ -112,6 +113,57 @@ public class SalaryServiceImpl implements SalaryService {
             salaries.add(salary);
         }
         salaryRepository.saveAll(salaries);
+    }
+
+    @Override
+    public List<SalaryResponseDto> fetchSalaryDetails(String yearMonth) {
+        try{
+            if (!salaryRepository.existsByMonth(yearMonth)){
+                throw new ResourceNotFoundException("Salary not found for the selected date");
+            }
+            List<Salary> salaryList = salaryRepository.findByMonth(yearMonth);
+            return salaryList.stream().map(SalaryMapper::mapToSalaryResponseDto).toList();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public String approveSalaryDetails(String yearMonth, String username) {
+
+        if (yearMonth == null || yearMonth.isBlank()) {
+            throw new ResourceNotFoundException("yearMonth is required");
+        }
+
+        // ✅ normalize body (handles accidental quotes/spaces)
+        String normalized = yearMonth.trim();
+        if (normalized.startsWith("\"") && normalized.endsWith("\"")) {
+            normalized = normalized.substring(1, normalized.length() - 1).trim();
+        }
+
+        Employee approvedEmployee = employeeRepository.findByEmail(username);
+        if (approvedEmployee == null) {
+            throw new ResourceNotFoundException("Approved employee not found");
+        }
+
+        // ✅ Bulk update (no findByMonth + loop + saveAll)
+        int updatedRows = salaryRepository.approveMonthSalaries(
+                normalized,
+                Request.PENDING,
+                Request.APPROVED,
+                approvedEmployee
+        );
+
+        if (updatedRows == 0) {
+            // Either month has no rows OR none are in PENDING state
+            if (!salaryRepository.existsByMonth(normalized)) {
+                throw new ResourceNotFoundException("Salary not found for the selected date");
+            }
+            return "Salary already approved";
+        }
+
+        return "Salary Approved Successfully";
     }
 
     private void validateDto(EmployeeSalaryAddDto dto) {

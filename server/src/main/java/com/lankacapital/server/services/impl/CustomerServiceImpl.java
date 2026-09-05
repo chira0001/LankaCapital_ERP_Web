@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Role;
@@ -15,8 +16,10 @@ import com.lankacapital.server.repositories.RoleRepository;
 import com.lankacapital.server.services.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -160,12 +163,21 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<CustomerResponseDto> getAllActiveCustomers() {
-        return customerRepository.findAll()
-                .stream()
-                .filter(c -> !c.getDeleted())
-                .map(CustomerMapper::mapToCustomerResponseDto)
-                .collect(Collectors.toList());
+    public PageResponse<CustomerResponseDto> getAllActiveCustomers(int page, int size, String search) {
+
+        int pageIndex = Math.max(page, 1) - 1;
+
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "nic") // change sort if you want (keeps stable listing)
+        );
+
+        Page<Customer> customerPage = customerRepository.findActiveCustomers(search, pageable);
+
+        Page<CustomerResponseDto> dtoPage = customerPage.map(CustomerMapper::mapToCustomerResponseDto);
+
+        return PageResponse.from(dtoPage, page);
     }
 
     @Override
@@ -211,7 +223,7 @@ public class CustomerServiceImpl implements CustomerService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 50);
+        Pageable pageable = PageRequest.of(page, 25);
 
         return customerRepository.findAll(pageable)
                 .getContent()

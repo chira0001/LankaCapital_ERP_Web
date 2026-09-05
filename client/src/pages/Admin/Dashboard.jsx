@@ -21,6 +21,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Helmet } from "react-helmet";
+import { ToastContainer } from "react-toastify";
 
 // =========================
 // FORMAT CURRENCY
@@ -60,7 +62,7 @@ const dummyLoanDistribution = [
 const dummyMetrics = {
   totalIncome: 105000,
   totalExpense: 78000,
-  netProfit: 27000, 
+  netProfit: 27000,
   totalAssets: 420000,
   totalLiabilities: 190000,
   netWorth: 230000,
@@ -109,30 +111,30 @@ const DashboardPage = () => {
       const isValid = (val) => val !== null && val !== undefined && val > 0;
 
       setMetrics({
-  totalIncome: isValid(data.totalIncome)
-    ? data.totalIncome
-    : dummyMetrics.totalIncome,
+        totalIncome: isValid(data.totalIncome)
+          ? data.totalIncome
+          : dummyMetrics.totalIncome,
 
-  totalExpense: isValid(data.totalExpense)
-    ? data.totalExpense
-    : dummyMetrics.totalExpense,
+        totalExpense: isValid(data.totalExpense)
+          ? data.totalExpense
+          : dummyMetrics.totalExpense,
 
-  netProfit: isValid(data.netProfit)
-    ? data.netProfit
-    : dummyMetrics.netProfit,
+        netProfit: isValid(data.netProfit)
+          ? data.netProfit
+          : dummyMetrics.netProfit,
 
-  totalAssets: isValid(data.totalAssets)
-    ? data.totalAssets
-    : dummyMetrics.totalAssets,
+        totalAssets: isValid(data.totalAssets)
+          ? data.totalAssets
+          : dummyMetrics.totalAssets,
 
-  totalLiabilities: isValid(data.totalLiabilities)
-    ? data.totalLiabilities
-    : dummyMetrics.totalLiabilities,
+        totalLiabilities: isValid(data.totalLiabilities)
+          ? data.totalLiabilities
+          : dummyMetrics.totalLiabilities,
 
-  netWorth: isValid(data.netWorth)
-    ? data.netWorth
-    : dummyMetrics.netWorth,
-});
+        netWorth: isValid(data.netWorth)
+          ? data.netWorth
+          : dummyMetrics.netWorth,
+      });
 
       setMonthlyIncome(
         data.monthlyIncome?.length ? data.monthlyIncome : dummyMonthlyIncome
@@ -164,7 +166,7 @@ const DashboardPage = () => {
 
   return (
     <div className="p-3 sm:p-4 lg:p-6">
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <h1 className="mb-4 text-xl font-bold sm:text-2xl">Executive Dashboard</h1>
 
       {/* METRICS */}

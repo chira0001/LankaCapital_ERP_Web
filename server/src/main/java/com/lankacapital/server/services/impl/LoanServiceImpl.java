@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.dtos.ReceptionistDto.RecepLoanUpdateDto;
 import com.lankacapital.server.entities.*;
 import com.lankacapital.server.enums.LoanStatus;
@@ -8,16 +9,17 @@ import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.exceptions.ResourceExistException;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.CustomerMapper;
+import com.lankacapital.server.mappers.DailyCollectionMapper;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.repositories.*;
+import com.lankacapital.server.repositories.Projections.LoanPaymentStatsProjection;
 import com.lankacapital.server.services.LoanService;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.utils.UtilityFunctions;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.math.RoundingMode;
@@ -27,6 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.lankacapital.server.utils.UtilityFunctions.isValidUUID;
@@ -159,24 +162,26 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanResponseDto> getAllLoans(String username) {
+    public PageResponse<LoanResponseDto> getAllLoans(String username, int page, int size, String search) {
 
         Employee employee = employeeRepository.findByEmail(username);
         String role = employee.getRole().getRoleName();
 
-        return loanRepository.findAll()
-                .stream()
-                .filter(loan -> {
-                    if ("ADMIN".equals(role)) {
-                        return !isValidUUID(loan.getFileNumber());
-                    }
-                    if ("RECEPTIONIST".equals(role)) {
-                        return isValidUUID(loan.getFileNumber());
-                    }
-                    return false; // other roles see nothing
-                })
-                .map(LoanMapper::mapToLoanResponseDto)
-                .toList();
+        boolean isReceptionist = "RECEPTIONIST".equalsIgnoreCase(role);
+
+        int pageIndex = Math.max(page, 1) - 1;
+
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<Loan> loanPage = loanRepository.findLoansForRoleWithSearch(isReceptionist, search, pageable);
+
+        Page<LoanResponseDto> dtoPage = loanPage.map(LoanMapper::mapToLoanResponseDto);
+
+        return PageResponse.from(dtoPage, page);
     }
 
     @Override
@@ -317,11 +322,8 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public LoanResponseDto updateInterest(InterestUpdateDTO dto, String username) {
-        Loan loan=loanRepository.findByFileNumber(dto.getFileNumber())
-                .orElseThrow(()->new ResourceNotFoundException("Loan not Found"+dto.getFileNumber()));
-
-//        InterestRate rate = interestRateRepository.findById(dto.getInterestRate())
-//                        .orElseThrow(()->new ResourceNotFoundException("Interest Rate not Found"+dto.getInterestRate()));
+        Loan loan = loanRepository.findByFileNumber(dto.getFileNumber())
+                .orElseThrow(()->new ResourceNotFoundException("Loan not Found "+dto.getFileNumber()));
 
         loan.setInterestRate(dto.getInterestRate());
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);
@@ -491,7 +493,7 @@ public class LoanServiceImpl implements LoanService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 50);
+        Pageable pageable = PageRequest.of(page, 25);
 
         return loanRepository.findAll(pageable)
                 .getContent()
@@ -595,10 +597,65 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public List<LoanSummaryResponseDto> fetchLoanSummary() {
+    public PageResponse<LoanSummaryResponseDto> fetchLoanSummary(int page, int size, String search) {
+        int pageIndex = Math.max(page, 1) - 1;
 
-        List<Loan> loanList = loanRepository.fetchApprovedLoansWithCollections();
-        return loanList.stream().map(LoanMapper::mapToLoanSummaryResponseDto).toList();
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<Loan> loansPage = loanRepository.searchLoans(LoanStatus.APPROVED, search, pageable);
+        List<Loan> loans = loansPage.getContent();
+
+        List<Long> loanIds = loans.stream().map(Loan::getId).toList();
+
+        // ✅ Make this effectively final (no reassignment)
+        final Map<Long, LoanPaymentStatsProjection> statsMap =
+                loanIds.isEmpty()
+                        ? Collections.emptyMap()
+                        : dailyCollectionRepository.fetchPaymentStats(loanIds).stream()
+                        .collect(Collectors.toMap(
+                                LoanPaymentStatsProjection::getLoanId,
+                                Function.identity()
+                        ));
+
+        List<LoanSummaryResponseDto> dtoList = loans.stream().map(loan -> {
+            LoanPaymentStatsProjection stats = statsMap.get(loan.getId());
+
+            BigDecimal totalPaid = (stats != null && stats.getTotalPaid() != null)
+                    ? stats.getTotalPaid()
+                    : BigDecimal.ZERO;
+
+            long paidCount = (stats != null && stats.getPaidCount() != null)
+                    ? stats.getPaidCount()
+                    : 0L;
+
+            return LoanMapper.mapToLoanSummaryResponseDto(loan, totalPaid, paidCount);
+        }).toList();
+
+        Page<LoanSummaryResponseDto> dtoPage =
+                new PageImpl<>(dtoList, pageable, loansPage.getTotalElements());
+
+        return PageResponse.from(dtoPage, page);
+    }
+
+    @Override
+    public PageResponse<DailyCollectionResponseDto> fetchLoanPayments(Long loanId, int page, int size) {
+        int pageIndex = Math.max(page, 1) - 1;
+
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.ASC, "installmentNumber")
+        );
+
+        Page<DailyCollection> paymentPage =
+                dailyCollectionRepository.findByLoanIdOrderByInstallmentNumberAsc(loanId, pageable);
+
+        Page<DailyCollectionResponseDto> dtoPage = paymentPage.map(DailyCollectionMapper::mapToDailyCollectionResponseDto);
+        return PageResponse.from(dtoPage, page);
     }
 }
 

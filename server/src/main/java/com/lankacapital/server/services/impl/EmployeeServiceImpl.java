@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.*;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.dtos.EmployeeAddDto;
 import com.lankacapital.server.dtos.EmployeeRequestDto;
 import com.lankacapital.server.dtos.EmployeeResponseDto;
@@ -20,8 +21,10 @@ import com.lankacapital.server.services.EmployeeService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.authentication.PasswordEncoderParser;
@@ -82,11 +85,24 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+//    @Transactional(readOnly = true)
     @Transactional
-    public List<EmployeeResponseDto> getAllEmployees(String username) {
-        List<Employee> employeeList = employeeRepository.findAll();
-        employeeList.remove(employeeRepository.findByEmail(username));
-        return employeeList.stream().map(EmployeeMapper::mapToEmployeeResponseDto).toList();
+    public PageResponse<EmployeeResponseDto> getAllEmployees(String username, int page, int size, String search) {
+
+        int pageIndex = Math.max(page, 1) - 1;
+
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                Math.max(size, 1),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<Employee> employeePage =
+                employeeRepository.findActiveEmployeesExceptEmail(username, search, pageable);
+
+        Page<EmployeeResponseDto> dtoPage = employeePage.map(EmployeeMapper::mapToEmployeeResponseDto);
+
+        return PageResponse.from(dtoPage, page);
     }
 
     @Override
@@ -192,10 +208,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(Long id) {
 
         Employee employee = employeeRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Employee not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
-        employeeRepository.delete(employee);
+        employee.setDeleted(true);
+        employee.setAccountStatus("Deleted");
+        employeeRepository.save(employee);
     }
 
     @Override
@@ -204,7 +221,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 50);
+        Pageable pageable = PageRequest.of(page, 25);
 
         return employeeRepository.findAllByRole(pageable)
                 .getContent()

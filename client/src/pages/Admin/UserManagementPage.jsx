@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { UserPlus, X } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { UserPlus, X, Search } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
+import { ToastContainer } from "react-toastify";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -19,6 +20,28 @@ const UserManagementPage = () => {
 
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // ✅ backend pagination + search
+  const [page, setPage] = useState(1);
+  const size = 15;
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // ✅ caching like Salary section (in-memory Map + abort in-flight requests)
+  const cacheRef = useRef(new Map()); // key -> { content, totalPages, totalElements, ... }
+  const abortRef = useRef(null);
+
+  const cacheKey = useMemo(
+    () => `${page}:${size}:${debouncedSearch || ""}`,
+    [page, size, debouncedSearch]
+  );
+
+  const clearUsersCache = useCallback(() => {
+    cacheRef.current.clear();
+  }, []);
+
   const [newUser, setNewUser] = useState({
     nic: "",
     firstName: "",
@@ -27,20 +50,73 @@ const UserManagementPage = () => {
     roleId: "",
     address: "",
     phoneNumber: "",
-    basicSalary: ""
+    basicSalary: "",
   });
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosAPI.get("/admin/employees");
-      setUsers(res.data);
-    } catch (error) {
-      toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 350);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const fetchUsers = useCallback(
+    async ({ force = false } = {}) => {
+      // ✅ Cache hit -> serve immediately unless forced refresh
+      if (!force && cacheRef.current.has(cacheKey)) {
+        const cached = cacheRef.current.get(cacheKey) || {};
+        const cachedContent = Array.isArray(cached.content) ? cached.content : [];
+
+        setUsers(cachedContent);
+        setTotalPages(Number(cached.totalPages) || 1);
+        setTotalElements(Number(cached.totalElements) || 0);
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Cancel previous request (page/search changed quickly)
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        setLoading(true);
+
+        const res = await axiosAPI.get("/admin/employees", {
+          params: {
+            page,
+            size,
+            search: debouncedSearch || "",
+          },
+          signal: controller.signal,
+        });
+
+        const data = res.data || {};
+        const content = Array.isArray(data.content) ? data.content : [];
+
+        setUsers(content);
+        setTotalPages(Number(data.totalPages) || 1);
+        setTotalElements(Number(data.totalElements) || 0);
+
+        cacheRef.current.set(cacheKey, data);
+      } catch (error) {
+        if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+
+        console.error(error);
+        toast.error("Failed to load users");
+        setUsers([]);
+        setTotalPages(1);
+        setTotalElements(0);
+      } finally {
+        if (abortRef.current === controller) {
+          setLoading(false);
+        }
+      }
+    },
+    [cacheKey, debouncedSearch, page, size]
+  );
 
   const fetchRoles = async () => {
     try {
@@ -52,13 +128,22 @@ const UserManagementPage = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
     fetchRoles();
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // cleanup in-flight request on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
   }, []);
 
   const handleCreateUser = async () => {
     try {
-      // Basic validation (minimal, non-breaking)
       if (!newUser.nic || !newUser.firstName || !newUser.email || !newUser.roleId) {
         toast.error("Please fill required fields");
         return;
@@ -70,7 +155,9 @@ const UserManagementPage = () => {
 
       toast.success("User created successfully");
 
+      // keep existing behaviour (optimistic add) + refetch
       setUsers((prev) => [...prev, res.data]);
+
       setNewUser({
         nic: "",
         firstName: "",
@@ -79,11 +166,14 @@ const UserManagementPage = () => {
         roleId: "",
         address: "",
         phoneNumber: "",
-        basicSalary: ""
+        basicSalary: "",
       });
 
       setShowAddForm(false);
-      fetchUsers();
+
+      // ✅ invalidate cache (list changed)
+      clearUsersCache();
+      fetchUsers({ force: true });
     } catch (error) {
       console.error(error);
       toast.error("Create failed");
@@ -98,7 +188,10 @@ const UserManagementPage = () => {
       toast.success("User updated");
       setOpenEditModal(false);
       setOpenModal(false);
-      fetchUsers();
+
+      // ✅ invalidate cache (list changed)
+      clearUsersCache();
+      fetchUsers({ force: true });
     } catch {
       toast.error("Update failed");
     }
@@ -115,8 +208,18 @@ const UserManagementPage = () => {
       setOpenModal(false);
       setSelecetedEmployee(null);
 
-      // Optimistically update UI (no need to refetch immediately)
+      // Optimistic update
       setUsers((prev) => prev.filter((u) => u.id !== employeeId));
+
+      // ✅ invalidate cache (list changed)
+      clearUsersCache();
+
+      // If page becomes empty, go back one page (optional but helps UX)
+      if (users.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchUsers({ force: true });
+      }
     } catch (e) {
       console.error(e);
       toast.error("User not deleted");
@@ -125,44 +228,24 @@ const UserManagementPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900">
-                Loading Users
-              </p>
-              <p className="text-xs text-gray-500">
-                Please wait while we fetch the latest data...
-              </p>
-            </div>
-          </div>
-
-          {/* simple skeleton */}
-          <div className="mt-6 space-y-3">
-            <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
-            <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse mt-2" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const startIndex = totalElements === 0 ? 0 : (page - 1) * size + 1;
+  const endIndex = Math.min(page * size, totalElements);
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800">
             User Management
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm">
             Manage employees, roles and details
+          </p>
+          <p className="mt-1 text-xs text-gray-400">
+            Showing {startIndex}–{endIndex} of {totalElements}
           </p>
         </div>
 
@@ -173,6 +256,20 @@ const UserManagementPage = () => {
           <UserPlus className="w-4 h-4 mr-2" />
           Add User
         </Button>
+      </div>
+
+      {/* SEARCH (backend) */}
+      <div className="mb-4 w-full max-w-md relative">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          size={18}
+        />
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by NIC / name / email / role"
+          className="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+        />
       </div>
 
       {/* ADD USER CARD */}
@@ -209,7 +306,6 @@ const UserManagementPage = () => {
 
                   {roles.map((r) => {
                     if (r.roleName === "CUSTOMER") return null;
-
                     return (
                       <option key={r.id} value={r.id}>
                         {r.roleName === "FO" ? "FIELD OFFICER" : r.roleName}
@@ -240,43 +336,66 @@ const UserManagementPage = () => {
         </div>
       )}
 
-      {/* ===================== MOBILE USERS LIST (cards) ===================== */}
+      {/* MOBILE LIST */}
       <div className="md:hidden space-y-3">
-        {users.map((user) => (
-          <div
-            key={user.id}
-            onClick={() => {
-              setOpenModal(true);
-              setSelecetedEmployee(user);
-            }}
-            className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-blue-50"
-            role="button"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs text-gray-500">NIC</p>
-                <p className="text-sm font-medium text-gray-800 break-all">{user.nic}</p>
-
-                <p className="mt-2 text-xs text-gray-500">Name</p>
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {user.firstName} {user.lastName}
-                </p>
-
-                <p className="mt-2 text-xs text-gray-500">Email</p>
-                <p className="text-sm text-gray-700 break-all">{user.email}</p>
-              </div>
-
-              <div className="shrink-0 text-right">
-                <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
-                  {user.role}
-                </span>
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm animate-pulse"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="h-3 w-10 rounded bg-gray-100" />
+                  <div className="mt-2 h-4 w-28 rounded bg-gray-100" />
+                  <div className="mt-3 h-3 w-12 rounded bg-gray-100" />
+                  <div className="mt-2 h-4 w-36 rounded bg-gray-100" />
+                  <div className="mt-3 h-3 w-12 rounded bg-gray-100" />
+                  <div className="mt-2 h-4 w-full max-w-52 rounded bg-gray-100" />
+                </div>
+                <div className="h-6 w-20 shrink-0 rounded-full bg-gray-100" />
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          users.map((user) => (
+            <div
+              key={user.id}
+              onClick={() => {
+                setOpenModal(true);
+                setSelecetedEmployee(user);
+              }}
+              className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-blue-50"
+              role="button"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">NIC</p>
+                  <p className="text-sm font-medium text-gray-800 break-all">
+                    {user.nic}
+                  </p>
+
+                  <p className="mt-2 text-xs text-gray-500">Name</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {user.firstName} {user.lastName}
+                  </p>
+
+                  <p className="mt-2 text-xs text-gray-500">Email</p>
+                  <p className="text-sm text-gray-700 break-all">{user.email}</p>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* ===================== USERS TABLE (md+) ===================== */}
+      {/* USERS TABLE */}
       <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -289,32 +408,85 @@ const UserManagementPage = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  onClick={() => {
-                    setOpenModal(true);
-                    setSelecetedEmployee(user);
-                  }}
-                  className="cursor-pointer border-t transition hover:bg-blue-50"
-                >
-                  <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">{user.nic}</td>
-                  <td className="px-3 py-3 font-medium text-gray-800 sm:px-4 md:px-6 md:py-4">
-                    {user.firstName} {user.lastName}
-                  </td>
-                  <td className="hidden px-3 py-3 text-gray-600 sm:table-cell sm:px-4 md:px-6 md:py-4">
-                    {user.email}
-                  </td>
-                  <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
-                      {user.role}
-                    </span>
+              {loading ? (
+                Array.from({ length: 7 }).map((_, index) => (
+                  <tr key={index} className="border-t animate-pulse">
+                    <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                      <div className="h-4 w-28 rounded bg-gray-100" />
+                    </td>
+                    <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                      <div className="h-4 w-36 rounded bg-gray-100" />
+                    </td>
+                    <td className="hidden px-3 py-3 sm:table-cell sm:px-4 md:px-6 md:py-4">
+                      <div className="h-4 w-48 rounded bg-gray-100" />
+                    </td>
+                    <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                      <div className="h-6 w-24 rounded-full bg-gray-100" />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                users.map((user) => (
+                  <tr
+                    key={user.id}
+                    onClick={() => {
+                      setOpenModal(true);
+                      setSelecetedEmployee(user);
+                    }}
+                    className="cursor-pointer border-t transition hover:bg-blue-50"
+                  >
+                    <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">{user.nic}</td>
+                    <td className="px-3 py-3 font-medium text-gray-800 sm:px-4 md:px-6 md:py-4">
+                      {user.firstName} {user.lastName}
+                    </td>
+                    <td className="hidden px-3 py-3 text-gray-600 sm:table-cell sm:px-4 md:px-6 md:py-4">
+                      {user.email}
+                    </td>
+                    <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
+                        {user.role}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+
+              {!loading && users.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-14 text-center text-sm text-gray-400">
+                    No users found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination footer */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3">
+            <p className="text-xs text-gray-500">
+              Page {page} of {totalPages}
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* DETAILS MODAL */}
@@ -360,17 +532,13 @@ const UserManagementPage = () => {
               <div>
                 <p className="text-gray-500">Role</p>
                 <p className="font-medium text-gray-800">
-                  {selectedEmployee.role === "FO"
-                    ? "Field Officer"
-                    : selectedEmployee.role}
+                  {selectedEmployee.role === "FO" ? "Field Officer" : selectedEmployee.role}
                 </p>
               </div>
 
               <div>
                 <p className="text-gray-500">Phone Number</p>
-                <p className="font-medium text-gray-800">
-                  {selectedEmployee.phoneNumber}
-                </p>
+                <p className="font-medium text-gray-800">{selectedEmployee.phoneNumber}</p>
               </div>
 
               <div>
@@ -384,16 +552,12 @@ const UserManagementPage = () => {
 
               <div>
                 <p className="text-gray-500">Account Status</p>
-                <p className="font-medium text-gray-800">
-                  {selectedEmployee.accountStatus}
-                </p>
+                <p className="font-medium text-gray-800">{selectedEmployee.accountStatus}</p>
               </div>
 
               <div className="sm:col-span-2">
                 <p className="text-gray-500">Address</p>
-                <p className="font-medium text-gray-800">
-                  {selectedEmployee.address}
-                </p>
+                <p className="font-medium text-gray-800">{selectedEmployee.address}</p>
               </div>
             </div>
 
@@ -420,7 +584,7 @@ const UserManagementPage = () => {
         </div>
       )}
 
-      {/* EDIT MODAL (STACKED ABOVE) */}
+      {/* EDIT MODAL */}
       {openEditModal && editEmployee && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-white w-full max-w-[520px] max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-4 sm:p-6 relative">

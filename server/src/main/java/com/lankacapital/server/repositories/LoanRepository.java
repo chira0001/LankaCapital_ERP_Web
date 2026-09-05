@@ -5,8 +5,10 @@ import com.lankacapital.server.entities.Customer;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.enums.LoanStatus;
 import com.lankacapital.server.enums.LoanType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.lankacapital.server.enums.LoanStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -48,30 +50,21 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
     List<Loan> findByLoanTypeOrderByIdDesc(LoanType loanType);
 
-//    @Query("""
-//    SELECT new com.lankacapital.server.dtos.LoanSummaryProjectionDto(
-//        l.amount,
-//        l.createdAt,
-//        l.fileNumber,
-//        l.installment,
-//        l.interestRate,
-//        l.loanType,
-//        l.endAt,
-//        COALESCE(SUM(dc.paidAmount), 0)
-//    )
-//    FROM Loan l
-//    LEFT JOIN DailyCollection dc ON dc.loan = l
-//    GROUP BY
-//        l.id,
-//        l.amount,
-//        l.createdAt,
-//        l.fileNumber,
-//        l.installment,
-//        l.interestRate,
-//        l.loanType,
-//        l.endAt
-//""")
-//    List<LoanSummaryProjectionDto> fetchLoanSummary();
+    @EntityGraph(attributePaths = {"customer", "approvedEmployee"})
+    @Query("""
+        select l from Loan l
+        join l.customer c
+        where l.status = :status
+          and (
+                :search is null or :search = '' or
+                lower(l.fileNumber) like lower(concat('%', :search, '%')) or
+                lower(c.name) like lower(concat('%', :search, '%')) or
+                lower(c.nic) like lower(concat('%', :search, '%'))
+          )
+    """)
+    Page<Loan> searchLoans(@Param("status") LoanStatus status,
+                           @Param("search") String search,
+                           Pageable pageable);
 
     @Query("""
     SELECT DISTINCT l
@@ -80,4 +73,27 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     WHERE l.status = com.lankacapital.server.enums.LoanStatus.APPROVED
 """)
     List<Loan> fetchApprovedLoansWithCollections();
+
+    @EntityGraph(attributePaths = {"customer", "createdEmployee", "updatedEmployee", "approvedEmployee"})
+    @Query("""
+        select l
+        from Loan l
+        left join l.customer c
+        where l.fileNumber is not null
+          and (
+                (:isReceptionist = true and l.fileNumber like '________-____-____-____-____________')
+             or (:isReceptionist = false and l.fileNumber not like '________-____-____-____-____________')
+          )
+          and (
+                :search is null or :search = '' or
+                lower(l.fileNumber) like lower(concat('%', :search, '%')) or
+                lower(c.nic) like lower(concat('%', :search, '%')) or
+                lower(c.name) like lower(concat('%', :search, '%'))
+          )
+    """)
+    Page<Loan> findLoansForRoleWithSearch(
+            @Param("isReceptionist") boolean isReceptionist,
+            @Param("search") String search,
+            Pageable pageable
+    );
 }

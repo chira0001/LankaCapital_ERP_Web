@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import axiosAPI from '@/api/axiosAPI';
 import { UserCheck } from 'lucide-react';
+import { ToastContainer } from 'react-toastify';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -62,13 +63,38 @@ const FieldOfficerPerformancePage = () => {
     }, {});
   }, [performanceData]);
 
+  // ===================== LOADING SKELETON =====================
+  const OfficerCardSkeleton = () => (
+    <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+      {/* Officer header skeleton */}
+      <div className="p-6 border-b bg-gray-50 flex items-center gap-3 animate-pulse">
+        <div className="h-5 w-5 rounded bg-gray-200" />
+        <div className="space-y-2">
+          <div className="h-4 w-40 rounded bg-gray-200" />
+          <div className="h-3 w-64 rounded bg-gray-100" />
+        </div>
+      </div>
+
+      {/* Table skeleton */}
+      <div className="space-y-2 p-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <div className="h-4 w-28 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-24 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-24 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-40 rounded bg-gray-100 animate-pulse" />
+            <div className="h-4 w-24 rounded bg-gray-100 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <Helmet>
-        <title>Field Officer Performance - LendPro</title>
-      </Helmet>
-
-      <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-8">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div className="min-h-screen bg-gray-50 p-3">
         <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
 
           {/* Header */}
@@ -95,7 +121,7 @@ const FieldOfficerPerformancePage = () => {
                     [e.target.name]: e.target.value,
                   }))
                 }
-                className="border rounded px-3 py-2 mt-1"
+                className="date-input border rounded px-3 py-2 mt-1"
               />
             </div>
 
@@ -111,7 +137,7 @@ const FieldOfficerPerformancePage = () => {
                     [e.target.name]: e.target.value,
                   }))
                 }
-                className="border rounded px-3 py-2 mt-1"
+                className="date-input border rounded px-3 py-2 mt-1"
               />
             </div>
 
@@ -123,11 +149,23 @@ const FieldOfficerPerformancePage = () => {
             </button>
           </div>
 
-          {/* Loading */}
+          {/* Loading — skeleton cards (header + date filter stay visible) */}
           {loading ? (
-            <div className="text-center py-20">
-              <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p>Loading collections...</p>
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-3 px-1">
+                <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">
+                    Loading collections
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Please wait while we fetch the latest data...
+                  </p>
+                </div>
+              </div>
+
+              <OfficerCardSkeleton />
+              <OfficerCardSkeleton />
             </div>
           ) : Object.keys(groupedByOfficer).length === 0 ? (
             <div className="text-center py-20 text-gray-500">

@@ -1,5 +1,6 @@
 package com.lankacapital.server.entities;
 
+import com.lankacapital.server.enums.Request;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -49,7 +50,7 @@ public class Salary {
     private BigDecimal unpaidLeave;
 
     @Column(precision = 12, scale = 2)
-    private BigDecimal loans;
+    private BigDecimal travel;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal salaryAdvance;
@@ -72,7 +73,12 @@ public class Salary {
     @Column(precision = 12, scale = 2)
     private BigDecimal netSalary;
 
-    private Long updateStatus = 0L;
+    @Enumerated(EnumType.STRING)
+    private Request status = Request.PENDING;
+
+    @ManyToOne
+    @JoinColumn(name = "entered_by")
+    private Employee enteredEmployee;
 
     @ManyToOne
     @JoinColumn(name = "approved_by")
