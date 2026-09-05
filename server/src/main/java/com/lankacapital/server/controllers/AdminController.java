@@ -554,7 +554,6 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
 
-        // returns NoteSharesDataDto or null
         return ResponseEntity.ok(noteSharesDataService.getNoteSharesData(financialDate));
     }
 

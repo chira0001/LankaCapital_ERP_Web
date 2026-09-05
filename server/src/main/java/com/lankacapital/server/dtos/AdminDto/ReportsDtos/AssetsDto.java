@@ -9,6 +9,7 @@ public class AssetsDto {
     private Long id;
     private String assetName;
     private String purchasedMonth;
+    private String depreciationMonth;
     private String rate;
     private BigDecimal amount;
 }

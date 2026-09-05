@@ -12,6 +12,7 @@ public class AssetRegistryMapper {
 
         assetsRegistry.setAssetName(assetsDto.getAssetName());
         assetsRegistry.setPurchasedDate(LocalDate.parse(assetsDto.getPurchasedMonth()));
+        assetsRegistry.setDepreciatedDate(LocalDate.parse(assetsDto.getDepreciationMonth()));
         assetsRegistry.setRate(Double.valueOf(assetsDto.getRate()));
         assetsRegistry.setAmount(assetsDto.getAmount());
 
@@ -24,6 +25,7 @@ public class AssetRegistryMapper {
         dto.setId(assetsRegistry.getId());
         dto.setAssetName(assetsRegistry.getAssetName());
         dto.setPurchasedMonth(assetsRegistry.getPurchasedDate().toString());
+        dto.setDepreciationMonth(assetsRegistry.getDepreciatedDate().toString());
         dto.setRate(assetsRegistry.getRate().toString());
         dto.setAmount(assetsRegistry.getAmount());
 

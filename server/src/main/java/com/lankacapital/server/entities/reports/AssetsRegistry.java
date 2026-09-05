@@ -20,6 +20,7 @@ public class AssetsRegistry {
 
     private String assetName;
     private LocalDate purchasedDate;
+    private LocalDate depreciatedDate;
     private Double rate;
     private BigDecimal amount;
 }
