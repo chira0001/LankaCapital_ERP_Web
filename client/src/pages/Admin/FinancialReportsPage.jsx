@@ -11,7 +11,7 @@ import { Download, ChevronDown } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
 import axiosApi from "../../api/axiosAPI.js";
-import * as XLSX from "xlsx";
+import XLSX from "xlsx-js-style";
 import dayjs from "dayjs";
 
 import { ToastContainer, toast } from "react-toastify";
@@ -220,7 +220,7 @@ const FinancialReportsPage = () => {
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: "array" });
+      const wb = XLSX.read(arrayBuffer, { type: "array", cellStyles: true });
 
       // PPE only (for now)
       if (Array.isArray(data.ppe)) {

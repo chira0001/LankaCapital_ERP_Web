@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import XLSX from "xlsx-js-style";
 import dayjs from "dayjs";
 
 /**
@@ -217,6 +217,17 @@ function shiftFormulaRows(ws, startRow0, delta, wb, sheetName) {
             if (!cell?.f) continue;
             cell.f = moveReference(cell.f, sheetReference);
         }
+    }
+}
+
+function setRowBold(ws, row0, maxCol) {
+    for (let col = 0; col <= maxCol; col++) {
+        const cell = getCell(ws, row0, col);
+        if (!cell) continue;
+        cell.s = {
+            ...(cell.s || {}),
+            font: { ...(cell.s?.font || {}), bold: true },
+        };
     }
 }
 
@@ -490,9 +501,11 @@ export function fillWorkingWorksheet(wb, working) {
         const firstDataRow0 = header.r + 1;
         const availableRows = nextHeader.r - firstDataRow0;
         const templateRow0 = firstDataRow0;
-        const delta = itemCount - availableRows;
+        const blankRowsAfterSection = 2;
+        const requiredRows = itemCount + blankRowsAfterSection;
+        const delta = requiredRows - availableRows;
 
-        if (delta < 0) clearRows(ws, firstDataRow0 + itemCount, nextHeader.r);
+        if (itemCount < availableRows) clearRows(ws, firstDataRow0 + itemCount, nextHeader.r);
         shiftRows(ws, nextHeader.r, delta, { wb, sheetName: "Working" });
 
         for (let index = 0; index < itemCount; index++) {
@@ -566,6 +579,18 @@ export function fillWorkingWorksheet(wb, working) {
     setTotalFormula(ws, newTotalRow.r, 1, "B", epfFirstDataRow0, epfItems.length);
     setTotalFormula(ws, newTotalRow.r, 2, "C", epfFirstDataRow0, epfItems.length);
     setTotalFormula(ws, newTotalRow.r, 3, "D", epfFirstDataRow0, epfItems.length);
+
+    ["Income", "Administrative Expenses", "Assets", "EPF ETF", "EPF & ETF", "Total"].forEach(
+        (label) => {
+            const header = findWorkingLabel(label);
+            setRowBold(ws, header.r, label === "EPF & ETF" || label === "Total" ? 3 : 2);
+        }
+    );
+
+    setCellValueCreateIfMissing(ws, epfHeader.r, 0, {
+        t: "s",
+        v: "EPF & ETF Month",
+    });
 }
 
 export function fillFinancialTemplate(wb, data) {
