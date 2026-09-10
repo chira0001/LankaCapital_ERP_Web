@@ -584,7 +584,7 @@ export function fillWorkingWorksheet(wb, working) {
     const adminItems = working.workingAdministrativeExpenseDtos || [];
     const adminRes = fillWorkingSectionTableDynamic({
         ws,
-        headerText: "Admin Expenses",
+        headerText: "Administrative Expenses",
         headerCol: 0,
         keyCol: 0,
         maxCol: 1,
@@ -639,9 +639,12 @@ export function fillWorkingWorksheet(wb, working) {
         sumRowColIndex: 1,
     });
 
+    console.log("assetsRes.mode : ", assetsRes.mode);
+    console.log("assetsRes : ", assetsRes);
+
     if (assetsRes.mode === "not-found") {
         let row = 8; // A9
-        for (const item of assetItems) {
+        for (let item of assetItems) {
             setCellValueCreateIfMissing(ws, row, 0, { t: "s", v: item?.assetName ?? "" });
             setCellValueCreateIfMissing(ws, row, 1, { t: "n", v: safeNum(item?.assetAmount) });
             row++;
@@ -659,7 +662,7 @@ export function fillWorkingWorksheet(wb, working) {
 
     const epfRes = fillWorkingSectionTableDynamic({
         ws,
-        headerText: "EPF/ETF",
+        headerText: "EPF & ETF",
         headerCol: 0,
         keyCol: 0,
         maxCol: 1,
@@ -686,6 +689,9 @@ export function fillWorkingWorksheet(wb, working) {
         sumColLetter: "B",
         sumRowColIndex: 1,
     });
+
+    console.log("epfRes.mode : ", epfRes.mode);
+    console.log("epfRes : ", epfRes);
 
     if (epfRes.mode === "not-found") {
         let row = 12; // A13
