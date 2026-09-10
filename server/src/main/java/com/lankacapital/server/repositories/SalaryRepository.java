@@ -1,5 +1,6 @@
 package com.lankacapital.server.repositories;
 
+import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Salary;
 import com.lankacapital.server.enums.Request;
@@ -10,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 
 @Repository
@@ -34,5 +37,20 @@ public interface SalaryRepository extends JpaRepository<Salary, Long> {
             @Param("pendingStatus") Request pendingStatus,
             @Param("approvedStatus") Request approvedStatus,
             @Param("approvedEmployee") Employee approvedEmployee
+    );
+
+    @Query("""
+    SELECT 
+        new com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto(
+            s.month,
+            COALESCE(SUM(s.companyEPF),0) + COALESCE(SUM(s.employeeEPF),0)
+        )
+    FROM Salary s
+    WHERE s.month BETWEEN :startDate AND :endDate
+    GROUP BY s.month
+""")
+    List<WorkingEPFETFDto> fetchEPF(
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate
     );
 }

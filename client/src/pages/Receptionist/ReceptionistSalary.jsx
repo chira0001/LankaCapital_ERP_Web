@@ -161,7 +161,7 @@ const ReceptionistSalary = () => {
                     <table className="w-full whitespace-nowrap">
                         <thead className='text-center'>
                             <tr className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
-                                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Emp Id</th>
+                                {/* <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Emp Id</th> */}
                                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Employee</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Role</th>
                                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">Working <br /> Days</th>
@@ -178,12 +178,12 @@ const ReceptionistSalary = () => {
                                     key={employee.id}
                                     className="hover:bg-blue-50 transition-colors"
                                 >
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {employee.id}
-                                    </td>
+                                    {/* <td className="px-6 py-4 text-sm text-gray-500">
+                                        {employee.nic}
+                                    </td> */}
 
                                     <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                                        {employee.firstName} {employee.lastName}
+                                        {employee.firstName} {employee.lastName} <br /> <span className='font-normal'>{employee.nic ? `(${employee.nic})` : ""}</span>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
                                         {employee.role === "FO"
