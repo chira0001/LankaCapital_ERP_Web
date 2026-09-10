@@ -189,184 +189,107 @@ function findCellByTextInsensitive(ws, desiredText, { col = null } = {}) {
     return null;
 }
 
-function updateSheetRefEndRow(ws, endRow0) {
+function shiftFormulaRows(ws, startRow0, delta, wb, sheetName) {
+    const firstShiftedRow1 = startRow0 + 1;
+    const moveReference = (formula, pattern) =>
+        formula.replace(pattern, (match, prefix, col, rowAbs, rowText) => {
+            const row = Number(rowText);
+            if (rowAbs === "$" || row < firstShiftedRow1) return match;
+            return `${prefix}${col}${rowAbs}${row + delta}`;
+        });
+
+    for (const cell of Object.values(ws)) {
+        if (!cell?.f) continue;
+        cell.f = moveReference(cell.f, /(^|[^!A-Z0-9_])(\$?[A-Z]{1,3})(\$?)(\d+)/g);
+    }
+
+    if (!wb || !sheetName) return;
+
+    const escapedSheetName = sheetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const sheetReference = new RegExp(
+        `((?:'${escapedSheetName}'|${escapedSheetName})!)(\\$?[A-Z]{1,3})(\\$?)(\\d+)`,
+        "g"
+    );
+
+    for (const sheet of Object.values(wb.Sheets)) {
+        if (sheet === ws) continue;
+        for (const cell of Object.values(sheet)) {
+            if (!cell?.f) continue;
+            cell.f = moveReference(cell.f, sheetReference);
+        }
+    }
+}
+
+function shiftRows(ws, startRow0, delta, workbookContext) {
+    if (delta === 0) return;
+    shiftFormulaRows(ws, startRow0, delta, workbookContext?.wb, workbookContext?.sheetName);
+
+    if (delta > 0) {
+        shiftRowsDown(ws, startRow0, delta);
+        const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+        range.e.r += delta;
+        ws["!ref"] = XLSX.utils.encode_range(range);
+        return;
+    }
+
+    const keys = Object.keys(ws)
+        .filter((key) => !key.startsWith("!"))
+        .map((a) => ({ a, ...XLSX.utils.decode_cell(a) }))
+        .filter(({ r }) => r >= startRow0)
+        .sort((a, b) => a.r - b.r || a.c - b.c);
+
+    for (const { a, r, c } of keys) {
+        ws[addrOf(r + delta, c)] = ws[a];
+        delete ws[a];
+    }
+
+    if (Array.isArray(ws["!merges"])) {
+        ws["!merges"] = ws["!merges"].map((m) => {
+            const shifted = { s: { ...m.s }, e: { ...m.e } };
+            if (shifted.s.r >= startRow0) {
+                shifted.s.r += delta;
+                shifted.e.r += delta;
+            }
+            return shifted;
+        });
+    }
+
+    if (Array.isArray(ws["!rows"])) {
+        const rows = [];
+        for (let r = 0; r < ws["!rows"].length; r++) {
+            const row = ws["!rows"][r];
+            if (!row) continue;
+            rows[r >= startRow0 ? r + delta : r] = row;
+        }
+        ws["!rows"] = rows;
+    }
+
     const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
-    range.e.r = Math.max(range.e.r, endRow0);
+    range.e.r = Math.max(range.s.r, range.e.r + delta);
     ws["!ref"] = XLSX.utils.encode_range(range);
 }
 
-/**
- * Heuristic: skip a "column titles" row (e.g. "Date | Amount", "Name | Amount")
- */
-function looksLikeColumnTitlesRow(ws, row0, keyCol, maxCol) {
-    const lower = (v) => (typeof v === "string" ? v.trim().toLowerCase() : "");
-
-    const key = lower(getCell(ws, row0, keyCol)?.v);
-    const v1 = lower(getCell(ws, row0, keyCol + 1)?.v);
-
-    if (!key && !v1) return false;
-
-    const keyLooksLikeTitle =
-        ["name", "category", "description", "asset", "date", "month"].includes(key) ||
-        key.includes("name") ||
-        key.includes("date") ||
-        key.includes("month") ||
-        key.includes("category");
-
-    const otherLooksLikeAmount = v1 === "amount" || v1.includes("amount") || v1 === "value";
-
-    // Also consider any cell in the row to be "amount"
-    let anyAmount = otherLooksLikeAmount;
-    for (let c = keyCol; c <= maxCol; c++) {
-        const vv = lower(getCell(ws, row0, c)?.v);
-        if (vv === "amount" || vv.includes("amount") || vv === "value") {
-            anyAmount = true;
-            break;
-        }
+function clearRows(ws, startRow0, endRow0) {
+    for (const address of Object.keys(ws)) {
+        if (address.startsWith("!")) continue;
+        const { r } = XLSX.utils.decode_cell(address);
+        if (r >= startRow0 && r < endRow0) delete ws[address];
     }
 
-    return keyLooksLikeTitle && anyAmount;
+    if (Array.isArray(ws["!rows"])) {
+        for (let r = startRow0; r < endRow0; r++) delete ws["!rows"][r];
+    }
 }
 
-/**
- * Fill a "section table" in Working sheet:
- * - finds section header by text in column A
- * - uses template row below header (skipping column-title row if present)
- * - expands by shifting everything below the boundary row down
- */
-function fillWorkingSectionTableDynamic({
-    ws,
-    headerText,
-    headerCol = 0,
-    keyCol = 0,
-    maxCol,
-    items,
-    sectionHeadersLower, // used to stop scanning at next section
-    writeRow, // (row0, item) => void
-    clearRow, // (row0) => void
-    sumColLetter = null, // optional: update SUM in totals row if a formula exists
-    sumRowColIndex = null, // optional: which column holds SUM formula on totals row
-}) {
-    const headerCell = findCellByTextInsensitive(ws, headerText, { col: headerCol });
-    if (!headerCell) return { mode: "not-found" };
+function setTotalFormula(ws, row0, col, colLetter, firstDataRow0, itemCount) {
+    const cell = getCell(ws, row0, col);
+    if (!cell?.f) return;
 
-    const range0 = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
-
-    // Pick template row: first "real" row after header (skip blank rows and optional title row)
-    let templateRow0 = headerCell.r + 1;
-    while (templateRow0 <= range0.e.r) {
-        // find first row that has any cell objects in 0..maxCol
-        let rowHasAny = false;
-        for (let c = 0; c <= maxCol; c++) {
-            if (getCell(ws, templateRow0, c)) {
-                rowHasAny = true;
-                break;
-            }
-        }
-        if (!rowHasAny) {
-            templateRow0++;
-            continue;
-        }
-
-        if (looksLikeColumnTitlesRow(ws, templateRow0, keyCol, maxCol)) {
-            templateRow0++;
-            continue;
-        }
-
-        break;
-    }
-
-    // Determine dummyCount + boundary row
-    let dummyCount = 0;
-    let boundaryRow0 = null;
-    let totalsRow0 = null;
-
-    for (let r = templateRow0; r <= range0.e.r; r++) {
-        const keyVal = getCell(ws, r, keyCol)?.v;
-
-        // stop at blank row AFTER at least 1 dummy row
-        if (isBlank(keyVal)) {
-            if (dummyCount > 0) {
-                boundaryRow0 = r;
-                break;
-            }
-            continue;
-        }
-
-        // stop at "Total..." row
-        if (typeof keyVal === "string" && keyVal.trim().toLowerCase().includes("total")) {
-            totalsRow0 = r;
-            boundaryRow0 = r;
-            break;
-        }
-
-        // stop if we hit the next section header
-        if (typeof keyVal === "string") {
-            const k = keyVal.trim().toLowerCase();
-            if (sectionHeadersLower.includes(k) && k !== String(headerText).trim().toLowerCase()) {
-                boundaryRow0 = r;
-                break;
-            }
-        }
-
-        dummyCount++;
-    }
-
-    if (dummyCount === 0) {
-        dummyCount = 1;
-        boundaryRow0 = boundaryRow0 ?? templateRow0 + 1;
-    }
-    if (boundaryRow0 === null) boundaryRow0 = templateRow0 + dummyCount;
-
-    const desiredCount = items.length;
-    const delta = desiredCount - dummyCount;
-
-    if (delta > 0) shiftRowsDown(ws, boundaryRow0, delta);
-    const newBoundaryRow0 = boundaryRow0 + Math.max(delta, 0);
-    const firstDataRowNum1 = templateRow0 + 1;
-    const lastDataRowNum1 = templateRow0 + desiredCount;
-
-    // write rows
-    for (let i = 0; i < desiredCount; i++) {
-        const r0 = templateRow0 + i;
-        cloneTemplateRowTo(ws, templateRow0, r0, maxCol);
-        writeRow(r0, items[i]);
-    }
-
-    // clear remaining placeholders (if fewer items)
-    if (desiredCount < dummyCount) {
-        for (let r0 = templateRow0 + desiredCount; r0 < templateRow0 + dummyCount; r0++) {
-            cloneTemplateRowTo(ws, templateRow0, r0, maxCol);
-            clearRow(r0);
-        }
-    }
-
-    // Optional: update totals SUM formula if the template has it
-    if (sumColLetter && sumRowColIndex != null) {
-        const tr0 = totalsRow0 != null ? totalsRow0 + Math.max(delta, 0) : null;
-        if (tr0 != null) {
-            const totalsCell = getCell(ws, tr0, sumRowColIndex);
-            if (totalsCell?.f) {
-                if (desiredCount <= 0) {
-                    totalsCell.f = "0";
-                    totalsCell.v = 0;
-                    totalsCell.t = "n";
-                } else {
-                    totalsCell.f = `SUM(${sumColLetter}${firstDataRowNum1}:${sumColLetter}${lastDataRowNum1})`;
-                    totalsCell.v = 0;
-                    totalsCell.t = "n";
-                }
-            }
-        }
-    }
-
-    // Update sheet range
-    const newRange = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
-    if (delta > 0 && boundaryRow0 <= newRange.e.r) newRange.e.r += delta;
-    newRange.e.r = Math.max(newRange.e.r, newBoundaryRow0, templateRow0 + desiredCount);
-    ws["!ref"] = XLSX.utils.encode_range(newRange);
-
-    return { mode: "dynamic", headerRow0: headerCell.r, templateRow0, boundaryRow0: newBoundaryRow0 };
+    cell.f = itemCount
+        ? `SUM(${colLetter}${firstDataRow0 + 1}:${colLetter}${firstDataRow0 + itemCount})`
+        : "0";
+    cell.v = 0;
+    cell.t = "n";
 }
 
 /**
@@ -539,12 +462,8 @@ export function fillPPEWorksheet(wb, ppeRows) {
 }
 
 /**
- * ---------------------------
- * WORKING (UPDATED)
- * - auto-detect section row positions (dynamic)
- * - EPF date formatted as "Aug 2026" via Excel date serial + numFmt "mmm yyyy"
- * - still respects formulas (won't overwrite them)
- * ---------------------------
+ * Populate Working from top to bottom. Each next section is found only after
+ * the previous one has been resized, so headings never depend on fixed rows.
  */
 export function fillWorkingWorksheet(wb, working) {
     if (!wb) throw new Error("Workbook missing");
@@ -559,158 +478,94 @@ export function fillWorkingWorksheet(wb, working) {
         return Number.isFinite(n) ? n : 0;
     };
 
-    // Known section headers in column A (used to avoid reading into the next section)
-    const sectionHeadersLower = ["admin expenses", "assets", "epf/etf", "epf etf", "interest income"];
+    const findWorkingLabel = (label) => {
+        const found = findCellByTextInsensitive(ws, label, { col: 0 });
+        if (!found) throw new Error(`Working sheet is missing the ${label} label`);
+        return found;
+    };
 
-    // ---------------------------------------------------
-    // 1) Interest Income (dynamic by label; fallback B2)
-    // Template assumption: column A contains "Interest Income", value is in column B same row
-    // ---------------------------------------------------
+    const resizeRowsBefore = (headerText, nextHeaderText, itemCount, maxCol) => {
+        const header = findWorkingLabel(headerText);
+        const nextHeader = findWorkingLabel(nextHeaderText);
+        const firstDataRow0 = header.r + 1;
+        const availableRows = nextHeader.r - firstDataRow0;
+        const templateRow0 = firstDataRow0;
+        const delta = itemCount - availableRows;
+
+        if (delta < 0) clearRows(ws, firstDataRow0 + itemCount, nextHeader.r);
+        shiftRows(ws, nextHeader.r, delta, { wb, sheetName: "Working" });
+
+        for (let index = 0; index < itemCount; index++) {
+            cloneTemplateRowTo(ws, templateRow0, firstDataRow0 + index, maxCol);
+        }
+
+        return { firstDataRow0, templateRow0 };
+    };
+
+    // Income
     const interestLabel = findCellByTextInsensitive(ws, "Interest Income", { col: 0 });
     if (interestLabel) {
-        setCellValuePreserveStyle(ws, interestLabel.r, interestLabel.c + 1, {
+        setCellValueCreateIfMissing(ws, interestLabel.r, interestLabel.c + 1, {
             t: "n",
             v: safeNum(working.interestIncome),
         });
-    } else {
-        // fallback to old fixed cell B2
-        setCellValueCreateIfMissing(ws, 1, 1, { t: "n", v: safeNum(working.interestIncome) });
     }
 
-    // ---------------------------------------------------
-    // 2) Admin Expenses (dynamic; fallback A5+)
-    // Columns: A=name, B=amount
-    // ---------------------------------------------------
+    // Administrative Expenses. The Assets heading is shifted after every item.
     const adminItems = working.workingAdministrativeExpenseDtos || [];
-    const adminRes = fillWorkingSectionTableDynamic({
-        ws,
-        headerText: "Administrative Expenses",
-        headerCol: 0,
-        keyCol: 0,
-        maxCol: 1,
-        items: adminItems,
-        sectionHeadersLower,
-        writeRow: (r0, item) => {
-            setCellValuePreserveStyle(ws, r0, 0, { t: "s", v: item?.adminExpenseName ?? "" });
-            setCellValuePreserveStyle(ws, r0, 1, { t: "n", v: safeNum(item?.adminExpenseAmount) });
-        },
-        clearRow: (r0) => {
-            setCellValuePreserveStyle(ws, r0, 0, { t: "s", v: "" });
-            setCellValuePreserveStyle(ws, r0, 1, { t: "s", v: "" });
-        },
-        // Optional totals behavior if your template has a "Total" row with formula in column B:
-        sumColLetter: "B",
-        sumRowColIndex: 1,
+    const adminBlock = resizeRowsBefore(
+        "Administrative Expenses",
+        "Assets",
+        adminItems.length,
+        1
+    );
+    adminItems.forEach((item, index) => {
+        const row0 = adminBlock.firstDataRow0 + index;
+        setCellValueCreateIfMissing(ws, row0, 0, { t: "s", v: item?.adminExpenseName ?? "" });
+        setCellValueCreateIfMissing(ws, row0, 1, { t: "n", v: safeNum(item?.adminExpenseAmount) });
     });
 
-    // fallback (old fixed positions) if header not found
-    if (adminRes.mode === "not-found") {
-        let row = 4; // A5
-        for (const item of adminItems) {
-            setCellValueCreateIfMissing(ws, row, 0, { t: "s", v: item?.adminExpenseName ?? "" });
-            setCellValueCreateIfMissing(ws, row, 1, { t: "n", v: safeNum(item?.adminExpenseAmount) });
-            row++;
-        }
-        updateSheetRefEndRow(ws, row + 5);
-    }
-
-    // ---------------------------------------------------
-    // 3) Assets (dynamic; fallback A9+)
-    // Columns: A=name, B=amount
-    // ---------------------------------------------------
+    // Assets. The EPF heading follows the generated asset rows.
     const assetItems = working.workingAssetsDtos || [];
-    const assetsRes = fillWorkingSectionTableDynamic({
-        ws,
-        headerText: "Assets",
-        headerCol: 0,
-        keyCol: 0,
-        maxCol: 1,
-        items: assetItems,
-        sectionHeadersLower,
-        writeRow: (r0, item) => {
-            setCellValuePreserveStyle(ws, r0, 0, { t: "s", v: item?.assetName ?? "" });
-            setCellValuePreserveStyle(ws, r0, 1, { t: "n", v: safeNum(item?.assetAmount) });
-        },
-        clearRow: (r0) => {
-            setCellValuePreserveStyle(ws, r0, 0, { t: "s", v: "" });
-            setCellValuePreserveStyle(ws, r0, 1, { t: "s", v: "" });
-        },
-        sumColLetter: "B",
-        sumRowColIndex: 1,
+    const assetsBlock = resizeRowsBefore("Assets", "EPF ETF", assetItems.length, 2);
+    assetItems.forEach((item, index) => {
+        const row0 = assetsBlock.firstDataRow0 + index;
+        setCellValueCreateIfMissing(ws, row0, 0, { t: "s", v: item?.assetName ?? "" });
+        setCellValueCreateIfMissing(ws, row0, 1, { t: "n", v: safeNum(item?.assetAmount) });
     });
 
-    console.log("assetsRes.mode : ", assetsRes.mode);
-    console.log("assetsRes : ", assetsRes);
-
-    if (assetsRes.mode === "not-found") {
-        let row = 8; // A9
-        for (let item of assetItems) {
-            setCellValueCreateIfMissing(ws, row, 0, { t: "s", v: item?.assetName ?? "" });
-            setCellValueCreateIfMissing(ws, row, 1, { t: "n", v: safeNum(item?.assetAmount) });
-            row++;
-        }
-        updateSheetRefEndRow(ws, row + 5);
-    }
-
-    // ---------------------------------------------------
-    // 4) EPF/ETF (dynamic; fallback A13+)
-    // Date format: "Aug 2026" => Excel numFmt "mmm yyyy"
-    // Columns: A=date, B=amount
-    // ---------------------------------------------------
+    // EPF / ETF. Its column-heading row remains in place; only the rows above Total resize.
     const epfItems = working.workingEPFETFDtos || [];
+    const epfHeader = findWorkingLabel("EPF & ETF");
+    const totalRow = findWorkingLabel("Total");
+    const epfFirstDataRow0 = epfHeader.r + 1;
+    const epfTemplateRow0 = epfFirstDataRow0;
+    const epfAvailableRows = totalRow.r - epfFirstDataRow0;
+    const epfDelta = epfItems.length - epfAvailableRows;
+    if (epfDelta < 0) clearRows(ws, epfFirstDataRow0 + epfItems.length, totalRow.r);
+    shiftRows(ws, totalRow.r, epfDelta, { wb, sheetName: "Working" });
+
     const epfFmt = "mmm yyyy";
+    epfItems.forEach((item, index) => {
+        const row0 = epfFirstDataRow0 + index;
+        cloneTemplateRowTo(ws, epfTemplateRow0, row0, 3);
 
-    const epfRes = fillWorkingSectionTableDynamic({
-        ws,
-        headerText: "EPF & ETF",
-        headerCol: 0,
-        keyCol: 0,
-        maxCol: 1,
-        items: epfItems,
-        sectionHeadersLower,
-        writeRow: (r0, item) => {
-            const serial = parseToSerial(item?.date);
-            setCellValuePreserveStyle(ws, r0, 0, {
-                t: "n",
-                v: serial ?? "",
-                z: epfFmt,
-                numFmt: epfFmt,
-            });
-
-            setCellValuePreserveStyle(ws, r0, 1, {
-                t: "n",
-                v: safeNum(item?.epf20 ?? item?.EPF20),
-            });
-        },
-        clearRow: (r0) => {
-            setCellValuePreserveStyle(ws, r0, 0, { t: "s", v: "", z: epfFmt, numFmt: epfFmt });
-            setCellValuePreserveStyle(ws, r0, 1, { t: "s", v: "" });
-        },
-        sumColLetter: "B",
-        sumRowColIndex: 1,
+        setCellValueCreateIfMissing(ws, row0, 0, {
+            t: "n",
+            v: parseToSerial(item?.date) ?? "",
+            z: epfFmt,
+            numFmt: epfFmt,
+        });
+        setCellValueCreateIfMissing(ws, row0, 1, {
+            t: "n",
+            v: safeNum(item?.epf20 ?? item?.EPF20),
+        });
     });
 
-    console.log("epfRes.mode : ", epfRes.mode);
-    console.log("epfRes : ", epfRes);
-
-    if (epfRes.mode === "not-found") {
-        let row = 12; // A13
-        for (const item of epfItems) {
-            const serial = parseToSerial(item?.date);
-            setCellValueCreateIfMissing(ws, row, 0, {
-                t: "n",
-                v: serial ?? "",
-                z: epfFmt,
-                numFmt: epfFmt,
-            });
-            setCellValueCreateIfMissing(ws, row, 1, {
-                t: "n",
-                v: safeNum(item?.epf20 ?? item?.EPF20),
-            });
-            row++;
-        }
-        updateSheetRefEndRow(ws, row + 5);
-    }
+    const newTotalRow = findWorkingLabel("Total");
+    setTotalFormula(ws, newTotalRow.r, 1, "B", epfFirstDataRow0, epfItems.length);
+    setTotalFormula(ws, newTotalRow.r, 2, "C", epfFirstDataRow0, epfItems.length);
+    setTotalFormula(ws, newTotalRow.r, 3, "D", epfFirstDataRow0, epfItems.length);
 }
 
 export function fillFinancialTemplate(wb, data) {
