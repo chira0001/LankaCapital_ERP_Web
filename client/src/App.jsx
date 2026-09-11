@@ -125,7 +125,8 @@ const App = () => {
           <Route path="salary" element={<Salary />} />
           <Route path="customers" element={<CustomerManagementPage />} />
           <Route path="officers" element={<FieldOfficerPerformancePage />} />
-          <Route path="petty-cash" element={<PettyCashPage />} />
+          <Route path="admin-exp" element={<PettyCashPage />} />
+          {/* <Route path="petty-cash" element={<PettyCashPage />} /> */}
           <Route path="financials" element={<FinancialReportsPage />} />
           {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
           <Route path="users" element={<UserManagementPage />} />
@@ -145,8 +146,9 @@ const App = () => {
           <Route path="loan-summary" element={<LoanSummary />} />
           <Route path="salary" element={<ReceptionistSalary />} />
           <Route path="view" element={<ReceptionistView />} />
-          <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} />
-          <Route path="monthlyPetty" element={<ReceptionistPettyCash />} />
+          {/* <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} /> */}
+          <Route path="admin-exp" element={<ReceptionistPettyCash />} />
+          {/* <Route path="monthlyPetty" element={<ReceptionistPettyCash />} /> */}
           <Route path="financials" element={<ReceptionistFinancials />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
