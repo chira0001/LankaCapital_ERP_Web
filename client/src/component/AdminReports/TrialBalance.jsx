@@ -213,11 +213,12 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
                         className="mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none ring-0 transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200"
                     >
                         <option value="">Select account type</option>
-                        <option value="ASSET">Asset</option>
-                        <option value="LIABILITY">Liability</option>
-                        <option value="EQUITY">Equity</option>
-                        <option value="EXPENSE">Expense</option>
-                        <option value="INCOME">Income</option>
+                        <option value="BankAccounts">Bank Accounts</option>
+                        <option value="Assets">Asset</option>
+                        <option value="Liabilities">Liabilities</option>
+                        <option value="Equity">Equity</option>
+                        <option value="Expenses">Expenses</option>
+                        <option value="Income">Income</option>
                     </select>
                 </div>
 

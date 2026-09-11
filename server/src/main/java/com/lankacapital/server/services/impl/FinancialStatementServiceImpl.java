@@ -1,11 +1,15 @@
 package com.lankacapital.server.services.impl;
 
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto;
 import com.lankacapital.server.dtos.StatementDto.PPE;
+import com.lankacapital.server.dtos.StatementDto.TRIALBALANCE;
 import com.lankacapital.server.dtos.StatementDto.WORKING;
 import com.lankacapital.server.entities.reports.AssetsRegistry;
+import com.lankacapital.server.entities.reports.TrialBalanceData;
+import com.lankacapital.server.enums.AccountType;
 import com.lankacapital.server.mappers.statementMappers.PPE_WORKING_Mapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.LoanRepository;
@@ -23,9 +27,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -80,13 +83,8 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         String startDate = beginPeriod.format(DateTimeFormatter.ofPattern("yyyy-MM"));
         String endDate = endPeriod.format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
-//        LocalDateTime startDateTime = LocalDateTime.parse(beginPeriod + "T00:00:00");
-//        LocalDateTime endDateTime = LocalDateTime.parse(endPeriod + "T23:59:59");
-
         LocalDateTime startDateTime = beginPeriod.atStartOfDay();
         LocalDateTime endDateTime = endPeriod.plusDays(1).atStartOfDay();
-
-        System.out.println("-------------------------------" + startDate + "========== " + endDate);
 
         WORKING working = new WORKING();
         BigDecimal income = loanRepository.fetchApprovedLoansAndCreatedAtBetweenStartPeriodAndEndPeriod(startDateTime,endDateTime);
@@ -104,6 +102,51 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return working;
     }
 
+    private TRIALBALANCE generateTRIALBALANCE(LocalDate beginPeriod, LocalDate endPeriod) {
+
+        // 1) DB trial balance rows
+        List<TrialBalanceData> rows =
+                trialBalanceDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+
+        List<TrialBalanceDataDto> baseDtos = rows.stream()
+                .map(PPE_WORKING_Mapper::mapToDto)
+                .toList();
+
+        // 2) Group by AccountType
+        Map<AccountType, List<TrialBalanceDataDto>> grouped = baseDtos.stream()
+                .collect(Collectors.groupingBy(
+                        TrialBalanceDataDto::getAccountType,
+                        () -> new EnumMap<>(AccountType.class),
+                        Collectors.toCollection(ArrayList::new)
+                ));
+
+        // 3) OPTIONAL: add PPE lines into Assets (append, not overwrite)
+        List<TrialBalanceDataDto> ppeDtos = generatePPE().stream()
+                .map(PPE_WORKING_Mapper::mapToTrialBalanceDataDtoFromPPE)
+                .toList();
+        grouped.computeIfAbsent(AccountType.Assets, k -> new ArrayList<>()).addAll(ppeDtos);
+
+        // 4) OPTIONAL: add PettyCash admin expenses into Expenses (append, not overwrite)
+        List<WorkingAdministrativeExpenseDto> expenseDtos =
+                pettyCashRepository.fetchApprovedPettyCashAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
+
+        List<TrialBalanceDataDto> expenseTbDtos = expenseDtos.stream()
+                .map(PPE_WORKING_Mapper::mapToTrialBalanceDataDtoFromWorkingAdministrativeExpenseDto)
+                .toList();
+        grouped.computeIfAbsent(AccountType.Expenses, k -> new ArrayList<>()).addAll(expenseTbDtos);
+
+        // 5) Build response object (never return null lists)
+        TRIALBALANCE tb = new TRIALBALANCE();
+        tb.setBankAccounts(grouped.getOrDefault(AccountType.BankAccounts, List.of()));
+        tb.setAssets(grouped.getOrDefault(AccountType.Assets, List.of()));
+        tb.setLiabilities(grouped.getOrDefault(AccountType.Liabilities, List.of()));
+        tb.setEquity(grouped.getOrDefault(AccountType.Equity, List.of()));
+        tb.setExpenses(grouped.getOrDefault(AccountType.Expenses, List.of()));
+        tb.setIncome(grouped.getOrDefault(AccountType.Income, List.of()));
+
+        return tb;
+    }
+
     @Override
     @Transactional
     public HashMap<String, Object> generateReports(String reportType, String startDate, String endDate) {
@@ -118,9 +161,12 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("ppe",generatePPE());
             }else if(reportType.equalsIgnoreCase("working")){
                 data.put("working",generateWORKING(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("tb")){
+                data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("statement")){
                 data.put("ppe",generatePPE());
                 data.put("working",generateWORKING(beginPeriod, endPeriod));
+                data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
             }
 
             return data;
