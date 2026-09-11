@@ -189,7 +189,8 @@ const PettyCashPage = () => {
         <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            Petty Cash Requests
+            {/* Petty Cash Requests */}
+            Administrative Expense Request
           </h1>
 
           <Button
@@ -445,7 +446,8 @@ const PettyCashPage = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between mb-6">
-                <h2 className="font-semibold text-lg">Petty Cash Details</h2>
+                <h2 className="font-semibold text-lg">Administrative Expense Details</h2>
+                {/* <h2 className="font-semibold text-lg">Petty Cash Details</h2> */}
                 <button onClick={() => setIsRowClicked(false)}>✕</button>
               </div>
 
@@ -523,7 +525,8 @@ const PettyCashPage = () => {
         {isEdit && pettyCashInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
             <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-semibold mb-4">Edit Petty Cash</h2>
+              <h2 className="text-lg font-semibold mb-4">Edit Administrative Expense Request</h2>
+              {/* <h2 className="text-lg font-semibold mb-4">Edit Petty Cash</h2> */}
 
               <div className="space-y-4">
                 <span className='text-sm text-slate-400'>Amount</span>
