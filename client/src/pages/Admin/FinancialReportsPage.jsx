@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillPPEWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -229,6 +229,15 @@ const FinancialReportsPage = () => {
 
       if (data.working) {
         fillWorkingWorksheet(wb, data.working);
+      }
+
+      if (data.tb || data.trialBalance) {
+        fillTBWorksheet(
+          wb,
+          data.tb || data.trialBalance,
+          Array.isArray(data.ppe) ? data.ppe : [],
+          endDate
+        );
       }
 
       XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);

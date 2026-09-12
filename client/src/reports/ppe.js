@@ -76,6 +76,59 @@ function setCellValueCreateIfMissing(ws, r, c, { t, v, z, numFmt }) {
     }
 }
 
+function cloneRowTemplate(ws, templateRow0, maxCol) {
+    const cells = [];
+    for (let c = 0; c <= maxCol; c++) {
+        const cell = getCell(ws, templateRow0, c);
+        cells[c] = cell ? { ...cell, s: cell.s ? { ...cell.s } : cell.s } : null;
+    }
+
+    const row = Array.isArray(ws["!rows"]) && ws["!rows"][templateRow0]
+        ? { ...ws["!rows"][templateRow0] }
+        : null;
+
+    return { cells, row };
+}
+
+function applyRowTemplate(ws, template, targetRow0, maxCol) {
+    for (let c = 0; c <= maxCol; c++) {
+        const addr = addrOf(targetRow0, c);
+        const source = template?.cells?.[c];
+        if (source) {
+            ws[addr] = { ...source, s: source.s ? { ...source.s } : source.s };
+        } else {
+            delete ws[addr];
+        }
+    }
+
+    if (template?.row) {
+        ws["!rows"] = ws["!rows"] || [];
+        ws["!rows"][targetRow0] = { ...template.row };
+    }
+}
+
+function setCellValueAllowFormula(ws, r, c, { t, v, f, z, numFmt }) {
+    const a = addrOf(r, c);
+    const cell = ws[a] || (ws[a] = {});
+
+    delete cell.f;
+    if (f) {
+        cell.f = f;
+        cell.t = t || "n";
+        cell.v = v ?? 0;
+    } else {
+        cell.t = t;
+        cell.v = v;
+    }
+
+    if (z) cell.z = z;
+    if (numFmt) {
+        cell.z = cell.z || numFmt;
+        cell.s = cell.s || {};
+        cell.s.numFmt = cell.s.numFmt || numFmt;
+    }
+}
+
 function cloneTemplateRowTo(ws, templateRow0, targetRow0, maxCol) {
     const fromRowNum1 = templateRow0 + 1;
     const toRowNum1 = targetRow0 + 1;
@@ -564,12 +617,335 @@ export function fillWorkingWorksheet(wb, working) {
     });
 }
 
+function normalizeTrialBalanceSections(tb) {
+    const sectionAliases = new Map([
+        ["bankaccounts", "BankAccounts"],
+        ["bank accounts", "BankAccounts"],
+        ["bankaccount", "BankAccounts"],
+        ["bank account", "BankAccounts"],
+        ["assets", "Assets"],
+        ["asset", "Assets"],
+        ["liabilities", "Liabilities"],
+        ["liability", "Liabilities"],
+        ["equity", "Equity"],
+        ["income", "Income"],
+        ["expenses", "Expenses"],
+        ["expense", "Expenses"],
+    ]);
+
+    const sections = {
+        BankAccounts: [],
+        Assets: [],
+        Liabilities: [],
+        Equity: [],
+        Income: [],
+        Expenses: [],
+    };
+
+    const pushItem = (sectionKey, item) => {
+        if (!sectionKey || !sections[sectionKey] || !item) return;
+        sections[sectionKey].push(item);
+    };
+
+    if (Array.isArray(tb)) {
+        tb.forEach((item) => {
+            const rawType = String(item?.accountType ?? item?.type ?? "").trim().toLowerCase();
+            pushItem(sectionAliases.get(rawType), item);
+        });
+        return sections;
+    }
+
+    if (!tb || typeof tb !== "object") return sections;
+
+    Object.entries(tb).forEach(([key, value]) => {
+        const sectionKey = sectionAliases.get(String(key).trim().toLowerCase());
+        if (Array.isArray(value)) {
+            value.forEach((item) => pushItem(sectionKey, item));
+        }
+    });
+
+    return sections;
+}
+
+function normalizeTrialBalanceRows(items) {
+    const grouped = new Map();
+
+    (Array.isArray(items) ? items : []).forEach((item) => {
+        const accountName = String(item?.accountName ?? item?.name ?? "").trim();
+        if (!accountName) return;
+
+        const amount = Number(item?.amount ?? item?.value ?? 0);
+        if (!Number.isFinite(amount)) return;
+
+        const transactionType = String(item?.transactionType ?? item?.type ?? "DR").trim().toUpperCase();
+        const current = grouped.get(accountName) || { accountName, dr: 0, cr: 0 };
+        if (transactionType === "CR") current.cr += amount;
+        else current.dr += amount;
+        grouped.set(accountName, current);
+    });
+
+    return Array.from(grouped.values()).map((row) => {
+        const net = (Number(row.dr) || 0) - (Number(row.cr) || 0);
+        if (net >= 0) return { accountName: row.accountName, dr: net, cr: 0 };
+        return { accountName: row.accountName, dr: 0, cr: Math.abs(net) };
+    });
+}
+
+function formatTrialBalanceDate(value) {
+    const parsed = value ? dayjs(value) : null;
+    if (!parsed?.isValid()) return null;
+
+    const day = parsed.date();
+    const suffix =
+        day % 10 === 1 && day !== 11
+            ? "st"
+            : day % 10 === 2 && day !== 12
+                ? "nd"
+                : day % 10 === 3 && day !== 13
+                    ? "rd"
+                    : "th";
+
+    return `${day}${suffix} ${parsed.format("MMMM YYYY")}`;
+}
+
+function findPPEDataStartRow0(ws) {
+    const header = findCellByTextInsensitive(ws, "Asset", { col: 0 });
+    return header ? header.r + 1 : 3;
+}
+
+export function fillTBWorksheet(wb, tb, ppeRows = [], endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "TB");
+    if (!ws) throw new Error("TB sheet not found in template");
+
+    const COLS = { ACCOUNT: 0, DR: 1, CR: 2 };
+    const rangeBefore = XLSX.utils.decode_range(ws["!ref"] || "A1:C1");
+    const valueMaxCol = COLS.CR;
+    const styleMaxCol = Math.max(rangeBefore.e.c, valueMaxCol);
+    const sectionOrder = [
+        { key: "BankAccounts", label: "Bank accounts" },
+        { key: "Assets", label: "Assets" },
+        { key: "Liabilities", label: "Liabilities" },
+        { key: "Equity", label: "Equity" },
+        { key: "Income", label: "Income" },
+        { key: "Expenses", label: "Expenses" },
+    ];
+
+    const headerRow = findCellByTextInsensitive(ws, "Accounts", { col: COLS.ACCOUNT });
+    const totalRow = findCellByTextInsensitive(ws, "Total", { col: COLS.ACCOUNT });
+    if (!headerRow || !totalRow) throw new Error("TB sheet layout is missing Accounts or Total");
+
+    const firstBodyRow0 = headerRow.r + 1;
+    const existingTotalRow0 = totalRow.r;
+
+    const sectionTemplates = {};
+    const itemTemplates = {};
+    let fallbackSectionTemplate = null;
+    let fallbackItemTemplate = null;
+
+    sectionOrder.forEach(({ key, label }) => {
+        const found = findCellByTextInsensitive(ws, label, { col: COLS.ACCOUNT });
+        if (!found) return;
+
+        sectionTemplates[key] = cloneRowTemplate(ws, found.r, styleMaxCol);
+        fallbackSectionTemplate = fallbackSectionTemplate || sectionTemplates[key];
+
+        if (found.r + 1 < existingTotalRow0) {
+            itemTemplates[key] = cloneRowTemplate(ws, found.r + 1, styleMaxCol);
+            fallbackItemTemplate = fallbackItemTemplate || itemTemplates[key];
+        }
+    });
+
+    const totalTemplate = cloneRowTemplate(ws, existingTotalRow0, styleMaxCol);
+    const differenceTemplate = cloneRowTemplate(ws, existingTotalRow0 + 1, styleMaxCol);
+
+    const manualSections = normalizeTrialBalanceSections(tb);
+    const ppeItems = Array.isArray(ppeRows) ? ppeRows : [];
+    const ppeSheetName = getSheetByNameInsensitive(wb, "PPE").sheetName;
+    const ppeWs = wb.Sheets[ppeSheetName];
+    const ppeDataStartRow0 = ppeWs ? findPPEDataStartRow0(ppeWs) : 3;
+    const ppeTotalRow1 = ppeDataStartRow0 + ppeItems.length + 1;
+    const ppeAssetNames = new Set();
+
+    const ppeAssetRows = ppeItems
+        .map((item, index) => {
+            const accountName = String(item?.asset ?? item?.assetName ?? "").trim();
+            if (!accountName) return null;
+            ppeAssetNames.add(accountName.toLowerCase());
+            return {
+                accountName,
+                drFormula: `'${ppeSheetName}'!D${ppeDataStartRow0 + index + 1}`,
+                drFallback: Number(item?.amount ?? 0) || 0,
+                cr: 0,
+            };
+        })
+        .filter(Boolean);
+
+    const depreciationTotal = ppeItems.reduce(
+        (sum, item) => sum + (Number(item?.depreciationAmount) || 0),
+        0
+    );
+    const depreciationRow =
+        ppeItems.length > 0
+            ? {
+                accountName:
+                    findCellByTextInsensitive(ws, "Accumalated Deprecion", { col: COLS.ACCOUNT })?.cell
+                        ?.v ||
+                    findCellByTextInsensitive(ws, "Accumulated Deprecion", { col: COLS.ACCOUNT })?.cell
+                        ?.v ||
+                    "Accumalated Deprecion",
+                dr: 0,
+                crFormula: `'${ppeSheetName}'!G${ppeTotalRow1}`,
+                crFallback: depreciationTotal,
+            }
+            : null;
+
+    const sections = sectionOrder.map(({ key, label }) => {
+        const normalizedRows = normalizeTrialBalanceRows(manualSections[key]);
+        const manualRows =
+            key === "Assets"
+                ? normalizedRows.filter(
+                    (row) => !ppeAssetNames.has(String(row.accountName).trim().toLowerCase())
+                )
+                : normalizedRows;
+
+        const rows =
+            key === "Assets"
+                ? [...ppeAssetRows, ...(depreciationRow ? [depreciationRow] : []), ...manualRows]
+                : manualRows;
+
+        return { key, label, rows };
+    });
+
+    const desiredBodyRowCount = sections.reduce(
+        (count, section) => count + 1 + section.rows.length,
+        0
+    );
+    const currentBodyRowCount = existingTotalRow0 - firstBodyRow0;
+    const delta = desiredBodyRowCount - currentBodyRowCount;
+
+    shiftRows(ws, existingTotalRow0, delta, { wb, sheetName });
+
+    const newTotalRow0 = existingTotalRow0 + delta;
+    clearRows(ws, firstBodyRow0, newTotalRow0);
+
+    let row0 = firstBodyRow0;
+    sections.forEach((section) => {
+        applyRowTemplate(
+            ws,
+            sectionTemplates[section.key] || fallbackSectionTemplate,
+            row0,
+            styleMaxCol
+        );
+        setCellValueAllowFormula(ws, row0, COLS.ACCOUNT, { t: "s", v: section.label });
+        setCellValueAllowFormula(ws, row0, COLS.DR, { t: "s", v: "" });
+        setCellValueAllowFormula(ws, row0, COLS.CR, { t: "s", v: "" });
+        setRowBold(ws, row0, valueMaxCol);
+        row0++;
+
+        section.rows.forEach((item) => {
+            applyRowTemplate(
+                ws,
+                itemTemplates[section.key] || fallbackItemTemplate,
+                row0,
+                styleMaxCol
+            );
+            setCellValueAllowFormula(ws, row0, COLS.ACCOUNT, {
+                t: "s",
+                v: item.accountName ?? "",
+            });
+            const drValue = Number(item.dr ?? item.drFallback ?? 0) || 0;
+            const crValue = Number(item.cr ?? item.crFallback ?? 0) || 0;
+
+            setCellValueAllowFormula(
+                ws,
+                row0,
+                COLS.DR,
+                item.drFormula || drValue
+                    ? { t: "n", v: drValue, f: item.drFormula }
+                    : { t: "s", v: "" }
+            );
+            setCellValueAllowFormula(
+                ws,
+                row0,
+                COLS.CR,
+                item.crFormula || crValue
+                    ? { t: "n", v: crValue, f: item.crFormula }
+                    : { t: "s", v: "" }
+            );
+            row0++;
+        });
+    });
+
+    applyRowTemplate(ws, totalTemplate, newTotalRow0, styleMaxCol);
+    setCellValueAllowFormula(ws, newTotalRow0, COLS.ACCOUNT, { t: "s", v: "Total" });
+    setCellValueAllowFormula(ws, newTotalRow0, COLS.DR, {
+        t: "n",
+        v: 0,
+        f: `SUM(B${firstBodyRow0 + 1}:B${newTotalRow0})`,
+    });
+    setCellValueAllowFormula(ws, newTotalRow0, COLS.CR, {
+        t: "n",
+        v: 0,
+        f: `SUM(C${firstBodyRow0 + 1}:C${newTotalRow0})`,
+    });
+    setRowBold(ws, newTotalRow0, valueMaxCol);
+
+    applyRowTemplate(ws, differenceTemplate, newTotalRow0 + 1, styleMaxCol);
+    setCellValueAllowFormula(ws, newTotalRow0 + 1, COLS.ACCOUNT, { t: "s", v: "" });
+    setCellValueAllowFormula(ws, newTotalRow0 + 1, COLS.DR, {
+        t: "n",
+        v: 0,
+        f: `B${newTotalRow0 + 1}-C${newTotalRow0 + 1}`,
+    });
+    setCellValueAllowFormula(ws, newTotalRow0 + 1, COLS.CR, { t: "s", v: "" });
+
+    if (delta < 0) {
+        clearRows(ws, newTotalRow0 + 2, existingTotalRow0 + 2);
+    }
+
+    const formattedDate =
+        formatTrialBalanceDate(endDate) ||
+        formatTrialBalanceDate(
+            Object.values(manualSections)
+                .flat()
+                .find((item) => item?.financialDate)?.financialDate
+        );
+    if (formattedDate) {
+        const asAtCell = findCellByTextInsensitive(ws, "As at 31st March 2025", {
+            col: COLS.ACCOUNT,
+        });
+        if (asAtCell) {
+            setCellValueAllowFormula(ws, asAtCell.r, asAtCell.c, {
+                t: "s",
+                v: `As at ${formattedDate}`,
+            });
+        }
+    }
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+    range.e.r = Math.max(range.s.r, newTotalRow0 + 1);
+    range.e.c = Math.max(range.e.c, styleMaxCol);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+
+    [0, 1, 2, headerRow.r].forEach((boldRow0) => setRowBold(ws, boldRow0, valueMaxCol));
+}
+
 export function fillFinancialTemplate(wb, data) {
     if (!wb) throw new Error("Workbook missing");
     if (!data || typeof data !== "object") throw new Error("Data missing");
 
     if (Array.isArray(data.ppe)) fillPPEWorksheet(wb, data.ppe);
     if (data.working) fillWorkingWorksheet(wb, data.working);
+    if (data.tb || data.trialBalance) {
+        fillTBWorksheet(
+            wb,
+            data.tb || data.trialBalance,
+            Array.isArray(data.ppe) ? data.ppe : [],
+            data.endDate || data.periodEndDate || data.financialDate
+        );
+    }
 
     return wb;
 }
