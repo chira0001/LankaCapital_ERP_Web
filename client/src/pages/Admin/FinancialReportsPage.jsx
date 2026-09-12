@@ -222,9 +222,11 @@ const FinancialReportsPage = () => {
       const arrayBuffer = await response.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: "array", cellStyles: true });
 
-      // PPE only (for now)
-      if (Array.isArray(data.ppe)) {
-        fillPPEWorksheet(wb, data.ppe);
+      const ppeRows =
+        Array.isArray(data?.ppe) ? data.ppe : reportType === "ppe" && Array.isArray(data) ? data : [];
+
+      if (ppeRows.length > 0 || reportType === "ppe") {
+        fillPPEWorksheet(wb, ppeRows);
       }
 
       if (data.working) {
@@ -235,7 +237,7 @@ const FinancialReportsPage = () => {
         fillTBWorksheet(
           wb,
           data.tb || data.trialBalance,
-          Array.isArray(data.ppe) ? data.ppe : [],
+          ppeRows,
           endDate
         );
       }

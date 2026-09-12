@@ -268,6 +268,60 @@ function setRowBold(ws, row0, maxCol) {
     }
 }
 
+function applyCellStylePatch(ws, row0, col, patch) {
+    const cell = ws[addrOf(row0, col)] || (ws[addrOf(row0, col)] = { t: "s", v: "" });
+    cell.s = {
+        ...(cell.s || {}),
+        ...patch,
+        font: { ...(cell.s?.font || {}), ...(patch.font || {}) },
+        alignment: { ...(cell.s?.alignment || {}), ...(patch.alignment || {}) },
+        border: { ...(cell.s?.border || {}), ...(patch.border || {}) },
+    };
+}
+
+function applyPPEWorksheetStyle(ws, headerRow0, startRow0, totalRow0, maxCol) {
+    const thinBorder = {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } },
+    };
+
+    applyCellStylePatch(ws, 0, 0, {
+        font: { bold: true },
+        alignment: { horizontal: "left", vertical: "center" },
+    });
+
+    for (let row0 = headerRow0; row0 <= totalRow0; row0++) {
+        for (let col = 0; col <= maxCol; col++) {
+            applyCellStylePatch(ws, row0, col, {
+                border: thinBorder,
+                alignment: { vertical: "center", wrapText: row0 === headerRow0 },
+            });
+        }
+    }
+
+    for (let col = 0; col <= maxCol; col++) {
+        applyCellStylePatch(ws, headerRow0, col, {
+            font: { bold: true },
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        });
+        applyCellStylePatch(ws, totalRow0, col, {
+            font: { bold: true },
+            alignment: { vertical: "center" },
+        });
+    }
+
+    for (let row0 = startRow0; row0 <= totalRow0; row0++) {
+        applyCellStylePatch(ws, row0, 0, { alignment: { horizontal: "left", vertical: "center" } });
+        [2, 3, 5, 6].forEach((col) =>
+            applyCellStylePatch(ws, row0, col, {
+                alignment: { horizontal: "right", vertical: "center" },
+            })
+        );
+    }
+}
+
 function shiftRows(ws, startRow0, delta, workbookContext) {
     if (delta === 0) return;
     shiftFormulaRows(ws, startRow0, delta, workbookContext?.wb, workbookContext?.sheetName);
@@ -379,25 +433,28 @@ export function fillPPEWorksheet(wb, ppeRows) {
         DATE: 5,
         DEP_AMOUNT: 6,
     };
-    const maxCol = COLS.DEP_AMOUNT;
+    const valueMaxCol = COLS.DEP_AMOUNT;
+    const maxCol = Math.max(range0.e.c, valueMaxCol);
+    
+    let totalsRow0 = findCellByTextInsensitive(ws, "Total", { col: COLS.ASSET })?.r ?? null;
+    let dummyCount = totalsRow0 !== null ? Math.max(totalsRow0 - startRow0, 0) : 0;
 
-    let dummyCount = 0;
-    let totalsRow0 = null;
-
-    for (let r = startRow0; r <= range0.e.r; r++) {
-        const assetVal = getCell(ws, r, COLS.ASSET)?.v;
-        if (!isBlank(assetVal)) {
-            dummyCount++;
-            continue;
-        }
-        if (dummyCount > 0) {
-            totalsRow0 = r;
-            break;
+    if (totalsRow0 === null) {
+        for (let r = startRow0; r <= range0.e.r; r++) {
+            const assetVal = getCell(ws, r, COLS.ASSET)?.v;
+            if (!isBlank(assetVal)) {
+                dummyCount++;
+                continue;
+            }
+            if (dummyCount > 0) {
+                totalsRow0 = r;
+                break;
+            }
         }
     }
 
     if (dummyCount === 0) {
-        dummyCount = 2;
+        dummyCount = 1;
         totalsRow0 = startRow0 + dummyCount;
     }
     if (totalsRow0 === null) totalsRow0 = startRow0 + dummyCount;
@@ -428,71 +485,74 @@ export function fillPPEWorksheet(wb, ppeRows) {
         const purchasedSerial = parseToSerial(item.monthOfPurchased);
         const depStartSerial = parseToSerial(item.monthStartingDepreciation);
 
-        setCellValuePreserveStyle(ws, r0, COLS.ASSET, { t: "s", v: item.asset ?? "" });
+        setCellValueAllowFormula(ws, r0, COLS.ASSET, { t: "s", v: item.asset ?? "" });
 
-        setCellValuePreserveStyle(ws, r0, COLS.PURCHASED, {
+        setCellValueAllowFormula(ws, r0, COLS.PURCHASED, {
             t: "n",
             v: purchasedSerial ?? "",
             z: dateNumFmt,
             numFmt: dateNumFmt,
         });
 
-        setCellValuePreserveStyle(ws, r0, COLS.RATE, {
+        setCellValueAllowFormula(ws, r0, COLS.RATE, {
             t: "n",
             v: Number(item.rate ?? 0) || 0,
         });
 
-        setCellValuePreserveStyle(ws, r0, COLS.AMOUNT, {
+        setCellValueAllowFormula(ws, r0, COLS.AMOUNT, {
             t: "n",
             v: Number(item.amount ?? 0) || 0,
         });
 
-        setCellValuePreserveStyle(ws, r0, COLS.DEP_START, {
+        setCellValueAllowFormula(ws, r0, COLS.DEP_START, {
             t: "n",
             v: depStartSerial ?? "",
             z: dateNumFmt,
             numFmt: dateNumFmt,
         });
 
-        setCellValuePreserveStyle(ws, r0, COLS.DATE, {
+        setCellValueAllowFormula(ws, r0, COLS.DATE, {
             t: "n",
             v: Number(item.date ?? 0) || 0,
+        });
+
+        setCellValueAllowFormula(ws, r0, COLS.DEP_AMOUNT, {
+            t: "n",
+            v: Number(item.depreciationAmount ?? 0) || 0,
         });
     }
 
     if (desiredCount < dummyCount) {
         for (let r0 = startRow0 + desiredCount; r0 < startRow0 + dummyCount; r0++) {
             cloneTemplateRowTo(ws, templateRow0, r0, maxCol);
-            setCellValuePreserveStyle(ws, r0, COLS.ASSET, { t: "s", v: "" });
-            setCellValuePreserveStyle(ws, r0, COLS.PURCHASED, { t: "s", v: "", z: dateNumFmt });
-            setCellValuePreserveStyle(ws, r0, COLS.RATE, { t: "s", v: "" });
-            setCellValuePreserveStyle(ws, r0, COLS.AMOUNT, { t: "s", v: "" });
-            setCellValuePreserveStyle(ws, r0, COLS.DEP_START, { t: "s", v: "", z: dateNumFmt });
-            setCellValuePreserveStyle(ws, r0, COLS.DATE, { t: "s", v: "" });
+            setCellValueAllowFormula(ws, r0, COLS.ASSET, { t: "s", v: "" });
+            setCellValueAllowFormula(ws, r0, COLS.PURCHASED, { t: "s", v: "", z: dateNumFmt });
+            setCellValueAllowFormula(ws, r0, COLS.RATE, { t: "s", v: "" });
+            setCellValueAllowFormula(ws, r0, COLS.AMOUNT, { t: "s", v: "" });
+            setCellValueAllowFormula(ws, r0, COLS.DEP_START, { t: "s", v: "", z: dateNumFmt });
+            setCellValueAllowFormula(ws, r0, COLS.DATE, { t: "s", v: "" });
+            setCellValueAllowFormula(ws, r0, COLS.DEP_AMOUNT, { t: "s", v: "" });
         }
     }
 
     const firstDataRowNum1 = startRow0 + 1;
     const lastDataRowNum1 = startRow0 + desiredCount;
 
-    const updateSumIfFormula = (r0, c, colLetter) => {
-        const cell = getCell(ws, r0, c);
-        if (!cell || !cell.f) return;
-
-        if (desiredCount <= 0) {
-            cell.f = "0";
-            cell.v = 0;
-            cell.t = "n";
-            return;
-        }
-
-        cell.f = `SUM(${colLetter}${firstDataRowNum1}:${colLetter}${lastDataRowNum1})`;
-        cell.v = 0;
-        cell.t = "n";
+    const updateSumFormula = (r0, c, colLetter) => {
+        setCellValueAllowFormula(ws, r0, c, {
+            t: "n",
+            v: 0,
+            f:
+                desiredCount > 0
+                    ? `SUM(${colLetter}${firstDataRowNum1}:${colLetter}${lastDataRowNum1})`
+                    : "0",
+        });
     };
 
-    updateSumIfFormula(newTotalsRow0, COLS.AMOUNT, "D");
-    updateSumIfFormula(newTotalsRow0, COLS.DEP_AMOUNT, "G");
+    setCellValueAllowFormula(ws, newTotalsRow0, COLS.ASSET, { t: "s", v: "Total" });
+    updateSumFormula(newTotalsRow0, COLS.AMOUNT, "D");
+    updateSumFormula(newTotalsRow0, COLS.DEP_AMOUNT, "G");
+    applyPPEWorksheetStyle(ws, startRow0 - 1, startRow0, newTotalsRow0, valueMaxCol);
 
     const newRange = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
     if (delta > 0 && totalsRow0 <= newRange.e.r) newRange.e.r += delta;

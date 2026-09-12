@@ -571,7 +571,11 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
     if (!data) return null;
 
     if (Array.isArray(data)) {
-        return <GenericTable data={data} title={humanTitle(reportType)} />;
+        return reportType === "ppe" ? (
+            <PPETable data={data} />
+        ) : (
+            <GenericTable data={data} title={humanTitle(reportType)} />
+        );
     }
 
     return (
