@@ -51,6 +51,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return value == null ? BigDecimal.ZERO : value;
     }
 
+    @Transactional
     private List<PPE> generatePPE() {
         List<AssetsRegistry> assetsRegistries = assetsRegistryRepository.findAll();
         List<PPE> ppeList = new ArrayList<>();
@@ -78,6 +79,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return ppeList;
     }
 
+    @Transactional
     private WORKING generateWORKING(LocalDate beginPeriod, LocalDate endPeriod){
 
         String startDate = beginPeriod.format(DateTimeFormatter.ofPattern("yyyy-MM"));
@@ -102,17 +104,13 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return working;
     }
 
+    @Transactional
     private TRIALBALANCE generateTRIALBALANCE(LocalDate beginPeriod, LocalDate endPeriod) {
-
-        // 1) DB trial balance rows
-        List<TrialBalanceData> rows =
-                trialBalanceDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
-
+        List<TrialBalanceData> rows = trialBalanceDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
         List<TrialBalanceDataDto> baseDtos = rows.stream()
                 .map(PPE_WORKING_Mapper::mapToDto)
                 .toList();
 
-        // 2) Group by AccountType
         Map<AccountType, List<TrialBalanceDataDto>> grouped = baseDtos.stream()
                 .collect(Collectors.groupingBy(
                         TrialBalanceDataDto::getAccountType,
@@ -120,13 +118,11 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                         Collectors.toCollection(ArrayList::new)
                 ));
 
-        // 3) OPTIONAL: add PPE lines into Assets (append, not overwrite)
         List<TrialBalanceDataDto> ppeDtos = generatePPE().stream()
                 .map(PPE_WORKING_Mapper::mapToTrialBalanceDataDtoFromPPE)
                 .toList();
         grouped.computeIfAbsent(AccountType.Assets, k -> new ArrayList<>()).addAll(ppeDtos);
 
-        // 4) OPTIONAL: add PettyCash admin expenses into Expenses (append, not overwrite)
         List<WorkingAdministrativeExpenseDto> expenseDtos =
                 pettyCashRepository.fetchApprovedPettyCashAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
 
@@ -135,7 +131,6 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 .toList();
         grouped.computeIfAbsent(AccountType.Expenses, k -> new ArrayList<>()).addAll(expenseTbDtos);
 
-        // 5) Build response object (never return null lists)
         TRIALBALANCE tb = new TRIALBALANCE();
         tb.setBankAccounts(grouped.getOrDefault(AccountType.BankAccounts, List.of()));
         tb.setAssets(grouped.getOrDefault(AccountType.Assets, List.of()));
@@ -168,7 +163,6 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("working",generateWORKING(beginPeriod, endPeriod));
                 data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
             }
-
             return data;
         } catch (Exception e) {
             throw new RuntimeException(e);

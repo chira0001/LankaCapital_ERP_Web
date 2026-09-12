@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import React, { memo, useCallback, useMemo } from "react";
 
 const formatCurrency = (value) => {
@@ -72,7 +73,7 @@ const TableRow = ({ row, columns, rowIndex }) => (
             <td
                 key={idx}
                 className={`px-3 py-2 text-gray-700 ${col.align === "right" ? "text-right" : ""
-                    } ${col.bold ? "font-semibold text-gray-900" : ""}`}
+                    } ${col.bold ? "text-gray-400" : ""}`}
             >
                 {col.render ? col.render(row, rowIndex) : row?.[col.key] ?? "-"}
             </td>
@@ -261,6 +262,164 @@ const WorkingTable = memo(function WorkingTable({ data }) {
     );
 });
 
+// TB Table (Trial Balance)
+const TBTable = memo(function TBTable({ data, endDateVal }) {
+    const tb = data || {};
+    const end = endDateVal || dayjs();
+
+    const sectionOrder = useMemo(
+        () => [
+            { key: "BankAccounts", label: "Bank accounts" },
+            { key: "Assets", label: "Assets" },
+            { key: "Liabilities", label: "Liabilities" },
+            { key: "Equity", label: "Equity" },
+            { key: "Income", label: "Income" },
+            { key: "Expenses", label: "Expenses" },
+        ],
+        []
+    );
+
+    const normalizeSection = useCallback((items) => {
+        const rows = Array.isArray(items) ? items : [];
+        const map = new Map();
+
+        rows.forEach((it) => {
+            const name = it?.accountName ?? "-";
+            const amount = Number(it?.amount ?? 0);
+            const type = String(it?.transactionType ?? "").toUpperCase();
+
+            if (!Number.isFinite(amount)) return;
+
+            const cur = map.get(name) || { accountName: name, dr: 0, cr: 0 };
+            if (type === "CR") cur.cr += amount;
+            else cur.dr += amount; // default DR
+            map.set(name, cur);
+        });
+
+        // Net to one side (like a TB)
+        return Array.from(map.values()).map((r) => {
+            const net = (Number(r.dr) || 0) - (Number(r.cr) || 0);
+            if (net >= 0) return { accountName: r.accountName, dr: net, cr: 0 };
+            return { accountName: r.accountName, dr: 0, cr: Math.abs(net) };
+        });
+    }, []);
+
+    const { sections, totals } = useMemo(() => {
+        const built = sectionOrder.map(({ key, label }) => {
+            const rows = normalizeSection(tb?.[key]);
+            const sectionTotal = rows.reduce(
+                (acc, r) => {
+                    acc.dr += Number(r.dr) || 0;
+                    acc.cr += Number(r.cr) || 0;
+                    return acc;
+                },
+                { dr: 0, cr: 0 }
+            );
+
+            return { key, label, rows, sectionTotal };
+        });
+
+        const totals = built.reduce(
+            (acc, s) => {
+                acc.dr += Number(s.sectionTotal.dr) || 0;
+                acc.cr += Number(s.sectionTotal.cr) || 0;
+                return acc;
+            },
+            { dr: 0, cr: 0 }
+        );
+
+        return { sections: built, totals };
+    }, [tb, sectionOrder, normalizeSection]);
+
+    const difference = (Number(totals.dr) || 0) - (Number(totals.cr) || 0);
+
+    const columns = useMemo(
+        () => [
+            { key: "accountName", label: "Accounts", bold: true },
+            {
+                key: "dr",
+                label: "Dr",
+                align: "right",
+                render: (row) => (row?.dr ? formatCurrency(row.dr) : "-"),
+            },
+            {
+                key: "cr",
+                label: "Cr",
+                align: "right",
+                render: (row) => (row?.cr ? formatCurrency(row.cr) : "-"),
+            },
+        ],
+        []
+    );
+
+    const hasAnyRows = sections.some((s) => (s.rows || []).length > 0);
+
+    if (!hasAnyRows) {
+        return (
+            <div className="rounded-lg border border-dashed bg-gray-50 p-4 text-sm text-gray-600">
+                No data available
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-2">
+            <div className="flex flex-col items-center">
+                <span>N K R S Lanka Capital Pvt Ltd</span>
+                <span>Trial Balance</span>
+                <span>As at {end}</span>
+            </div>
+            <TableWrapper>
+                <TableHeader columns={columns} />
+                <tbody className="bg-white">
+                    {sections.map((section) => (
+                        <React.Fragment key={section.key}>
+                            {/* Section header row (like the uploaded image) */}
+                            <tr className="border-t bg-gray-50">
+                                <td className="px-3 py-2 font-semibold text-gray-900">
+                                    {section.label}
+                                </td>
+                                <td className="px-3 py-2" />
+                                <td className="px-3 py-2" />
+                            </tr>
+
+                            {/* Section rows */}
+                            {(section.rows || []).map((row, idx) => (
+                                <TableRow
+                                    key={`${section.key}-${row.accountName}-${idx}`}
+                                    row={row}
+                                    columns={columns}
+                                    rowIndex={idx}
+                                />
+                            ))}
+                        </React.Fragment>
+                    ))}
+
+                    {/* Total row */}
+                    <tr className="border-t bg-gray-50 font-semibold">
+                        <td className="px-3 py-2 text-gray-900">Total</td>
+                        <td className="px-3 py-2 text-right font-semibold text-gray-900">
+                            {formatCurrency(totals.dr)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold text-gray-900">
+                            {formatCurrency(totals.cr)}
+                        </td>
+                    </tr>
+
+                    {/* Difference row (to resemble the bottom line in the image) */}
+                    <tr className="border-t">
+                        <td className="px-3 py-2 text-gray-700"></td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                            {difference ? formatCurrency(difference) : "-"}
+                        </td>
+                        <td className="px-3 py-2"></td>
+                    </tr>
+                </tbody>
+            </TableWrapper>
+        </div>
+    );
+});
+
 // Generic Table (for other report types)
 const GenericTable = memo(function GenericTable({ data, title }) {
     const rows = Array.isArray(data) ? data : [];
@@ -305,8 +464,7 @@ const GenericTable = memo(function GenericTable({ data, title }) {
     );
 });
 
-// Main ReportTables component
-const ReportTables = memo(function ReportTables({ data, reportType }) {
+const ReportTables = memo(function ReportTables({ data, end, reportType }) {
     const sortedSections = useMemo(() => {
         if (!data) return [];
 
@@ -364,6 +522,10 @@ const ReportTables = memo(function ReportTables({ data, reportType }) {
 
         if (key === "working" || type === "working") {
             return <WorkingTable data={value} />;
+        }
+
+        if (key === "tb" || key === "trialBalance") {
+            return <TBTable data={value} endDateVal={end} />;
         }
 
         // Handle nested objects for other types

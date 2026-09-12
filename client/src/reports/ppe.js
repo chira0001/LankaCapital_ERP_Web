@@ -1,9 +1,6 @@
 import XLSX from "xlsx-js-style";
 import dayjs from "dayjs";
 
-/**
- * Case-insensitive sheet getter
- */
 function getSheetByNameInsensitive(wb, desiredName) {
     const found =
         wb.SheetNames.find(
@@ -13,9 +10,6 @@ function getSheetByNameInsensitive(wb, desiredName) {
     return { sheetName: found, ws: wb.Sheets[found] };
 }
 
-/**
- * Shared helpers (PPE + Working)
- */
 function makeDateSerialHelpers(wb) {
     const date1904 = !!wb?.Workbook?.WBProps?.date1904;
 
@@ -29,8 +23,6 @@ function makeDateSerialHelpers(wb) {
     const parseToSerial = (value) => {
         if (!value) return null;
         if (value instanceof Date) return toExcelSerial(value);
-
-        // Most common: "2026-06-01" or ISO datetime
         if (typeof value === "string" || typeof value === "number") {
             const d = dayjs(value);
             if (!d.isValid()) return null;
@@ -51,14 +43,11 @@ function getCell(ws, r, c) {
     return ws[addrOf(r, c)];
 }
 
-/**
- * PPE behavior: do NOT create missing cells (preserve template only)
- */
 function setCellValuePreserveStyle(ws, r, c, { t, v, z, numFmt }) {
     const a = addrOf(r, c);
     const cell = ws[a];
     if (!cell) return;
-    if (cell.f) return; // do not override formulas
+    if (cell.f) return;
 
     cell.t = t;
     cell.v = v;
@@ -71,9 +60,6 @@ function setCellValuePreserveStyle(ws, r, c, { t, v, z, numFmt }) {
     }
 }
 
-/**
- * Working fallback behavior: create if missing (still won't override formulas)
- */
 function setCellValueCreateIfMissing(ws, r, c, { t, v, z, numFmt }) {
     const a = addrOf(r, c);
     const cell = ws[a] || (ws[a] = {});
@@ -100,11 +86,9 @@ function cloneTemplateRowTo(ws, templateRow0, targetRow0, maxCol) {
 
         const src = ws[srcAddr];
         if (!src) continue;
-        if (ws[dstAddr]) continue; // keep existing cell (preserve style of already-created rows)
+        if (ws[dstAddr]) continue;
 
         const cloned = { ...src };
-
-        // Adjust row refs inside formulas when cloning the template row
         if (cloned.f) {
             cloned.f = String(cloned.f).replace(
                 /(\$?[A-Z]{1,3})(\$?)(\d+)/g,
@@ -303,11 +287,6 @@ function setTotalFormula(ws, row0, col, colLetter, firstDataRow0, itemCount) {
     cell.t = "n";
 }
 
-/**
- * ---------------------------
- * PPE (unchanged behavior, but uses shared helpers)
- * ---------------------------
- */
 export function fillPPEWorksheet(wb, ppeRows) {
     if (!wb) throw new Error("Worksheet missing");
     if (!Array.isArray(ppeRows)) throw new Error("PPE Rows must be an array");
@@ -349,7 +328,6 @@ export function fillPPEWorksheet(wb, ppeRows) {
     };
     const maxCol = COLS.DEP_AMOUNT;
 
-    // detect dummy rows and totals row
     let dummyCount = 0;
     let totalsRow0 = null;
 
@@ -429,7 +407,6 @@ export function fillPPEWorksheet(wb, ppeRows) {
         });
     }
 
-    // clear remaining placeholders
     if (desiredCount < dummyCount) {
         for (let r0 = startRow0 + desiredCount; r0 < startRow0 + dummyCount; r0++) {
             cloneTemplateRowTo(ws, templateRow0, r0, maxCol);
@@ -442,7 +419,6 @@ export function fillPPEWorksheet(wb, ppeRows) {
         }
     }
 
-    // update totals formulas if present
     const firstDataRowNum1 = startRow0 + 1;
     const lastDataRowNum1 = startRow0 + desiredCount;
 
@@ -465,17 +441,12 @@ export function fillPPEWorksheet(wb, ppeRows) {
     updateSumIfFormula(newTotalsRow0, COLS.AMOUNT, "D");
     updateSumIfFormula(newTotalsRow0, COLS.DEP_AMOUNT, "G");
 
-    // update !ref
     const newRange = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
     if (delta > 0 && totalsRow0 <= newRange.e.r) newRange.e.r += delta;
     newRange.e.r = Math.max(newRange.e.r, newTotalsRow0, startRow0 + desiredCount);
     ws["!ref"] = XLSX.utils.encode_range(newRange);
 }
 
-/**
- * Populate Working from top to bottom. Each next section is found only after
- * the previous one has been resized, so headings never depend on fixed rows.
- */
 export function fillWorkingWorksheet(wb, working) {
     if (!wb) throw new Error("Workbook missing");
     if (!working) throw new Error("Working data missing");

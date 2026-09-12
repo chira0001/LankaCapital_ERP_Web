@@ -741,7 +741,6 @@ const FinancialReportsPage = () => {
               </select>
             </div>
 
-            {/* Remove generate button and automatically generate when selection changes */}
             <Button onClick={handleGenerate} disabled={loading}>
               {loading ? "Loading..." : "Generate"}
             </Button>
@@ -771,7 +770,7 @@ const FinancialReportsPage = () => {
               Select report type and generate
             </div>
           ) : (
-            <ReportTables data={data} reportType={reportType} />
+            <ReportTables data={data} end={endDate} reportType={reportType} />
           )}
         </section>
       </div>
