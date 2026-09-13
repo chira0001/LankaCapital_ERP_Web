@@ -420,6 +420,162 @@ const TBTable = memo(function TBTable({ data, endDateVal }) {
     );
 });
 
+const formatEquityDate = (value) => {
+    const parsed = value ? dayjs(value) : null;
+    if (!parsed?.isValid()) return "";
+
+    const day = parsed.date();
+    const suffix =
+        day % 10 === 1 && day !== 11
+            ? "st"
+            : day % 10 === 2 && day !== 12
+                ? "nd"
+                : day % 10 === 3 && day !== 13
+                    ? "rd"
+                    : "th";
+
+    return `${String(day).padStart(2, "0")}${suffix} ${parsed.format("MMMM YYYY")}`;
+};
+
+const readFirstNumberFromMap = (map, preferredKey = null) => {
+    if (!map || typeof map !== "object") return 0;
+    if (preferredKey && Object.prototype.hasOwnProperty.call(map, preferredKey)) {
+        const preferred = Number(map[preferredKey]);
+        return Number.isFinite(preferred) ? preferred : 0;
+    }
+
+    const firstValue = Object.values(map)[0];
+    const number = Number(firstValue);
+    return Number.isFinite(number) ? number : 0;
+};
+
+const findShareCapitalFromTB = (tb) => {
+    if (!tb || typeof tb !== "object") return null;
+    const equityRows = tb.Equity || tb.equity || [];
+    if (!Array.isArray(equityRows)) return null;
+
+    const row = equityRows.find(
+        (item) => String(item?.accountName ?? "").trim().toLowerCase() === "share capital"
+    );
+    if (!row) return null;
+
+    const amount = Number(row.amount ?? 0);
+    if (!Number.isFinite(amount)) return null;
+
+    const transactionType = String(row.transactionType ?? "").trim().toUpperCase();
+    return transactionType === "DR" ? -amount : amount;
+};
+
+const CETable = memo(function CETable({ data, tb, endDateVal }) {
+    const ce = data || {};
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const openingDate = end?.isValid()
+        ? end.subtract(1, "year").add(1, "day")
+        : null;
+
+    const openingStated = readFirstNumberFromMap(ce.statedCapitalBalance);
+    const openingRetained = readFirstNumberFromMap(ce.retainedEarningBalance);
+    const sharesStated = findShareCapitalFromTB(tb);
+    const sharesRetained = readFirstNumberFromMap(ce.retainedEarningShares, "Shares Issued");
+    const profitStated = readFirstNumberFromMap(
+        ce.statedCapitalPL,
+        "Profit or Loss for the Period"
+    );
+
+    const safeNumber = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+    const rows = [
+        {
+            item: `Balance as at ${openingDate ? formatEquityDate(openingDate) : "-"}`,
+            statedCapital: openingStated,
+            retainedEarnings: openingRetained,
+        },
+        {
+            item: "Shares Issued",
+            statedCapital: sharesStated,
+            retainedEarnings: sharesRetained,
+        },
+        {
+            item: "Profit/(Loss) for the Period",
+            statedCapital: profitStated,
+            retainedEarnings: null,
+        },
+    ].map((row) => ({
+        ...row,
+        total: safeNumber(row.statedCapital) + safeNumber(row.retainedEarnings),
+    }));
+
+    const closing = rows.reduce(
+        (acc, row) => ({
+            statedCapital: acc.statedCapital + safeNumber(row.statedCapital),
+            retainedEarnings: acc.retainedEarnings + safeNumber(row.retainedEarnings),
+            total: acc.total + safeNumber(row.total),
+        }),
+        { statedCapital: 0, retainedEarnings: 0, total: 0 }
+    );
+
+    const statementEnd = end?.isValid() ? formatEquityDate(end) : "-";
+
+    const renderValue = (value) =>
+        value === null || value === undefined ? "-" : formatCurrency(value);
+
+    return (
+        <div className="space-y-3">
+            <div className="text-sm font-semibold uppercase text-gray-900">
+                <div>N K R S LANKA CAPITAL (PRIVATE) LIMITED</div>
+                <div>STATEMENT OF CHANGES IN EQUITY</div>
+                <div>FOR THE PERIOD ENDED {String(statementEnd).toUpperCase()}</div>
+            </div>
+
+            <TableWrapper>
+                <thead className="bg-white">
+                    <tr>
+                        <th className="border-b px-3 py-2 text-left"></th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                            Stated Capital<br />Rs.
+                        </th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                            Retained Earnings<br />Rs.
+                        </th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                            Total<br />Rs.
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white">
+                    {rows.map((row, idx) => (
+                        <tr key={idx} className="border-t">
+                            <td className="px-3 py-2 font-medium text-gray-900">{row.item}</td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                                {renderValue(row.statedCapital)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                                {renderValue(row.retainedEarnings)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-700">
+                                {renderValue(row.total)}
+                            </td>
+                        </tr>
+                    ))}
+                    <tr className="border-t-2 border-gray-900 font-semibold">
+                        <td className="px-3 py-2 text-gray-900">
+                            Balance as at {statementEnd}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                            {formatCurrency(closing.statedCapital)}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                            {formatCurrency(closing.retainedEarnings)}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-900">
+                            {formatCurrency(closing.total)}
+                        </td>
+                    </tr>
+                </tbody>
+            </TableWrapper>
+        </div>
+    );
+});
+
 // Generic Table (for other report types)
 const GenericTable = memo(function GenericTable({ data, title }) {
     const rows = Array.isArray(data) ? data : [];
@@ -528,6 +684,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
             return <TBTable data={value} endDateVal={end} />;
         }
 
+        if (key === "ce" || key === "equityChanges") {
+            return <CETable data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
         // Handle nested objects for other types
         if (value && typeof value === "object" && !Array.isArray(value)) {
             // Check if it has array properties
@@ -566,7 +726,7 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         }
 
         return <GenericTable data={value} title={humanTitle(key)} />;
-    }, []);
+    }, [data, end]);
 
     if (!data) return null;
 

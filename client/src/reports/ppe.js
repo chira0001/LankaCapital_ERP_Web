@@ -768,6 +768,23 @@ function formatTrialBalanceDate(value) {
     return `${day}${suffix} ${parsed.format("MMMM YYYY")}`;
 }
 
+function formatEquityDate(value) {
+    const parsed = value ? dayjs(value) : null;
+    if (!parsed?.isValid()) return null;
+
+    const day = parsed.date();
+    const suffix =
+        day % 10 === 1 && day !== 11
+            ? "st"
+            : day % 10 === 2 && day !== 12
+                ? "nd"
+                : day % 10 === 3 && day !== 13
+                    ? "rd"
+                    : "th";
+
+    return `${String(day).padStart(2, "0")}${suffix} ${parsed.format("MMMM YYYY")}`;
+}
+
 function findPPEDataStartRow0(ws) {
     const header = findCellByTextInsensitive(ws, "Asset", { col: 0 });
     return header ? header.r + 1 : 3;
@@ -992,6 +1009,140 @@ export function fillTBWorksheet(wb, tb, ppeRows = [], endDate = null) {
     [0, 1, 2, headerRow.r].forEach((boldRow0) => setRowBold(ws, boldRow0, valueMaxCol));
 }
 
+function findTrialBalanceAccountRow(ws, accountName) {
+    const wanted = String(accountName).trim().toLowerCase();
+
+    for (const address of Object.keys(ws || {})) {
+        if (address.startsWith("!")) continue;
+        const cell = ws[address];
+        if (typeof cell?.v !== "string") continue;
+        if (cell.v.trim().toLowerCase() !== wanted) continue;
+
+        const decoded = XLSX.utils.decode_cell(address);
+        if (decoded.c === 0) return decoded.r;
+    }
+
+    return null;
+}
+
+function readFirstNumberFromMap(map, preferredKey = null) {
+    if (!map || typeof map !== "object") return 0;
+
+    if (preferredKey && Object.prototype.hasOwnProperty.call(map, preferredKey)) {
+        const preferred = Number(map[preferredKey]);
+        return Number.isFinite(preferred) ? preferred : 0;
+    }
+
+    const firstValue = Object.values(map)[0];
+    const number = Number(firstValue);
+    return Number.isFinite(number) ? number : 0;
+}
+
+export function fillCEWorksheet(wb, ce, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+    if (!ce || typeof ce !== "object") throw new Error("CE data missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "CE");
+    if (!ws) throw new Error("CE sheet not found in template");
+
+    const COLS = {
+        LABEL: 0,
+        STATED_CAPITAL: 4,
+        RETAINED_EARNINGS: 6,
+        TOTAL: 8,
+    };
+
+    const safeNum = (value) => {
+        const number = Number(value ?? 0);
+        return Number.isFinite(number) ? number : 0;
+    };
+
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    if (periodEnd?.isValid()) {
+        const openingDate = periodEnd.subtract(1, "year").add(1, "day");
+        const formattedEnd = formatEquityDate(periodEnd);
+        const formattedOpening = formatEquityDate(openingDate);
+
+        setCellValueAllowFormula(ws, 2, COLS.LABEL, {
+            t: "s",
+            v: `FOR THE PERIOD ENDED ${formattedEnd.toUpperCase()}`,
+        });
+        setCellValueAllowFormula(ws, 6, COLS.LABEL, {
+            t: "s",
+            v: `Balance as at ${formattedOpening}`,
+        });
+        setCellValueAllowFormula(ws, 12, COLS.LABEL, {
+            t: "s",
+            v: `Balance as at ${formattedEnd}`,
+        });
+    }
+
+    setCellValueAllowFormula(ws, 6, COLS.STATED_CAPITAL, {
+        t: "n",
+        v: safeNum(readFirstNumberFromMap(ce.statedCapitalBalance)),
+    });
+    setCellValueAllowFormula(ws, 6, COLS.RETAINED_EARNINGS, {
+        t: "n",
+        v: safeNum(readFirstNumberFromMap(ce.retainedEarningBalance)),
+    });
+    setCellValueAllowFormula(ws, 8, COLS.RETAINED_EARNINGS, {
+        t: "n",
+        v: safeNum(readFirstNumberFromMap(ce.retainedEarningShares, "Shares Issued")),
+    });
+    setCellValueAllowFormula(ws, 10, COLS.STATED_CAPITAL, {
+        t: "n",
+        v: safeNum(readFirstNumberFromMap(ce.statedCapitalPL, "Profit or Loss for the Period")),
+    });
+
+    const tbSheetName = getSheetByNameInsensitive(wb, "TB").sheetName;
+    const tbWs = wb.Sheets[tbSheetName];
+    const shareCapitalRow0 = findTrialBalanceAccountRow(tbWs, "Share capital");
+    if (shareCapitalRow0 !== null) {
+        const rowNum1 = shareCapitalRow0 + 1;
+        setCellValueAllowFormula(ws, 8, COLS.STATED_CAPITAL, {
+            t: "n",
+            v: 0,
+            f: `'${tbSheetName}'!C${rowNum1}`,
+        });
+    }
+
+    setCellValueAllowFormula(ws, 6, COLS.TOTAL, {
+        t: "n",
+        v: 0,
+        f: `E7+G7`,
+    });
+    setCellValueAllowFormula(ws, 8, COLS.TOTAL, {
+        t: "n",
+        v: 0,
+        f: `E9+G9`,
+    });
+    setCellValueAllowFormula(ws, 10, COLS.TOTAL, {
+        t: "n",
+        v: 0,
+        f: `E11+G11`,
+    });
+    setCellValueAllowFormula(ws, 12, COLS.STATED_CAPITAL, {
+        t: "n",
+        v: 0,
+        f: `SUM(E7:E11)`,
+    });
+    setCellValueAllowFormula(ws, 12, COLS.RETAINED_EARNINGS, {
+        t: "n",
+        v: 0,
+        f: `SUM(G7:G11)`,
+    });
+    setCellValueAllowFormula(ws, 12, COLS.TOTAL, {
+        t: "n",
+        v: 0,
+        f: `SUM(I7:I11)`,
+    });
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:J23");
+    range.e.r = Math.max(range.e.r, 12);
+    range.e.c = Math.max(range.e.c, COLS.TOTAL);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+}
+
 export function fillFinancialTemplate(wb, data) {
     if (!wb) throw new Error("Workbook missing");
     if (!data || typeof data !== "object") throw new Error("Data missing");
@@ -1003,6 +1154,13 @@ export function fillFinancialTemplate(wb, data) {
             wb,
             data.tb || data.trialBalance,
             Array.isArray(data.ppe) ? data.ppe : [],
+            data.endDate || data.periodEndDate || data.financialDate
+        );
+    }
+    if (data.ce) {
+        fillCEWorksheet(
+            wb,
+            data.ce,
             data.endDate || data.periodEndDate || data.financialDate
         );
     }

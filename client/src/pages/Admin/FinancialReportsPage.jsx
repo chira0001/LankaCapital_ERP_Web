@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillCEWorksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -242,12 +242,16 @@ const FinancialReportsPage = () => {
         );
       }
 
+      if (data.ce) {
+        fillCEWorksheet(wb, data.ce, endDate);
+      }
+
       XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);
     } catch (error) {
       console.error(error);
       toast.error("Excel export failed");
     }
-  }, [data, endDate, formatMonth]);
+  }, [data, endDate, formatMonth, reportType]);
 
   const [sectionsOpen, setSectionsOpen] = useState({
     trialBalance: false,

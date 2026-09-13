@@ -4,10 +4,13 @@ import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
 import com.lankacapital.server.dtos.StatementDto.PPE;
+import com.lankacapital.server.entities.reports.EquityChange;
 import com.lankacapital.server.entities.reports.TrialBalanceData;
 import com.lankacapital.server.enums.AccountType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 
 public class PPE_WORKING_Mapper {
     public static WorkingAssetsDto mapToWorkingAssetsDto(PPE ppe){
@@ -47,9 +50,26 @@ public class PPE_WORKING_Mapper {
         TrialBalanceDataDto dto = new TrialBalanceDataDto();
         dto.setAccountName(e.getAccountName());
         dto.setAmount(e.getAmount());
-        dto.setTransactionType(e.getTransactionType()); // "DR" / "CR"
+        dto.setTransactionType(e.getTransactionType());
         dto.setAccountType(e.getAccountType());
         dto.setFinancialDate(e.getFinancialDate());
         return dto;
+    }
+
+    public static HashMap<String, BigDecimal> mapToCEHashMapFromEquityChange(EquityChange change){
+        HashMap<String, BigDecimal> map = new HashMap<>();
+
+        if(change.getDataName().trim().toLowerCase().startsWith("balance")){
+            map.put(change.getDataName(),change.getRetainedEarningAmount());
+            map.put(change.getDataName(),change.getStatedCapitalAmount());
+        }
+        else if(change.getDataName().equalsIgnoreCase("Shares Issued")){
+            map.put(change.getDataName(),change.getRetainedEarningAmount());
+        }
+        else if(change.getDataName().equalsIgnoreCase("Profit or Loss for the Period")){
+            map.put(change.getDataName(),change.getStatedCapitalAmount());
+        }
+
+        return map;
     }
 }
