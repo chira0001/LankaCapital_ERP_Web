@@ -576,6 +576,250 @@ const CETable = memo(function CETable({ data, tb, endDateVal }) {
     );
 });
 
+const formatCashFlowDate = (value) => {
+    const parsed = value ? dayjs(value) : null;
+    if (!parsed?.isValid()) return "31ST MARCH";
+
+    return `${parsed.date()}${formatEquityDate(parsed).replace(/^\d+(st|nd|rd|th)\s/i, "$1 ").toUpperCase()}`;
+};
+
+const findTrialBalanceAmount = (tb, accountName, side = "DR") => {
+    if (!tb || typeof tb !== "object") return null;
+
+    const wanted = String(accountName).trim().toLowerCase();
+    const sections = [
+        tb.BankAccounts,
+        tb.bankAccounts,
+        tb.Assets,
+        tb.assets,
+        tb.Liabilities,
+        tb.liabilities,
+        tb.Equity,
+        tb.equity,
+        tb.Income,
+        tb.income,
+        tb.Expenses,
+        tb.expenses,
+    ];
+
+    const row = sections
+        .filter(Array.isArray)
+        .flat()
+        .find((item) => String(item?.accountName ?? "").trim().toLowerCase() === wanted);
+
+    if (!row) return null;
+
+    const amount = Number(row.amount ?? 0);
+    if (!Number.isFinite(amount)) return null;
+
+    const transactionType = String(row.transactionType ?? "").trim().toUpperCase();
+    if (side === "CR") return transactionType === "DR" ? null : amount;
+    return transactionType === "CR" ? null : amount;
+};
+
+const CashFlowTable = memo(function CashFlowTable({ data, tb, endDateVal }) {
+    const cf = data || {};
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const year = end?.isValid() ? end.format("YYYY") : "2025";
+    const periodEnd = formatCashFlowDate(endDateVal);
+    const openingCashBalance = cf.openingCashBalance;
+    const cashInHandAmount = cf.cashInHandAmount;
+    const incomeTaxPaid = findTrialBalanceAmount(tb, "Income Tax", "DR");
+
+    const renderAmount = (value, { red = false, strong = false, borderTop = false, borderBottom = false } = {}) => {
+        const number = Number(value);
+        const hasValue = value !== null && value !== undefined && value !== "" && Number.isFinite(number);
+        const display = hasValue ? formatCurrency(Math.abs(number)) : "-";
+        const bracketed = hasValue && number < 0 ? `(${display})` : display;
+
+        return (
+            <td
+                className={[
+                    "w-36 border border-gray-200 px-2 py-1.5 text-right tabular-nums text-gray-900",
+                    red ? "bg-white text-black" : "",
+                    strong ? "font-semibold" : "",
+                    borderTop ? "border-t-gray-900" : "",
+                    borderBottom ? "border-b-gray-900" : "",
+                ].join(" ")}
+            >
+                {bracketed}
+            </td>
+        );
+    };
+
+    const LabelCell = ({ children, strong = false, indent = false }) => (
+        <td
+            className={[
+                "border border-gray-200 px-2 py-1.5 text-left text-gray-900",
+                strong ? "font-semibold" : "",
+                indent ? "pl-8" : "",
+            ].join(" ")}
+            colSpan={indent ? 4 : 5}
+        >
+            {children}
+        </td>
+    );
+
+    const SpacerRow = () => (
+        <tr>
+            <td className="border border-gray-200 px-2 py-2" colSpan={6} />
+        </tr>
+    );
+
+    return (
+        <div className="w-full overflow-x-auto rounded-lg border bg-white">
+            <table className="min-w-[980px] border-collapse text-sm">
+                <tbody>
+                    <tr>
+                        <LabelCell strong>N K R S LANKA CAPITAL (PRIVATE) LIMITED</LabelCell>
+                        <td className="border border-gray-200 px-2 py-1.5 text-center font-semibold text-gray-900">
+                            Page 5
+                        </td>
+                    </tr>
+                    <tr>
+                        <LabelCell strong>STATEMENT OF CASH FLOWS</LabelCell>
+                        <td className="border border-gray-200 px-2 py-1.5" />
+                    </tr>
+                    <tr>
+                        <LabelCell strong>FOR THE YEAR PERIOD {periodEnd}</LabelCell>
+                        <td className="border border-gray-200 px-2 py-1.5 text-center font-semibold text-gray-900">
+                            {year}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-2 py-1.5" colSpan={5} />
+                        <td className="border border-gray-200 px-2 py-1.5 text-center font-semibold text-gray-900">
+                            Rs.
+                        </td>
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell strong>Cash flow from Operating Activities</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell>Net Profit before Taxation</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell>Adjustments For:</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Depreciation</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Operating Profit Before Working Capital Changes</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell indent>(Increase)/Decrease in Receivables</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Increase/(Decrease) in Trade Creditors & Other Payable</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Increase/(Decrease) in Director's Current Account</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Cash Generated from Operations</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell indent>Income Tax Paid</LabelCell>
+                        {renderAmount(incomeTaxPaid)}
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-2 py-1.5" colSpan={5} />
+                        {renderAmount(incomeTaxPaid, { borderTop: true })}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Net Cash Flows from Operating Activities</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell strong>Cash Flow from Investing Activities</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Property, Plant and Equipment</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Net Cash Flow from/(Used in) Investing Activities</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell strong>Cash flow from Financing Activities</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Shares Issued</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Net Cash Used in Financing Activities</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+                    <tr>
+                        <LabelCell strong>Net increase/ (Decrease) in Cash & Cash Equivalents</LabelCell>
+                        {renderAmount(null, { strong: true })}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Cash & Cash Equivalents at the Beginning of the Period</LabelCell>
+                        {renderAmount(openingCashBalance, { red: true })}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Cash & Cash Equivalents at the End of the Period</LabelCell>
+                        {renderAmount(null, { borderBottom: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell strong>At the Beginning</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Cash in Hand</LabelCell>
+                        {renderAmount(cashInHandAmount, { red: true })}
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-2 py-1.5" colSpan={5} />
+                        {renderAmount(cashInHandAmount, { borderTop: true, borderBottom: true })}
+                    </tr>
+
+                    <SpacerRow />
+                    <tr>
+                        <LabelCell strong>At the End</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <LabelCell indent>Cash in Hand</LabelCell>
+                        {renderAmount(null)}
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-2 py-1.5" colSpan={5} />
+                        {renderAmount(null, { borderTop: true })}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    );
+});
+
 // Generic Table (for other report types)
 const GenericTable = memo(function GenericTable({ data, title }) {
     const rows = Array.isArray(data) ? data : [];
@@ -686,6 +930,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
 
         if (key === "ce" || key === "equityChanges") {
             return <CETable data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
+        if (key === "cf" || key === "cashFlow") {
+            return <CashFlowTable data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
         // Handle nested objects for other types
