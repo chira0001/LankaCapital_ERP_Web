@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillPPEWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillCEWorksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -222,13 +222,28 @@ const FinancialReportsPage = () => {
       const arrayBuffer = await response.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: "array", cellStyles: true });
 
-      // PPE only (for now)
-      if (Array.isArray(data.ppe)) {
-        fillPPEWorksheet(wb, data.ppe);
+      const ppeRows =
+        Array.isArray(data?.ppe) ? data.ppe : reportType === "ppe" && Array.isArray(data) ? data : [];
+
+      if (ppeRows.length > 0 || reportType === "ppe") {
+        fillPPEWorksheet(wb, ppeRows);
       }
 
       if (data.working) {
         fillWorkingWorksheet(wb, data.working);
+      }
+
+      if (data.tb || data.trialBalance) {
+        fillTBWorksheet(
+          wb,
+          data.tb || data.trialBalance,
+          ppeRows,
+          endDate
+        );
+      }
+
+      if (data.ce) {
+        fillCEWorksheet(wb, data.ce, endDate);
       }
 
       XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);
@@ -236,7 +251,7 @@ const FinancialReportsPage = () => {
       console.error(error);
       toast.error("Excel export failed");
     }
-  }, [data, endDate, formatMonth]);
+  }, [data, endDate, formatMonth, reportType]);
 
   const [sectionsOpen, setSectionsOpen] = useState({
     trialBalance: false,
@@ -741,7 +756,6 @@ const FinancialReportsPage = () => {
               </select>
             </div>
 
-            {/* Remove generate button and automatically generate when selection changes */}
             <Button onClick={handleGenerate} disabled={loading}>
               {loading ? "Loading..." : "Generate"}
             </Button>
@@ -771,7 +785,7 @@ const FinancialReportsPage = () => {
               Select report type and generate
             </div>
           ) : (
-            <ReportTables data={data} reportType={reportType} />
+            <ReportTables data={data} end={endDate} reportType={reportType} />
           )}
         </section>
       </div>
