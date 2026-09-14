@@ -8,7 +8,7 @@ import java.time.LocalDate;
 @Data
 public class CashFlowDataDto {
     private LocalDate financialDate;
-    private BigDecimal incomeTaxPaidAmount;
+//    private BigDecimal incomeTaxPaidAmount;
     private BigDecimal cashInHandAmount;
     private BigDecimal openingCashBalance;
 }

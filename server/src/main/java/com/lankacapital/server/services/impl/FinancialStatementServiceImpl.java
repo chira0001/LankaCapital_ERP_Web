@@ -4,11 +4,9 @@ import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto;
-import com.lankacapital.server.dtos.StatementDto.CE;
-import com.lankacapital.server.dtos.StatementDto.PPE;
-import com.lankacapital.server.dtos.StatementDto.TRIALBALANCE;
-import com.lankacapital.server.dtos.StatementDto.WORKING;
+import com.lankacapital.server.dtos.StatementDto.*;
 import com.lankacapital.server.entities.reports.AssetsRegistry;
+import com.lankacapital.server.entities.reports.CashFlowData;
 import com.lankacapital.server.entities.reports.EquityChange;
 import com.lankacapital.server.entities.reports.TrialBalanceData;
 import com.lankacapital.server.enums.AccountType;
@@ -147,13 +145,9 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
     private CE generateCE(LocalDate beginPeriod, LocalDate endPeriod){
         List<EquityChange> equityChangesList =
                 equityChangeRepository.findByFinancialDateBetween(beginPeriod,endPeriod);
-
         CE ce = new CE();
-
         for(EquityChange change : equityChangesList){
-
             String name = change.getDataName();
-
             if(name != null && name.trim().toLowerCase().startsWith("balance")){
                 ce.getRetainedEarningBalance()
                         .put(name, change.getRetainedEarningAmount());
@@ -170,8 +164,15 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                         .put(name, change.getStatedCapitalAmount());
             }
         }
-
         return ce;
+    }
+
+    private CF generateCF(LocalDate beginPeriod, LocalDate endPeriod){
+        CF cf = new CF();
+        CashFlowData flowData = cashFlowDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        cf.setCashInHandAmount(flowData.getCashInHandAmount());
+        cf.setOpeningCashBalance(flowData.getOpeningCashBalance());
+        return cf;
     }
 
     @Override
@@ -192,11 +193,14 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("ce")) {
                 data.put("ce", generateCE(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("cf")) {
+                data.put("cf",generateCF(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("statement")){
                 data.put("ppe",generatePPE());
                 data.put("working",generateWORKING(beginPeriod, endPeriod));
                 data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
                 data.put("ce", generateCE(beginPeriod, endPeriod));
+                data.put("cf",generateCF(beginPeriod, endPeriod));
             }
             return data;
         } catch (Exception e) {

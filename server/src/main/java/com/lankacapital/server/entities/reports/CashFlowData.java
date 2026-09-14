@@ -19,7 +19,7 @@ public class CashFlowData {
     private long id;
 
     private LocalDate financialDate;
-    private BigDecimal incomeTaxPaidAmount;
+//    private BigDecimal incomeTaxPaidAmount;
     private BigDecimal cashInHandAmount;
     private BigDecimal openingCashBalance;
 }

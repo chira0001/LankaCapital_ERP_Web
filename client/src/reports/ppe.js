@@ -51,6 +51,7 @@ function setCellValuePreserveStyle(ws, r, c, { t, v, z, numFmt }) {
 
     cell.t = t;
     cell.v = v;
+    delete cell.w;
 
     if (z) cell.z = z;
     if (numFmt) {
@@ -67,6 +68,7 @@ function setCellValueCreateIfMissing(ws, r, c, { t, v, z, numFmt }) {
 
     cell.t = t;
     cell.v = v;
+    delete cell.w;
 
     if (z) cell.z = z;
     if (numFmt) {
@@ -120,6 +122,7 @@ function setCellValueAllowFormula(ws, r, c, { t, v, f, z, numFmt }) {
         cell.t = t;
         cell.v = v;
     }
+    delete cell.w;
 
     if (z) cell.z = z;
     if (numFmt) {
@@ -1038,6 +1041,49 @@ function readFirstNumberFromMap(map, preferredKey = null) {
     return Number.isFinite(number) ? number : 0;
 }
 
+export function fillCFWorksheet(wb, cf) {
+    if (!wb) throw new Error("Workbook missing");
+    if (!cf || typeof cf !== "object") throw new Error("CF data missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "CF");
+    if (!ws) throw new Error("CF sheet not found in template");
+
+    const safeNum = (value) => {
+        const number = Number(value ?? 0);
+        return Number.isFinite(number) ? number : 0;
+    };
+
+    const COLS = { AMOUNT: 6 };
+
+    setCellValueAllowFormula(ws, 28, COLS.AMOUNT, {
+        t: "n",
+        v: safeNum(cf.openingCashBalance),
+    });
+    setCellValueAllowFormula(ws, 32, COLS.AMOUNT, {
+        t: "n",
+        v: safeNum(cf.cashInHandAmount),
+    });
+
+    const tb = getSheetByNameInsensitive(wb, "TB");
+    const incomeTaxRow0 = findTrialBalanceAccountRow(tb.ws, "Income Tax");
+    if (incomeTaxRow0 !== null) {
+        const rowNum1 = incomeTaxRow0 + 1;
+        const sourceValue = Number(tb.ws?.[`B${rowNum1}`]?.v ?? 0);
+        setCellValueAllowFormula(ws, 16, COLS.AMOUNT, {
+            t: "n",
+            v: Number.isFinite(sourceValue) ? sourceValue : 0,
+            f: `'${tb.sheetName}'!B${rowNum1}`,
+        });
+    }
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:I43");
+    range.e.r = Math.max(range.e.r, 42);
+    range.e.c = Math.max(range.e.c, COLS.AMOUNT);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+
+    return { sheetName, ws };
+}
+
 export function fillCEWorksheet(wb, ce, endDate = null) {
     if (!wb) throw new Error("Workbook missing");
     if (!ce || typeof ce !== "object") throw new Error("CE data missing");
@@ -1164,6 +1210,7 @@ export function fillFinancialTemplate(wb, data) {
             data.endDate || data.periodEndDate || data.financialDate
         );
     }
+    if (data.cf) fillCFWorksheet(wb, data.cf);
 
     return wb;
 }

@@ -9,7 +9,7 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
 
     const [cashFlow, setCashFlow] = useState({
         financialDate: rangeEnd,
-        incomeTaxPaidAmount: "",
+        // incomeTaxPaidAmount: "",
         cashInHandAmount: "",
         openingCashBalance: "",
     });
@@ -31,7 +31,7 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
     const clearCashFlowInputs = useCallback(() => {
         setCashFlow({
             financialDate: rangeEnd,
-            incomeTaxPaidAmount: "",
+            // incomeTaxPaidAmount: "",
             cashInHandAmount: "",
             openingCashBalance: "",
         });
@@ -77,7 +77,7 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
                 setCashFlow((prev) => ({
                     ...prev,
                     financialDate: existing.financialDate ?? rangeEnd,
-                    incomeTaxPaidAmount: existing.incomeTaxPaidAmount ?? "",
+                    // incomeTaxPaidAmount: existing.incomeTaxPaidAmount ?? "",
                     cashInHandAmount: existing.cashInHandAmount ?? "",
                     openingCashBalance: existing.openingCashBalance ?? "",
                 }));
@@ -87,7 +87,7 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
                 setCashFlow((prev) => ({
                     ...prev,
                     financialDate: rangeEnd,
-                    incomeTaxPaidAmount: "",
+                    // incomeTaxPaidAmount: "",
                     cashInHandAmount: "",
                     openingCashBalance: "",
                 }));
@@ -122,14 +122,14 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
 
         return (
             Boolean(rangeEnd) &&
-            String(cashFlow.incomeTaxPaidAmount).trim() !== "" &&
+            // String(cashFlow.incomeTaxPaidAmount).trim() !== "" &&
             String(cashFlow.openingCashBalance).trim() !== "" &&
             String(cashFlow.cashInHandAmount).trim() !== ""
         );
     }, [
         isLocked,
         rangeEnd,
-        cashFlow.incomeTaxPaidAmount,
+        // cashFlow.incomeTaxPaidAmount,
         cashFlow.openingCashBalance,
         cashFlow.cashInHandAmount,
     ]);
@@ -210,7 +210,8 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
             </div>
 
             <div className="mt-4 grid gap-4">
-                <div>
+                {/*
+                <div> 
                     <Label htmlFor="incomeTaxPaidAmount">
                         Income Tax Paid Amount<span className="text-red-500">*</span>
                     </Label>
@@ -226,6 +227,7 @@ const Cashflow = ({ periodStartDate, periodEndDate, startDate, endDate }) => {
                         disabled={isSaving || isLocked || isCheckingExisting}
                     />
                 </div>
+                */}
 
                 <div>
                     <Label htmlFor="openingCashBalance">
