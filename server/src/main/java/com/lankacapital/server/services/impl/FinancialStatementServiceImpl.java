@@ -5,10 +5,7 @@ import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingA
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto;
 import com.lankacapital.server.dtos.StatementDto.*;
-import com.lankacapital.server.entities.reports.AssetsRegistry;
-import com.lankacapital.server.entities.reports.CashFlowData;
-import com.lankacapital.server.entities.reports.EquityChange;
-import com.lankacapital.server.entities.reports.TrialBalanceData;
+import com.lankacapital.server.entities.reports.*;
 import com.lankacapital.server.enums.AccountType;
 import com.lankacapital.server.mappers.statementMappers.PPE_WORKING_Mapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
@@ -175,6 +172,13 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return cf;
     }
 
+    private P11 generateP11(LocalDate beginPeriod, LocalDate endPeriod){
+        NoteSharesData sharesData = noteSharesDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        P11 p11 = new P11();
+        p11.setNumberOfShares(sharesData.getNumberOfShares());
+        return p11;
+    }
+
     @Override
     @Transactional
     public HashMap<String, Object> generateReports(String reportType, String startDate, String endDate) {
@@ -195,12 +199,15 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("ce", generateCE(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("cf")) {
                 data.put("cf",generateCF(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("p11")) {
+                data.put("p11",generateP11(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("statement")){
                 data.put("ppe",generatePPE());
                 data.put("working",generateWORKING(beginPeriod, endPeriod));
                 data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
                 data.put("ce", generateCE(beginPeriod, endPeriod));
                 data.put("cf",generateCF(beginPeriod, endPeriod));
+                data.put("p11",generateP11(beginPeriod, endPeriod));
             }
             return data;
         } catch (Exception e) {

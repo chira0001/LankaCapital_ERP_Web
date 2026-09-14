@@ -11,4 +11,8 @@ import java.util.Optional;
 public interface NoteSharesDataRepository extends JpaRepository<NoteSharesData,Long> {
     Optional<NoteSharesData> findTopByFinancialDate(LocalDate financialDate);
     boolean existsByFinancialDate(LocalDate financialDate);
+    NoteSharesData findByFinancialDateBetween(
+            LocalDate start,
+            LocalDate end
+    );
 }

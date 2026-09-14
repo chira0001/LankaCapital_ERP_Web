@@ -1028,6 +1028,116 @@ function findTrialBalanceAccountRow(ws, accountName) {
     return null;
 }
 
+function findTrialBalanceAccountRowByAliases(ws, accountNames) {
+    for (const accountName of accountNames) {
+        const row = findTrialBalanceAccountRow(ws, accountName);
+        if (row !== null) return row;
+    }
+
+    return null;
+}
+
+function readWorksheetNumber(ws, row0, col) {
+    const value = Number(getCell(ws, row0, col)?.v ?? 0);
+    return Number.isFinite(value) ? value : 0;
+}
+
+export function fillP11Worksheet(wb, p11 = {}, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { ws } = getSheetByNameInsensitive(wb, "P11");
+    if (!ws) throw new Error("P11 sheet not found in template");
+
+    const tb = getSheetByNameInsensitive(wb, "TB");
+    const tbWs = tb.ws;
+    const tbSheetName = tb.sheetName;
+    const amountCol = 9;
+    const safeNum = (value) => {
+        const number = Number(value ?? 0);
+        return Number.isFinite(number) ? number : 0;
+    };
+
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    if (periodEnd?.isValid()) {
+        setCellValueAllowFormula(ws, 2, amountCol, {
+            t: "n",
+            v: Number(periodEnd.format("YYYY")),
+        });
+    }
+
+    setCellValueAllowFormula(ws, 11, amountCol, {
+        t: "n",
+        v: safeNum(p11?.numberOfShares),
+    });
+    setCellValueAllowFormula(ws, 12, amountCol, {
+        t: "n",
+        v: safeNum(p11?.numberOfShares),
+        f: "SUM(J12)",
+    });
+
+    const writeTbReference = (targetRow0, accountNames, sourceCol) => {
+        const clearTarget = () => {
+            setCellValueAllowFormula(ws, targetRow0, amountCol, { t: "s", v: "" });
+        };
+
+        if (!tbWs) {
+            clearTarget();
+            return false;
+        }
+
+        const sourceRow0 = findTrialBalanceAccountRowByAliases(tbWs, accountNames);
+        if (sourceRow0 === null) {
+            clearTarget();
+            return false;
+        }
+
+        const rowNum1 = sourceRow0 + 1;
+        setCellValueAllowFormula(ws, targetRow0, amountCol, {
+            t: "n",
+            v: readWorksheetNumber(tbWs, sourceRow0, sourceCol),
+            f: `'${tbSheetName}'!${XLSX.utils.encode_col(sourceCol)}${rowNum1}`,
+        });
+        return true;
+    };
+
+    writeTbReference(6, ["Cash In Hand", "Cash"], 1);
+    setCellValueAllowFormula(ws, 7, amountCol, {
+        t: "n",
+        v: readWorksheetNumber(ws, 6, amountCol),
+        f: "SUM(J7:J7)",
+    });
+
+    writeTbReference(15, ["Share capital", "Share Capital", "Stated Capital"], 2);
+    setCellValueAllowFormula(ws, 16, amountCol, {
+        t: "n",
+        v: readWorksheetNumber(ws, 15, amountCol),
+        f: "SUM(J16)",
+    });
+
+    const payables = [
+        { row0: 19, aliases: ["EPF"] },
+        { row0: 20, aliases: ["ETF"] },
+        { row0: 21, aliases: ["Accountancy Fee", "Accountany Fee"] },
+        { row0: 22, aliases: ["Audit Fee"] },
+    ];
+
+    payables.forEach(({ row0, aliases }) => {
+        writeTbReference(row0, aliases, 2);
+    });
+    setCellValueAllowFormula(ws, 23, amountCol, {
+        t: "n",
+        v: payables.reduce((sum, item) => sum + readWorksheetNumber(ws, item.row0, amountCol), 0),
+        f: "SUM(J20:J23)",
+    });
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:J24");
+    range.e.r = Math.max(range.e.r, 23);
+    range.e.c = Math.max(range.e.c, amountCol);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+
+    return { ws };
+}
+
 function readFirstNumberFromMap(map, preferredKey = null) {
     if (!map || typeof map !== "object") return 0;
 
@@ -1211,6 +1321,13 @@ export function fillFinancialTemplate(wb, data) {
         );
     }
     if (data.cf) fillCFWorksheet(wb, data.cf);
+    if (data.p11) {
+        fillP11Worksheet(
+            wb,
+            data.p11,
+            data.endDate || data.periodEndDate || data.financialDate
+        );
+    }
 
     return wb;
 }
