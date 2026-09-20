@@ -8,7 +8,7 @@ public class CashFlowDataMapper {
         CashFlowData flowData = new CashFlowData();
 
         flowData.setFinancialDate(dto.getFinancialDate());
-        flowData.setIncomeTaxPaidAmount(dto.getIncomeTaxPaidAmount());
+//        flowData.setIncomeTaxPaidAmount(dto.getIncomeTaxPaidAmount());
         flowData.setCashInHandAmount(dto.getCashInHandAmount());
         flowData.setOpeningCashBalance(dto.getOpeningCashBalance());
 
@@ -19,7 +19,7 @@ public class CashFlowDataMapper {
         CashFlowDataDto dto = new CashFlowDataDto();
 
         dto.setFinancialDate(flowData.getFinancialDate());
-        dto.setIncomeTaxPaidAmount(flowData.getIncomeTaxPaidAmount());
+//        dto.setIncomeTaxPaidAmount(flowData.getIncomeTaxPaidAmount());
         dto.setCashInHandAmount(flowData.getCashInHandAmount());
         dto.setOpeningCashBalance(flowData.getOpeningCashBalance());
 

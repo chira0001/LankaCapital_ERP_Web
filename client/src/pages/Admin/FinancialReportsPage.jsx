@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillCEWorksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillCEWorksheet, fillCFWorksheet, fillP11Worksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -191,6 +191,21 @@ const FinancialReportsPage = () => {
         return;
       }
 
+      if (reportType === "p11") {
+        const [p11Res, tbRes] = await Promise.all([
+          axiosApi.get(`/admin/reports`, {
+            params: { reportType, startDate, endDate },
+          }),
+          axiosApi.get(`/admin/reports`, {
+            params: { reportType: "tb", startDate, endDate },
+          }),
+        ]);
+        const mergedData = { ...p11Res.data, ...tbRes.data };
+        console.log("res.data : ", mergedData);
+        setData(mergedData);
+        return;
+      }
+
       const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType,
@@ -244,6 +259,14 @@ const FinancialReportsPage = () => {
 
       if (data.ce) {
         fillCEWorksheet(wb, data.ce, endDate);
+      }
+
+      if (data.cf) {
+        fillCFWorksheet(wb, data.cf);
+      }
+
+      if (data.p11) {
+        fillP11Worksheet(wb, data.p11, endDate);
       }
 
       XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);
