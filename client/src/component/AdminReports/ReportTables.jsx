@@ -420,6 +420,104 @@ const TBTable = memo(function TBTable({ data, endDateVal }) {
     );
 });
 
+const BalanceSheetTable = memo(function BalanceSheetTable({ data, endDateVal }) {
+    const tb = data?.tb || data?.trialBalance || {};
+    const ppe = Array.isArray(data?.ppe) ? data.ppe : [];
+    const ce = data?.ce || {};
+
+    const accountRows = useMemo(
+        () => Object.values(tb).flatMap((section) => (Array.isArray(section) ? section : [])),
+        [tb]
+    );
+
+    const accountBalance = useCallback(
+        (aliases) =>
+            accountRows
+                .filter((row) => aliases.includes(String(row?.accountName ?? "").trim().toLowerCase()))
+                .reduce((sum, row) => sum + Math.abs(Number(row?.amount) || 0), 0),
+        [accountRows]
+    );
+
+    const firstMapValue = useCallback((map) => {
+        const value = Number(Object.values(map || {})[0] ?? 0);
+        return Number.isFinite(value) ? value : 0;
+    }, []);
+
+    const values = useMemo(() => {
+        const propertyPlantEquipment = ppe.reduce(
+            (sum, asset) => sum + (Number(asset?.amount) || 0) - (Number(asset?.depreciationAmount) || 0),
+            0
+        );
+        const receivables = accountBalance(["receivables"]);
+        const cash = accountBalance(["cash", "cash in hand"]);
+        const statedCapital = accountBalance(["share capital", "stated capital"]);
+        const retainedEarnings =
+            firstMapValue(ce.retainedEarningBalance) + firstMapValue(ce.retainedEarningShares);
+        const tradeCreditors = accountBalance(["epf", "etf", "accountancy fee", "accountany fee", "audit fee"]);
+        const directorsCurrentAccount = accountBalance([
+            "director c/a - invetment",
+            "director's current account",
+            "director current account",
+        ]);
+        const totalCurrentAssets = receivables + cash;
+        const totalAssets = propertyPlantEquipment + totalCurrentAssets;
+        const totalCurrentLiabilities = tradeCreditors + directorsCurrentAccount;
+        const totalEquityAndLiabilities = statedCapital + retainedEarnings + totalCurrentLiabilities;
+
+        return {
+            propertyPlantEquipment,
+            receivables,
+            cash,
+            totalCurrentAssets,
+            totalAssets,
+            statedCapital,
+            retainedEarnings,
+            tradeCreditors,
+            directorsCurrentAccount,
+            totalCurrentLiabilities,
+            totalEquityAndLiabilities,
+        };
+    }, [accountBalance, ce, firstMapValue, ppe]);
+
+    const periodEnd = endDateVal ? dayjs(endDateVal).format("DD MMMM YYYY") : "-";
+    const AmountRow = ({ label, value, strong = false, indent = false }) => (
+        <tr className={strong ? "border-t bg-gray-50 font-semibold" : "border-t"}>
+            <td className={`px-3 py-2 text-gray-900 ${indent ? "pl-8" : ""}`}>{label}</td>
+            <td className="px-3 py-2 text-right text-gray-900">{formatCurrency(value)}</td>
+        </tr>
+    );
+
+    return (
+        <TableWrapper title={`BS - ${periodEnd}`}>
+            <thead className="sticky top-0 z-10 bg-gray-50">
+                <tr>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">Particulars</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-800">Rs.</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white">
+                <tr className="border-t bg-gray-100"><td className="px-3 py-2 font-semibold text-gray-900" colSpan={2}>Assets</td></tr>
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Non Current Assets</td></tr>
+                <AmountRow label="Property, Plant and Equipment" value={values.propertyPlantEquipment} indent />
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Current Assets</td></tr>
+                <AmountRow label="Receivables" value={values.receivables} indent />
+                <AmountRow label="Cash & Cash Equivalent" value={values.cash} indent />
+                <AmountRow label="Total Current Assets" value={values.totalCurrentAssets} strong />
+                <AmountRow label="Total Assets" value={values.totalAssets} strong />
+                <tr className="border-t bg-gray-100"><td className="px-3 py-2 font-semibold text-gray-900" colSpan={2}>Equity & Liabilities</td></tr>
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Capital and Reserve</td></tr>
+                <AmountRow label="Stated Capital" value={values.statedCapital} indent />
+                <AmountRow label="Retained Earnings" value={values.retainedEarnings} indent />
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Current Liabilities</td></tr>
+                <AmountRow label="Trade Creditors & Other Payable" value={values.tradeCreditors} indent />
+                <AmountRow label="Director's Current Account" value={values.directorsCurrentAccount} indent />
+                <AmountRow label="Total Current Liabilities" value={values.totalCurrentLiabilities} strong />
+                <AmountRow label="Total Equity and Liabilities" value={values.totalEquityAndLiabilities} strong />
+            </tbody>
+        </TableWrapper>
+    );
+});
+
 const formatEquityDate = (value) => {
     const parsed = value ? dayjs(value) : null;
     if (!parsed?.isValid()) return "";
@@ -1254,6 +1352,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
             return <P11Table data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
+        if (key === "bs" || key === "balanceSheet") {
+            return <BalanceSheetTable data={data} endDateVal={end} />;
+        }
+
         // Handle nested objects for other types
         if (value && typeof value === "object" && !Array.isArray(value)) {
             // Check if it has array properties
@@ -1304,11 +1406,15 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         );
     }
 
+    if (reportType === "bs") {
+        return <BalanceSheetTable data={data} endDateVal={end} />;
+    }
+
     return (
         <div className="space-y-6">
             {sortedSections.map((section) => (
                 <section key={section.key} className="space-y-2">
-                    {section.key !== "ppe" && section.key !== "working" && (
+                    {section.key !== "ppe" && section.key !== "working" && section.key !== "bs" && (
                         <h3 className="text-base font-semibold text-gray-900">
                             {humanTitle(section.key)}
                         </h3>

@@ -179,6 +179,20 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return p11;
     }
 
+    private void addBalanceSheetSupportingReports(
+            HashMap<String, Object> data,
+            LocalDate beginPeriod,
+            LocalDate endPeriod
+    ) {
+        data.put("ppe", generatePPE());
+        data.put("working", generateWORKING(beginPeriod, endPeriod));
+        data.put("tb", generateTRIALBALANCE(beginPeriod, endPeriod));
+        data.put("ce", generateCE(beginPeriod, endPeriod));
+        data.put("cf", generateCF(beginPeriod, endPeriod));
+        data.put("p11", generateP11(beginPeriod, endPeriod));
+        data.put("bs", true);
+    }
+
     @Override
     @Transactional
     public HashMap<String, Object> generateReports(String reportType, String startDate, String endDate) {
@@ -201,13 +215,10 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("cf",generateCF(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("p11")) {
                 data.put("p11",generateP11(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("bs")) {
+                addBalanceSheetSupportingReports(data, beginPeriod, endPeriod);
             }else if(reportType.equalsIgnoreCase("statement")){
-                data.put("ppe",generatePPE());
-                data.put("working",generateWORKING(beginPeriod, endPeriod));
-                data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
-                data.put("ce", generateCE(beginPeriod, endPeriod));
-                data.put("cf",generateCF(beginPeriod, endPeriod));
-                data.put("p11",generateP11(beginPeriod, endPeriod));
+                addBalanceSheetSupportingReports(data, beginPeriod, endPeriod);
             }
             return data;
         } catch (Exception e) {

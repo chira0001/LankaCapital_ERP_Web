@@ -1394,6 +1394,37 @@ export function fillCEWorksheet(wb, ce, endDate = null) {
     ws["!ref"] = XLSX.utils.encode_range(range);
 }
 
+export function fillBSWorksheet(wb, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "BS");
+    if (!ws) throw new Error("BS sheet not found in template");
+
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    if (periodEnd?.isValid()) {
+        // The BS calculation cells are template formulas. Only refresh period values.
+        setCellValuePreserveStyle(ws, 2, 0, {
+            t: "s",
+            v: `AS AT ${formatEquityDate(periodEnd).toUpperCase()}`,
+        });
+        setCellValuePreserveStyle(ws, 2, 4, {
+            t: "n",
+            v: Number(periodEnd.format("YYYY")),
+        });
+    }
+
+    // Ask Excel to recalculate the preserved cross-sheet formulas when opened.
+    wb.Workbook = wb.Workbook || {};
+    wb.Workbook.CalcPr = {
+        ...(wb.Workbook.CalcPr || {}),
+        calcMode: "auto",
+        fullCalcOnLoad: true,
+        forceFullCalc: true,
+    };
+
+    return { sheetName, ws };
+}
+
 export function fillFinancialTemplate(wb, data) {
     if (!wb) throw new Error("Workbook missing");
     if (!data || typeof data !== "object") throw new Error("Data missing");
@@ -1424,6 +1455,7 @@ export function fillFinancialTemplate(wb, data) {
             data.endDate || data.periodEndDate || data.financialDate
         );
     }
+    fillBSWorksheet(wb, data.endDate || data.periodEndDate || data.financialDate);
 
     return wb;
 }
