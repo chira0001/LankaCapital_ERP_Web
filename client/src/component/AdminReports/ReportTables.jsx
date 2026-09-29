@@ -420,6 +420,104 @@ const TBTable = memo(function TBTable({ data, endDateVal }) {
     );
 });
 
+const BalanceSheetTable = memo(function BalanceSheetTable({ data, endDateVal }) {
+    const tb = data?.tb || data?.trialBalance || {};
+    const ppe = Array.isArray(data?.ppe) ? data.ppe : [];
+    const ce = data?.ce || {};
+
+    const accountRows = useMemo(
+        () => Object.values(tb).flatMap((section) => (Array.isArray(section) ? section : [])),
+        [tb]
+    );
+
+    const accountBalance = useCallback(
+        (aliases) =>
+            accountRows
+                .filter((row) => aliases.includes(String(row?.accountName ?? "").trim().toLowerCase()))
+                .reduce((sum, row) => sum + Math.abs(Number(row?.amount) || 0), 0),
+        [accountRows]
+    );
+
+    const firstMapValue = useCallback((map) => {
+        const value = Number(Object.values(map || {})[0] ?? 0);
+        return Number.isFinite(value) ? value : 0;
+    }, []);
+
+    const values = useMemo(() => {
+        const propertyPlantEquipment = ppe.reduce(
+            (sum, asset) => sum + (Number(asset?.amount) || 0) - (Number(asset?.depreciationAmount) || 0),
+            0
+        );
+        const receivables = accountBalance(["receivables"]);
+        const cash = accountBalance(["cash", "cash in hand"]);
+        const statedCapital = accountBalance(["share capital", "stated capital"]);
+        const retainedEarnings =
+            firstMapValue(ce.retainedEarningBalance) + firstMapValue(ce.retainedEarningShares);
+        const tradeCreditors = accountBalance(["epf", "etf", "accountancy fee", "accountany fee", "audit fee"]);
+        const directorsCurrentAccount = accountBalance([
+            "director c/a - invetment",
+            "director's current account",
+            "director current account",
+        ]);
+        const totalCurrentAssets = receivables + cash;
+        const totalAssets = propertyPlantEquipment + totalCurrentAssets;
+        const totalCurrentLiabilities = tradeCreditors + directorsCurrentAccount;
+        const totalEquityAndLiabilities = statedCapital + retainedEarnings + totalCurrentLiabilities;
+
+        return {
+            propertyPlantEquipment,
+            receivables,
+            cash,
+            totalCurrentAssets,
+            totalAssets,
+            statedCapital,
+            retainedEarnings,
+            tradeCreditors,
+            directorsCurrentAccount,
+            totalCurrentLiabilities,
+            totalEquityAndLiabilities,
+        };
+    }, [accountBalance, ce, firstMapValue, ppe]);
+
+    const periodEnd = endDateVal ? dayjs(endDateVal).format("DD MMMM YYYY") : "-";
+    const AmountRow = ({ label, value, strong = false, indent = false }) => (
+        <tr className={strong ? "border-t bg-gray-50 font-semibold" : "border-t"}>
+            <td className={`px-3 py-2 text-gray-900 ${indent ? "pl-8" : ""}`}>{label}</td>
+            <td className="px-3 py-2 text-right text-gray-900">{formatCurrency(value)}</td>
+        </tr>
+    );
+
+    return (
+        <TableWrapper title={`BS - ${periodEnd}`}>
+            <thead className="sticky top-0 z-10 bg-gray-50">
+                <tr>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-800">Particulars</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-800">Rs.</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white">
+                <tr className="border-t bg-gray-100"><td className="px-3 py-2 font-semibold text-gray-900" colSpan={2}>Assets</td></tr>
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Non Current Assets</td></tr>
+                <AmountRow label="Property, Plant and Equipment" value={values.propertyPlantEquipment} indent />
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Current Assets</td></tr>
+                <AmountRow label="Receivables" value={values.receivables} indent />
+                <AmountRow label="Cash & Cash Equivalent" value={values.cash} indent />
+                <AmountRow label="Total Current Assets" value={values.totalCurrentAssets} strong />
+                <AmountRow label="Total Assets" value={values.totalAssets} strong />
+                <tr className="border-t bg-gray-100"><td className="px-3 py-2 font-semibold text-gray-900" colSpan={2}>Equity & Liabilities</td></tr>
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Capital and Reserve</td></tr>
+                <AmountRow label="Stated Capital" value={values.statedCapital} indent />
+                <AmountRow label="Retained Earnings" value={values.retainedEarnings} indent />
+                <tr className="border-t"><td className="px-3 py-2 font-medium text-gray-900" colSpan={2}>Current Liabilities</td></tr>
+                <AmountRow label="Trade Creditors & Other Payable" value={values.tradeCreditors} indent />
+                <AmountRow label="Director's Current Account" value={values.directorsCurrentAccount} indent />
+                <AmountRow label="Total Current Liabilities" value={values.totalCurrentLiabilities} strong />
+                <AmountRow label="Total Equity and Liabilities" value={values.totalEquityAndLiabilities} strong />
+            </tbody>
+        </TableWrapper>
+    );
+});
+
 const formatEquityDate = (value) => {
     const parsed = value ? dayjs(value) : null;
     if (!parsed?.isValid()) return "";
@@ -626,6 +724,313 @@ const findTrialBalanceAmountByAliases = (tb, accountNames, side = "DR") => {
     return null;
 };
 
+const findTrialBalanceAmountInSection = (tb, sectionNames, accountNames, side = "DR") => {
+    if (!tb || typeof tb !== "object") return null;
+
+    const names = new Set(accountNames.map((name) => String(name).trim().toLowerCase()));
+    const rows = sectionNames
+        .flatMap((sectionName) => [tb[sectionName], tb[sectionName.toLowerCase()]])
+        .filter(Array.isArray)
+        .flat();
+
+    const row = rows.find((item) =>
+        names.has(String(item?.accountName ?? "").trim().toLowerCase())
+    );
+    if (!row) return null;
+
+    const amount = Number(row.amount ?? 0);
+    if (!Number.isFinite(amount)) return null;
+
+    const transactionType = String(row.transactionType ?? "").trim().toUpperCase();
+    if (side === "CR") return transactionType === "DR" ? null : amount;
+    return transactionType === "CR" ? null : amount;
+};
+
+const ProfitLossAmountRow = ({ label, note, formattedValue, strong = false }) => (
+    <tr className={strong ? "border-t-2 border-gray-900 font-semibold" : "border-t"}>
+        <td className="w-16 px-3 py-2 text-center text-gray-700">{note ?? ""}</td>
+        <td className="px-3 py-2 text-gray-900">{label}</td>
+        <td className="w-48 px-3 py-2 text-right tabular-nums text-gray-900">
+            {formattedValue}
+        </td>
+    </tr>
+);
+
+const ProfitLossTable = memo(function ProfitLossTable({ tb, endDateVal }) {
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const period = end?.isValid() ? formatEquityDate(end).toUpperCase() : "-";
+    const safeAmount = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+
+    const revenue = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Income"], ["Interest Income"], "CR")
+    );
+    const administrationExpenses = safeAmount(
+        findTrialBalanceAmountInSection(
+            tb,
+            ["Expenses"],
+            ["Accountancy Fee", "Accountany Fee"],
+            "DR"
+        )
+    ) + safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Audit Fee"], "DR")
+    );
+    const financeCost = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Bad Debts"], "DR")
+    );
+    const incomeTaxExpense = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Income Tax"], "DR")
+    );
+    const profitBeforeTax = revenue - administrationExpenses - financeCost;
+    const profitForPeriod = profitBeforeTax - incomeTaxExpense;
+
+    const formatStatementAmount = (value) => {
+        const amount = safeAmount(value);
+        return amount < 0 ? `(${formatCurrency(Math.abs(amount))})` : formatCurrency(amount);
+    };
+
+    return (
+        <div className="space-y-3">
+            <div className="text-sm font-semibold uppercase text-gray-900">
+                <div>N K R S LANKA CAPITAL (PRIVATE) LIMITED</div>
+                <div>STATEMENT OF COMPREHENSIVE INCOME</div>
+                <div>FOR THE YEAR ENDED {period}</div>
+            </div>
+            <TableWrapper>
+                <thead className="bg-white">
+                    <tr>
+                        <th className="border-b px-3 py-2 text-center font-semibold text-gray-900">Note</th>
+                        <th className="border-b px-3 py-2 text-left font-semibold text-gray-900"></th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Rs.</th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white">
+                    <ProfitLossAmountRow label="Revenue" note="4" formattedValue={formatStatementAmount(revenue)} />
+                    <ProfitLossAmountRow label="Administration Expenses" note="5" formattedValue={formatStatementAmount(-administrationExpenses)} />
+                    <ProfitLossAmountRow label="Finance Cost" note="6" formattedValue={formatStatementAmount(-financeCost)} />
+                    <ProfitLossAmountRow label="Profit/ (Loss) Before Taxation" formattedValue={formatStatementAmount(profitBeforeTax)} strong />
+                    <ProfitLossAmountRow label="Income Tax Expense" note="7" formattedValue={formatStatementAmount(-incomeTaxExpense)} />
+                    <ProfitLossAmountRow label="Profit/ (Loss) for the Period" formattedValue={formatStatementAmount(profitForPeriod)} strong />
+                </tbody>
+            </TableWrapper>
+            <p className="text-xs text-gray-500">Figures in brackets indicate deductions.</p>
+        </div>
+    );
+});
+
+const normalizeP10Entries = (values) =>
+    Array.isArray(values)
+        ? values.flatMap((item) =>
+            Object.entries(item || {}).map(([name, value]) => ({
+                name: String(name || "").trim(),
+                value: Number.isFinite(Number(value)) ? Number(value) : 0,
+            }))
+        )
+        : [];
+
+const P10AssetRows = ({ rows, valueKey, openingLabel, closingLabel, totalLabel }) => {
+    const total = rows.reduce((sum, row) => sum + (Number(row[valueKey]) || 0), 0);
+
+    return (
+        <TableWrapper>
+            <thead className="bg-white">
+                <tr>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-900"></th>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-900">
+                        Balance at {openingLabel}
+                    </th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Additions</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Disposal</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                        Balance at {closingLabel}
+                    </th>
+                </tr>
+            </thead>
+            <tbody className="bg-white">
+                {rows.map((row, index) => (
+                    <tr key={`${valueKey}-${index}`} className="border-t">
+                        <td className="px-3 py-2 text-gray-900">{row.name}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(row[valueKey])}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(row[valueKey])}
+                        </td>
+                    </tr>
+                ))}
+                <tr className="border-t-2 border-gray-900 font-semibold">
+                    <td className="px-3 py-2 text-gray-900">{totalLabel}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                        {formatCurrency(total)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                        {formatCurrency(total)}
+                    </td>
+                </tr>
+            </tbody>
+        </TableWrapper>
+    );
+};
+
+const P10Table = memo(function P10Table({ data, endDateVal }) {
+    const costEntries = normalizeP10Entries(data?.costValue);
+    const depreciationEntries = normalizeP10Entries(data?.depreciationValue);
+    const rows = Array.from(
+        { length: Math.max(costEntries.length, depreciationEntries.length) },
+        (_, index) => ({
+            name: costEntries[index]?.name || depreciationEntries[index]?.name || "-",
+            cost: costEntries[index]?.value ?? 0,
+            depreciation: depreciationEntries[index]?.value ?? 0,
+        })
+    );
+    const openingDate = data?.balanceAtDate ? dayjs(data.balanceAtDate) : null;
+    const periodEnd = endDateVal ? dayjs(endDateVal) : null;
+    const openingLabel = openingDate?.isValid() ? openingDate.format("DD.MM.YYYY") : "-";
+    const closingLabel = periodEnd?.isValid() ? periodEnd.format("DD.MM.YYYY") : "-";
+    const total = (key) => rows.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+
+    return (
+        <div className="space-y-4">
+            <div className="text-sm font-semibold uppercase text-gray-900">
+                <div>N K R S LANKA CAPITAL (PRIVATE) LIMITED</div>
+                <div>NOTES TO THE FINANCIAL STATEMENTS</div>
+            </div>
+            <div>
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">8. Property, Plant and Equipment - Cost</h4>
+                <P10AssetRows rows={rows} valueKey="cost" openingLabel={openingLabel} closingLabel={closingLabel} totalLabel="Total Cost" />
+            </div>
+            <div>
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">Accumulated Depreciation</h4>
+                <P10AssetRows rows={rows} valueKey="depreciation" openingLabel={openingLabel} closingLabel={closingLabel} totalLabel="Total Accumulated Depreciation" />
+            </div>
+            <TableWrapper>
+                <thead className="bg-white">
+                    <tr>
+                        <th className="border-b px-3 py-2 text-left font-semibold text-gray-900">Written Down Value</th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                            Balance as at {closingLabel}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white">
+                    {rows.map((row, index) => (
+                        <tr key={`wdv-${index}`} className="border-t">
+                            <td className="px-3 py-2 text-gray-900">{row.name}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                                {formatCurrency(row.cost - row.depreciation)}
+                            </td>
+                        </tr>
+                    ))}
+                    <tr className="border-t-2 border-gray-900 font-semibold">
+                        <td className="px-3 py-2 text-gray-900">Total Written Down Value</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(total("cost") - total("depreciation"))}
+                        </td>
+                    </tr>
+                </tbody>
+            </TableWrapper>
+        </div>
+    );
+});
+
+const P09Table = memo(function P09Table({ tb, endDateVal }) {
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const period = end?.isValid() ? end.format("DD MMMM YYYY").toUpperCase() : "-";
+    const commissionIncome = findTrialBalanceAmountInSection(
+        tb,
+        ["Income"],
+        ["Interest Income"],
+        "CR"
+    );
+    const administrativeExpenses = [
+        {
+            label: "Accountancy Fee",
+            amount: findTrialBalanceAmountInSection(
+                tb,
+                ["Expenses"],
+                ["Accountancy Fee", "Accountany Fee"],
+                "DR"
+            ),
+        },
+        {
+            label: "Audit Fee",
+            amount: findTrialBalanceAmountInSection(tb, ["Expenses"], ["Audit Fee"], "DR"),
+        },
+    ];
+    const totalAdministrativeExpenses = administrativeExpenses.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+    );
+
+    const renderAmount = (amount) => (
+        <td className="border border-gray-300 px-3 py-2 text-right tabular-nums text-gray-900">
+            {amount === null ? "-" : formatCurrency(amount)}
+        </td>
+    );
+
+    return (
+        <div className="w-full overflow-x-auto rounded-lg border bg-white">
+            <table className="min-w-[620px] border-collapse text-sm">
+                <tbody>
+                    <tr>
+                        <td colSpan={2} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            N K R S LANKA CAPITAL (PRIVATE) LIMITED
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-950">
+                            Page 9
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan={3} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            NOTES TO THE FINANCIAL STATEMENTS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan={3} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            FOR THE PERIOD ENDED {period}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">4</td>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">Revenue</td>
+                        <td className="border border-gray-300 px-3 py-2 text-right font-semibold text-gray-950">Rs.</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Commission Income</td>
+                        {renderAmount(commissionIncome)}
+                    </tr>
+                    <tr className="font-semibold">
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Total Revenue</td>
+                        {renderAmount(commissionIncome)}
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">5</td>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">Administration Expenses</td>
+                        <td className="border border-gray-300 px-3 py-2" />
+                    </tr>
+                    {administrativeExpenses.map((expense) => (
+                        <tr key={expense.label}>
+                            <td className="border border-gray-300 px-3 py-2" />
+                            <td className="border border-gray-300 px-3 py-2">{expense.label}</td>
+                            {renderAmount(expense.amount)}
+                        </tr>
+                    ))}
+                    <tr className="font-semibold">
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Total Administration Expenses</td>
+                        {renderAmount(totalAdministrativeExpenses)}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    );
+});
+
 const P11Table = memo(function P11Table({ data, tb, endDateVal }) {
     const end = endDateVal ? dayjs(endDateVal) : null;
     const year = end?.isValid() ? end.format("YYYY") : "2025";
@@ -666,7 +1071,8 @@ const P11Table = memo(function P11Table({ data, tb, endDateVal }) {
         <td
             className={[
                 "w-28 border border-gray-300 px-2 py-1.5 text-right tabular-nums text-gray-950",
-                red ? "bg-red-600 text-black" : "",
+                red ? "bg-white text-black" : "",
+                // red ? "bg-red-600 text-black" : "",
                 top ? "border-t-2 border-t-black" : "",
                 bottom ? "border-b-2 border-b-black" : "",
                 number ? "" : "",
@@ -1072,7 +1478,7 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         const preferredOrder = [
             "ppe",
             "working",
-            ...(reportType === "p11" ? [] : ["tb", "trialBalance"]),
+            ...(["p09", "p11"].includes(reportType) ? [] : ["tb", "trialBalance"]),
             "incometax",
             "incomeTax",
             "p10",
@@ -1128,8 +1534,24 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
             return <CashFlowTable data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
+        if (key === "p09") {
+            return <P09Table tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
+        if (key === "p10") {
+            return <P10Table data={value} endDateVal={end} />;
+        }
+
         if (key === "p11") {
             return <P11Table data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
+        if (key === "pl" || key === "profitLoss") {
+            return <ProfitLossTable tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
+        if (key === "bs" || key === "balanceSheet") {
+            return <BalanceSheetTable data={data} endDateVal={end} />;
         }
 
         // Handle nested objects for other types
@@ -1182,11 +1604,23 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         );
     }
 
+    if (reportType === "bs") {
+        return <BalanceSheetTable data={data} endDateVal={end} />;
+    }
+
+    if (reportType === "pl") {
+        return <ProfitLossTable tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+    }
+
+    if (reportType === "p10") {
+        return <P10Table data={data?.p10} endDateVal={end} />;
+    }
+
     return (
         <div className="space-y-6">
             {sortedSections.map((section) => (
                 <section key={section.key} className="space-y-2">
-                    {section.key !== "ppe" && section.key !== "working" && (
+                    {section.key !== "ppe" && section.key !== "working" && section.key !== "p10" && section.key !== "pl" && section.key !== "bs" && (
                         <h3 className="text-base font-semibold text-gray-900">
                             {humanTitle(section.key)}
                         </h3>

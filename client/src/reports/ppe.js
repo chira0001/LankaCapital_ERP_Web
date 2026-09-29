@@ -1042,6 +1042,282 @@ function readWorksheetNumber(ws, row0, col) {
     return Number.isFinite(value) ? value : 0;
 }
 
+function findTrialBalanceSectionRow(ws, sectionName) {
+    return findCellByTextInsensitive(ws, sectionName, { col: 0 })?.r ?? null;
+}
+
+function findTrialBalanceAccountRowInSection(ws, sectionName, accountNames) {
+    const sectionRow0 = findTrialBalanceSectionRow(ws, sectionName);
+    if (sectionRow0 === null) return null;
+
+    const normalizedNames = new Set(
+        accountNames.map((name) => String(name).trim().toLowerCase())
+    );
+
+    const lastRow0 = XLSX.utils.decode_range(ws["!ref"] || "A1:A1").e.r;
+    for (let row0 = sectionRow0 + 1; row0 <= lastRow0; row0++) {
+        const account = getCell(ws, row0, 0)?.v;
+        const normalizedAccount = String(account ?? "").trim().toLowerCase();
+
+        if (normalizedNames.has(normalizedAccount)) return row0;
+        if (normalizedAccount === "total") break;
+        if (
+            ["bank accounts", "assets", "liabilities", "equity", "income", "expenses"].includes(
+                normalizedAccount
+            )
+        ) {
+            break;
+        }
+    }
+
+    return null;
+}
+
+function findFormulaCellForLabel(ws, label) {
+    const labelCell = findCellByTextInsensitive(ws, label, { col: 1 });
+    if (!labelCell) return null;
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+    for (let col = labelCell.c + 1; col <= range.e.c; col++) {
+        const cell = getCell(ws, labelCell.r, col);
+        if (cell?.f) return { row0: labelCell.r, col };
+    }
+
+    return null;
+}
+
+function updateFormulaReferencePreserveStyle(ws, target, tbSheetName, tbWs, sourceRow0, sourceCol) {
+    if (!target || sourceRow0 === null) return false;
+
+    const cell = getCell(ws, target.row0, target.col);
+    if (!cell?.f) return false;
+
+    cell.f = `'${tbSheetName}'!${XLSX.utils.encode_col(sourceCol)}${sourceRow0 + 1}`;
+    cell.t = "n";
+    cell.v = readWorksheetNumber(tbWs, sourceRow0, sourceCol);
+    delete cell.w;
+    return true;
+}
+
+function setCellFormulaPreserveStyle(ws, row0, col, formula) {
+    const cell = getCell(ws, row0, col);
+    if (!cell) return;
+
+    cell.t = "n";
+    cell.f = formula;
+    cell.v = 0;
+    delete cell.w;
+}
+
+function normalizeP10Entries(values) {
+    if (!Array.isArray(values)) return [];
+
+    return values.flatMap((item) =>
+        Object.entries(item || {}).map(([name, value]) => ({
+            name: String(name || "").trim(),
+            value: Number.isFinite(Number(value)) ? Number(value) : 0,
+        }))
+    );
+}
+
+function expandP10Section(ws, firstDataRow0, totalRow0, itemCount, maxCol, workbookContext) {
+    const rowCount = Math.max(itemCount, 1);
+    const delta = rowCount - 1;
+    if (delta > 0) {
+        shiftRows(ws, totalRow0, delta, workbookContext);
+        for (let index = 1; index < rowCount; index++) {
+            cloneTemplateRowTo(ws, firstDataRow0, firstDataRow0 + index, maxCol);
+        }
+    }
+
+    return {
+        firstDataRow0,
+        totalRow0: totalRow0 + delta,
+        rowCount,
+    };
+}
+
+export function fillP10Worksheet(wb, p10, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+    if (!p10 || typeof p10 !== "object") throw new Error("P10 data missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "P10");
+    if (!ws) throw new Error("P10 sheet not found in template");
+
+    const COLS = { NAME: 1, OPENING: 4, ADDITIONS: 6, CLOSING: 9 };
+    const maxCol = COLS.CLOSING;
+    const costEntries = normalizeP10Entries(p10.costValue);
+    const depreciationEntries = normalizeP10Entries(p10.depreciationValue);
+    const itemCount = Math.max(costEntries.length, depreciationEntries.length, 1);
+    const rows = Array.from({ length: itemCount }, (_, index) => ({
+        name: costEntries[index]?.name || depreciationEntries[index]?.name || "",
+        cost: costEntries[index]?.value ?? 0,
+        depreciation: depreciationEntries[index]?.value ?? 0,
+    }));
+    const workbookContext = { wb, sheetName };
+
+    const costLabel = findCellByTextInsensitive(ws, "Furniture & Fittings", { col: COLS.NAME });
+    if (!costLabel) throw new Error("P10 cost row is missing from template");
+    const costSection = expandP10Section(
+        ws,
+        costLabel.r,
+        costLabel.r + 1,
+        itemCount,
+        maxCol,
+        workbookContext
+    );
+
+    const depreciationHeader = findCellByTextInsensitive(ws, "Accumulated Depreciation", {
+        col: COLS.NAME,
+    });
+    if (!depreciationHeader) throw new Error("P10 accumulated depreciation section is missing");
+    const depreciationSection = expandP10Section(
+        ws,
+        depreciationHeader.r + 1,
+        depreciationHeader.r + 2,
+        itemCount,
+        maxCol,
+        workbookContext
+    );
+
+    const writtenDownHeader = findCellByTextInsensitive(ws, "Written Down Value", { col: COLS.NAME });
+    if (!writtenDownHeader) throw new Error("P10 written down value section is missing");
+    const writtenDownSection = expandP10Section(
+        ws,
+        writtenDownHeader.r + 1,
+        writtenDownHeader.r + 2,
+        itemCount,
+        maxCol,
+        workbookContext
+    );
+
+    const openingDate = p10.balanceAtDate ? dayjs(p10.balanceAtDate) : null;
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    const formattedOpeningDate = openingDate?.isValid() ? openingDate.format("DD.MM.YYYY") : null;
+    const formattedEndDate = periodEnd?.isValid() ? periodEnd.format("DD.MM.YYYY") : null;
+
+    if (formattedOpeningDate) {
+        [costSection.firstDataRow0 - 1, depreciationSection.firstDataRow0 - 1].forEach((row0) => {
+            setCellValuePreserveStyle(ws, row0, COLS.OPENING, {
+                t: "s",
+                v: `Balance at ${formattedOpeningDate}`,
+            });
+        });
+    }
+    if (formattedEndDate) {
+        [costSection.firstDataRow0 - 1, depreciationSection.firstDataRow0 - 1].forEach((row0) => {
+            setCellValuePreserveStyle(ws, row0, COLS.CLOSING, {
+                t: "s",
+                v: `Balance at ${formattedEndDate}`,
+            });
+        });
+        setCellValuePreserveStyle(ws, writtenDownSection.firstDataRow0 - 1, COLS.CLOSING, {
+            t: "s",
+            v: `Balance as at\r\n ${formattedEndDate}`,
+        });
+    }
+
+    rows.forEach((row, index) => {
+        const costRow0 = costSection.firstDataRow0 + index;
+        const depreciationRow0 = depreciationSection.firstDataRow0 + index;
+        const writtenDownRow0 = writtenDownSection.firstDataRow0 + index;
+
+        // Asset names and opening balances are the only direct P10 inputs.
+        setCellValueAllowFormula(ws, costRow0, COLS.NAME, { t: "s", v: row.name });
+        setCellValuePreserveStyle(ws, costRow0, COLS.OPENING, { t: "n", v: row.cost });
+
+        setCellFormulaPreserveStyle(ws, depreciationRow0, COLS.NAME, `B${costRow0 + 1}`);
+        setCellValuePreserveStyle(ws, depreciationRow0, COLS.OPENING, {
+            t: "n",
+            v: row.depreciation,
+        });
+
+        setCellFormulaPreserveStyle(ws, writtenDownRow0, COLS.NAME, `B${depreciationRow0 + 1}`);
+        setCellFormulaPreserveStyle(
+            ws,
+            writtenDownRow0,
+            COLS.CLOSING,
+            `J${costRow0 + 1}-J${depreciationRow0 + 1}`
+        );
+    });
+
+    const setSectionTotals = (section, columns) => {
+        columns.forEach(({ col, letter }) => {
+            setCellFormulaPreserveStyle(
+                ws,
+                section.totalRow0,
+                col,
+                `SUM(${letter}${section.firstDataRow0 + 1}:${letter}${section.totalRow0})`
+            );
+        });
+    };
+
+    setSectionTotals(costSection, [
+        { col: COLS.OPENING, letter: "E" },
+        { col: COLS.ADDITIONS, letter: "G" },
+        { col: COLS.CLOSING, letter: "J" },
+    ]);
+    setSectionTotals(depreciationSection, [
+        { col: COLS.OPENING, letter: "E" },
+        { col: COLS.ADDITIONS, letter: "G" },
+        { col: COLS.CLOSING, letter: "J" },
+    ]);
+    setSectionTotals(writtenDownSection, [{ col: COLS.CLOSING, letter: "J" }]);
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:J1");
+    range.e.r = Math.max(range.e.r, writtenDownSection.totalRow0);
+    range.e.c = Math.max(range.e.c, COLS.CLOSING);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+
+    wb.Workbook = wb.Workbook || {};
+    wb.Workbook.CalcPr = {
+        ...(wb.Workbook.CalcPr || {}),
+        calcMode: "auto",
+        fullCalcOnLoad: true,
+        forceFullCalc: true,
+    };
+
+    return { sheetName, ws };
+}
+
+export function fillP09Worksheet(wb) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { ws } = getSheetByNameInsensitive(wb, "P09");
+    const tb = getSheetByNameInsensitive(wb, "TB");
+    if (!ws) throw new Error("P09 sheet not found in template");
+    if (!tb.ws) throw new Error("TB sheet not found in template");
+
+    const mappings = [
+        {
+            p09Label: "Commission Income",
+            section: "Income",
+            accounts: ["Interest Income"],
+            sourceCol: 2,
+        },
+        {
+            p09Label: "Accountancy Fee",
+            section: "Expenses",
+            accounts: ["Accountancy Fee", "Accountany Fee"],
+            sourceCol: 1,
+        },
+        {
+            p09Label: "Audit Fee",
+            section: "Expenses",
+            accounts: ["Audit Fee"],
+            sourceCol: 1,
+        },
+    ];
+
+    mappings.forEach(({ p09Label, section, accounts, sourceCol }) => {
+        const target = findFormulaCellForLabel(ws, p09Label);
+        const sourceRow0 = findTrialBalanceAccountRowInSection(tb.ws, section, accounts);
+        updateFormulaReferencePreserveStyle(ws, target, tb.sheetName, tb.ws, sourceRow0, sourceCol);
+    });
+
+    return { ws };
+}
+
 export function fillP11Worksheet(wb, p11 = {}, endDate = null) {
     if (!wb) throw new Error("Workbook missing");
 
@@ -1299,6 +1575,68 @@ export function fillCEWorksheet(wb, ce, endDate = null) {
     ws["!ref"] = XLSX.utils.encode_range(range);
 }
 
+export function fillBSWorksheet(wb, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "BS");
+    if (!ws) throw new Error("BS sheet not found in template");
+
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    if (periodEnd?.isValid()) {
+        // The BS calculation cells are template formulas. Only refresh period values.
+        setCellValuePreserveStyle(ws, 2, 0, {
+            t: "s",
+            v: `AS AT ${formatEquityDate(periodEnd).toUpperCase()}`,
+        });
+        setCellValuePreserveStyle(ws, 2, 4, {
+            t: "n",
+            v: Number(periodEnd.format("YYYY")),
+        });
+    }
+
+    // Ask Excel to recalculate the preserved cross-sheet formulas when opened.
+    wb.Workbook = wb.Workbook || {};
+    wb.Workbook.CalcPr = {
+        ...(wb.Workbook.CalcPr || {}),
+        calcMode: "auto",
+        fullCalcOnLoad: true,
+        forceFullCalc: true,
+    };
+
+    return { sheetName, ws };
+}
+
+export function fillPLWorksheet(wb, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "PL");
+    if (!ws) throw new Error("PL sheet not found in template");
+
+    const periodEnd = endDate ? dayjs(endDate) : null;
+    if (periodEnd?.isValid()) {
+        // Keep the template's P09 and subtotal formulas intact; only refresh period inputs.
+        setCellValuePreserveStyle(ws, 2, 0, {
+            t: "s",
+            v: `FOR THE YEAR ENDED ${formatEquityDate(periodEnd).toUpperCase()}`,
+        });
+        setCellValuePreserveStyle(ws, 2, 3, {
+            t: "n",
+            v: Number(periodEnd.format("YYYY")),
+        });
+    }
+
+    // Ask Excel to recalculate the preserved cross-sheet formulas when opened.
+    wb.Workbook = wb.Workbook || {};
+    wb.Workbook.CalcPr = {
+        ...(wb.Workbook.CalcPr || {}),
+        calcMode: "auto",
+        fullCalcOnLoad: true,
+        forceFullCalc: true,
+    };
+
+    return { sheetName, ws };
+}
+
 export function fillFinancialTemplate(wb, data) {
     if (!wb) throw new Error("Workbook missing");
     if (!data || typeof data !== "object") throw new Error("Data missing");
@@ -1321,6 +1659,14 @@ export function fillFinancialTemplate(wb, data) {
         );
     }
     if (data.cf) fillCFWorksheet(wb, data.cf);
+    if (data.p10) {
+        fillP10Worksheet(
+            wb,
+            data.p10,
+            data.endDate || data.periodEndDate || data.financialDate
+        );
+    }
+    if (data.tb || data.trialBalance) fillP09Worksheet(wb);
     if (data.p11) {
         fillP11Worksheet(
             wb,
@@ -1328,6 +1674,8 @@ export function fillFinancialTemplate(wb, data) {
             data.endDate || data.periodEndDate || data.financialDate
         );
     }
+    fillPLWorksheet(wb, data.endDate || data.periodEndDate || data.financialDate);
+    fillBSWorksheet(wb, data.endDate || data.periodEndDate || data.financialDate);
 
     return wb;
 }
