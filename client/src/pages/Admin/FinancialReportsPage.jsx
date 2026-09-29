@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillCEWorksheet, fillCFWorksheet, fillP11Worksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillFinancialTemplate } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -206,6 +206,16 @@ const FinancialReportsPage = () => {
         return;
       }
 
+      if (reportType === "p09") {
+        const tbRes = await axiosApi.get(`/admin/reports`, {
+          params: { reportType: "tb", startDate, endDate },
+        });
+        const mergedData = { p09: {}, ...tbRes.data };
+        console.log("res.data : ", mergedData);
+        setData(mergedData);
+        return;
+      }
+
       const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType,
@@ -213,8 +223,10 @@ const FinancialReportsPage = () => {
           endDate: endDate,
         },
       });
-      console.log("res.data : ", res.data);
-      setData(res.data);
+      const reportData =
+        reportType === "statement" ? { ...res.data, p09: res.data?.p09 ?? {} } : res.data;
+      console.log("res.data : ", reportData);
+      setData(reportData);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
       setData(null);
@@ -237,37 +249,8 @@ const FinancialReportsPage = () => {
       const arrayBuffer = await response.arrayBuffer();
       const wb = XLSX.read(arrayBuffer, { type: "array", cellStyles: true });
 
-      const ppeRows =
-        Array.isArray(data?.ppe) ? data.ppe : reportType === "ppe" && Array.isArray(data) ? data : [];
-
-      if (ppeRows.length > 0 || reportType === "ppe") {
-        fillPPEWorksheet(wb, ppeRows);
-      }
-
-      if (data.working) {
-        fillWorkingWorksheet(wb, data.working);
-      }
-
-      if (data.tb || data.trialBalance) {
-        fillTBWorksheet(
-          wb,
-          data.tb || data.trialBalance,
-          ppeRows,
-          endDate
-        );
-      }
-
-      if (data.ce) {
-        fillCEWorksheet(wb, data.ce, endDate);
-      }
-
-      if (data.cf) {
-        fillCFWorksheet(wb, data.cf);
-      }
-
-      if (data.p11) {
-        fillP11Worksheet(wb, data.p11, endDate);
-      }
+      const exportData = Array.isArray(data) ? { ppe: data } : data;
+      fillFinancialTemplate(wb, { ...exportData, endDate });
 
       XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);
     } catch (error) {
