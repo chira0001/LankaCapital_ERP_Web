@@ -223,8 +223,10 @@ const FinancialReportsPage = () => {
           endDate: endDate,
         },
       });
-      console.log("res.data : ", res.data);
-      setData(res.data);
+      const reportData =
+        reportType === "statement" ? { ...res.data, p09: res.data?.p09 ?? {} } : res.data;
+      console.log("res.data : ", reportData);
+      setData(reportData);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
       setData(null);
