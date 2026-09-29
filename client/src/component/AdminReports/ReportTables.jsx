@@ -746,6 +746,77 @@ const findTrialBalanceAmountInSection = (tb, sectionNames, accountNames, side = 
     return transactionType === "CR" ? null : amount;
 };
 
+const ProfitLossAmountRow = ({ label, note, formattedValue, strong = false }) => (
+    <tr className={strong ? "border-t-2 border-gray-900 font-semibold" : "border-t"}>
+        <td className="w-16 px-3 py-2 text-center text-gray-700">{note ?? ""}</td>
+        <td className="px-3 py-2 text-gray-900">{label}</td>
+        <td className="w-48 px-3 py-2 text-right tabular-nums text-gray-900">
+            {formattedValue}
+        </td>
+    </tr>
+);
+
+const ProfitLossTable = memo(function ProfitLossTable({ tb, endDateVal }) {
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const period = end?.isValid() ? formatEquityDate(end).toUpperCase() : "-";
+    const safeAmount = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+
+    const revenue = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Income"], ["Interest Income"], "CR")
+    );
+    const administrationExpenses = safeAmount(
+        findTrialBalanceAmountInSection(
+            tb,
+            ["Expenses"],
+            ["Accountancy Fee", "Accountany Fee"],
+            "DR"
+        )
+    ) + safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Audit Fee"], "DR")
+    );
+    const financeCost = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Bad Debts"], "DR")
+    );
+    const incomeTaxExpense = safeAmount(
+        findTrialBalanceAmountInSection(tb, ["Expenses"], ["Income Tax"], "DR")
+    );
+    const profitBeforeTax = revenue - administrationExpenses - financeCost;
+    const profitForPeriod = profitBeforeTax - incomeTaxExpense;
+
+    const formatStatementAmount = (value) => {
+        const amount = safeAmount(value);
+        return amount < 0 ? `(${formatCurrency(Math.abs(amount))})` : formatCurrency(amount);
+    };
+
+    return (
+        <div className="space-y-3">
+            <div className="text-sm font-semibold uppercase text-gray-900">
+                <div>N K R S LANKA CAPITAL (PRIVATE) LIMITED</div>
+                <div>STATEMENT OF COMPREHENSIVE INCOME</div>
+                <div>FOR THE YEAR ENDED {period}</div>
+            </div>
+            <TableWrapper>
+                <thead className="bg-white">
+                    <tr>
+                        <th className="border-b px-3 py-2 text-center font-semibold text-gray-900">Note</th>
+                        <th className="border-b px-3 py-2 text-left font-semibold text-gray-900"></th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Rs.</th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white">
+                    <ProfitLossAmountRow label="Revenue" note="4" formattedValue={formatStatementAmount(revenue)} />
+                    <ProfitLossAmountRow label="Administration Expenses" note="5" formattedValue={formatStatementAmount(-administrationExpenses)} />
+                    <ProfitLossAmountRow label="Finance Cost" note="6" formattedValue={formatStatementAmount(-financeCost)} />
+                    <ProfitLossAmountRow label="Profit/ (Loss) Before Taxation" formattedValue={formatStatementAmount(profitBeforeTax)} strong />
+                    <ProfitLossAmountRow label="Income Tax Expense" note="7" formattedValue={formatStatementAmount(-incomeTaxExpense)} />
+                    <ProfitLossAmountRow label="Profit/ (Loss) for the Period" formattedValue={formatStatementAmount(profitForPeriod)} strong />
+                </tbody>
+            </TableWrapper>
+            <p className="text-xs text-gray-500">Figures in brackets indicate deductions.</p>
+        </div>
+    );
+});
+
 const P09Table = memo(function P09Table({ tb, endDateVal }) {
     const end = endDateVal ? dayjs(endDateVal) : null;
     const period = end?.isValid() ? end.format("DD MMMM YYYY").toUpperCase() : "-";
@@ -1352,6 +1423,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
             return <P11Table data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
+        if (key === "pl" || key === "profitLoss") {
+            return <ProfitLossTable tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
         if (key === "bs" || key === "balanceSheet") {
             return <BalanceSheetTable data={data} endDateVal={end} />;
         }
@@ -1410,11 +1485,15 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         return <BalanceSheetTable data={data} endDateVal={end} />;
     }
 
+    if (reportType === "pl") {
+        return <ProfitLossTable tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+    }
+
     return (
         <div className="space-y-6">
             {sortedSections.map((section) => (
                 <section key={section.key} className="space-y-2">
-                    {section.key !== "ppe" && section.key !== "working" && section.key !== "bs" && (
+                    {section.key !== "ppe" && section.key !== "working" && section.key !== "pl" && section.key !== "bs" && (
                         <h3 className="text-base font-semibold text-gray-900">
                             {humanTitle(section.key)}
                         </h3>

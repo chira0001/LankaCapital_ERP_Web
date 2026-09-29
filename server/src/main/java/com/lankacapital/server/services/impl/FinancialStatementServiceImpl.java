@@ -190,6 +190,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         data.put("ce", generateCE(beginPeriod, endPeriod));
         data.put("cf", generateCF(beginPeriod, endPeriod));
         data.put("p11", generateP11(beginPeriod, endPeriod));
+        data.put("pl", true);
         data.put("bs", true);
     }
 
@@ -215,6 +216,9 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("cf",generateCF(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("p11")) {
                 data.put("p11",generateP11(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("pl")) {
+                data.put("tb", generateTRIALBALANCE(beginPeriod, endPeriod));
+                data.put("pl", true);
             }else if(reportType.equalsIgnoreCase("bs")) {
                 addBalanceSheetSupportingReports(data, beginPeriod, endPeriod);
             }else if(reportType.equalsIgnoreCase("statement")){
