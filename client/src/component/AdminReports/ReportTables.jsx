@@ -817,6 +817,125 @@ const ProfitLossTable = memo(function ProfitLossTable({ tb, endDateVal }) {
     );
 });
 
+const normalizeP10Entries = (values) =>
+    Array.isArray(values)
+        ? values.flatMap((item) =>
+            Object.entries(item || {}).map(([name, value]) => ({
+                name: String(name || "").trim(),
+                value: Number.isFinite(Number(value)) ? Number(value) : 0,
+            }))
+        )
+        : [];
+
+const P10AssetRows = ({ rows, valueKey, openingLabel, closingLabel, totalLabel }) => {
+    const total = rows.reduce((sum, row) => sum + (Number(row[valueKey]) || 0), 0);
+
+    return (
+        <TableWrapper>
+            <thead className="bg-white">
+                <tr>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-900"></th>
+                    <th className="border-b px-3 py-2 text-left font-semibold text-gray-900">
+                        Balance at {openingLabel}
+                    </th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Additions</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">Disposal</th>
+                    <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                        Balance at {closingLabel}
+                    </th>
+                </tr>
+            </thead>
+            <tbody className="bg-white">
+                {rows.map((row, index) => (
+                    <tr key={`${valueKey}-${index}`} className="border-t">
+                        <td className="px-3 py-2 text-gray-900">{row.name}</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(row[valueKey])}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(row[valueKey])}
+                        </td>
+                    </tr>
+                ))}
+                <tr className="border-t-2 border-gray-900 font-semibold">
+                    <td className="px-3 py-2 text-gray-900">{totalLabel}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                        {formatCurrency(total)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-500">-</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                        {formatCurrency(total)}
+                    </td>
+                </tr>
+            </tbody>
+        </TableWrapper>
+    );
+};
+
+const P10Table = memo(function P10Table({ data, endDateVal }) {
+    const costEntries = normalizeP10Entries(data?.costValue);
+    const depreciationEntries = normalizeP10Entries(data?.depreciationValue);
+    const rows = Array.from(
+        { length: Math.max(costEntries.length, depreciationEntries.length) },
+        (_, index) => ({
+            name: costEntries[index]?.name || depreciationEntries[index]?.name || "-",
+            cost: costEntries[index]?.value ?? 0,
+            depreciation: depreciationEntries[index]?.value ?? 0,
+        })
+    );
+    const openingDate = data?.balanceAtDate ? dayjs(data.balanceAtDate) : null;
+    const periodEnd = endDateVal ? dayjs(endDateVal) : null;
+    const openingLabel = openingDate?.isValid() ? openingDate.format("DD.MM.YYYY") : "-";
+    const closingLabel = periodEnd?.isValid() ? periodEnd.format("DD.MM.YYYY") : "-";
+    const total = (key) => rows.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+
+    return (
+        <div className="space-y-4">
+            <div className="text-sm font-semibold uppercase text-gray-900">
+                <div>N K R S LANKA CAPITAL (PRIVATE) LIMITED</div>
+                <div>NOTES TO THE FINANCIAL STATEMENTS</div>
+            </div>
+            <div>
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">8. Property, Plant and Equipment - Cost</h4>
+                <P10AssetRows rows={rows} valueKey="cost" openingLabel={openingLabel} closingLabel={closingLabel} totalLabel="Total Cost" />
+            </div>
+            <div>
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">Accumulated Depreciation</h4>
+                <P10AssetRows rows={rows} valueKey="depreciation" openingLabel={openingLabel} closingLabel={closingLabel} totalLabel="Total Accumulated Depreciation" />
+            </div>
+            <TableWrapper>
+                <thead className="bg-white">
+                    <tr>
+                        <th className="border-b px-3 py-2 text-left font-semibold text-gray-900">Written Down Value</th>
+                        <th className="border-b px-3 py-2 text-right font-semibold text-gray-900">
+                            Balance as at {closingLabel}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="bg-white">
+                    {rows.map((row, index) => (
+                        <tr key={`wdv-${index}`} className="border-t">
+                            <td className="px-3 py-2 text-gray-900">{row.name}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                                {formatCurrency(row.cost - row.depreciation)}
+                            </td>
+                        </tr>
+                    ))}
+                    <tr className="border-t-2 border-gray-900 font-semibold">
+                        <td className="px-3 py-2 text-gray-900">Total Written Down Value</td>
+                        <td className="px-3 py-2 text-right tabular-nums text-gray-900">
+                            {formatCurrency(total("cost") - total("depreciation"))}
+                        </td>
+                    </tr>
+                </tbody>
+            </TableWrapper>
+        </div>
+    );
+});
+
 const P09Table = memo(function P09Table({ tb, endDateVal }) {
     const end = endDateVal ? dayjs(endDateVal) : null;
     const period = end?.isValid() ? end.format("DD MMMM YYYY").toUpperCase() : "-";
@@ -1419,6 +1538,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
             return <P09Table tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
+        if (key === "p10") {
+            return <P10Table data={value} endDateVal={end} />;
+        }
+
         if (key === "p11") {
             return <P11Table data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
@@ -1489,11 +1612,15 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         return <ProfitLossTable tb={data?.tb || data?.trialBalance} endDateVal={end} />;
     }
 
+    if (reportType === "p10") {
+        return <P10Table data={data?.p10} endDateVal={end} />;
+    }
+
     return (
         <div className="space-y-6">
             {sortedSections.map((section) => (
                 <section key={section.key} className="space-y-2">
-                    {section.key !== "ppe" && section.key !== "working" && section.key !== "pl" && section.key !== "bs" && (
+                    {section.key !== "ppe" && section.key !== "working" && section.key !== "p10" && section.key !== "pl" && section.key !== "bs" && (
                         <h3 className="text-base font-semibold text-gray-900">
                             {humanTitle(section.key)}
                         </h3>
