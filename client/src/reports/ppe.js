@@ -1042,6 +1042,101 @@ function readWorksheetNumber(ws, row0, col) {
     return Number.isFinite(value) ? value : 0;
 }
 
+function findTrialBalanceSectionRow(ws, sectionName) {
+    return findCellByTextInsensitive(ws, sectionName, { col: 0 })?.r ?? null;
+}
+
+function findTrialBalanceAccountRowInSection(ws, sectionName, accountNames) {
+    const sectionRow0 = findTrialBalanceSectionRow(ws, sectionName);
+    if (sectionRow0 === null) return null;
+
+    const normalizedNames = new Set(
+        accountNames.map((name) => String(name).trim().toLowerCase())
+    );
+
+    const lastRow0 = XLSX.utils.decode_range(ws["!ref"] || "A1:A1").e.r;
+    for (let row0 = sectionRow0 + 1; row0 <= lastRow0; row0++) {
+        const account = getCell(ws, row0, 0)?.v;
+        const normalizedAccount = String(account ?? "").trim().toLowerCase();
+
+        if (normalizedNames.has(normalizedAccount)) return row0;
+        if (normalizedAccount === "total") break;
+        if (
+            ["bank accounts", "assets", "liabilities", "equity", "income", "expenses"].includes(
+                normalizedAccount
+            )
+        ) {
+            break;
+        }
+    }
+
+    return null;
+}
+
+function findFormulaCellForLabel(ws, label) {
+    const labelCell = findCellByTextInsensitive(ws, label, { col: 1 });
+    if (!labelCell) return null;
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:A1");
+    for (let col = labelCell.c + 1; col <= range.e.c; col++) {
+        const cell = getCell(ws, labelCell.r, col);
+        if (cell?.f) return { row0: labelCell.r, col };
+    }
+
+    return null;
+}
+
+function updateFormulaReferencePreserveStyle(ws, target, tbSheetName, tbWs, sourceRow0, sourceCol) {
+    if (!target || sourceRow0 === null) return false;
+
+    const cell = getCell(ws, target.row0, target.col);
+    if (!cell?.f) return false;
+
+    cell.f = `'${tbSheetName}'!${XLSX.utils.encode_col(sourceCol)}${sourceRow0 + 1}`;
+    cell.t = "n";
+    cell.v = readWorksheetNumber(tbWs, sourceRow0, sourceCol);
+    delete cell.w;
+    return true;
+}
+
+export function fillP09Worksheet(wb) {
+    if (!wb) throw new Error("Workbook missing");
+
+    const { ws } = getSheetByNameInsensitive(wb, "P09");
+    const tb = getSheetByNameInsensitive(wb, "TB");
+    if (!ws) throw new Error("P09 sheet not found in template");
+    if (!tb.ws) throw new Error("TB sheet not found in template");
+
+    const mappings = [
+        {
+            p09Label: "Commission Income",
+            section: "Income",
+            accounts: ["Interest Income"],
+            sourceCol: 2,
+        },
+        {
+            p09Label: "Accountancy Fee",
+            section: "Expenses",
+            accounts: ["Accountancy Fee", "Accountany Fee"],
+            sourceCol: 1,
+        },
+        {
+            p09Label: "Audit Fee",
+            section: "Expenses",
+            accounts: ["Audit Fee"],
+            sourceCol: 1,
+        },
+    ];
+
+    mappings.forEach(({ p09Label, section, accounts, sourceCol }) => {
+        const target = findFormulaCellForLabel(ws, p09Label);
+        const sourceRow0 = findTrialBalanceAccountRowInSection(tb.ws, section, accounts);
+        updateFormulaReferencePreserveStyle(ws, target, tb.sheetName, tb.ws, sourceRow0, sourceCol);
+    });
+
+    return { ws };
+}
+
 export function fillP11Worksheet(wb, p11 = {}, endDate = null) {
     if (!wb) throw new Error("Workbook missing");
 
@@ -1321,6 +1416,7 @@ export function fillFinancialTemplate(wb, data) {
         );
     }
     if (data.cf) fillCFWorksheet(wb, data.cf);
+    fillP09Worksheet(wb);
     if (data.p11) {
         fillP11Worksheet(
             wb,

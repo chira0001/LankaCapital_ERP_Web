@@ -25,7 +25,7 @@ import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
-import { fillCEWorksheet, fillCFWorksheet, fillP11Worksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
+import { fillCEWorksheet, fillCFWorksheet, fillP09Worksheet, fillP11Worksheet, fillPPEWorksheet, fillTBWorksheet, fillWorkingWorksheet } from "../../reports/ppe.js";
 
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
@@ -206,6 +206,16 @@ const FinancialReportsPage = () => {
         return;
       }
 
+      if (reportType === "p09") {
+        const tbRes = await axiosApi.get(`/admin/reports`, {
+          params: { reportType: "tb", startDate, endDate },
+        });
+        const mergedData = { p09: {}, ...tbRes.data };
+        console.log("res.data : ", mergedData);
+        setData(mergedData);
+        return;
+      }
+
       const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType,
@@ -264,6 +274,8 @@ const FinancialReportsPage = () => {
       if (data.cf) {
         fillCFWorksheet(wb, data.cf);
       }
+
+      fillP09Worksheet(wb);
 
       if (data.p11) {
         fillP11Worksheet(wb, data.p11, endDate);

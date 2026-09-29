@@ -626,6 +626,123 @@ const findTrialBalanceAmountByAliases = (tb, accountNames, side = "DR") => {
     return null;
 };
 
+const findTrialBalanceAmountInSection = (tb, sectionNames, accountNames, side = "DR") => {
+    if (!tb || typeof tb !== "object") return null;
+
+    const names = new Set(accountNames.map((name) => String(name).trim().toLowerCase()));
+    const rows = sectionNames
+        .flatMap((sectionName) => [tb[sectionName], tb[sectionName.toLowerCase()]])
+        .filter(Array.isArray)
+        .flat();
+
+    const row = rows.find((item) =>
+        names.has(String(item?.accountName ?? "").trim().toLowerCase())
+    );
+    if (!row) return null;
+
+    const amount = Number(row.amount ?? 0);
+    if (!Number.isFinite(amount)) return null;
+
+    const transactionType = String(row.transactionType ?? "").trim().toUpperCase();
+    if (side === "CR") return transactionType === "DR" ? null : amount;
+    return transactionType === "CR" ? null : amount;
+};
+
+const P09Table = memo(function P09Table({ tb, endDateVal }) {
+    const end = endDateVal ? dayjs(endDateVal) : null;
+    const period = end?.isValid() ? end.format("DD MMMM YYYY").toUpperCase() : "-";
+    const commissionIncome = findTrialBalanceAmountInSection(
+        tb,
+        ["Income"],
+        ["Interest Income"],
+        "CR"
+    );
+    const administrativeExpenses = [
+        {
+            label: "Accountancy Fee",
+            amount: findTrialBalanceAmountInSection(
+                tb,
+                ["Expenses"],
+                ["Accountancy Fee", "Accountany Fee"],
+                "DR"
+            ),
+        },
+        {
+            label: "Audit Fee",
+            amount: findTrialBalanceAmountInSection(tb, ["Expenses"], ["Audit Fee"], "DR"),
+        },
+    ];
+    const totalAdministrativeExpenses = administrativeExpenses.reduce(
+        (sum, row) => sum + (Number(row.amount) || 0),
+        0
+    );
+
+    const renderAmount = (amount) => (
+        <td className="border border-gray-300 px-3 py-2 text-right tabular-nums text-gray-900">
+            {amount === null ? "-" : formatCurrency(amount)}
+        </td>
+    );
+
+    return (
+        <div className="w-full overflow-x-auto rounded-lg border bg-white">
+            <table className="min-w-[620px] border-collapse text-sm">
+                <tbody>
+                    <tr>
+                        <td colSpan={2} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            N K R S LANKA CAPITAL (PRIVATE) LIMITED
+                        </td>
+                        <td className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-950">
+                            Page 9
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan={3} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            NOTES TO THE FINANCIAL STATEMENTS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan={3} className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">
+                            FOR THE PERIOD ENDED {period}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">4</td>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">Revenue</td>
+                        <td className="border border-gray-300 px-3 py-2 text-right font-semibold text-gray-950">Rs.</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Commission Income</td>
+                        {renderAmount(commissionIncome)}
+                    </tr>
+                    <tr className="font-semibold">
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Total Revenue</td>
+                        {renderAmount(commissionIncome)}
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">5</td>
+                        <td className="border border-gray-300 px-3 py-2 font-semibold text-gray-950">Administration Expenses</td>
+                        <td className="border border-gray-300 px-3 py-2" />
+                    </tr>
+                    {administrativeExpenses.map((expense) => (
+                        <tr key={expense.label}>
+                            <td className="border border-gray-300 px-3 py-2" />
+                            <td className="border border-gray-300 px-3 py-2">{expense.label}</td>
+                            {renderAmount(expense.amount)}
+                        </tr>
+                    ))}
+                    <tr className="font-semibold">
+                        <td className="border border-gray-300 px-3 py-2" />
+                        <td className="border border-gray-300 px-3 py-2">Total Administration Expenses</td>
+                        {renderAmount(totalAdministrativeExpenses)}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    );
+});
+
 const P11Table = memo(function P11Table({ data, tb, endDateVal }) {
     const end = endDateVal ? dayjs(endDateVal) : null;
     const year = end?.isValid() ? end.format("YYYY") : "2025";
@@ -666,7 +783,8 @@ const P11Table = memo(function P11Table({ data, tb, endDateVal }) {
         <td
             className={[
                 "w-28 border border-gray-300 px-2 py-1.5 text-right tabular-nums text-gray-950",
-                red ? "bg-red-600 text-black" : "",
+                red ? "bg-white text-black" : "",
+                // red ? "bg-red-600 text-black" : "",
                 top ? "border-t-2 border-t-black" : "",
                 bottom ? "border-b-2 border-b-black" : "",
                 number ? "" : "",
@@ -1072,7 +1190,7 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
         const preferredOrder = [
             "ppe",
             "working",
-            ...(reportType === "p11" ? [] : ["tb", "trialBalance"]),
+            ...(["p09", "p11"].includes(reportType) ? [] : ["tb", "trialBalance"]),
             "incometax",
             "incomeTax",
             "p10",
@@ -1126,6 +1244,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
 
         if (key === "cf" || key === "cashFlow") {
             return <CashFlowTable data={value} tb={data?.tb || data?.trialBalance} endDateVal={end} />;
+        }
+
+        if (key === "p09") {
+            return <P09Table tb={data?.tb || data?.trialBalance} endDateVal={end} />;
         }
 
         if (key === "p11") {
