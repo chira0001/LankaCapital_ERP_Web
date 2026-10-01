@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface IncomeTaxDataRepository extends JpaRepository<IncomeTaxData, Long> {
     boolean existsByFinancialDate(LocalDate financialDate);
     Optional<IncomeTaxData> findTopByFinancialDate(LocalDate financialDate);
+    IncomeTaxData findByFinancialDate(LocalDate date);
 }
