@@ -1,6 +1,7 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
+import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.IncomeTax.IncomeTaxResponseDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.P10.FinancialNoteAssetsDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
@@ -208,6 +209,31 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return dataDto;
     }
 
+    private IncomeTaxResponseDataDto generateIncomeTax(LocalDate beginPeriod, LocalDate endPeriod){
+        IncomeTaxResponseDataDto taxResponseDataDto = new IncomeTaxResponseDataDto();
+
+        IncomeTaxData taxData = incomeTaxDataRepository.findByFinancialDate(endPeriod);
+        taxResponseDataDto.setWithholdingPayments(taxData.getWithholdingAmount());
+
+        List<FinancialNoteData> noteData = financialNoteDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        List<HashMap<String, Integer>> assetYears = new ArrayList<>();
+        for(FinancialNoteData data : noteData){
+            HashMap<String, Integer> assetData = new HashMap<>();
+            assetData.put(data.getAssetsRegistry().getAssetName(), data.getYears());
+            assetYears.add(assetData);
+        }
+        taxResponseDataDto.setAssetYear(assetYears);
+
+        HashMap<LocalDate, BigDecimal> bfData = new HashMap<>();
+        bfData.put(taxData.getBalanceBFDate(),taxData.getBalanceBFAmount());
+        taxResponseDataDto.setBalanceBF(bfData);
+
+        taxResponseDataDto.setInvestmentIncome(taxData.getInvestmentIncome());
+        taxResponseDataDto.setBusinessIncome(taxData.getBusinessIncome());
+
+        return taxResponseDataDto;
+    }
+
     private void addBalanceSheetSupportingReports(
             HashMap<String, Object> data,
             LocalDate beginPeriod,
@@ -220,6 +246,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         data.put("cf", generateCF(beginPeriod, endPeriod));
         data.put("p10", generateP10(beginPeriod, endPeriod));
         data.put("p11", generateP11(beginPeriod, endPeriod));
+        data.put("incomeTax", generateIncomeTax(beginPeriod, endPeriod));
         data.put("pl", true);
         data.put("bs", true);
     }
@@ -248,6 +275,8 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("p10",generateP10(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("p11")) {
                 data.put("p11",generateP11(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("incomeTax")) {
+                data.put("incomeTax", generateIncomeTax(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("pl")) {
                 data.put("tb", generateTRIALBALANCE(beginPeriod, endPeriod));
                 data.put("pl", true);
