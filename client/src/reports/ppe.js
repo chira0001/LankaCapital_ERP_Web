@@ -1637,6 +1637,203 @@ export function fillPLWorksheet(wb, endDate = null) {
     return { sheetName, ws };
 }
 
+function toFiniteNumber(value) {
+    const number = Number(value ?? 0);
+    return Number.isFinite(number) ? number : 0;
+}
+
+function getIncomeTaxAssets(assetYear) {
+    if (!Array.isArray(assetYear)) return [];
+
+    return assetYear.flatMap((entry) =>
+        Object.entries(entry || {}).map(([name, years]) => ({
+            name,
+            years: toFiniteNumber(years),
+        }))
+    );
+}
+
+function getBalanceBroughtForward(balanceBF) {
+    if (!balanceBF || typeof balanceBF !== "object") return { date: null, amount: 0 };
+
+    const [date, amount] = Object.entries(balanceBF)[0] || [];
+    return { date: date || null, amount: toFiniteNumber(amount) };
+}
+
+function formatAssessmentYear(dateValue, offset = 0) {
+    const date = dayjs(dateValue);
+    if (!date.isValid()) return null;
+
+    const endYear = date.year() + offset;
+    return `${endYear - 1}/${endYear}`;
+}
+
+function cloneIncomeTaxAssetRow(ws, templateRow0, targetRow0, maxCol, p10RowOffset) {
+    // SheetJS may retain empty cells in the inserted row. Clear them first so
+    // cloneTemplateRowTo copies every source cell (including formula cells).
+    if (targetRow0 !== templateRow0) {
+        for (let col = 0; col <= maxCol; col++) {
+            delete ws[addrOf(targetRow0, col)];
+        }
+    }
+    cloneTemplateRowTo(ws, templateRow0, targetRow0, maxCol);
+
+    // The template row links to the corresponding P10 row. Copying the row in
+    // Excel would advance these references, so do the same for each new asset.
+    for (let col = 0; col <= maxCol; col++) {
+        const cell = getCell(ws, targetRow0, col);
+        if (!cell?.f || p10RowOffset === 0) continue;
+
+        cell.f = cell.f.replace(
+            /((?:'P10'|P10)!\$?[A-Z]{1,3}\$?)(\d+)/g,
+            (match, prefix, rowText) => {
+                if (prefix.endsWith("$")) return match;
+                return `${prefix}${Number(rowText) + p10RowOffset}`;
+            }
+        );
+        cell.v = 0;
+    }
+}
+
+export function fillIncomeTaxWorksheet(wb, incomeTax, endDate = null) {
+    if (!wb) throw new Error("Workbook missing");
+    if (!incomeTax || typeof incomeTax !== "object") {
+        throw new Error("Income tax data missing");
+    }
+
+    const { sheetName, ws } = getSheetByNameInsensitive(wb, "Income Tax");
+    if (!ws) throw new Error("Income Tax sheet not found in template");
+
+    const COLS = {
+        DESCRIPTION: 0,
+        COST: 1,
+        YEARS: 2,
+        OPENING_BALANCE: 3,
+        CLAIM: 4,
+        CLOSING_BALANCE: 5,
+        WDV: 7,
+    };
+    const assetTemplateRow0 = 34; // Excel row 35
+    const totalRow0 = 36; // Excel row 37
+    const maxCol = Math.max(XLSX.utils.decode_range(ws["!ref"] || "A1:K49").e.c, COLS.WDV);
+    const assets = getIncomeTaxAssets(incomeTax.assetYear);
+    const rowDelta = assets.length - 1;
+
+    // Insert space before the total row so every row below it (including its
+    // labels, borders and formulas) retains the template formatting.
+    if (rowDelta > 0) {
+        shiftRows(ws, totalRow0, rowDelta, { wb, sheetName });
+    }
+
+    const currentTotalRow0 = totalRow0 + Math.max(rowDelta, 0);
+    const assetRowCount = Math.max(assets.length, 1);
+
+    for (let index = 0; index < assetRowCount; index++) {
+        const row0 = assetTemplateRow0 + index;
+        cloneIncomeTaxAssetRow(ws, assetTemplateRow0, row0, maxCol, index);
+        const asset = assets[index];
+
+        setCellValueAllowFormula(ws, row0, COLS.DESCRIPTION, {
+            t: "s",
+            v: asset?.name || "",
+        });
+        setCellValueAllowFormula(ws, row0, COLS.YEARS, {
+            t: asset ? "n" : "s",
+            v: asset ? asset.years : "",
+        });
+    }
+
+    // Retain the template's total-row formulas, updating only their ranges to
+    // include the dynamically created asset rows.
+    [
+        [COLS.COST, "B"],
+        [COLS.OPENING_BALANCE, "D"],
+        [COLS.CLAIM, "E"],
+        [COLS.CLOSING_BALANCE, "F"],
+        [COLS.WDV, "H"],
+    ].forEach(([col, letter]) =>
+        setTotalFormula(ws, currentTotalRow0, col, letter, assetTemplateRow0, assets.length)
+    );
+
+    const balanceBF = getBalanceBroughtForward(incomeTax.balanceBF);
+    const broughtForwardYear = formatAssessmentYear(balanceBF.date);
+    const assessmentYear = formatAssessmentYear(endDate || balanceBF.date);
+    const carriedForwardYear = formatAssessmentYear(endDate || balanceBF.date, 1);
+
+    if (assessmentYear) {
+        setCellValueAllowFormula(ws, 2, COLS.DESCRIPTION, {
+            t: "s",
+            v: `YEAR OF ASSESSMENT ${assessmentYear}`,
+        });
+        setCellValueAllowFormula(ws, 32, COLS.DESCRIPTION, { t: "s", v: assessmentYear });
+    }
+
+    // These are the worksheet's non-formula inputs supplied by the Income Tax
+    // endpoint. Formula cells are deliberately left intact for Excel to recalculate.
+    setCellValueAllowFormula(ws, 7, COLS.WDV, {
+        t: "n",
+        v: toFiniteNumber(incomeTax.withholdingPayments),
+    });
+    setCellValueAllowFormula(ws, currentTotalRow0 + 4, COLS.WDV, {
+        t: "n",
+        v: balanceBF.amount,
+    });
+    setCellValueAllowFormula(ws, currentTotalRow0 + 9, COLS.WDV, {
+        t: "n",
+        v: toFiniteNumber(incomeTax.investmentIncome),
+    });
+    setCellValueAllowFormula(ws, currentTotalRow0 + 10, COLS.WDV, {
+        t: "n",
+        v: toFiniteNumber(incomeTax.businessIncome),
+    });
+
+    if (broughtForwardYear) {
+        setCellValueAllowFormula(ws, currentTotalRow0 + 4, COLS.DESCRIPTION, {
+            t: "s",
+            v: `Brought Forward from ${broughtForwardYear}`,
+        });
+    }
+    if (carriedForwardYear) {
+        setCellValueAllowFormula(ws, currentTotalRow0 + 11, COLS.DESCRIPTION, {
+            t: "s",
+            v: `Carried Forward to ${carriedForwardYear}`,
+        });
+    }
+
+    // Taxable Income is a category, not a numeric input. Make it follow the
+    // computed assessable business income and keep the tax calculation numeric.
+    setCellValueAllowFormula(ws, 16, COLS.WDV, {
+        t: "s",
+        v: "",
+        f: 'IF(H15<0,"Loss","Profit")',
+    });
+    setCellValueAllowFormula(ws, 18, 5, {
+        t: "n",
+        v: 0,
+        f: "IF(H15>0,H15,0)",
+    });
+    setCellValueAllowFormula(ws, 18, COLS.WDV, {
+        t: "n",
+        v: 0,
+        f: "F19*0.3",
+    });
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:K49");
+    range.e.r = Math.max(range.e.r, currentTotalRow0 + 11);
+    range.e.c = Math.max(range.e.c, maxCol);
+    ws["!ref"] = XLSX.utils.encode_range(range);
+
+    wb.Workbook = wb.Workbook || {};
+    wb.Workbook.CalcPr = {
+        ...(wb.Workbook.CalcPr || {}),
+        calcMode: "auto",
+        fullCalcOnLoad: true,
+        forceFullCalc: true,
+    };
+
+    return { sheetName, ws };
+}
+
 export function fillFinancialTemplate(wb, data) {
     if (!wb) throw new Error("Workbook missing");
     if (!data || typeof data !== "object") throw new Error("Data missing");
@@ -1671,6 +1868,13 @@ export function fillFinancialTemplate(wb, data) {
         fillP11Worksheet(
             wb,
             data.p11,
+            data.endDate || data.periodEndDate || data.financialDate
+        );
+    }
+    if (data.incomeTax) {
+        fillIncomeTaxWorksheet(
+            wb,
+            data.incomeTax,
             data.endDate || data.periodEndDate || data.financialDate
         );
     }
