@@ -1419,6 +1419,124 @@ const CashFlowTable = memo(function CashFlowTable({ data, tb, endDateVal }) {
     );
 });
 
+const IncomeTaxTable = memo(function IncomeTaxTable({ data, endDateVal }) {
+    const incomeTax = data || {};
+    const assets = Array.isArray(incomeTax.assetYear)
+        ? incomeTax.assetYear.flatMap((item) =>
+            Object.entries(item || {}).map(([asset, years]) => ({ asset, years }))
+        )
+        : [];
+    const [balanceBFDate, balanceBFAmount] = Object.entries(incomeTax.balanceBF || {})[0] || [];
+    const periodEnd = dayjs(endDateVal);
+    const assessmentEndYear = periodEnd.isValid()
+        ? periodEnd.year()
+        : (balanceBFDate ? dayjs(balanceBFDate).year() : null);
+    const assessmentYear = assessmentEndYear
+        ? `${assessmentEndYear - 1}/${assessmentEndYear}`
+        : "-";
+    const broughtForwardYear = balanceBFDate && dayjs(balanceBFDate).isValid()
+        ? `${dayjs(balanceBFDate).year() - 1}/${dayjs(balanceBFDate).year()}`
+        : "-";
+
+    const AmountCell = ({ children, strong = false }) => (
+        <td className={`border border-gray-200 px-3 py-2 text-right tabular-nums text-gray-900 ${strong ? "font-semibold" : ""}`}>
+            {children}
+        </td>
+    );
+    const LabelCell = ({ children, strong = false, indent = false, colSpan = 5 }) => (
+        <td className={`border border-gray-200 px-3 py-2 text-gray-900 ${strong ? "font-semibold" : ""} ${indent ? "pl-8" : ""}`} colSpan={colSpan}>
+            {children}
+        </td>
+    );
+    const FormulaCell = () => <AmountCell>-</AmountCell>;
+
+    return (
+        <div className="w-full overflow-x-auto rounded-lg border bg-white">
+            <table className="min-w-[900px] border-collapse text-sm">
+                <tbody>
+                    <tr>
+                        <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-950" colSpan={5}>
+                            N K R S LANKA CAPITAL (PRIVATE) LIMITED
+                        </td>
+                        <td className="border border-gray-200 px-3 py-2 text-center font-semibold text-gray-950">Page 12</td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-950" colSpan={5}>
+                            COMPUTATION OF INCOME TAX
+                        </td>
+                        <td className="border border-gray-200 px-3 py-2" />
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-950" colSpan={5}>
+                            YEAR OF ASSESSMENT {assessmentYear}
+                        </td>
+                        <td className="border border-gray-200 px-3 py-2 text-center font-semibold text-gray-950">Rs.</td>
+                    </tr>
+
+                    <tr><LabelCell>Profit/(Loss) Before Tax as per Financial Statements</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell>Less: Exempt Amounts, Final Withholding Payments &amp; Other Sources</LabelCell><AmountCell>{formatCurrency(incomeTax.withholdingPayments)}</AmountCell></tr>
+                    <tr><LabelCell strong>Profit/(Loss) After Exempt Amounts</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell>Add: Deduction not Allowed</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell indent>Depreciation</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell strong>Assessable Income From Business/(Business Loss)</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell strong>Taxable Income</LabelCell><AmountCell>Calculated in worksheet</AmountCell></tr>
+                    <tr><LabelCell>Income Tax on Taxable Income</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell>Less: Tax Credits</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell indent>Self Assessment Income Tax Payments</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell strong>Balance Tax Payable</LabelCell><FormulaCell /></tr>
+
+                    <tr>
+                        <td className="border border-gray-200 bg-gray-50 px-3 py-3 font-semibold text-gray-950" colSpan={6}>
+                            Annexure to the Income Tax Computation
+                        </td>
+                    </tr>
+                    <tr>
+                        <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-950" colSpan={6}>
+                            Annexure 1 - Capital Allowances On Depreciable Assets
+                        </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                        <th className="border border-gray-200 px-3 py-2 text-left font-semibold text-gray-800">Asset Description</th>
+                        <th className="border border-gray-200 px-3 py-2 text-right font-semibold text-gray-800">Cost</th>
+                        <th className="border border-gray-200 px-3 py-2 text-right font-semibold text-gray-800">Years</th>
+                        <th className="border border-gray-200 px-3 py-2 text-right font-semibold text-gray-800">Opening Balance</th>
+                        <th className="border border-gray-200 px-3 py-2 text-right font-semibold text-gray-800">Claim</th>
+                        <th className="border border-gray-200 px-3 py-2 text-right font-semibold text-gray-800">WDV</th>
+                    </tr>
+                    {assets.length ? assets.map((asset, index) => (
+                        <tr key={`${asset.asset}-${index}`}>
+                            <td className="border border-gray-200 px-3 py-2 text-gray-900">{asset.asset}</td>
+                            <AmountCell>-</AmountCell>
+                            <AmountCell>{formatNumber(asset.years)}</AmountCell>
+                            <AmountCell>-</AmountCell>
+                            <AmountCell>-</AmountCell>
+                            <AmountCell>-</AmountCell>
+                        </tr>
+                    )) : (
+                        <tr><td className="border border-gray-200 px-3 py-2 text-gray-500" colSpan={6}>No depreciable assets available.</td></tr>
+                    )}
+                    <tr className="bg-gray-50 font-semibold">
+                        <td className="border border-gray-200 px-3 py-2 text-gray-900">Total</td>
+                        <AmountCell>-</AmountCell><AmountCell /><AmountCell>-</AmountCell><AmountCell>-</AmountCell><AmountCell>-</AmountCell>
+                    </tr>
+
+                    <tr>
+                        <td className="border border-gray-200 px-3 py-2 font-semibold text-gray-950" colSpan={6}>
+                            Annexure 2 - Business Losses
+                        </td>
+                    </tr>
+                    <tr><LabelCell>Brought Forward from {broughtForwardYear}</LabelCell><AmountCell>{formatCurrency(balanceBFAmount)}</AmountCell></tr>
+                    <tr><LabelCell>Business Losses for the year</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell strong>Loss Deducted during the year</LabelCell><FormulaCell /></tr>
+                    <tr><LabelCell indent>Deducted against Investment Income</LabelCell><AmountCell>{formatCurrency(incomeTax.investmentIncome)}</AmountCell></tr>
+                    <tr><LabelCell indent>Deducted against Business Income</LabelCell><AmountCell>{formatCurrency(incomeTax.businessIncome)}</AmountCell></tr>
+                    <tr><LabelCell strong>Carried Forward</LabelCell><FormulaCell /></tr>
+                </tbody>
+            </table>
+        </div>
+    );
+});
+
 // Generic Table (for other report types)
 const GenericTable = memo(function GenericTable({ data, title }) {
     const rows = Array.isArray(data) ? data : [];
@@ -1520,6 +1638,10 @@ const ReportTables = memo(function ReportTables({ data, end, reportType }) {
 
         if (key === "working" || type === "working") {
             return <WorkingTable data={value} />;
+        }
+
+        if (key === "incomeTax" || key === "incometax") {
+            return <IncomeTaxTable data={value} endDateVal={end} />;
         }
 
         if (key === "tb" || key === "trialBalance") {
