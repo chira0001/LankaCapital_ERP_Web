@@ -30,7 +30,6 @@ public class DailyCollectionMapper {
         collection.setInstallmentNumber(dto.getInstallmentNumber());
         collection.setPaidAmount(dto.getPaidAmount());
         collection.setPaidAt(dto.getPaidAt());
-        collection.setDueAmount(dto.getDueAmount());
 
         return collection;
     }
@@ -40,8 +39,6 @@ public class DailyCollectionMapper {
 
         collection.setInstallmentNumber(dto.getInstallmentNumber());
         collection.setPaidAmount(dto.getPaidAmount());
-        collection.setDueAmount(dto.getDueAmount());
-//        collection.setPaidAt(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime());
         collection.setPaidAt(dto.getPaidAt());
 
         return collection;

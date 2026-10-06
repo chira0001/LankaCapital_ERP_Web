@@ -25,4 +25,5 @@ public interface DailyCollectionService {
     String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto);
     DailyCollection addDailyCollection(String username, CollectionRequestDto collectionDto);
     List<CollectionResDto> manageCollections(String username, List<CollectionReqDto> collectionReqDto);
+    List<LoanStatusDto> getLoanStatus(String username, LoanAsyncDto fileNumbers);
 }
