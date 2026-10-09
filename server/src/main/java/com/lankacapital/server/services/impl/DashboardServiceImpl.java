@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private final FinancialStatementRepository financialStatementRepository;
+//    private final FinancialStatementRepository financialStatementRepository;
     private final MonthlyIncomeRepository monthlyIncomeRepository;
     private final MonthlyExpenseRepository monthlyExpenseRepository;
     private final LoanRepository loanRepository;

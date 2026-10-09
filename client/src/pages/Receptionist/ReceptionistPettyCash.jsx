@@ -187,10 +187,11 @@ const ReceptionistPettyCash = () => {
 
         <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">
-                Petty Cash Management
+                {/* Petty Cash Management */}
+                Administrative Expense Management
             </h1>
             <p className="text-gray-500 mt-1">
-                Submit and track your petty cash expenses
+                Submit and track your administrative expenses
             </p>
         </div>
 
@@ -349,7 +350,8 @@ const ReceptionistPettyCash = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                 <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-700">
-                        Edit Petty Cash
+                        {/* Edit Petty Cash */}
+                        Edit Administrative Expense
                     </h2>
 
                     <div className="space-y-3">

@@ -2,8 +2,7 @@ package com.lankacapital.server.controllers;
 
 import com.lankacapital.server.dtos.*;
 import com.lankacapital.server.dtos.AdminDto.DailyCollectionRequestDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.AssetsDto;
-import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
+import com.lankacapital.server.dtos.AdminDto.ReportsDtos.*;
 import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
 
@@ -11,10 +10,10 @@ import com.lankacapital.server.entities.SalaryMetaData;
 import com.lankacapital.server.exceptions.ResourceNotFoundException;
 import com.lankacapital.server.mappers.LoanMapper;
 import com.lankacapital.server.services.*;
-import com.lankacapital.server.services.ReportsService.AssetsRegistryService;
-import com.lankacapital.server.services.ReportsService.TrialBalanceDataService;
+import com.lankacapital.server.services.ReportsService.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -46,7 +45,12 @@ public class AdminController {
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
     private final TrialBalanceDataService trialBalanceDataService;
+    private final EquityChangeService equityChangeService;
     private final SalaryService salaryService;
+    private final CashFlowDataService cashFlowDataService;
+    private final FinancialNoteDataService financialNoteDataService;
+    private final NoteSharesDataService noteSharesDataService;
+    private final IncomeTaxDataService incomeTaxDataService;
 
     @PostMapping(path = "/role")
     public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
@@ -420,16 +424,6 @@ public class AdminController {
         return new ResponseEntity<>(loanService.fetchLoanPayments(loanId, page, size), HttpStatus.OK);
     }
 
-    //reports
-    @GetMapping("/reports")
-    public ResponseEntity<?> generateReport(
-            @RequestParam String reportType,
-            @RequestParam String startDate,
-            @RequestParam String endDate
-    ) {
-        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
-    }
-
     @GetMapping(path = "/assets")
     public ResponseEntity<?> getFromAssetsRegistry(Authentication authentication){
         if(authentication == null || authentication.getName().isEmpty()){
@@ -471,6 +465,133 @@ public class AdminController {
         }
         return new ResponseEntity<>(trialBalanceDataService.fetchTrialBalances(startDate,endDate), HttpStatus.CREATED);
     }
+
+    @PostMapping(path = "/equityChange")
+    public ResponseEntity<?> addToEquityChange(
+            Authentication authentication,
+            @RequestBody List<EquityChangeDto> equityChangeDtos
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(equityChangeService.addEquityChange(equityChangeDtos), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/equityChange")
+    public ResponseEntity<?> fetchEquityChanges(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(equityChangeService.fetchEquityChange(startDate,endDate), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/cashFlow")
+    public ResponseEntity<?> addToCashFlow(
+            Authentication authentication,
+            @RequestBody CashFlowDataDto dto
+            ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(cashFlowDataService.addCashFlow(dto), HttpStatus.CREATED);
+    }
+
+    @GetMapping(path = "/cashFlow")
+    public ResponseEntity<?> fetchCashFlowData(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            Authentication authentication
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(cashFlowDataService.fetchCashFlow(startDate,endDate), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/financialNotes")
+    public ResponseEntity<?> addToFinancialNotes(
+            Authentication authentication,
+            @RequestBody List<FinancialNoteDataDto> dto
+    ){
+        if(authentication == null || authentication.getName().isEmpty()){
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(financialNoteDataService.addFinancialNoteData(dto), HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/shares")
+    public ResponseEntity<?> addToNoteShares(Authentication authentication,
+                                             @RequestBody NoteSharesDataDto dto) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                noteSharesDataService.addNoteSharesData(dto),
+                HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping(path = "/shares")
+    public ResponseEntity<?> getNoteShares(Authentication authentication,
+                                           @RequestParam("financialDate")
+                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                           LocalDate financialDate) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return ResponseEntity.ok(noteSharesDataService.getNoteSharesData(financialDate));
+    }
+
+    @PostMapping(path = "/incomeTax")
+    public ResponseEntity<?> addToIncomeTax(
+            Authentication authentication,
+            @RequestBody IncomeTaxDataDto dto
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                incomeTaxDataService.addNoteIncomeTax(dto),
+                HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping(path = "/incomeTax")
+    public ResponseEntity<?> getIncomeTax(
+            Authentication authentication,
+            @RequestParam("financialDate")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate financialDate
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return ResponseEntity.ok(incomeTaxDataService.getIncomeTaxByFinancialDate(financialDate));
+    }
+
+
+    //reports
+    @GetMapping("/reports")
+    public ResponseEntity<?> generateReport(
+            @RequestParam String reportType,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        System.out.println(reportType + " - " + startDate + " - " + endDate);
+        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+    }
+
+
+
+
 
 
     //revenue tracking

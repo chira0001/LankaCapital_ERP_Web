@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,4 +117,17 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     ) {
         return findActiveLoansApprovedBefore(status, loanType, cutoffDate.atTime(LocalTime.MAX));
     }
+
+    @Query("""
+    SELECT 
+        COALESCE(SUM(l.documentCharge),0) + 
+        COALESCE(SUM((l.amount * l.interestRate)/100),0)
+    FROM Loan l
+    WHERE l.status = com.lankacapital.server.enums.LoanStatus.APPROVED
+    AND l.createdAt BETWEEN :startPeriod AND :endPeriod
+""")
+    BigDecimal fetchApprovedLoansAndCreatedAtBetweenStartPeriodAndEndPeriod(
+            @Param("startPeriod") LocalDateTime startPeriod,
+            @Param("endPeriod") LocalDateTime endPeriod
+    );
 }

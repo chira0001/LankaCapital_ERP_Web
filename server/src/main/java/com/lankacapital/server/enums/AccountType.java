@@ -1,9 +1,10 @@
 package com.lankacapital.server.enums;
 
 public enum AccountType {
-    ASSET,
-    LIABILITY,
-    EQUITY,
-    EXPENSE,
-    INCOME
+    Assets,
+    Liabilities,
+    Equity,
+    Expenses,
+    Income,
+    BankAccounts
 }

@@ -59,24 +59,33 @@ const ReceptionistDashboard = () => {
                 }`,
             func: 'salary'
         },
+        // {
+        //     name: "Monthly Expenses",
+        //     icon: (
+        //         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M20 7h-3V3c0-.33-.16-.64-.43-.82a.98.98 0 0 0-.92-.11L3.28 6.82C2.51 7.11 2 7.87 2 8.69V20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2m-5-2.54V7H8.39zM4 20V9h16v2h-5c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h5v2zm16-4h-5v-3h5z"></path></svg>
+        //     ),
+        //     css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'monthlyExp' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
+        //         }`,
+        //     func: 'monthlyExp'
+        // },
         {
-            name: "Monthly Expenses",
-            icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M20 7h-3V3c0-.33-.16-.64-.43-.82a.98.98 0 0 0-.92-.11L3.28 6.82C2.51 7.11 2 7.87 2 8.69V20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2m-5-2.54V7H8.39zM4 20V9h16v2h-5c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h5v2zm16-4h-5v-3h5z"></path></svg>
-            ),
-            css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'monthlyExp' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
-                }`,
-            func: 'monthlyExp'
-        },
-        {
-            name: "Monthly Petty Cash",
+            name: <p className='text-left'>Administrative <br />Expenses</ p>,
             icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M21 8H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1m-1 8c-1.1 0-2 .9-2 2h-8c0-1.1-.9-2-2-2v-4c1.1 0 2-.9 2-2h8c0 1.1.9 2 2 2z"></path><path d="M18 4H3c-.55 0-1 .45-1 1v11h2V6h14zm-4 8a2 2 0 1 0 0 4 2 2 0 1 0 0-4"></path></svg>
             ),
-            css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'monthlyPetty' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
+            css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'admin-exp' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
                 }`,
-            func: 'monthlyPetty'
+            func: 'admin-exp'
         },
+        // {
+        //     name: "Monthly Petty Cash",
+        //     icon: (
+        //         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" ><path d="M21 8H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V9c0-.55-.45-1-1-1m-1 8c-1.1 0-2 .9-2 2h-8c0-1.1-.9-2-2-2v-4c1.1 0 2-.9 2-2h8c0 1.1.9 2 2 2z"></path><path d="M18 4H3c-.55 0-1 .45-1 1v11h2V6h14zm-4 8a2 2 0 1 0 0 4 2 2 0 1 0 0-4"></path></svg>
+        //     ),
+        //     css: `flex gap-3 items-center transition-all duration-200 ${currentPanel === 'monthlyPetty' ? "text-black font-semibold border border-black shadow-md" : "text-gray-400 hover:text-black"
+        //         }`,
+        //     func: 'monthlyPetty'
+        // },
         // {
         //     name: "Business Financials",
         //     icon: (
