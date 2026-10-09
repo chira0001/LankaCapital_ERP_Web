@@ -18,7 +18,12 @@ public class LoanCollectionDto {
     private Double installmentAmount;
     private Double dueAmount;
     private Double totalPaidAmount;
-//    private Double preClosureAmount;
+    private Double payableAmount; //start
+
+    private LocalDateTime lastPaidAtDate;
+    private Double lastPaidAmount;
+    private Double lastDueAmount; //end
+    private LocalDateTime loanApprovedAt;
 
     private String customerNic;
     private String customerName;
