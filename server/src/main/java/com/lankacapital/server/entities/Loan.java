@@ -84,4 +84,7 @@ public class Loan {
         }
         this.status = LoanStatus.PENDING;
     }
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 }

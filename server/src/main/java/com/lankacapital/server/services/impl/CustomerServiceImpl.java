@@ -223,7 +223,7 @@ public class CustomerServiceImpl implements CustomerService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 25);
+        Pageable pageable = PageRequest.of(page, 50);
 
         return customerRepository.findAll(pageable)
                 .getContent()
@@ -234,13 +234,6 @@ public class CustomerServiceImpl implements CustomerService {
                 ))
                 .toList();
     }
-
-//        return getAllCustomer();
-
-//        return customerRepository.findUpdatedCustomers(pageable)
-//                .stream()
-//                .map(CustomerMapper::mapToCustomerAsyncDto)
-//                .toList();
 
     @Override
     public Customer addNewCustomer(String username, CustomerAddSyncDto customerAddSyncDto){
