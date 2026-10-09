@@ -16,6 +16,8 @@ import com.lankacapital.server.services.DailyCollectionService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -165,46 +167,50 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
 //        return dto;
 //    }
 
+    @Transactional
     @Override
-    public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto){
+    public String syncDailyCollection(String username, CollectionSyncDto collectionSyncDto) {
         DailyCollection collection = DailyCollectionMapper.mapToSync(collectionSyncDto);
 
         Employee authEmployee = employeeRepository.findByEmail(username);
-        if(authEmployee == null){
+        if (authEmployee == null) {
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-
         collection.setEmployee(authEmployee);
 
-        Loan loan = loanRepository
-                .findByFileNumber(collectionSyncDto.getFileNumber())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Loan not found")
-                );
+        Loan loan = loanRepository.findByFileNumber(collectionSyncDto.getFileNumber())
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
 
         if (loan.getStatus() != LoanStatus.APPROVED) {
             throw new ResourceExistException("This loan is currently: " + loan.getStatus());
         }
+        collection.setLoan(loan);
+
+        BigDecimal incomingDueAmount = collectionSyncDto.getDueAmount() != null
+                ? collectionSyncDto.getDueAmount()
+                : BigDecimal.ZERO;
 
         Optional<DailyCollection> lastDailyCollection =
                 dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber());
 
-        if (lastDailyCollection.isPresent()) {
-            LocalDate lastDate = lastDailyCollection.get().getPaidAt().toLocalDate();
-            LocalDate newDate = collectionSyncDto.getPaidAt().toLocalDate();
+        if (lastDailyCollection.isPresent()
+                && Objects.equals(lastDailyCollection.get().getInstallmentNumber(), collectionSyncDto.getInstallmentNumber())) {
 
-            if (loan.getLoanType().equals(LoanType.DAILY)) {
-                if (!newDate.isAfter(lastDate)) {
-                    throw new ResourceExistException("Daily collection date must be after " + lastDate + ", received: " + newDate);
-                }
-            } else if (loan.getLoanType().equals(LoanType.WEEKLY)) {
-                if (newDate.isBefore(lastDate.plusWeeks(1))) {
-                    throw new ResourceExistException("Weekly collection must be on or after " + lastDate.plusWeeks(1) + ", received: " + newDate);
-                }
-            }
+            dailyCollectionRepository
+                    .findFirstByLoan_IdAndInstallmentNumberOrderByPaidAtAsc(loan.getId(), collectionSyncDto.getInstallmentNumber())
+                    .ifPresent(firstCollection -> {
+                        BigDecimal currentDue = firstCollection.getDueAmount() != null
+                                ? firstCollection.getDueAmount()
+                                : BigDecimal.ZERO;
+
+                        firstCollection.setDueAmount(incomingDueAmount);
+                        dailyCollectionRepository.save(firstCollection);
+                    });
+
+            collection.setDueAmount(BigDecimal.ZERO);
+        } else {
+            collection.setDueAmount(incomingDueAmount);
         }
-
-        collection.setLoan(loan);
 
         DailyCollection saved = dailyCollectionRepository.save(collection);
         return saved.getId().toString();
@@ -223,27 +229,9 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
             throw new ResourceExistException("This loan is currently: " + loan.getStatus());
         }
 
-        Optional<DailyCollection> lastDailyCollection =
-                dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber());
-
-        if (lastDailyCollection.isPresent()) {
-            LocalDate lastDate = lastDailyCollection.get().getPaidAt().toLocalDate();
-            LocalDate newDate = collectionDto.getPaidAt().toLocalDate();
-
-            if (loan.getLoanType().equals(LoanType.DAILY)) {
-                if (!newDate.isAfter(lastDate)) {
-                    throw new ResourceExistException("Daily collection date must be after " + lastDate + ", received: " + newDate);
-                }
-            } else if (loan.getLoanType().equals(LoanType.WEEKLY)) {
-                if (newDate.isBefore(lastDate.plusWeeks(1))) {
-                    throw new ResourceExistException("Weekly collection must be on or after " + lastDate.plusWeeks(1) + ", received: " + newDate);
-                }
-            }
-        }
-
         dailyCollectionRepository.findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(loan.getFileNumber())
                 .ifPresent(lastCollection -> {
-                    if (lastCollection.getInstallmentNumber() >= collectionDto.getInstallmentNumber()) {
+                    if (lastCollection.getInstallmentNumber() > collectionDto.getInstallmentNumber()) {
                         throw new ResourceExistException("Invalid installment number: " + collectionDto.getInstallmentNumber());
                     }
                 });
@@ -272,7 +260,42 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
             loanRepository.save(loan);
         }
 
+        int maxInstallment = collections.stream()
+                .map(DailyCollection::getInstallmentNumber)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+
         DailyCollection collection = DailyCollectionMapper.mapToDailyCollection(collectionDto);
+
+        BigDecimal clientDueAmount = collectionDto.getDueAmount() != null
+                ? collectionDto.getDueAmount()
+                : BigDecimal.ZERO;
+
+        if (maxInstallment != 0 && maxInstallment == collectionDto.getInstallmentNumber()) {
+            DailyCollection earliestCollection = collections.stream()
+                    .filter(c -> c.getInstallmentNumber() != null && c.getInstallmentNumber().equals(maxInstallment))
+                    .filter(c -> c.getPaidAt() != null)
+                    .min(Comparator.comparing(DailyCollection::getPaidAt))
+                    .orElse(null);
+
+            if (earliestCollection != null) {
+                earliestCollection.setDueAmount(clientDueAmount);
+
+                long currentStatus = earliestCollection.getUpdateStatus() != null
+                        ? earliestCollection.getUpdateStatus()
+                        : 0L;
+                earliestCollection.setUpdateStatus(currentStatus + 1L);
+
+                dailyCollectionRepository.save(earliestCollection);
+            }
+
+            collection.setDueAmount(BigDecimal.ZERO);
+
+        } else {
+            collection.setDueAmount(clientDueAmount);
+        }
+
         collection.setEmployee(employee);
         collection.setLoan(loan);
 
@@ -280,52 +303,96 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
     }
 
     @Override
-    public List<CollectionResDto> manageCollections(String username, List<CollectionReqDto> collectionReqDto){
+    public List<CollectionResDto> manageCollections(String username, List<CollectionReqDto> collectionReqDto) {
         Employee employee = employeeRepository.findByEmail(username);
-        if(employee == null){
+        if (employee == null) {
             throw new ResourceNotFoundException("Employee not found with verification");
         }
 
-        List<CollectionResDto> dtoList = new ArrayList<>();
+        if (collectionReqDto == null || collectionReqDto.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        for (CollectionReqDto dto : collectionReqDto){
+        List<CollectionResDto> dtoList = new ArrayList<>();
+        for (CollectionReqDto dto : collectionReqDto) {
             Optional<Loan> loan = loanRepository.findByFileNumber(dto.getFileNumber());
-            if(loan.isEmpty()){
+            if (loan.isEmpty()) {
                 continue;
             }
+
             List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_Id(loan.get().getId());
             if (collections == null || collections.isEmpty()) {
                 continue;
             }
-            DailyCollection lastCollection = collections.stream()
-                    .max(Comparator.comparing(DailyCollection::getInstallmentNumber))
+
+            DailyCollection latestPaidCollection = collections.stream()
+                    .filter(c -> c != null && c.getPaidAt() != null)
+                    .max(Comparator.comparing(DailyCollection::getPaidAt))
                     .orElse(null);
 
-            if(lastCollection.getInstallmentNumber() <= dto.getInstallmentNo()){
+            if (latestPaidCollection == null || latestPaidCollection.getPaidAt() == null) {
                 continue;
             }
 
-            CollectionResDto collectionResDto = new CollectionResDto();
+            if (dto.getPaidAt() != null && !latestPaidCollection.getPaidAt().isAfter(dto.getPaidAt())) {
+                continue;
+            }
+
+            DailyCollection lastInstallmentCollection = collections.stream()
+                    .filter(Objects::nonNull)
+                    .max(Comparator.comparing(
+                            DailyCollection::getInstallmentNumber,
+                            Comparator.nullsFirst(Comparator.naturalOrder())
+                    ))
+                    .orElse(latestPaidCollection);
 
             BigDecimal totalDueAmount = collections.stream()
+                    .filter(Objects::nonNull)
                     .map(DailyCollection::getDueAmount)
+                    .filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal totalPaidAmount = collections.stream()
+                    .filter(Objects::nonNull)
                     .map(DailyCollection::getPaidAmount)
+                    .filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal scaledDueAmount = totalDueAmount.setScale(2, RoundingMode.HALF_UP);
             BigDecimal scaledTotalPaid = totalPaidAmount.setScale(2, RoundingMode.HALF_UP);
 
+            CollectionResDto collectionResDto = new CollectionResDto();
             collectionResDto.setDueAmount(scaledDueAmount.doubleValue());
             collectionResDto.setTotalPaid(scaledTotalPaid.doubleValue());
-            collectionResDto.setInstallmentNo(lastCollection.getInstallmentNumber());
-            collectionResDto.setFileNumber(lastCollection.getLoan().getFileNumber());
-            collectionResDto.setPaidAt(lastCollection.getPaidAt());
+            collectionResDto.setInstallmentNo(lastInstallmentCollection.getInstallmentNumber());
+            collectionResDto.setFileNumber(loan.get().getFileNumber());
+            collectionResDto.setPaidAt(latestPaidCollection.getPaidAt());
 
             dtoList.add(collectionResDto);
         }
         return dtoList;
+    }
+
+    @Override
+    public List<LoanStatusDto> getLoanStatus(String username, LoanAsyncDto fileNumbers) {
+        Employee employee = employeeRepository.findByEmail(username);
+        if (employee == null) {
+            throw new ResourceNotFoundException("Employee not found with verification");
+        }
+
+        List<LoanWeeklySummaryProjection> summaryRows = dailyCollectionRepository
+                .findWeeklyMaxInstallmentSummary(LoanType.WEEKLY.name(), fileNumbers.getId());
+
+        List<LoanStatusDto> list = new ArrayList<>();
+        for (LoanWeeklySummaryProjection row : summaryRows) {
+            LoanStatusDto dto = new LoanStatusDto();
+            dto.setFileNumber(row.getFileNumber());
+            dto.setPaidAmount(row.getPaidAmount());
+            dto.setInstallmentNo(row.getInstallmentNo());
+            dto.setLastPaidAt(row.getStartedAt());
+
+            list.add(dto);
+        }
+        return list;
     }
 }

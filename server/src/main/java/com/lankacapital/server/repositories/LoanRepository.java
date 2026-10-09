@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -98,6 +99,24 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
             @Param("search") String search,
             Pageable pageable
     );
+
+    @Query("SELECT l FROM Loan l WHERE l.status = :status " +
+            "AND l.loanType = :loanType " +
+            "AND l.approvedAt IS NOT NULL " +
+            "AND l.approvedAt <= :cutoffDateTime")
+    List<Loan> findActiveLoansApprovedBefore(
+            @Param("status") LoanStatus status,
+            @Param("loanType") LoanType loanType,
+            @Param("cutoffDateTime") LocalDateTime cutoffDateTime
+    );
+
+    default List<Loan> findActiveLoansStartedOnOrBefore(
+            LoanStatus status,
+            LoanType loanType,
+            LocalDate cutoffDate
+    ) {
+        return findActiveLoansApprovedBefore(status, loanType, cutoffDate.atTime(LocalTime.MAX));
+    }
 
     @Query("""
     SELECT 

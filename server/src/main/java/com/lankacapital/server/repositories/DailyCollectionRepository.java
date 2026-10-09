@@ -1,7 +1,11 @@
 package com.lankacapital.server.repositories;
 
 import com.lankacapital.server.dtos.CollectionReqDto;
+import com.lankacapital.server.dtos.LoanWeeklySummaryProjection;
 import com.lankacapital.server.entities.DailyCollection;
+import com.lankacapital.server.entities.Loan;
+import com.lankacapital.server.enums.LoanStatus;
+import com.lankacapital.server.enums.LoanType;
 import com.lankacapital.server.repositories.Projections.LoanPaymentStatsProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +30,9 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
     );
 
     Optional<DailyCollection> findFirstByLoan_FileNumberOrderByInstallmentNumberDesc(String fileNumber);
+
+    Optional<DailyCollection> findFirstByLoan_IdAndInstallmentNumberOrderByPaidAtAsc(Long loanId, Integer installmentNumber);
+
     List<DailyCollection> findDailyCollectionByLoan_Id(Long loanId);
 
     @Query("""
@@ -40,4 +47,32 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
 
     @EntityGraph(attributePaths = {"employee"})
     Page<DailyCollection> findByLoanIdOrderByInstallmentNumberAsc(Long loanId, Pageable pageable);
+
+    @Query(value = """
+        SELECT 
+            l.file_number AS fileNumber,
+            COALESCE(SUM(dc.paid_amount), 0) AS paidAmount,
+            COALESCE(SUM(dc.due_amount), 0) AS dueAmount,
+            dc.installment_number AS installmentNo,
+            MAX(dc.paid_at) AS startedAt
+        FROM daily_collections dc
+        JOIN loans l ON dc.loan_id = l.id
+        INNER JOIN (
+            SELECT loan_id, MAX(installment_number) AS max_inst
+            FROM daily_collections
+            GROUP BY loan_id
+        ) latest_inst 
+          ON dc.loan_id = latest_inst.loan_id 
+         AND dc.installment_number = latest_inst.max_inst
+        WHERE l.loan_type = :loanType
+          AND l.file_number IN (:fileNumbers)
+        GROUP BY l.id, l.file_number, dc.installment_number
+        ORDER BY l.id
+    """, nativeQuery = true)
+    List<LoanWeeklySummaryProjection> findWeeklyMaxInstallmentSummary(@Param("loanType") String loanType, @Param("fileNumbers") List<String> fileNumbers);
+
+    @Query("SELECT COALESCE(MAX(c.installmentNumber), 0) FROM DailyCollection c WHERE c.loan.id = :loanId")
+    Integer findMaxInstallmentNumberByLoanId(@Param("loanId") Long loanId);
+
+    boolean existsByLoanIdAndPaidAtBetween(Long loanId, LocalDateTime start, LocalDateTime end);
 }
