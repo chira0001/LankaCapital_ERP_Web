@@ -1,16 +1,13 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.AdminDto.ReportsDtos.TrialBalanceDataDto;
+import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.IncomeTax.IncomeTaxResponseDataDto;
+import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.P10.FinancialNoteAssetsDataDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingAssetsDto;
 import com.lankacapital.server.dtos.AdminDto.WorksheetDtos.WorkingSheet.WorkingEPFETFDto;
-import com.lankacapital.server.dtos.StatementDto.CE;
-import com.lankacapital.server.dtos.StatementDto.PPE;
-import com.lankacapital.server.dtos.StatementDto.TRIALBALANCE;
-import com.lankacapital.server.dtos.StatementDto.WORKING;
-import com.lankacapital.server.entities.reports.AssetsRegistry;
-import com.lankacapital.server.entities.reports.EquityChange;
-import com.lankacapital.server.entities.reports.TrialBalanceData;
+import com.lankacapital.server.dtos.StatementDto.*;
+import com.lankacapital.server.entities.reports.*;
 import com.lankacapital.server.enums.AccountType;
 import com.lankacapital.server.mappers.statementMappers.PPE_WORKING_Mapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
@@ -144,16 +141,13 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         return tb;
     }
 
+    @Transactional
     private CE generateCE(LocalDate beginPeriod, LocalDate endPeriod){
         List<EquityChange> equityChangesList =
                 equityChangeRepository.findByFinancialDateBetween(beginPeriod,endPeriod);
-
         CE ce = new CE();
-
         for(EquityChange change : equityChangesList){
-
             String name = change.getDataName();
-
             if(name != null && name.trim().toLowerCase().startsWith("balance")){
                 ce.getRetainedEarningBalance()
                         .put(name, change.getRetainedEarningAmount());
@@ -170,8 +164,91 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                         .put(name, change.getStatedCapitalAmount());
             }
         }
-
         return ce;
+    }
+
+    @Transactional
+    private CF generateCF(LocalDate beginPeriod, LocalDate endPeriod){
+        CF cf = new CF();
+        CashFlowData flowData = cashFlowDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        cf.setCashInHandAmount(flowData.getCashInHandAmount());
+        cf.setOpeningCashBalance(flowData.getOpeningCashBalance());
+        return cf;
+    }
+
+    @Transactional
+    private P11 generateP11(LocalDate beginPeriod, LocalDate endPeriod){
+        NoteSharesData sharesData = noteSharesDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        P11 p11 = new P11();
+        p11.setNumberOfShares(sharesData.getNumberOfShares());
+        return p11;
+    }
+
+    @Transactional
+    private FinancialNoteAssetsDataDto generateP10(LocalDate beginPeriod, LocalDate endPeriod){
+        FinancialNoteAssetsDataDto dataDto = new FinancialNoteAssetsDataDto();
+        List<FinancialNoteData> noteDataList = financialNoteDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        dataDto.setBalanceAtDate(beginPeriod);
+
+        List<HashMap<String, BigDecimal>> costHashMapList = new ArrayList<>();
+        List<HashMap<String, BigDecimal>> depreciationHashMapList = new ArrayList<>();
+
+        for(FinancialNoteData data : noteDataList){
+            HashMap<String, BigDecimal> costHashMap = new HashMap<>();
+            costHashMap.put(data.getAssetsRegistry().getAssetName(), data.getOpeningBalance());
+            costHashMapList.add(costHashMap);
+
+            HashMap<String, BigDecimal> depreciationHashMap = new HashMap<>();
+            depreciationHashMap.put(data.getAssetsRegistry().getAssetName(), data.getDepreciationBalance());
+            depreciationHashMapList.add(depreciationHashMap);
+        }
+
+        dataDto.setCostValue(costHashMapList);
+        dataDto.setDepreciationValue(depreciationHashMapList);
+
+        return dataDto;
+    }
+
+    private IncomeTaxResponseDataDto generateIncomeTax(LocalDate beginPeriod, LocalDate endPeriod){
+        IncomeTaxResponseDataDto taxResponseDataDto = new IncomeTaxResponseDataDto();
+
+        IncomeTaxData taxData = incomeTaxDataRepository.findByFinancialDate(endPeriod);
+        taxResponseDataDto.setWithholdingPayments(taxData.getWithholdingAmount());
+
+        List<FinancialNoteData> noteData = financialNoteDataRepository.findByFinancialDateBetween(beginPeriod, endPeriod);
+        List<HashMap<String, Integer>> assetYears = new ArrayList<>();
+        for(FinancialNoteData data : noteData){
+            HashMap<String, Integer> assetData = new HashMap<>();
+            assetData.put(data.getAssetsRegistry().getAssetName(), data.getYears());
+            assetYears.add(assetData);
+        }
+        taxResponseDataDto.setAssetYear(assetYears);
+
+        HashMap<LocalDate, BigDecimal> bfData = new HashMap<>();
+        bfData.put(taxData.getBalanceBFDate(),taxData.getBalanceBFAmount());
+        taxResponseDataDto.setBalanceBF(bfData);
+
+        taxResponseDataDto.setInvestmentIncome(taxData.getInvestmentIncome());
+        taxResponseDataDto.setBusinessIncome(taxData.getBusinessIncome());
+
+        return taxResponseDataDto;
+    }
+
+    private void addBalanceSheetSupportingReports(
+            HashMap<String, Object> data,
+            LocalDate beginPeriod,
+            LocalDate endPeriod
+    ) {
+        data.put("ppe", generatePPE());
+        data.put("working", generateWORKING(beginPeriod, endPeriod));
+        data.put("tb", generateTRIALBALANCE(beginPeriod, endPeriod));
+        data.put("ce", generateCE(beginPeriod, endPeriod));
+        data.put("cf", generateCF(beginPeriod, endPeriod));
+        data.put("p10", generateP10(beginPeriod, endPeriod));
+        data.put("p11", generateP11(beginPeriod, endPeriod));
+        data.put("incomeTax", generateIncomeTax(beginPeriod, endPeriod));
+        data.put("pl", true);
+        data.put("bs", true);
     }
 
     @Override
@@ -192,11 +269,21 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
                 data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
             }else if(reportType.equalsIgnoreCase("ce")) {
                 data.put("ce", generateCE(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("cf")) {
+                data.put("cf",generateCF(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("p10")) {
+                data.put("p10",generateP10(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("p11")) {
+                data.put("p11",generateP11(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("incomeTax")) {
+                data.put("incomeTax", generateIncomeTax(beginPeriod, endPeriod));
+            }else if(reportType.equalsIgnoreCase("pl")) {
+                data.put("tb", generateTRIALBALANCE(beginPeriod, endPeriod));
+                data.put("pl", true);
+            }else if(reportType.equalsIgnoreCase("bs")) {
+                addBalanceSheetSupportingReports(data, beginPeriod, endPeriod);
             }else if(reportType.equalsIgnoreCase("statement")){
-                data.put("ppe",generatePPE());
-                data.put("working",generateWORKING(beginPeriod, endPeriod));
-                data.put("tb",generateTRIALBALANCE(beginPeriod, endPeriod));
-                data.put("ce", generateCE(beginPeriod, endPeriod));
+                addBalanceSheetSupportingReports(data, beginPeriod, endPeriod);
             }
             return data;
         } catch (Exception e) {

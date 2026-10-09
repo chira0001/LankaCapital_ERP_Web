@@ -221,7 +221,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 25);
+        Pageable pageable = PageRequest.of(page, 50);
 
         return employeeRepository.findAllByRole(pageable)
                 .getContent()

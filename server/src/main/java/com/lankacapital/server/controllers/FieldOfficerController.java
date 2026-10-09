@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -154,7 +155,10 @@ public class FieldOfficerController {
     @PostMapping("/sync/collection")
     public ResponseEntity<?> syncToDailyCollections(Authentication authentication, @RequestBody List<CollectionSyncDto> collectionList) {
         List<String> successIds = new ArrayList<>();
-        for (CollectionSyncDto collectionDto : collectionList) {
+        List<CollectionSyncDto> sortedCollection = collectionList.stream()
+                .sorted(Comparator.comparing(CollectionSyncDto::getPaidAt, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        for (CollectionSyncDto collectionDto : sortedCollection) {
             try {
                 String value = dailyCollectionService.syncDailyCollection(authentication.getName(), collectionDto);
                 if(value != null){
@@ -208,6 +212,15 @@ public class FieldOfficerController {
     public ResponseEntity<?> updateCollection(Authentication authentication, @RequestBody List<CollectionReqDto> dto) {
         try {
             return ResponseEntity.ok(dailyCollectionService.manageCollections(authentication.getName(), dto));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/loan/status")
+    public ResponseEntity<?> getLoanStatus(Authentication authentication, @RequestBody LoanAsyncDto fileNumbers) {
+        try {
+            return ResponseEntity.ok(dailyCollectionService.getLoanStatus(authentication.getName(), fileNumbers));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
