@@ -488,12 +488,13 @@ public class LoanServiceImpl implements LoanService {
 //        return CustomerMapper.mapToCustomerResponseDto(customer);
 //    }
 
+    @Override
     public List<LoanManageDto> manageLoans(String username, int page){
         Employee authEmployee = employeeRepository.findByEmail(username);
         if(authEmployee == null){
             throw new ResourceNotFoundException("Employee not found with verification");
         }
-        Pageable pageable = PageRequest.of(page, 25);
+        Pageable pageable = PageRequest.of(page, 50);
 
         return loanRepository.findAll(pageable)
                 .getContent()
@@ -544,18 +545,43 @@ public class LoanServiceImpl implements LoanService {
                             2,
                             RoundingMode.HALF_UP
                     );
-
+            collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
             collectionDto.setTotalAmount(totalAmount.doubleValue());
+            collectionDto.setLoanApprovedAt(loan.getApprovedAt());
 
             List<DailyCollection> collections = dailyCollectionRepository.findDailyCollectionByLoan_Id(loan.getId());
 
             if (collections != null && !collections.isEmpty()) {
-                DailyCollection lastCollection = collections.stream()
-                        .max(Comparator.comparing(DailyCollection::getInstallmentNumber))
-                        .orElse(null);
+                int maxInstallment = collections.stream()
+                        .mapToInt(DailyCollection::getInstallmentNumber)
+                        .max()
+                        .orElse(0);
+
+                List<DailyCollection> lastCollectionList = collections.stream()
+                        .filter(c -> c.getInstallmentNumber().equals(maxInstallment))
+                        .sorted(Comparator.comparing(DailyCollection::getPaidAt))
+                        .toList();
+
+                DailyCollection lastCollectionMin = lastCollectionList.isEmpty() ? null : lastCollectionList.getFirst();
+                DailyCollection lastCollectionMax = lastCollectionList.isEmpty() ? null : lastCollectionList.getLast();
+
+                BigDecimal firstDueAmount = (lastCollectionMin != null && lastCollectionMin.getDueAmount() != null)
+                        ? lastCollectionMin.getDueAmount()
+                        : BigDecimal.ZERO;
+
+                BigDecimal lastPaidAmount = lastCollectionList.stream()
+                        .map(DailyCollection::getPaidAmount)
+                        .filter(Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                collectionDto.setLastPaidAmount(lastPaidAmount.doubleValue());
+                collectionDto.setLastDueAmount(firstDueAmount.doubleValue());
+
+                assert lastCollectionMax != null;
+                collectionDto.setLastPaidAtDate(lastCollectionMax.getPaidAt());
 
                 collectionDto.setLastInstallmentNo(
-                        lastCollection.getInstallmentNumber()
+                        lastCollectionMax.getInstallmentNumber()
                 );
 
                 BigDecimal totalDueAmount = collections.stream()
@@ -570,19 +596,24 @@ public class LoanServiceImpl implements LoanService {
 
                 collectionDto.setTotalPaidAmount(totalPaidAmount.doubleValue());
 
-                if(Objects.equals(lastCollection.getInstallmentNumber(), loan.getInstallment() - 1)){
-                    double lastInstallmentAmount = totalAmount
+                if(Objects.equals(lastCollectionMax.getInstallmentNumber(), loan.getInstallment() - 1)){
+                    double payableAmount = totalAmount
                             .subtract(totalPaidAmount)
                             .setScale(2, RoundingMode.HALF_UP)
                             .doubleValue();
 
-                    collectionDto.setInstallmentAmount(lastInstallmentAmount);
+                    collectionDto.setPayableAmount(payableAmount);
 
                 }else{
-                    collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
+                    if(totalDueAmount.doubleValue() >= installmentAmount.doubleValue()){
+                        collectionDto.setPayableAmount(0.00);
+                    }else{
+                        BigDecimal payableAmount = installmentAmount.subtract(totalDueAmount);
+                        collectionDto.setPayableAmount(payableAmount.doubleValue());
+                    }
                 }
             } else {
-                collectionDto.setInstallmentAmount(installmentAmount.doubleValue());
+                collectionDto.setPayableAmount(installmentAmount.doubleValue());
                 collectionDto.setLastInstallmentNo(0);
                 collectionDto.setDueAmount(0.00);
             }

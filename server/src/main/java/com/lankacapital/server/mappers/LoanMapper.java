@@ -176,6 +176,7 @@ public class LoanMapper {
         dto.setUpdateStatus(loan.getUpdateStatus());
         dto.setInterestRate(loan.getInterestRate());
         dto.setLoanType(loan.getLoanType().toString());
+        dto.setApprovedAt(loan.getApprovedAt());
 
         return dto;
     }
