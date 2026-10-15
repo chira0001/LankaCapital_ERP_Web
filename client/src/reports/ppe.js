@@ -576,10 +576,48 @@ export function fillWorkingWorksheet(wb, working) {
         return Number.isFinite(n) ? n : 0;
     };
 
+    // These labels are structural markers in the template, not report data.
+    // Keep their original cells so a row resize can always restore a marker
+    // even when SheetJS omits an empty/moved cell during a negative shift.
+    const workingLabels = new Map(
+        ["Income", "Administrative Expenses", "Assets", "EPF ETF", "EPF & ETF", "Total"].map(
+            (label) => {
+                const found = findCellByTextInsensitive(ws, label, { col: 0 });
+                if (!found) throw new Error(`Working sheet is missing the ${label} label`);
+                return [label, {
+                    r: found.r,
+                    c: found.c,
+                    cell: {
+                        ...found.cell,
+                        s: found.cell?.s ? { ...found.cell.s } : found.cell?.s,
+                    },
+                }];
+            }
+        )
+    );
+
+    const moveWorkingLabels = (startRow0, delta) => {
+        if (!delta) return;
+        workingLabels.forEach((label) => {
+            if (label.r >= startRow0) label.r += delta;
+        });
+    };
+
     const findWorkingLabel = (label) => {
         const found = findCellByTextInsensitive(ws, label, { col: 0 });
-        if (!found) throw new Error(`Working sheet is missing the ${label} label`);
-        return found;
+        if (found) return found;
+
+        const savedLabel = workingLabels.get(label);
+        if (!savedLabel) throw new Error(`Working sheet is missing the ${label} label`);
+
+        // Restore only the structural label; other cells on this row may have
+        // formulas that were already adjusted by shiftRows.
+        const address = addrOf(savedLabel.r, savedLabel.c);
+        ws[address] = {
+            ...savedLabel.cell,
+            s: savedLabel.cell?.s ? { ...savedLabel.cell.s } : savedLabel.cell?.s,
+        };
+        return { a: address, r: savedLabel.r, c: savedLabel.c, cell: ws[address] };
     };
 
     const resizeRowsBefore = (headerText, nextHeaderText, itemCount, maxCol) => {
@@ -592,8 +630,37 @@ export function fillWorkingWorksheet(wb, working) {
         const requiredRows = itemCount + blankRowsAfterSection;
         const delta = requiredRows - availableRows;
 
+        // Keep a copy of the following section's label before its row moves.
+        // `clearRows` intentionally removes unused data rows, and a negative
+        // shift can otherwise leave a heading cell behind when the template has
+        // fewer rows than the previous export.  In particular, that made the
+        // subsequent Assets lookup fail for a complete-statement export.
+        const nextHeaderCell = {
+            ...nextHeader.cell,
+            s: nextHeader.cell?.s ? { ...nextHeader.cell.s } : nextHeader.cell?.s,
+        };
+        const nextHeaderRow0 = nextHeader.r + delta;
+        const nextHeaderCol = nextHeader.c;
+
         if (itemCount < availableRows) clearRows(ws, firstDataRow0 + itemCount, nextHeader.r);
         shiftRows(ws, nextHeader.r, delta, { wb, sheetName: "Working" });
+        moveWorkingLabels(nextHeader.r, delta);
+
+        // Reapply the section label at its calculated destination.  This is
+        // deliberately limited to the label cell: other cells in that row may
+        // contain formulas whose references were updated by shiftRows.
+        const movedHeaderAddress = addrOf(nextHeaderRow0, nextHeaderCol);
+        const movedHeaderCell = ws[movedHeaderAddress];
+        if (
+            !movedHeaderCell ||
+            String(movedHeaderCell.v ?? "").trim().toLowerCase() !==
+                String(nextHeaderText).trim().toLowerCase()
+        ) {
+            ws[movedHeaderAddress] = {
+                ...nextHeaderCell,
+                s: nextHeaderCell.s ? { ...nextHeaderCell.s } : nextHeaderCell.s,
+            };
+        }
 
         for (let index = 0; index < itemCount; index++) {
             cloneTemplateRowTo(ws, templateRow0, firstDataRow0 + index, maxCol);
@@ -644,6 +711,7 @@ export function fillWorkingWorksheet(wb, working) {
     const epfDelta = epfItems.length - epfAvailableRows;
     if (epfDelta < 0) clearRows(ws, epfFirstDataRow0 + epfItems.length, totalRow.r);
     shiftRows(ws, totalRow.r, epfDelta, { wb, sheetName: "Working" });
+    moveWorkingLabels(totalRow.r, epfDelta);
 
     const epfFmt = "mmm yyyy";
     epfItems.forEach((item, index) => {
