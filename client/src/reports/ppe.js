@@ -609,19 +609,29 @@ export function fillWorkingWorksheet(wb, working) {
     };
 
     const findWorkingLabel = (label) => {
-        const found = findCellByTextInsensitive(ws, label, { col: 0 });
-        if (found) return found;
-
         const savedLabel = workingLabels.get(label);
         if (!savedLabel) throw new Error(`Working sheet is missing the ${label} label`);
 
-        // Restore only the structural label; other cells on this row may have
-        // formulas that were already adjusted by shiftRows.
+        // Do not search the generated data for a heading.  An administrative
+        // expense can legitimately be named "EPF & ETF", which would otherwise
+        // be mistaken for the structural EPF heading and cause the following
+        // resize to overwrite the Assets section.  The tracked coordinate is
+        // the source of truth and is updated whenever a section moves.
         const address = addrOf(savedLabel.r, savedLabel.c);
-        ws[address] = {
-            ...savedLabel.cell,
-            s: savedLabel.cell?.s ? { ...savedLabel.cell.s } : savedLabel.cell?.s,
-        };
+        const cell = ws[address];
+        const isExpectedLabel =
+            cell &&
+            typeof cell.v === "string" &&
+            cell.v.trim().toLowerCase() === String(label).trim().toLowerCase();
+
+        // Restore only a missing/moved structural label; other cells on this
+        // row may contain formulas already adjusted by shiftRows.
+        if (!isExpectedLabel) {
+            ws[address] = {
+                ...savedLabel.cell,
+                s: savedLabel.cell?.s ? { ...savedLabel.cell.s } : savedLabel.cell?.s,
+            };
+        }
         return { a: address, r: savedLabel.r, c: savedLabel.c, cell: ws[address] };
     };
 

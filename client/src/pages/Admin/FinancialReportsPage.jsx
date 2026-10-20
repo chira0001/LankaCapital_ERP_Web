@@ -27,6 +27,8 @@ import ReportTables from "../../component/AdminReports/ReportTables.jsx";
 
 import { fillFinancialTemplate } from "../../reports/ppe.js";
 
+const isFourDigitDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value ?? "");
+
 const CollapsibleSection = memo(function CollapsibleSection({
   id,
   title,
@@ -131,12 +133,13 @@ const FinancialReportsPage = () => {
 
   // -------------------- Date handlers --------------------
   const handleStartDateChange = useCallback((e) => {
-    setStartDate(e.target.value);
+    const value = e.target.value;
+    if (!value || isFourDigitDate(value)) setStartDate(value);
   }, []);
 
   const handleEndDateChange = useCallback((e) => {
     const val = e.target.value;
-    setEndDate(val);
+    if (!val || isFourDigitDate(val)) setEndDate(val);
   }, []);
 
   // -------------------- Assets --------------------
@@ -188,6 +191,10 @@ const FinancialReportsPage = () => {
       }
       if (endDate == null || endDate == "") {
         toast.error("Select end date");
+        return;
+      }
+      if (!isFourDigitDate(startDate) || !isFourDigitDate(endDate)) {
+        toast.error("Dates must use a four-digit year");
         return;
       }
 
@@ -661,6 +668,9 @@ const FinancialReportsPage = () => {
               <input
                 id="startDate"
                 type="date"
+                min="0001-01-01"
+                max="9999-12-31"
+                value={startDate ?? ""}
                 onChange={handleStartDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
@@ -671,6 +681,9 @@ const FinancialReportsPage = () => {
               <input
                 id="endDate"
                 type="date"
+                min="0001-01-01"
+                max="9999-12-31"
+                value={endDate ?? ""}
                 onChange={handleEndDateChange}
                 className="date-input mt-1 w-full rounded-md border bg-white p-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               />
