@@ -252,7 +252,22 @@ const FinancialReportsPage = () => {
       const exportData = Array.isArray(data) ? { ppe: data } : data;
       fillFinancialTemplate(wb, { ...exportData, endDate });
 
-      XLSX.writeFile(wb, `Audited Accounts ${formatMonth(endDate)}.xlsx`);
+      // `writeFile` uses Node's `fs` module in xlsx-js-style.  Vite correctly
+      // excludes that module from the browser bundle, so create the download
+      // from the workbook bytes instead.
+      const workbookBytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const downloadUrl = URL.createObjectURL(
+        new Blob([workbookBytes], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        })
+      );
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `Audited Accounts ${formatMonth(endDate)}.xlsx`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error(error);
       toast.error("Excel export failed");
