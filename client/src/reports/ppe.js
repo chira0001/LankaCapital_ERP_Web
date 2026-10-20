@@ -517,11 +517,16 @@ export function fillPPEWorksheet(wb, ppeRows) {
         setCellValueAllowFormula(ws, r0, COLS.DATE, {
             t: "n",
             v: Number(item.date ?? 0) || 0,
+            f: `E${r0 + 1}-B${r0 + 1}`,
         });
 
         setCellValueAllowFormula(ws, r0, COLS.DEP_AMOUNT, {
             t: "n",
             v: Number(item.depreciationAmount ?? 0) || 0,
+            // Depreciation is derived from the dates, value and useful life.
+            // The API's cached amount can be rounded differently; keeping the
+            // calculation in the workbook matches the audited report.
+            f: `(D${r0 + 1}/C${r0 + 1})*(F${r0 + 1}/365)`,
         });
     }
 
@@ -576,10 +581,58 @@ export function fillWorkingWorksheet(wb, working) {
         return Number.isFinite(n) ? n : 0;
     };
 
+    // These labels are structural markers in the template, not report data.
+    // Keep their original cells so a row resize can always restore a marker
+    // even when SheetJS omits an empty/moved cell during a negative shift.
+    const workingLabels = new Map(
+        ["Income", "Administrative Expenses", "Assets", "EPF ETF", "EPF & ETF", "Total"].map(
+            (label) => {
+                const found = findCellByTextInsensitive(ws, label, { col: 0 });
+                if (!found) throw new Error(`Working sheet is missing the ${label} label`);
+                return [label, {
+                    r: found.r,
+                    c: found.c,
+                    cell: {
+                        ...found.cell,
+                        s: found.cell?.s ? { ...found.cell.s } : found.cell?.s,
+                    },
+                }];
+            }
+        )
+    );
+
+    const moveWorkingLabels = (startRow0, delta) => {
+        if (!delta) return;
+        workingLabels.forEach((label) => {
+            if (label.r >= startRow0) label.r += delta;
+        });
+    };
+
     const findWorkingLabel = (label) => {
-        const found = findCellByTextInsensitive(ws, label, { col: 0 });
-        if (!found) throw new Error(`Working sheet is missing the ${label} label`);
-        return found;
+        const savedLabel = workingLabels.get(label);
+        if (!savedLabel) throw new Error(`Working sheet is missing the ${label} label`);
+
+        // Do not search the generated data for a heading.  An administrative
+        // expense can legitimately be named "EPF & ETF", which would otherwise
+        // be mistaken for the structural EPF heading and cause the following
+        // resize to overwrite the Assets section.  The tracked coordinate is
+        // the source of truth and is updated whenever a section moves.
+        const address = addrOf(savedLabel.r, savedLabel.c);
+        const cell = ws[address];
+        const isExpectedLabel =
+            cell &&
+            typeof cell.v === "string" &&
+            cell.v.trim().toLowerCase() === String(label).trim().toLowerCase();
+
+        // Restore only a missing/moved structural label; other cells on this
+        // row may contain formulas already adjusted by shiftRows.
+        if (!isExpectedLabel) {
+            ws[address] = {
+                ...savedLabel.cell,
+                s: savedLabel.cell?.s ? { ...savedLabel.cell.s } : savedLabel.cell?.s,
+            };
+        }
+        return { a: address, r: savedLabel.r, c: savedLabel.c, cell: ws[address] };
     };
 
     const resizeRowsBefore = (headerText, nextHeaderText, itemCount, maxCol) => {
@@ -592,8 +645,37 @@ export function fillWorkingWorksheet(wb, working) {
         const requiredRows = itemCount + blankRowsAfterSection;
         const delta = requiredRows - availableRows;
 
+        // Keep a copy of the following section's label before its row moves.
+        // `clearRows` intentionally removes unused data rows, and a negative
+        // shift can otherwise leave a heading cell behind when the template has
+        // fewer rows than the previous export.  In particular, that made the
+        // subsequent Assets lookup fail for a complete-statement export.
+        const nextHeaderCell = {
+            ...nextHeader.cell,
+            s: nextHeader.cell?.s ? { ...nextHeader.cell.s } : nextHeader.cell?.s,
+        };
+        const nextHeaderRow0 = nextHeader.r + delta;
+        const nextHeaderCol = nextHeader.c;
+
         if (itemCount < availableRows) clearRows(ws, firstDataRow0 + itemCount, nextHeader.r);
         shiftRows(ws, nextHeader.r, delta, { wb, sheetName: "Working" });
+        moveWorkingLabels(nextHeader.r, delta);
+
+        // Reapply the section label at its calculated destination.  This is
+        // deliberately limited to the label cell: other cells in that row may
+        // contain formulas whose references were updated by shiftRows.
+        const movedHeaderAddress = addrOf(nextHeaderRow0, nextHeaderCol);
+        const movedHeaderCell = ws[movedHeaderAddress];
+        if (
+            !movedHeaderCell ||
+            String(movedHeaderCell.v ?? "").trim().toLowerCase() !==
+                String(nextHeaderText).trim().toLowerCase()
+        ) {
+            ws[movedHeaderAddress] = {
+                ...nextHeaderCell,
+                s: nextHeaderCell.s ? { ...nextHeaderCell.s } : nextHeaderCell.s,
+            };
+        }
 
         for (let index = 0; index < itemCount; index++) {
             cloneTemplateRowTo(ws, templateRow0, firstDataRow0 + index, maxCol);
@@ -644,6 +726,7 @@ export function fillWorkingWorksheet(wb, working) {
     const epfDelta = epfItems.length - epfAvailableRows;
     if (epfDelta < 0) clearRows(ws, epfFirstDataRow0 + epfItems.length, totalRow.r);
     shiftRows(ws, totalRow.r, epfDelta, { wb, sheetName: "Working" });
+    moveWorkingLabels(totalRow.r, epfDelta);
 
     const epfFmt = "mmm yyyy";
     epfItems.forEach((item, index) => {
@@ -1225,12 +1308,17 @@ export function fillP10Worksheet(wb, p10, endDate = null) {
         // Asset names and opening balances are the only direct P10 inputs.
         setCellValueAllowFormula(ws, costRow0, COLS.NAME, { t: "s", v: row.name });
         setCellValuePreserveStyle(ws, costRow0, COLS.OPENING, { t: "n", v: row.cost });
+        // Dynamic rows do not inherit Excel's relative-reference adjustment
+        // from SheetJS. Link each addition directly to its PPE row so every
+        // asset remains connected after the sections have expanded.
+        setCellFormulaPreserveStyle(ws, costRow0, COLS.ADDITIONS, `PPE!D${index + 4}`);
 
         setCellFormulaPreserveStyle(ws, depreciationRow0, COLS.NAME, `B${costRow0 + 1}`);
         setCellValuePreserveStyle(ws, depreciationRow0, COLS.OPENING, {
             t: "n",
             v: row.depreciation,
         });
+        setCellFormulaPreserveStyle(ws, depreciationRow0, COLS.ADDITIONS, `PPE!G${index + 4}`);
 
         setCellFormulaPreserveStyle(ws, writtenDownRow0, COLS.NAME, `B${depreciationRow0 + 1}`);
         setCellFormulaPreserveStyle(
@@ -1288,32 +1376,104 @@ export function fillP09Worksheet(wb) {
     if (!ws) throw new Error("P09 sheet not found in template");
     if (!tb.ws) throw new Error("TB sheet not found in template");
 
-    const mappings = [
-        {
-            p09Label: "Commission Income",
-            section: "Income",
-            accounts: ["Interest Income"],
-            sourceCol: 2,
-        },
-        {
-            p09Label: "Accountancy Fee",
-            section: "Expenses",
-            accounts: ["Accountancy Fee", "Accountany Fee"],
-            sourceCol: 1,
-        },
-        {
-            p09Label: "Audit Fee",
-            section: "Expenses",
-            accounts: ["Audit Fee"],
-            sourceCol: 1,
-        },
+    const revenueTarget = findFormulaCellForLabel(ws, "Commission Income");
+    const revenueRow0 = findTrialBalanceAccountRowInSection(
+        tb.ws,
+        "Income",
+        ["Interest Income", "Commission Income"]
+    );
+    updateFormulaReferencePreserveStyle(ws, revenueTarget, tb.sheetName, tb.ws, revenueRow0, 2);
+
+    const adminHeader = findCellByTextInsensitive(ws, "Administration Expenses", { col: 1 });
+    const financeHeader = findCellByTextInsensitive(ws, "Finance Cost", { col: 1 });
+    if (!adminHeader || !financeHeader) {
+        throw new Error("P09 sheet layout is missing Administration Expenses or Finance Cost");
+    }
+
+    const firstAdminRow0 = adminHeader.r + 1;
+    const oldAdminTotalRow0 = financeHeader.r - 2;
+    const itemTemplate = cloneRowTemplate(ws, firstAdminRow0, 6);
+    const totalTemplate = cloneRowTemplate(ws, oldAdminTotalRow0, 6);
+    const tbExpenseFormula = (aliases) => {
+        const row0 = findTrialBalanceAccountRowInSection(tb.ws, "Expenses", aliases);
+        return row0 === null ? null : `'${tb.sheetName}'!B${row0 + 1}`;
+    };
+    const ppe = getSheetByNameInsensitive(wb, "PPE");
+    const ppeTotalRow0 = ppe.ws
+        ? findCellByTextInsensitive(ppe.ws, "Total", { col: 0 })?.r
+        : null;
+    const ppeTotalFormula = ppeTotalRow0 === null || ppeTotalRow0 === undefined
+        ? null
+        : `PPE!G${ppeTotalRow0 + 1}`;
+
+    // The template only contains two administration rows. Build the audited
+    // note from the source accounts, including the EPF/ETF and depreciation
+    // values that are calculated in their dedicated schedules.
+    const adminRows = [
+        ["Director Remuniration", tbExpenseFormula(["Dirtectors remuniration", "Directors remuneration"])],
+        ["Salaries & Wages", tbExpenseFormula(["Salaries & Wages"])],
+        ["EPF", "Working!C"],
+        ["ETF", "Working!D"],
+        ["Incorporation Fee", tbExpenseFormula(["Company Incorporation fees", "Incorporation Fees"])],
+        ["Business Promotion & Marketing Expenses", null],
+        ["Telephone & Internet", tbExpenseFormula(["Phone & Internet bills", "Telephone & Internet"])],
+        ["Electricity", tbExpenseFormula(["Electricity"])],
+        ["Office Rent", tbExpenseFormula(["Rent", "Rent Expenses"])],
+        ["Insurance", tbExpenseFormula(["Insurance"])],
+        ["Office Repair & Maintance", tbExpenseFormula(["Maintance & Repair", "Repair & Maintance"])],
+        ["Depreciation", ppeTotalFormula],
+        ["Printing & Stationery", tbExpenseFormula(["Stationery & Documents", "Printing & Stationery"])],
+        ["Accountancy Fee", tbExpenseFormula(["Accountancy Fee", "Accountany Fee"])],
+        ["Audit Fee", tbExpenseFormula(["Audit Fee"])],
     ];
 
-    mappings.forEach(({ p09Label, section, accounts, sourceCol }) => {
-        const target = findFormulaCellForLabel(ws, p09Label);
-        const sourceRow0 = findTrialBalanceAccountRowInSection(tb.ws, section, accounts);
-        updateFormulaReferencePreserveStyle(ws, target, tb.sheetName, tb.ws, sourceRow0, sourceCol);
+    const workingWs = getSheetByNameInsensitive(wb, "Working").ws;
+    const workingTotalRow0 = findCellByTextInsensitive(workingWs, "Total", { col: 0 })?.r;
+    if (workingTotalRow0 !== undefined) {
+        adminRows[2][1] = `Working!C${workingTotalRow0 + 1}`;
+        adminRows[3][1] = `Working!D${workingTotalRow0 + 1}`;
+    }
+    const promotionRows = [
+        tbExpenseFormula(["Advertisment & Sales Promotion"]),
+        tbExpenseFormula(["Commission", "Sales Commission"]),
+    ].filter(Boolean);
+    adminRows[5][1] = promotionRows.length ? promotionRows.join("+") : null;
+
+    const requiredRows = adminRows.length + 2; // total plus one spacer row
+    const availableRows = financeHeader.r - firstAdminRow0;
+    const delta = requiredRows - availableRows;
+    shiftRows(ws, financeHeader.r, delta, { wb, sheetName: "P09" });
+    const newFinanceRow0 = financeHeader.r + delta;
+    clearRows(ws, firstAdminRow0, newFinanceRow0);
+
+    adminRows.forEach(([label, formula], index) => {
+        const row0 = firstAdminRow0 + index;
+        applyRowTemplate(ws, itemTemplate, row0, 6);
+        setCellValueAllowFormula(ws, row0, 1, { t: "s", v: label });
+        setCellValueAllowFormula(ws, row0, 3, formula
+            ? { t: "n", v: 0, f: formula }
+            : { t: "s", v: "" });
     });
+
+    const newAdminTotalRow0 = firstAdminRow0 + adminRows.length;
+    applyRowTemplate(ws, totalTemplate, newAdminTotalRow0, 6);
+    setCellValueAllowFormula(ws, newAdminTotalRow0, 3, {
+        t: "n",
+        v: 0,
+        f: `SUM(D${firstAdminRow0 + 1}:D${newAdminTotalRow0})`,
+    });
+
+    const financeTarget = findFormulaCellForLabel(ws, "Bad Debts");
+    const financeRow0 = findTrialBalanceAccountRowInSection(tb.ws, "Expenses", ["Bad Debts"]);
+    updateFormulaReferencePreserveStyle(ws, financeTarget, tb.sheetName, tb.ws, financeRow0, 1);
+
+    const taxTarget = findFormulaCellForLabel(ws, "Current Tax Expense");
+    const taxRow0 = findTrialBalanceAccountRowInSection(tb.ws, "Expenses", ["Income Tax"]);
+    updateFormulaReferencePreserveStyle(ws, taxTarget, tb.sheetName, tb.ws, taxRow0, 1);
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1:G24");
+    range.e.r = Math.max(range.e.r, newFinanceRow0 + 6);
+    ws["!ref"] = XLSX.utils.encode_range(range);
 
     return { ws };
 }
@@ -1459,6 +1619,19 @@ export function fillCFWorksheet(wb, cf) {
             t: "n",
             v: Number.isFinite(sourceValue) ? sourceValue : 0,
             f: `'${tb.sheetName}'!B${rowNum1}`,
+        });
+    }
+
+    // P09 can grow when administration expense lines are generated. Rebuild
+    // the depreciation reference after that resize instead of retaining the
+    // template's invalid #REF! formula.
+    const p09 = getSheetByNameInsensitive(wb, "P09");
+    const depreciationRow0 = findCellByTextInsensitive(p09.ws, "Depreciation", { col: 1 })?.r;
+    if (depreciationRow0 !== undefined && depreciationRow0 !== null) {
+        setCellValueAllowFormula(ws, 8, COLS.AMOUNT, {
+            t: "n",
+            v: readWorksheetNumber(p09.ws, depreciationRow0, 3),
+            f: `'${p09.sheetName}'!D${depreciationRow0 + 1}`,
         });
     }
 
@@ -1855,7 +2028,6 @@ export function fillFinancialTemplate(wb, data) {
             data.endDate || data.periodEndDate || data.financialDate
         );
     }
-    if (data.cf) fillCFWorksheet(wb, data.cf);
     if (data.p10) {
         fillP10Worksheet(
             wb,
@@ -1864,6 +2036,9 @@ export function fillFinancialTemplate(wb, data) {
         );
     }
     if (data.tb || data.trialBalance) fillP09Worksheet(wb);
+    // Cash-flow references P09/P10 cells, both of which may have been moved
+    // while their dynamic schedules were expanded.
+    if (data.cf) fillCFWorksheet(wb, data.cf);
     if (data.p11) {
         fillP11Worksheet(
             wb,
