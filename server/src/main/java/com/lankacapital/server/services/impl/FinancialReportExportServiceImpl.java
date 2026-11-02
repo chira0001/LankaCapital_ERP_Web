@@ -16,6 +16,7 @@ import java.beans.Introspector;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -86,11 +87,12 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
                     + definedNames
                     + outputXml.substring(namesEnd + "</definedNames>".length());
         } else {
-            int workbookEnd = outputXml.lastIndexOf("</workbook>");
-            if (workbookEnd < 0) throw new IOException("Malformed workbook XML");
-            updatedXml = outputXml.substring(0, workbookEnd)
+            int insertionPoint = outputXml.indexOf("<calcPr");
+            if (insertionPoint < 0) insertionPoint = outputXml.lastIndexOf("</workbook>");
+            if (insertionPoint < 0) throw new IOException("Malformed workbook XML");
+            updatedXml = outputXml.substring(0, insertionPoint)
                     + definedNames
-                    + outputXml.substring(workbookEnd);
+                    + outputXml.substring(insertionPoint);
         }
 
         ByteArrayOutputStream restored = new ByteArrayOutputStream();
@@ -207,7 +209,9 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         }
 
         List<?> epf = list(working.get("workingEPFETFDtos"));
-        int epfLabel = findRow(sheet, "EPF & ETF", 0);
+        epfHeader = findRow(sheet, "EPF ETF", 0);
+        if (epfHeader < 0) throw new IllegalStateException("Working sheet is missing the EPF ETF section");
+        int epfLabel = epfHeader + 1;
         int total = findRow(sheet, "Total", 0);
         int epfFirst = epfLabel + 1;
         resizeBefore(sheet, total, total - epfFirst, epf.size(), 3);
@@ -217,6 +221,8 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             int row = epfFirst + i;
             setDate(sheet, row, 0, item.get("date"), "mmm yyyy");
             setNumber(sheet, row, 1, number(item.getOrDefault("epf20", item.get("EPF20"))));
+            setFormula(sheet, row, 2, "B" + (row + 1) + "*12/20");
+            setFormula(sheet, row, 3, "C" + (row + 1) + "*3/12");
         }
         setFormula(sheet, total, 1, epf.isEmpty() ? "0" : "SUM(B" + (epfFirst + 1) + ":B" + (epfFirst + epf.size()) + ")");
         setFormula(sheet, total, 2, epf.isEmpty() ? "0" : "SUM(C" + (epfFirst + 1) + ":C" + (epfFirst + epf.size()) + ")");
@@ -593,9 +599,9 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private static void resizeSection(Sheet sheet, int firstDataRow, int nextHeader, int itemCount, int maxColumn) {
         int available = nextHeader - firstDataRow;
-        int required = itemCount + 2;
+        int required = itemCount + 1;
         int delta = required - available;
-        if (delta < 0) clearRows(sheet, firstDataRow + itemCount, nextHeader - 1);
+        if (delta < 0) clearRows(sheet, firstDataRow + required, nextHeader - 1);
         if (delta != 0) shiftRows(sheet, nextHeader, delta);
         for (int i = 1; i < itemCount; i++) copyRowStyle(sheet, firstDataRow, firstDataRow + i, maxColumn);
     }
@@ -821,7 +827,10 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         if (value instanceof LocalDate date) return date;
         if (value instanceof Date date) return new java.sql.Date(date.getTime()).toLocalDate();
         try {
-            return value == null ? null : LocalDate.parse(value.toString().substring(0, 10));
+            if (value == null) return null;
+            String text = value.toString();
+            if (text.length() == 7) return YearMonth.parse(text).atDay(1);
+            return LocalDate.parse(text.substring(0, 10));
         } catch (RuntimeException ignored) {
             return null;
         }
