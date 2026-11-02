@@ -8,6 +8,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +18,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @AllArgsConstructor
@@ -48,14 +52,85 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             data.putIfAbsent("p09", Map.of());
         }
 
-        try (InputStream template = new ClassPathResource(TEMPLATE_PATH).getInputStream();
-             Workbook workbook = WorkbookFactory.create(template);
+        byte[] templateBytes;
+        try (InputStream template = new ClassPathResource(TEMPLATE_PATH).getInputStream()) {
+            templateBytes = template.readAllBytes();
+        }
+
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(templateBytes));
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            removeDefinedNamesForRowShifts(workbook);
             fillWorkbook(workbook, data, endDate);
             workbook.setForceFormulaRecalculation(true);
             workbook.write(output);
-            return output.toByteArray();
+            return restoreDefinedNames(templateBytes, output.toByteArray());
         }
+    }
+
+    private static void removeDefinedNamesForRowShifts(Workbook workbook) {
+        new ArrayList<>(workbook.getAllNames()).forEach(workbook::removeName);
+    }
+
+    private static byte[] restoreDefinedNames(byte[] templateBytes, byte[] outputBytes) throws IOException {
+        String templateXml = zipEntryText(templateBytes, "xl/workbook.xml");
+        String definedNames = extractDefinedNames(templateXml);
+        if (definedNames == null) return outputBytes;
+
+        String outputXml = zipEntryText(outputBytes, "xl/workbook.xml");
+        String updatedXml;
+        int namesStart = outputXml.indexOf("<definedNames");
+        if (namesStart >= 0) {
+            int namesEnd = outputXml.indexOf("</definedNames>", namesStart);
+            if (namesEnd < 0) throw new IOException("Malformed workbook defined names section");
+            updatedXml = outputXml.substring(0, namesStart)
+                    + definedNames
+                    + outputXml.substring(namesEnd + "</definedNames>".length());
+        } else {
+            int workbookEnd = outputXml.lastIndexOf("</workbook>");
+            if (workbookEnd < 0) throw new IOException("Malformed workbook XML");
+            updatedXml = outputXml.substring(0, workbookEnd)
+                    + definedNames
+                    + outputXml.substring(workbookEnd);
+        }
+
+        ByteArrayOutputStream restored = new ByteArrayOutputStream();
+        try (ZipInputStream input = new ZipInputStream(new ByteArrayInputStream(outputBytes));
+             ZipOutputStream zip = new ZipOutputStream(restored)) {
+            ZipEntry entry;
+            while ((entry = input.getNextEntry()) != null) {
+                ZipEntry copy = new ZipEntry(entry.getName());
+                copy.setTime(entry.getTime());
+                zip.putNextEntry(copy);
+                if ("xl/workbook.xml".equals(entry.getName())) {
+                    zip.write(updatedXml.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                } else {
+                    input.transferTo(zip);
+                }
+                zip.closeEntry();
+                input.closeEntry();
+            }
+        }
+        return restored.toByteArray();
+    }
+
+    private static String zipEntryText(byte[] archive, String entryName) throws IOException {
+        try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(archive))) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entryName.equals(entry.getName())) {
+                    return new String(zip.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+            }
+        }
+        throw new IOException("Workbook is missing " + entryName);
+    }
+
+    private static String extractDefinedNames(String workbookXml) throws IOException {
+        int start = workbookXml.indexOf("<definedNames");
+        if (start < 0) return null;
+        int end = workbookXml.indexOf("</definedNames>", start);
+        if (end < 0) throw new IOException("Malformed template defined names section");
+        return workbookXml.substring(start, end + "</definedNames>".length());
     }
 
     private void fillWorkbook(Workbook workbook, Map<String, Object> data, LocalDate endDate) {
@@ -82,7 +157,7 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         int template = start;
         int oldRows = Math.max(total - start, 1);
         resizeBefore(sheet, total, oldRows, rows.size(), 6);
-        int newTotal = total + Math.max(rows.size() - oldRows, 0);
+        int newTotal = total + rows.size() - oldRows;
         for (int i = 0; i < rows.size(); i++) {
             int row = start + i;
             copyRowStyle(sheet, template, row, 6);
@@ -95,6 +170,7 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             setFormula(sheet, row, 5, "E" + (row + 1) + "-B" + (row + 1));
             setFormula(sheet, row, 6, "(D" + (row + 1) + "/C" + (row + 1) + ")*(F" + (row + 1) + "/365)");
         }
+        for (int column = 0; column <= 6; column++) clearCell(sheet, newTotal, column);
         setText(sheet, newTotal, 0, "Total");
         setFormula(sheet, newTotal, 3, rows.isEmpty() ? "0" : "SUM(D" + (start + 1) + ":D" + (start + rows.size()) + ")");
         setFormula(sheet, newTotal, 6, rows.isEmpty() ? "0" : "SUM(G" + (start + 1) + ":G" + (start + rows.size()) + ")");
@@ -526,8 +602,10 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private static void resizeBefore(Sheet sheet, int atRow, int availableRows, int desiredRows, int maxColumn) {
         int delta = desiredRows - availableRows;
-        if (delta > 0) shiftRows(sheet, atRow, delta);
-        else if (delta < 0) clearRows(sheet, atRow + delta, atRow - 1);
+        if (delta != 0) {
+            shiftRows(sheet, atRow, delta);
+            if (delta < 0) clearRows(sheet, atRow + delta + 1, atRow - 1);
+        }
         if (desiredRows > 1) {
             int template = Math.max(atRow - 1, 0);
             for (int i = 1; i < desiredRows; i++) copyRowStyle(sheet, template, template + i, maxColumn);
@@ -536,9 +614,6 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private static void shiftRows(Sheet sheet, int startRow, int delta) {
         if (delta != 0 && startRow <= sheet.getLastRowNum()) {
-            Workbook workbook = sheet.getWorkbook();
-            // The supplied template contains unrelated broken #REF! names that POI cannot shift.
-            new ArrayList<>(workbook.getAllNames()).forEach(workbook::removeName);
             sheet.shiftRows(startRow, sheet.getLastRowNum(), delta, true, false);
         }
     }

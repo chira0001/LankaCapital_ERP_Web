@@ -1,7 +1,9 @@
 package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.services.FinancialStatementService;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -18,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FinancialReportExportServiceImplTest {
     @Test
     void exportsCompleteStatementAsExcelWorkbook() throws Exception {
-        FinancialStatementService reportService = (type, start, end) -> statementData(1);
+        FinancialStatementService reportService = (type, start, end) -> statementData(1, 1);
         FinancialReportExportServiceImpl exportService =
                 new FinancialReportExportServiceImpl(reportService);
 
         byte[] bytes = exportService.export(
                 "statement",
-                LocalDate.of(2024, 4, 1),
-                LocalDate.of(2025, 3, 31)
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2027, 3, 31)
         );
 
         try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
@@ -33,6 +35,9 @@ class FinancialReportExportServiceImplTest {
             assertEquals("Desk", workbook.getSheet("PPE").getRow(3).getCell(0).getStringCellValue());
             assertNotNull(workbook.getSheet("TB").getRow(4).getCell(0));
             assertNotNull(workbook.getSheet("Income Tax").getRow(34).getCell(0));
+            assertTrue(((XSSFWorkbook) workbook).getCTWorkbook().getDefinedNames()
+                    .getDefinedNameList().stream()
+                    .anyMatch(name -> "Beg_Bal".equals(name.getName())));
             int totalRow = findRow(workbook.getSheet("TB"), "Total");
             assertEquals("B" + (totalRow + 1) + "-C" + (totalRow + 1),
                     workbook.getSheet("TB").getRow(totalRow + 1).getCell(1).getCellFormula());
@@ -41,14 +46,14 @@ class FinancialReportExportServiceImplTest {
 
     @Test
     void expandsTrialBalanceForAdditionalAccounts() throws Exception {
-        FinancialStatementService reportService = (type, start, end) -> statementData(30);
+        FinancialStatementService reportService = (type, start, end) -> statementData(30, 1);
         FinancialReportExportServiceImpl exportService =
                 new FinancialReportExportServiceImpl(reportService);
 
         byte[] bytes = exportService.export(
                 "statement",
-                LocalDate.of(2024, 4, 1),
-                LocalDate.of(2025, 3, 31)
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2027, 3, 31)
         );
 
         try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
@@ -57,6 +62,27 @@ class FinancialReportExportServiceImplTest {
             int lastAccountRow = findRow(sheet, "Cash 29");
             assertTrue(lastAccountRow < totalRow);
             assertEquals("SUM(B5:B" + totalRow + ")", sheet.getRow(totalRow).getCell(1).getCellFormula());
+        }
+    }
+
+    @Test
+    void compactsPpeRowsWhenReportHasNoAssets() throws Exception {
+        FinancialStatementService reportService = (type, start, end) -> statementData(1, 0);
+        FinancialReportExportServiceImpl exportService =
+                new FinancialReportExportServiceImpl(reportService);
+
+        byte[] bytes = exportService.export(
+                "statement",
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2027, 3, 31)
+        );
+
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            var sheet = workbook.getSheet("PPE");
+            assertEquals(3, findRow(sheet, "Total"));
+            assertEquals("0", sheet.getRow(3).getCell(3).getCellFormula());
+            assertEquals(CellType.BLANK, sheet.getRow(3).getCell(5).getCellType());
+            assertEquals("0", sheet.getRow(3).getCell(6).getCellFormula());
         }
     }
 
@@ -69,7 +95,7 @@ class FinancialReportExportServiceImplTest {
         throw new AssertionError("Could not find row: " + value);
     }
 
-    private static HashMap<String, Object> statementData(int bankAccountCount) {
+    private static HashMap<String, Object> statementData(int bankAccountCount, int ppeCount) {
         HashMap<String, Object> result = new HashMap<>();
         List<Map<String, Object>> bankAccounts = IntStream.range(0, bankAccountCount)
                 .mapToObj(index -> Map.<String, Object>of(
@@ -78,15 +104,16 @@ class FinancialReportExportServiceImplTest {
                         "transactionType", "DR"
                 ))
                 .toList();
-        result.put("ppe", List.of(Map.of(
+        Map<String, Object> ppe = Map.of(
                 "asset", "Desk",
-                "monthOfPurchased", "2024-04-03",
-                "monthStartingDepreciation", "2025-03-12",
+                "monthOfPurchased", "2026-04-03",
+                "monthStartingDepreciation", "2027-03-12",
                 "rate", 5,
                 "amount", 1000,
                 "date", 343,
                 "depreciationAmount", 18.79
-        )));
+        );
+        result.put("ppe", IntStream.range(0, ppeCount).mapToObj(index -> ppe).toList());
         result.put("working", Map.of(
                 "interestIncome", 1000,
                 "workingAdministrativeExpenseDtos", List.of(
@@ -108,7 +135,7 @@ class FinancialReportExportServiceImplTest {
                 "expenses", List.of(Map.of("accountName", "Bad Debts", "amount", 50, "transactionType", "DR"))
         ));
         result.put("p10", Map.of(
-                "balanceAtDate", "2024-04-01",
+                "balanceAtDate", "2026-04-01",
                 "costValue", List.of(Map.of("Desk", 1000)),
                 "depreciationValue", List.of(Map.of("Desk", 100))
         ));
@@ -122,7 +149,7 @@ class FinancialReportExportServiceImplTest {
         result.put("cf", Map.of("openingCashBalance", 20, "cashInHandAmount", 100));
         result.put("incomeTax", Map.of(
                 "assetYear", List.of(Map.of("Desk", 5)),
-                "balanceBF", Map.of("2024-04-01", 0),
+                "balanceBF", Map.of("2026-04-01", 0),
                 "withholdingPayments", 0,
                 "investmentIncome", 0,
                 "businessIncome", 100
