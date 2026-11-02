@@ -37,6 +37,7 @@ public class AdminController {
     private final PettyCashService pettyCashService;
 //    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
+    private final FinancialReportExportService financialReportExportService;
     private final AssetsRegistryService assetsRegistryService;
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
@@ -529,8 +530,36 @@ public class AdminController {
         if (authentication == null || authentication.getName().isEmpty()) {
             throw new ResourceNotFoundException("Token is invalid");
         }
-        System.out.println(reportType + " - " + startDate + " - " + endDate);
-        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+        var data = financialStatementService.generateReports(reportType, startDate, endDate);
+        if ("p11".equalsIgnoreCase(reportType)) {
+            data.putAll(financialStatementService.generateReports("tb", startDate, endDate));
+        } else if ("p09".equalsIgnoreCase(reportType)) {
+            data.put("p09", java.util.Map.of());
+            data.putAll(financialStatementService.generateReports("tb", startDate, endDate));
+        } else if ("statement".equalsIgnoreCase(reportType)) {
+            data.putIfAbsent("p09", java.util.Map.of());
+        }
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/reports/export")
+    public ResponseEntity<byte[]> exportReport(
+            @RequestParam String reportType,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication
+    ) throws java.io.IOException {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        byte[] report = financialReportExportService.export(reportType, startDate, endDate);
+        String filename = "Audited Accounts " + endDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")) + ".xlsx";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + filename + "\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(report);
     }
 
 
