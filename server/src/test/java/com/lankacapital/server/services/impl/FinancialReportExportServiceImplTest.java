@@ -69,6 +69,48 @@ class FinancialReportExportServiceImplTest {
             int totalRow = findRow(workbook.getSheet("TB"), "Total");
             assertEquals("B" + (totalRow + 1) + "-C" + (totalRow + 1),
                     workbook.getSheet("TB").getRow(totalRow + 1).getCell(1).getCellFormula());
+            var trialBalance = workbook.getSheet("TB");
+            int receivablesRow = findRow(trialBalance, "Receivables");
+            assertEquals("Receivables balance",
+                    trialBalance.getRow(receivablesRow + 1).getCell(0).getStringCellValue());
+            int incomeRow = findRow(trialBalance, "Income");
+            assertEquals(receivablesRow + 2, incomeRow);
+            assertEquals("'Working'!B2", trialBalance.getRow(incomeRow).getCell(2).getCellFormula());
+            assertTrue(isBold(workbook, trialBalance.getRow(receivablesRow).getCell(0)));
+            assertTrue(!isBold(workbook, trialBalance.getRow(incomeRow).getCell(0)));
+            int adminExpensesRow = findRow(trialBalance, "Administrative Expenses");
+            int badDebtsRow = findRow(trialBalance, "Bad Debts");
+            assertTrue(badDebtsRow > adminExpensesRow);
+            assertEquals("'Working'!B6", trialBalance.getRow(badDebtsRow).getCell(1).getCellFormula());
+            for (String section : List.of("Assets", "Liabilities", "Equity", "Administrative Expenses")) {
+                int sectionRow = findRow(trialBalance, section);
+                assertTrue(isBold(workbook, trialBalance.getRow(sectionRow).getCell(0)),
+                        section + " heading should be bold");
+                assertEquals(CellType.BLANK, trialBalance.getRow(sectionRow).getCell(1).getCellType());
+                assertEquals(CellType.BLANK, trialBalance.getRow(sectionRow).getCell(2).getCellType());
+            }
+            int bankAccountsRow = findRow(trialBalance, "Bank accounts");
+            assertTrue(!isBold(workbook, trialBalance.getRow(bankAccountsRow).getCell(0)));
+            int assetsHeaderRow = findRow(trialBalance, "Assets");
+            int receivablesHeaderRow = findRow(trialBalance, "Receivables");
+            for (int row = assetsHeaderRow + 1; row < receivablesHeaderRow; row++) {
+                var assetRow = trialBalance.getRow(row);
+                if (assetRow != null && assetRow.getCell(0) != null
+                        && !"Accumalated Deprecion".equalsIgnoreCase(
+                        assetRow.getCell(0).getStringCellValue())
+                        && !"Income".equalsIgnoreCase(assetRow.getCell(0).getStringCellValue())) {
+                    assertEquals(CellType.BLANK, assetRow.getCell(2).getCellType(),
+                            "Asset rows should not contain credit values");
+                }
+            }
+            int creditAssetRow = findRow(trialBalance, "Credit Asset");
+            assertEquals(CellType.BLANK, trialBalance.getRow(creditAssetRow).getCell(2).getCellType());
+            assertEquals(CellType.BLANK, trialBalance.getRow(receivablesRow).getCell(1).getCellType());
+            assertEquals(CellType.BLANK, trialBalance.getRow(receivablesRow).getCell(2).getCellType());
+            for (String dataRow : List.of("Cash 0", "Desk", "Share capital", "Bad Debts")) {
+                assertTrue(!isBold(workbook, trialBalance.getRow(findRow(trialBalance, dataRow)).getCell(0)),
+                        dataRow + " should be a regular data row");
+            }
         }
     }
 
@@ -90,6 +132,31 @@ class FinancialReportExportServiceImplTest {
             int lastAccountRow = findRow(sheet, "Cash 29");
             assertTrue(lastAccountRow < totalRow);
             assertEquals("SUM(B5:B" + totalRow + ")", sheet.getRow(totalRow).getCell(1).getCellFormula());
+        }
+    }
+
+    @Test
+    void loadsWorkingDataWhenExportingTrialBalanceAlone() throws Exception {
+        HashMap<String, Object> trialBalanceData = new HashMap<>();
+        trialBalanceData.put("tb", statementData(1, 1).get("tb"));
+        HashMap<String, Object> workingData = new HashMap<>();
+        workingData.put("working", statementData(1, 1).get("working"));
+        FinancialStatementService reportService = (type, start, end) ->
+                "tb".equals(type) ? trialBalanceData : workingData;
+        FinancialReportExportServiceImpl exportService =
+                new FinancialReportExportServiceImpl(reportService);
+
+        byte[] bytes = exportService.export(
+                "tb",
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2027, 3, 31)
+        );
+
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            var sheet = workbook.getSheet("TB");
+            int incomeRow = findRow(sheet, "Income");
+            assertEquals("'Working'!B2", sheet.getRow(incomeRow).getCell(2).getCellFormula());
+            assertEquals(1000, workbook.getSheet("Working").getRow(1).getCell(1).getNumericCellValue());
         }
     }
 
@@ -165,6 +232,13 @@ class FinancialReportExportServiceImplTest {
         throw new AssertionError("Could not find row: " + value);
     }
 
+    private static boolean isBold(
+            org.apache.poi.ss.usermodel.Workbook workbook,
+            org.apache.poi.ss.usermodel.Cell cell
+    ) {
+        return workbook.getFontAt(cell.getCellStyle().getFontIndexAsInt()).getBold();
+    }
+
     private static String workbookXml(byte[] bytes) throws IOException {
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes))) {
             ZipEntry entry;
@@ -179,7 +253,7 @@ class FinancialReportExportServiceImplTest {
 
     private static HashMap<String, Object> statementData(int bankAccountCount, int ppeCount) {
         return statementData(bankAccountCount, ppeCount,
-                List.of(expense("Office Rent", 500)));
+                List.of(expense("Office Rent", 500), expense("Bad Debts", 50)));
     }
 
     private static HashMap<String, Object> statementData(
@@ -220,7 +294,15 @@ class FinancialReportExportServiceImplTest {
         ));
         result.put("tb", Map.of(
                 "bankAccounts", bankAccounts,
-                "assets", List.of(),
+                "assets", List.of(Map.of(
+                        "accountName", "Receivables",
+                        "amount", 250,
+                        "transactionType", "DR"
+                ), Map.of(
+                        "accountName", "Credit Asset",
+                        "amount", 25,
+                        "transactionType", "CR"
+                )),
                 "liabilities", List.of(),
                 "equity", List.of(Map.of("accountName", "Share capital", "amount", 100, "transactionType", "CR")),
                 "income", List.of(Map.of("accountName", "Interest Income", "amount", 1000, "transactionType", "CR")),

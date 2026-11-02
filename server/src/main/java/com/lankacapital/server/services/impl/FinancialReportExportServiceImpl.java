@@ -52,6 +52,10 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         } else if ("statement".equalsIgnoreCase(reportType)) {
             data.putIfAbsent("p09", Map.of());
         }
+        if (data.containsKey("tb") && !data.containsKey("working")) {
+            data.putAll(financialStatementService.generateReports(
+                    "working", startDate.toString(), endDate.toString()));
+        }
 
         byte[] templateBytes;
         try (InputStream template = new ClassPathResource(TEMPLATE_PATH).getInputStream()) {
@@ -138,7 +142,9 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
     private void fillWorkbook(Workbook workbook, Map<String, Object> data, LocalDate endDate) {
         if (data.get("ppe") instanceof List<?> ppe) fillPpe(workbook, ppe);
         if (data.get("working") != null) fillWorking(workbook, map(data.get("working")));
-        if (data.get("tb") != null) fillTrialBalance(workbook, map(data.get("tb")), list(data.get("ppe")));
+        if (data.get("tb") != null) {
+            fillTrialBalance(workbook, map(data.get("tb")), list(data.get("ppe")), data.get("working"));
+        }
         if (data.get("p10") != null) fillP10(workbook, map(data.get("p10")), endDate);
         if (data.get("p11") != null) fillP11(workbook, map(data.get("p11")), endDate);
         if (data.get("ce") != null) fillEquity(workbook, map(data.get("ce")), endDate);
@@ -230,7 +236,12 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         setText(sheet, epfLabel, 0, "EPF & ETF Month");
     }
 
-    private void fillTrialBalance(Workbook workbook, Map<String, Object> tb, List<?> ppeRows) {
+    private void fillTrialBalance(
+            Workbook workbook,
+            Map<String, Object> tb,
+            List<?> ppeRows,
+            Object workingData
+    ) {
         Sheet sheet = requiredSheet(workbook, "TB");
         int header = findRow(sheet, "Accounts", 0);
         int total = findRow(sheet, "Total", 0);
@@ -279,7 +290,38 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
                 .filter(item -> !ppeNames.contains(
                         text(item.get("accountName")).trim().toLowerCase(Locale.ROOT)))
                 .forEach(sections.get("Assets")::add);
-        int desired = TB_SECTIONS.stream().mapToInt(section -> 1 + sections.get(section.getKey()).size()).sum();
+        int receivables = -1;
+        for (int i = 0; i < sections.get("Assets").size(); i++) {
+            if ("Receivables".equalsIgnoreCase(
+                    text(sections.get("Assets").get(i).get("accountName")).trim())) {
+                receivables = i;
+                break;
+            }
+        }
+        Map<String, Object> receivablesHeader = new HashMap<>();
+        receivablesHeader.put("accountName", "Receivables");
+        receivablesHeader.put("sectionHeader", true);
+        int incomeInsertIndex;
+        if (receivables >= 0) {
+            Map<String, Object> receivablesBalance = new HashMap<>(sections.get("Assets").get(receivables));
+            receivablesBalance.put("accountName", "Receivables balance");
+            sections.get("Assets").set(receivables, receivablesHeader);
+            sections.get("Assets").add(receivables + 1, receivablesBalance);
+            incomeInsertIndex = receivables + 2;
+        } else {
+            incomeInsertIndex = sections.get("Assets").size() + 1;
+            sections.get("Assets").add(sections.get("Assets").size(), receivablesHeader);
+        }
+        Map<String, Object> income = new HashMap<>();
+        income.put("accountName", "Income");
+        income.put("dr", 0d);
+        income.put("crFormula", "'Working'!B2");
+        sections.get("Assets").add(incomeInsertIndex, income);
+
+        int desired = TB_SECTIONS.stream()
+                .filter(section -> !"Income".equals(section.getKey()))
+                .mapToInt(section -> 1 + sections.get(section.getKey()).size())
+                .sum();
         int delta = desired - (total - first);
         if (delta > 0) shiftRows(sheet, total, delta);
         else if (delta < 0) {
@@ -289,19 +331,45 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         }
         int row = first;
         for (Map.Entry<String, String> section : TB_SECTIONS) {
+            if ("Income".equals(section.getKey())) continue;
             applyRowStyles(sheet, row, sectionStyles.get(section.getKey()), 2);
-            setText(sheet, row, 0, section.getValue());
-            boldRow(sheet, row, 2);
+            setText(sheet, row, 0, "Expenses".equals(section.getKey())
+                    ? "Administrative Expenses"
+                    : section.getValue());
+            clearCell(sheet, row, 1);
+            clearCell(sheet, row, 2);
+            if ("BankAccounts".equals(section.getKey())) unboldRow(sheet, row, 2);
+            else boldRow(sheet, row, 2);
             row++;
             for (Map<String, Object> item : sections.get(section.getKey())) {
                 applyRowStyles(sheet, row, itemStyles.get(section.getKey()), 2);
-                setText(sheet, row, 0, text(item.get("accountName")));
+                String accountName = text(item.get("accountName"));
+                setText(sheet, row, 0, accountName);
+                if (Boolean.TRUE.equals(item.get("sectionHeader"))) {
+                    clearCell(sheet, row, 1);
+                    clearCell(sheet, row, 2);
+                    boldRow(sheet, row, 2);
+                    row++;
+                    continue;
+                }
                 Object formula = item.get("drFormula");
-                if (formula != null) setFormula(sheet, row, 1, text(formula));
-                else setNumber(sheet, row, 1, number(item.getOrDefault("dr", item.get("drFallback"))));
+                if (formula != null) {
+                    setFormula(sheet, row, 1, text(formula));
+                } else {
+                    int workingExpenseRow = "Expenses".equals(section.getKey())
+                            ? findWorkingExpenseRow(workbook, workingData, accountName)
+                            : -1;
+                    if (workingExpenseRow >= 0) setFormula(sheet, row, 1, "'Working'!B" + (workingExpenseRow + 1));
+                    else setNumber(sheet, row, 1, number(item.getOrDefault("dr", item.get("drFallback"))));
+                }
                 formula = item.get("crFormula");
                 if (formula != null) setFormula(sheet, row, 2, text(formula));
                 else setNumber(sheet, row, 2, number(item.getOrDefault("cr", item.get("crFallback"))));
+                if ("Assets".equals(section.getKey())
+                        && !"Accumalated Deprecion".equalsIgnoreCase(accountName.trim())
+                        && !"Income".equalsIgnoreCase(accountName.trim())) {
+                    clearCell(sheet, row, 2);
+                }
                 row++;
             }
         }
@@ -312,6 +380,21 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         boldRow(sheet, row, 2);
         applyRowStyles(sheet, row + 1, differenceStyle, 2);
         setFormula(sheet, row + 1, 1, "B" + (row + 1) + "-C" + (row + 1));
+    }
+
+    private int findWorkingExpenseRow(Workbook workbook, Object workingData, String expenseName) {
+        if (workingData == null) return -1;
+        List<?> expenses = list(map(workingData).get("workingAdministrativeExpenseDtos"));
+        Sheet workingSheet = requiredSheet(workbook, "Working");
+        int adminHeader = findRow(workingSheet, "Administrative Expenses", 0);
+        if (adminHeader < 0) return -1;
+        for (int i = 0; i < expenses.size(); i++) {
+            Map<String, Object> expense = map(expenses.get(i));
+            if (expenseName.equalsIgnoreCase(text(expense.get("adminExpenseName")).trim())) {
+                return adminHeader + i + 1;
+            }
+        }
+        return -1;
     }
 
     private void fillP10(Workbook workbook, Map<String, Object> p10, LocalDate endDate) {
@@ -674,6 +757,14 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
     }
 
     private static void boldRow(Sheet sheet, int rowIndex, int maxColumn) {
+        setRowBold(sheet, rowIndex, maxColumn, true);
+    }
+
+    private static void unboldRow(Sheet sheet, int rowIndex, int maxColumn) {
+        setRowBold(sheet, rowIndex, maxColumn, false);
+    }
+
+    private static void setRowBold(Sheet sheet, int rowIndex, int maxColumn, boolean bold) {
         Row row = sheet.getRow(rowIndex);
         if (row == null) return;
         Workbook workbook = sheet.getWorkbook();
@@ -682,12 +773,14 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             if (cell == null) continue;
             CellStyle style = workbook.createCellStyle();
             style.cloneStyleFrom(cell.getCellStyle());
-            Font font = workbook.createFont();
             Font old = workbook.getFontAt(cell.getCellStyle().getFontIndexAsInt());
-            font.setBold(true);
+            Font font = workbook.createFont();
+            font.setBold(bold);
             font.setFontName(old.getFontName());
             font.setFontHeight(old.getFontHeight());
             font.setColor(old.getColor());
+            font.setItalic(old.getItalic());
+            font.setUnderline(old.getUnderline());
             style.setFont(font);
             cell.setCellStyle(style);
         }
