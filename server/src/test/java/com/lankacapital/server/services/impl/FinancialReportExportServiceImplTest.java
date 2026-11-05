@@ -238,6 +238,13 @@ class FinancialReportExportServiceImplTest {
                 "costValue", List.of(Map.of("Desk", 800), Map.of("Printer", 400)),
                 "depreciationValue", List.of(Map.of("Desk", 80), Map.of("Printer", 40))
         ));
+        data.put("incomeTax", Map.of(
+                "assetYear", List.of(Map.of("Asset 1", 5), Map.of("Asset 2", 7)),
+                "balanceBF", Map.of("2026-04-01", 0),
+                "withholdingPayments", 0,
+                "investmentIncome", 0,
+                "businessIncome", 100
+        ));
         FinancialStatementService reportService = (type, start, end) -> data;
         FinancialReportExportServiceImpl exportService =
                 new FinancialReportExportServiceImpl(reportService);
@@ -258,6 +265,12 @@ class FinancialReportExportServiceImplTest {
             assertEquals("'TB'!B" + (deskRow + 1), p10.getRow(costFirst).getCell(6).getCellFormula());
             assertEquals("'TB'!A" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(1).getCellFormula());
             assertEquals("'TB'!B" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(6).getCellFormula());
+                        var incomeTax = workbook.getSheet("Income Tax");
+                        int taxFirst = 34;
+                        assertEquals("'P10'!B6", incomeTax.getRow(taxFirst).getCell(0).getCellFormula());
+                        assertEquals(5, incomeTax.getRow(taxFirst).getCell(2).getNumericCellValue());
+                        assertEquals("'P10'!B7", incomeTax.getRow(taxFirst + 1).getCell(0).getCellFormula());
+                        assertEquals(7, incomeTax.getRow(taxFirst + 1).getCell(2).getNumericCellValue());
         }
     }
 

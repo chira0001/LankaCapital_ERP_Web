@@ -580,7 +580,9 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private void fillIncomeTax(Workbook workbook, Map<String, Object> tax, LocalDate endDate) {
         Sheet sheet = requiredSheet(workbook, "Income Tax");
+        Sheet p10 = requiredSheet(workbook, "P10");
         List<Map<String, Object>> assets = entries(tax.get("assetYear"));
+        int p10First = findRow(p10, "Cost", 1) + 1;
         int first = 34;
         int total = 36;
         int delta = Math.max(assets.size(), 1) - 1;
@@ -590,10 +592,10 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             int row = first + i;
             if (i > 0) copyRowStyle(sheet, first, row, 10);
             Map<String, Object> item = i < assets.size() ? assets.get(i) : Map.of();
-            setText(sheet, row, 0, text(item.get("name")));
-            setNumber(sheet, row, 2, number(item.get("years")));
-            linkFormula(sheet, row, 1, "'P10'!G" + (6 + i));
-            linkFormula(sheet, row, 3, "'P10'!E" + (6 + i));
+            linkFormula(sheet, row, 0, "'P10'!B" + (p10First + i + 1));
+            setNumber(sheet, row, 2, number(item.get("value")));
+            linkFormula(sheet, row, 1, "'P10'!G" + (p10First + i + 1));
+            linkFormula(sheet, row, 3, "'P10'!E" + (p10First + i + 1));
             setFormula(sheet, row, 4, "B" + (row + 1) + "/C" + (row + 1));
             setFormula(sheet, row, 5, "D" + (row + 1) + "+E" + (row + 1));
             setFormula(sheet, row, 7, "B" + (row + 1) + "-F" + (row + 1));
