@@ -226,6 +226,41 @@ class FinancialReportExportServiceImplTest {
         }
     }
 
+    @Test
+    void populatesP10AssetsAndAmountsFromTrialBalance() throws Exception {
+        HashMap<String, Object> data = statementData(0, 0);
+        data.put("ppe", List.of(
+                Map.of("asset", "Desk", "amount", 1000, "depreciationAmount", 100),
+                Map.of("asset", "Printer", "amount", 500, "depreciationAmount", 50)
+        ));
+        data.put("p10", Map.of(
+                "balanceAtDate", "2026-04-01",
+                "costValue", List.of(Map.of("Desk", 800), Map.of("Printer", 400)),
+                "depreciationValue", List.of(Map.of("Desk", 80), Map.of("Printer", 40))
+        ));
+        FinancialStatementService reportService = (type, start, end) -> data;
+        FinancialReportExportServiceImpl exportService =
+                new FinancialReportExportServiceImpl(reportService);
+
+        byte[] bytes = exportService.export(
+                "statement",
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2027, 3, 31)
+        );
+
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            var tb = workbook.getSheet("TB");
+            var p10 = workbook.getSheet("P10");
+            int costFirst = findRow(p10, "Cost", 1) + 1;
+            int deskRow = findRow(tb, "Desk");
+            int printerRow = findRow(tb, "Printer");
+            assertEquals("'TB'!A" + (deskRow + 1), p10.getRow(costFirst).getCell(1).getCellFormula());
+            assertEquals("'TB'!B" + (deskRow + 1), p10.getRow(costFirst).getCell(6).getCellFormula());
+            assertEquals("'TB'!A" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(1).getCellFormula());
+            assertEquals("'TB'!B" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(6).getCellFormula());
+        }
+    }
+
     private static int findRow(org.apache.poi.ss.usermodel.Sheet sheet, String value) {
         return findRow(sheet, value, 0);
     }

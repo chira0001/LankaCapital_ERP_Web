@@ -399,9 +399,21 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private void fillP10(Workbook workbook, Map<String, Object> p10, LocalDate endDate) {
         Sheet sheet = requiredSheet(workbook, "P10");
+        Sheet tb = requiredSheet(workbook, "TB");
         List<Map<String, Object>> cost = entries(p10.get("costValue"));
         List<Map<String, Object>> depreciation = entries(p10.get("depreciationValue"));
-        int count = Math.max(1, Math.max(cost.size(), depreciation.size()));
+        List<Integer> tbAssetRows = new ArrayList<>();
+        for (int row = 0; row <= tb.getLastRowNum(); row++) {
+            Row tbRow = tb.getRow(row);
+            Cell amountCell = tbRow == null ? null : tbRow.getCell(1);
+            if (amountCell != null && amountCell.getCellType() == CellType.FORMULA
+                    && amountCell.getCellFormula().startsWith("'PPE'!D")) {
+                tbAssetRows.add(row);
+            }
+        }
+        int count = Math.max(1, tbAssetRows.isEmpty()
+                ? Math.max(cost.size(), depreciation.size())
+                : tbAssetRows.size());
         int costLabel = findRow(sheet, "Furniture & Fittings", 1);
         int depHeader = findRow(sheet, "Accumulated Depreciation", 1);
         int wdvHeader = findRow(sheet, "Written Down Value", 1);
@@ -409,14 +421,17 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         int costFirst = costLabel;
         int costTotal = costFirst + 1;
         resizeBefore(sheet, costTotal, 1, count, 9);
+        costTotal = costFirst + count;
         depHeader = findRow(sheet, "Accumulated Depreciation", 1);
         int depFirst = depHeader + 1;
         int depTotal = depFirst + 1;
         resizeBefore(sheet, depTotal, 1, count, 9);
+        depTotal = depFirst + count;
         wdvHeader = findRow(sheet, "Written Down Value", 1);
         int wdvFirst = wdvHeader + 1;
         int wdvTotal = wdvFirst + 1;
         resizeBefore(sheet, wdvTotal, 1, count, 9);
+        wdvTotal = wdvFirst + count;
 
         setText(sheet, costFirst - 1, 4, "Balance at " + date(p10.get("balanceAtDate"), "dd.MM.yyyy"));
         setText(sheet, costFirst - 1, 9, "Balance at " + endDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
@@ -430,9 +445,15 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
             int dr = depFirst + i;
             int wr = wdvFirst + i;
             String name = text(c.getOrDefault("name", d.get("name")));
-            setText(sheet, cr, 1, name);
+            if (!tbAssetRows.isEmpty()) {
+                int tbAssetRow = tbAssetRows.get(i);
+                setFormula(sheet, cr, 1, "'TB'!A" + (tbAssetRow + 1));
+                setFormula(sheet, cr, 6, "'TB'!B" + (tbAssetRow + 1));
+            } else {
+                setText(sheet, cr, 1, name);
+                setFormula(sheet, cr, 6, "PPE!D" + (i + 4));
+            }
             setNumber(sheet, cr, 4, number(c.get("value")));
-            setFormula(sheet, cr, 6, "PPE!D" + (i + 4));
             setFormula(sheet, dr, 1, "B" + (cr + 1));
             setNumber(sheet, dr, 4, number(d.get("value")));
             setFormula(sheet, dr, 6, "PPE!G" + (i + 4));
