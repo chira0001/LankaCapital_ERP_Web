@@ -35,8 +35,6 @@ import ReceptionistView from "./pages/Receptionist/ReceptionistView";
 import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
 import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
 import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
-import { useEffect, useState } from "react";
-import ReceptionistFinancials from "./pages/Receptionist/ReceptionistFinancials";
 import LoanSummary from "./component/LoanSummary/LoanSummary";
 import Salary from "./pages/Admin/Salary";
 
@@ -47,7 +45,7 @@ const getUser = () => {
 
   try {
     return jwtDecode(token);
-  } catch (error) {
+  } catch {
     console.log("Invalid token");
     return null;
   }
@@ -149,7 +147,6 @@ const App = () => {
           {/* <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} /> */}
           <Route path="admin-exp" element={<ReceptionistPettyCash />} />
           {/* <Route path="monthlyPetty" element={<ReceptionistPettyCash />} /> */}
-          <Route path="financials" element={<ReceptionistFinancials />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
 

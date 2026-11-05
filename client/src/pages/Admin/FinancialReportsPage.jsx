@@ -11,8 +11,6 @@ import { Download, ChevronDown } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
 import axiosApi from "../../api/axiosAPI.js";
-import XLSX from "xlsx-js-style";
-import dayjs from "dayjs";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -24,8 +22,6 @@ import FinancialStatementNotes from "../../component/AdminReports/FinancialState
 import NoteShare from "../../component/AdminReports/NoteShare.jsx";
 import IncomeTax from "../../component/AdminReports/IncomeTax.jsx";
 import ReportTables from "../../component/AdminReports/ReportTables.jsx";
-
-import { fillFinancialTemplate } from "../../reports/ppe.js";
 
 const isFourDigitDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value ?? "");
 
@@ -85,6 +81,7 @@ const FinancialReportsPage = () => {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
 
   // kept (existing)
@@ -110,8 +107,6 @@ const FinancialReportsPage = () => {
     () => (Array.isArray(assetsList) ? assetsList.length : 0),
     [assetsList]
   );
-
-  const formatMonth = useCallback((d) => dayjs(d).format("YYYY-MM"), []);
 
   const reportTypes = useMemo(
     () => [
@@ -198,31 +193,6 @@ const FinancialReportsPage = () => {
         return;
       }
 
-      if (reportType === "p11") {
-        const [p11Res, tbRes] = await Promise.all([
-          axiosApi.get(`/admin/reports`, {
-            params: { reportType, startDate, endDate },
-          }),
-          axiosApi.get(`/admin/reports`, {
-            params: { reportType: "tb", startDate, endDate },
-          }),
-        ]);
-        const mergedData = { ...p11Res.data, ...tbRes.data };
-        console.log("res.data : ", mergedData);
-        setData(mergedData);
-        return;
-      }
-
-      if (reportType === "p09") {
-        const tbRes = await axiosApi.get(`/admin/reports`, {
-          params: { reportType: "tb", startDate, endDate },
-        });
-        const mergedData = { p09: {}, ...tbRes.data };
-        console.log("res.data : ", mergedData);
-        setData(mergedData);
-        return;
-      }
-
       const res = await axiosApi.get(`/admin/reports`, {
         params: {
           reportType,
@@ -230,10 +200,7 @@ const FinancialReportsPage = () => {
           endDate: endDate,
         },
       });
-      const reportData =
-        reportType === "statement" ? { ...res.data, p09: res.data?.p09 ?? {} } : res.data;
-      console.log("res.data : ", reportData);
-      setData(reportData);
+      setData(res.data);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load report");
       setData(null);
@@ -243,43 +210,29 @@ const FinancialReportsPage = () => {
   }, [reportType, startDate, endDate]);
 
   const handleExportExcel = useCallback(async () => {
-    if (!data) return;
+    if (!data || !isFourDigitDate(startDate) || !isFourDigitDate(endDate)) return;
 
     try {
-      const templateUrl = encodeURI("/templates/Audited Accounts 2425.xlsx");
-      const response = await fetch(templateUrl);
-      if (!response.ok) {
-        toast.error("Excel template not found");
-        return;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: "array", cellStyles: true });
-
-      const exportData = Array.isArray(data) ? { ppe: data } : data;
-      fillFinancialTemplate(wb, { ...exportData, endDate });
-
-      // `writeFile` uses Node's `fs` module in xlsx-js-style.  Vite correctly
-      // excludes that module from the browser bundle, so create the download
-      // from the workbook bytes instead.
-      const workbookBytes = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      const downloadUrl = URL.createObjectURL(
-        new Blob([workbookBytes], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        })
-      );
+      setIsExporting(true);
+      const response = await axiosApi.get("/admin/reports/export", {
+        params: { reportType, startDate, endDate },
+        responseType: "blob",
+      });
+      const downloadUrl = URL.createObjectURL(response.data);
       const downloadLink = document.createElement("a");
       downloadLink.href = downloadUrl;
-      downloadLink.download = `Audited Accounts ${formatMonth(endDate)}.xlsx`;
+      downloadLink.download = `Audited Accounts ${endDate.slice(0, 7)}.xlsx`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       downloadLink.remove();
-      URL.revokeObjectURL(downloadUrl);
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
     } catch (error) {
       console.error(error);
       toast.error("Excel export failed");
+    } finally {
+      setIsExporting(false);
     }
-  }, [data, endDate, formatMonth, reportType]);
+  }, [data, endDate, reportType, startDate]);
 
   const [sectionsOpen, setSectionsOpen] = useState({
     trialBalance: false,
@@ -794,8 +747,8 @@ const FinancialReportsPage = () => {
               {loading ? "Loading..." : "Generate"}
             </Button>
 
-            <Button onClick={handleExportExcel} variant="outline">
-              Export Excel
+            <Button onClick={handleExportExcel} variant="outline" disabled={!data || isExporting}>
+              {isExporting ? "Preparing Excel..." : "Export Excel"}
             </Button>
           </div>
         </section>

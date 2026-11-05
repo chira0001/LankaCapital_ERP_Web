@@ -137,7 +137,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         tb.setEquity(grouped.getOrDefault(AccountType.Equity, List.of()));
         tb.setExpenses(grouped.getOrDefault(AccountType.Expenses, List.of()));
         tb.setIncome(grouped.getOrDefault(AccountType.Income, List.of()));
-
+        System.out.println("Trial balanace : " + tb);
         return tb;
     }
 
