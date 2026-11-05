@@ -265,6 +265,17 @@ class FinancialReportExportServiceImplTest {
             assertEquals("'TB'!B" + (deskRow + 1), p10.getRow(costFirst).getCell(6).getCellFormula());
             assertEquals("'TB'!A" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(1).getCellFormula());
             assertEquals("'TB'!B" + (printerRow + 1), p10.getRow(costFirst + 1).getCell(6).getCellFormula());
+            assertEquals("SUM(E" + (costFirst + 1) + ":G" + (costFirst + 1) + ")",
+                    p10.getRow(costFirst).getCell(9).getCellFormula());
+            assertEquals("SUM(E" + (costFirst + 2) + ":G" + (costFirst + 2) + ")",
+                    p10.getRow(costFirst + 1).getCell(9).getCellFormula());
+            assertEquals("SUM(J" + (costFirst + 1) + ":J" + (costFirst + 2) + ")",
+                    p10.getRow(costFirst + 2).getCell(9).getCellFormula());
+            int depreciationFirst = findRow(p10, "Accumulated Depreciation", 1) + 1;
+            assertEquals("SUM(E" + (depreciationFirst + 1) + ":G" + (depreciationFirst + 1) + ")",
+                    p10.getRow(depreciationFirst).getCell(9).getCellFormula());
+            assertEquals("SUM(E" + (depreciationFirst + 2) + ":G" + (depreciationFirst + 2) + ")",
+                    p10.getRow(depreciationFirst + 1).getCell(9).getCellFormula());
                         var incomeTax = workbook.getSheet("Income Tax");
                         int taxFirst = 34;
                         assertEquals("'P10'!B6", incomeTax.getRow(taxFirst).getCell(0).getCellFormula());

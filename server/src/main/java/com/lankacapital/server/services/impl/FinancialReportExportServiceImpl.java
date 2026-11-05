@@ -454,9 +454,11 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
                 setFormula(sheet, cr, 6, "PPE!D" + (i + 4));
             }
             setNumber(sheet, cr, 4, number(c.get("value")));
+            setFormula(sheet, cr, 9, "SUM(E" + (cr + 1) + ":G" + (cr + 1) + ")");
             setFormula(sheet, dr, 1, "B" + (cr + 1));
             setNumber(sheet, dr, 4, number(d.get("value")));
             setFormula(sheet, dr, 6, "PPE!G" + (i + 4));
+            setFormula(sheet, dr, 9, "SUM(E" + (dr + 1) + ":G" + (dr + 1) + ")");
             setFormula(sheet, wr, 1, "B" + (dr + 1));
             setFormula(sheet, wr, 9, "J" + (cr + 1) + "-J" + (dr + 1));
         }
