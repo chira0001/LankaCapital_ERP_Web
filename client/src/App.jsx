@@ -83,7 +83,41 @@ const AdminMenuRoute = ({ permission, children }) => {
   const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-gray-500">Loading access...</div>;
+    return (
+      <div
+        className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-10"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="w-full max-w-xl rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-10 w-10 shrink-0 animate-spin rounded-full border-4 border-gray-200 border-t-black motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Loading Access Details
+              </p>
+              <p className="text-xs text-gray-500">
+                Please wait while we verify your access...
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2" aria-hidden="true">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div
+                key={index}
+                className="h-10 w-full animate-pulse rounded border border-gray-100 bg-gray-50 motion-reduce:animate-none"
+              />
+            ))}
+          </div>
+
+          <span className="sr-only">Loading access...</span>
+        </div>
+      </div>
+    );
   }
   if (isSuperAdmin || permissions.includes(permission)) return children;
 
