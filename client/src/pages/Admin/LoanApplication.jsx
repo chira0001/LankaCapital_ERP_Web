@@ -33,12 +33,8 @@ const LoanApplication = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // existing states (kept)
   const [selectedApp, setSelectedApp] = useState(null);
-  const [actionType, setActionType] = useState(null);
-  const [showDialog, setShowDialog] = useState(false);
   const [showLoan, setShowLoan] = useState(false);
-  const [decisionNote, setDecisionNote] = useState("");
   const [isEdit, setIsEdit] = useState(false);
 
   const [loanUpdatePayload, setLoanUpdatePayload] = useState({
@@ -148,76 +144,6 @@ const LoanApplication = () => {
       if (abortRef.current) abortRef.current.abort();
     };
   }, []);
-
-  const handleAction = (app, action) => {
-    setSelectedApp(app);
-    setActionType(action);
-    setDecisionNote("");
-    setShowDialog(true);
-  };
-
-  const confirmAction = async () => {
-    if (!selectedApp) return;
-
-    try {
-      setLoading(true);
-
-      if (actionType === "approve") {
-        if (!decisionNote.trim()) {
-          toast({
-            title: "Error",
-            description: "Decision note is required",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        await axiosAPI.put("/admin/approve", {
-          fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId,
-          decisionNote,
-        });
-      } else if (actionType === "reject") {
-        await axiosAPI.put("/admin/reject", {
-          fileNumber: selectedApp.fileNumber,
-          decisionNote,
-          employeeId: currentEmployeeId,
-        });
-      } else if (actionType === "reset") {
-        await axiosAPI.put("/admin/reset", {
-          fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId,
-        });
-      } else if (actionType === "incomplete") {
-        await axiosAPI.put("/admin/incomplete", {
-          fileNumber: selectedApp.fileNumber,
-          employeeId: currentEmployeeId,
-        });
-      }
-
-      // ✅ ensure refreshed data is not served from stale cache
-      clearLoanCache();
-      await fetchApplications({ force: true });
-
-      toast({
-        title: "Success",
-        description: `Application ${actionType} successfully`,
-      });
-    } catch (error) {
-      console.error("Failed to update application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update application",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      setShowDialog(false);
-      setSelectedApp(null);
-      setActionType(null);
-      setDecisionNote("");
-    }
-  };
 
   const getStatusBadge = (status) => {
     const normalized = (status ?? "").toUpperCase();

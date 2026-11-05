@@ -37,11 +37,11 @@ public class AdminController {
     private final PettyCashService pettyCashService;
 //    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
+    private final FinancialReportExportService financialReportExportService;
     private final AssetsRegistryService assetsRegistryService;
     private final DailyCollectionService dailyCollectionService;
     private final CustomerService customerService;
     private final DashboardService dashboardService;
-    private final SalaryConditionService salaryConditionService;
     private final SalaryMetaDataService salaryMetaDataService;
     private final PettyCashCategoryService pettyCashCategoryService;
     private final TrialBalanceDataService trialBalanceDataService;
@@ -51,16 +51,6 @@ public class AdminController {
     private final FinancialNoteDataService financialNoteDataService;
     private final NoteSharesDataService noteSharesDataService;
     private final IncomeTaxDataService incomeTaxDataService;
-
-    @PostMapping(path = "/role")
-    public ResponseEntity<?> addNewRole(@RequestBody RoleRegisterDto dto){
-        return new ResponseEntity<>(roleService.addNewRole(dto), HttpStatus.CREATED);
-    }
-
-    @PostMapping("/role/name")
-    public ResponseEntity<?> getRoleByName(@RequestBody RoleRegisterDto dto) {
-        return ResponseEntity.ok(roleService.getRoleByRoleName(dto));
-    }
 
     @GetMapping(path = "/role")
     public ResponseEntity<?> getAllRoles(){
@@ -91,21 +81,6 @@ public class AdminController {
                 salaryService.approveSalaryDetails(yearMonth, authentication.getName()),
                 HttpStatus.OK
         );
-    }
-
-    @PostMapping(path = "/salary-condition")
-    public ResponseEntity<?> addNewSalaryCondition(@RequestBody ConditionRegisterDto dto){
-        return new ResponseEntity<>(salaryConditionService.addNewSalaryCondition(dto), HttpStatus.CREATED);
-    }
-
-    @GetMapping(path = "/salary-condition/{conditionName}")
-    public ResponseEntity<?> getSalaryConditionBySalaryCondition(@PathVariable ConditionRegisterDto dto){
-        return new ResponseEntity<>(salaryConditionService.getSalaryConditionByConditionName(dto), HttpStatus.OK);
-    }
-
-    @GetMapping(path = "/salary-condition")
-    public ResponseEntity<?> getAllSalaryConditions(){
-        return new ResponseEntity<>(salaryConditionService.getAllSalaryConditions(), HttpStatus.OK);
     }
 
     @GetMapping(path = "/salary-meta-data")
@@ -197,16 +172,6 @@ public class AdminController {
         );
     }
 
-    @GetMapping("/loans/customer/{id}")
-    public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
-        return ResponseEntity.ok(loanService.getLoansByCustomerId(id));
-    }
-
-    @GetMapping("/loans/{fileNumber}")
-    public ResponseEntity<?> getLoanById(@PathVariable String fileNumber) {
-        return ResponseEntity.ok(loanService.getLoan(fileNumber));
-    }
-
     @PutMapping("/loans/{fileNumber}")
     public ResponseEntity<?> updateLoan(
             @PathVariable String fileNumber,
@@ -217,21 +182,6 @@ public class AdminController {
     }
 
     //admin interest management
-    @PutMapping("/loans/interest")
-    public ResponseEntity<?> updateInterest(@RequestBody InterestUpdateDTO dto, Authentication authentication){
-        return ResponseEntity.ok(loanService.updateInterest(dto, authentication.getName()));
-    }
-
-    @GetMapping("/loans/interest/{fileNumber}")
-    public ResponseEntity<?> getInterest(@PathVariable String fileNumber){
-        return ResponseEntity.ok(loanService.getInterest(fileNumber));
-    }
-
-    @DeleteMapping("/loans/interest/{fileNumber}")
-    public ResponseEntity<?> resetInterest(@PathVariable String fileNumber){
-        return ResponseEntity.ok(loanService.resetInterest(fileNumber));
-    }
-
     //petty cash
     @GetMapping("/pettyCash")
     public ResponseEntity<?>getAllPettyCash(){
@@ -269,11 +219,6 @@ public class AdminController {
         return ResponseEntity.ok(
                 pettyCashService.rejectPettyCash(id,authentication.getName())
         );
-    }
-
-    @GetMapping("/pettyCash/pending")
-    public ResponseEntity<?>getPendingPettyCash(){
-        return ResponseEntity.ok(pettyCashService.getPendingRequests());
     }
 
     @PutMapping("/undo/{id}/{adminUsername}")
@@ -585,8 +530,36 @@ public class AdminController {
         if (authentication == null || authentication.getName().isEmpty()) {
             throw new ResourceNotFoundException("Token is invalid");
         }
-        System.out.println(reportType + " - " + startDate + " - " + endDate);
-        return ResponseEntity.ok(financialStatementService.generateReports(reportType,startDate,endDate));
+        var data = financialStatementService.generateReports(reportType, startDate, endDate);
+        if ("p11".equalsIgnoreCase(reportType)) {
+            data.putAll(financialStatementService.generateReports("tb", startDate, endDate));
+        } else if ("p09".equalsIgnoreCase(reportType)) {
+            data.put("p09", java.util.Map.of());
+            data.putAll(financialStatementService.generateReports("tb", startDate, endDate));
+        } else if ("statement".equalsIgnoreCase(reportType)) {
+            data.putIfAbsent("p09", java.util.Map.of());
+        }
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/reports/export")
+    public ResponseEntity<byte[]> exportReport(
+            @RequestParam String reportType,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication
+    ) throws java.io.IOException {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        byte[] report = financialReportExportService.export(reportType, startDate, endDate);
+        String filename = "Audited Accounts " + endDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")) + ".xlsx";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + filename + "\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(report);
     }
 
 
@@ -594,46 +567,4 @@ public class AdminController {
 
 
 
-    //revenue tracking
-    @GetMapping("/revenue/summary")
-    public ResponseEntity<?> getRevenueSummary() {
-
-        var today = dailyCollectionService.getTodayCollection();
-        var week = dailyCollectionService.getWeeklyCollection();
-
-        return ResponseEntity.ok(
-                new RevenueSummary(today, week)
-        );
-    }
-
-    @GetMapping("/revenue/collections")
-    public ResponseEntity<?> getRevenueCollections() {
-
-        return ResponseEntity.ok(
-                dailyCollectionService.getAllCollections()
-        );
-    }
-
-    record RevenueSummary(
-            java.math.BigDecimal today,
-            java.math.BigDecimal week
-    ) {}
-
-
-
-
-
-
-
-
-    // Undo delete
-    @PutMapping("/customers/{nic}/undo")
-    public ResponseEntity<?> undoDeleteCustomer(@PathVariable String nic) {
-
-        customerService.undoDelete(nic);
-
-        return ResponseEntity.ok("Customer restored successfully");
-    }
 }
-
-

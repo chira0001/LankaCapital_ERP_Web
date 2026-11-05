@@ -25,22 +25,10 @@ public class ReceptionistController {
     private final SalaryService salaryService;
     private final EmployeeService employeeService;
 //    private final InstallmentService installmentService;
-    private final MonthlyExpenseService monthlyExpenseService;
     private final DailyCollectionService dailyCollectionService;
     private final PettyCashCategoryService pettyCashCategoryService;
     private final PettyCashService pettyCashService;
     private final FinancialStatementService financialStatementService;
-
-    @PostMapping(path = "/customers")
-    public ResponseEntity<?> registerCustomer(
-            @RequestBody CustomerRegisterDto customerRegisterDto,
-                                              Authentication authentication){
-        CustomerResponseDto registeredCustomer = customerService.registerCustomer(customerRegisterDto,authentication.getName());
-        if (registeredCustomer == null){
-            return new ResponseEntity<>("Customer not registered", HttpStatus.EXPECTATION_FAILED);
-        }
-        return new ResponseEntity<>(registeredCustomer, HttpStatus.CREATED);
-    }
 
     @PutMapping(path = "/customers")
     public ResponseEntity<?> updateCustomer(
@@ -62,15 +50,6 @@ public class ReceptionistController {
         }catch (NumberFormatException e){
             return new ResponseEntity<>("Enter valid NIC", HttpStatus.BAD_REQUEST);
         }
-    }
-
-    @GetMapping(path = "/customers")
-    public ResponseEntity<?> getAllCustomer(){
-        List<CustomerResponseDto> responseDtoList = customerService.getAllCustomer();
-        if (responseDtoList.isEmpty()){
-            return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
     }
 
     @GetMapping(path = "/customers/loans/{id}")
@@ -121,15 +100,6 @@ public class ReceptionistController {
         return new ResponseEntity<>(loanService.recepUpdateLoan(authentication.getName(),recepLoanUpdateDto,fileNumber), HttpStatus.OK);
     }
 
-    @GetMapping(path = "/loan/customers/{id}")
-    public ResponseEntity<?> getLoansByCustomerId(@PathVariable String id){
-        CustomerResponseDto dto = loanService.getLoansByCustomerId(id);
-        if (dto == null){
-            return new ResponseEntity<>("Nothing to display", HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(dto, HttpStatus.OK);
-    }
-
     @GetMapping(path = "/employees")
     public ResponseEntity<?> getAllEmployees(){
         return new ResponseEntity<>(employeeService.getAllEmployeesWithRole(), HttpStatus.OK);
@@ -161,14 +131,6 @@ public class ReceptionistController {
     @PutMapping(path = "/employees/profile")
     public ResponseEntity<?> updateProfileInfo(Authentication authentication, @RequestBody EmployeeResponseDto dto){
         return new ResponseEntity<>(employeeService.updateEmployeeInfo(authentication.getName(),dto), HttpStatus.OK);
-    }
-
-    @PostMapping(path = "/monthlyExpenses")
-    public ResponseEntity<?> addMonthlyExpenses(
-            @RequestBody MonthlyExpenseRequestDto monthlyExpenseRequestDto,
-            Authentication authentication
-    ){
-        return new ResponseEntity<>(monthlyExpenseService.addMonthlyExpenses(monthlyExpenseRequestDto, authentication.getName()), HttpStatus.CREATED);
     }
 
     @GetMapping("/loan/collection/{fileNumber}")
