@@ -147,6 +147,7 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody EmployeeResponseDto dto
     ) {
+        System.out.println("Employee : " + dto);
 
         return ResponseEntity.ok(
                 employeeService.updateEmployee(authentication.getName(),id, dto)

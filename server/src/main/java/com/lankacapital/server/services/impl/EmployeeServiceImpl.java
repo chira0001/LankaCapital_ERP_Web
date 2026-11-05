@@ -34,6 +34,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AdminMenuPermissionService adminMenuPermissionService;
 
     @Override
     public UserDetailsService userDetailsService() {
@@ -182,6 +185,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
+        boolean promotingToSuperAdmin = dto.getRole() != null
+                && "SUPERADMIN".equalsIgnoreCase(dto.getRole())
+                && (employee.getRole() == null
+                || !"SUPERADMIN".equalsIgnoreCase(employee.getRole().getRoleName()));
+        if (promotingToSuperAdmin && !adminMenuPermissionService.isSuperAdmin(username)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can promote employees to super admin"
+            );
+        }
 
         employee.setNic(dto.getNic());
         employee.setFirstName(dto.getFirstName());
@@ -194,9 +207,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setUpdatedEmployee(employeeRepository.findByEmail(username));
         if (dto.getRole() != null) {
             Role role = roleRepository.findByRoleName(dto.getRole());
-            if (role != null) {
-                employee.setRole(role);
+            if (role == null) {
+                throw new ResourceNotFoundException("Role not found: " + dto.getRole());
             }
+            employee.setRole(role);
         }
 
         return EmployeeMapper.mapToEmployeeResponseDto(

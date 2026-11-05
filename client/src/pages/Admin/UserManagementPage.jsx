@@ -7,6 +7,9 @@ import { ToastContainer } from "react-toastify";
 import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
 import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 
+const formatRoleLabel = (role) =>
+  role === "SUPERADMIN" ? "SUPER ADMIN" : role;
+
 const UserManagementPage = () => {
   const { isSuperAdmin } = useAdminMenuAccess();
   const [users, setUsers] = useState([]);
@@ -14,6 +17,7 @@ const UserManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -186,14 +190,34 @@ const UserManagementPage = () => {
   };
 
   const updateEmployee = async () => {
+    console.log("Role : ", editEmployee);
+    if (!editEmployee || updating) return;
+
     try {
-      await axiosAPI.put(`/admin/employees/${editEmployee.id}`, editEmployee);
+      setUpdating(true);
+      const response = await axiosAPI.put(
+        `/admin/employees/${editEmployee.id}`,
+        editEmployee
+      );
+      const updatedEmployee = response.data;
+
       if (isSuperAdmin && editEmployee.role === "ADMIN") {
         await axiosAPI.put(
           `/admin/employees/${editEmployee.id}/menu-permissions`,
           editEmployee.menuPermissions ?? []
         );
       }
+
+      if (updatedEmployee) {
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === updatedEmployee.id
+              ? { ...user, ...updatedEmployee }
+              : user
+          )
+        );
+      }
+
       toast.success("User updated");
       setOpenEditModal(false);
       setOpenModal(false);
@@ -201,8 +225,11 @@ const UserManagementPage = () => {
       // ✅ invalidate cache (list changed)
       clearUsersCache();
       fetchUsers({ force: true });
-    } catch {
-      toast.error("Update failed");
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Update failed");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -317,7 +344,9 @@ const UserManagementPage = () => {
                     if (r.roleName === "CUSTOMER") return null;
                     return (
                       <option key={r.id} value={r.id}>
-                        {r.roleName === "FO" ? "FIELD OFFICER" : r.roleName}
+                        {formatRoleLabel(
+                          r.roleName === "FO" ? "FIELD OFFICER" : r.roleName
+                        )}
                       </option>
                     );
                   })}
@@ -395,7 +424,7 @@ const UserManagementPage = () => {
 
                 <div className="shrink-0 text-right">
                   <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
-                    {user.role}
+                    {formatRoleLabel(user.role)}
                   </span>
                 </div>
               </div>
@@ -453,7 +482,7 @@ const UserManagementPage = () => {
                     </td>
                     <td className="px-3 py-3 sm:px-4 md:px-6 md:py-4">
                       <span className="rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-600">
-                        {user.role}
+                        {formatRoleLabel(user.role)}
                       </span>
                     </td>
                   </tr>
@@ -541,7 +570,11 @@ const UserManagementPage = () => {
               <div>
                 <p className="text-gray-500">Role</p>
                 <p className="font-medium text-gray-800">
-                  {selectedEmployee.role === "FO" ? "Field Officer" : selectedEmployee.role}
+                  {formatRoleLabel(
+                    selectedEmployee.role === "FO"
+                      ? "Field Officer"
+                      : selectedEmployee.role
+                  )}
                 </p>
               </div>
 
@@ -617,7 +650,7 @@ const UserManagementPage = () => {
               <div>
                 <label className="text-sm text-gray-500">Role</label>
                 <select
-                  value={editEmployee.role}
+                  value={editEmployee.role ?? ""}
                   onChange={(e) =>
                     setEditEmployee({
                       ...editEmployee,
@@ -626,13 +659,24 @@ const UserManagementPage = () => {
                   }
                   className="w-full mt-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
+                  <option value="" disabled hidden>
+                    Select Role
+                  </option>
                   {roles
-                    .filter((role) => role.roleName !== "CUSTOMER")
+                    .filter(
+                      (role) =>
+                        role.roleName !== "CUSTOMER" &&
+                        (isSuperAdmin ||
+                          role.roleName !== "SUPERADMIN" ||
+                          editEmployee.role === "SUPERADMIN")
+                    )
                     .map((role) => (
                       <option key={role.id} value={role.roleName}>
-                        {role.roleName === "FO"
-                          ? "Field Officer".toUpperCase()
-                          : role.roleName.toUpperCase()}
+                        {formatRoleLabel(
+                          role.roleName === "FO"
+                            ? "Field Officer".toUpperCase()
+                            : role.roleName.toUpperCase()
+                        )}
                       </option>
                     ))}
                 </select>
@@ -719,8 +763,9 @@ const UserManagementPage = () => {
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 onClick={updateEmployee}
+                disabled={updating}
               >
-                Save Changes
+                {updating ? "Updating..." : "Save Changes"}
               </Button>
             </div>
           </div>
