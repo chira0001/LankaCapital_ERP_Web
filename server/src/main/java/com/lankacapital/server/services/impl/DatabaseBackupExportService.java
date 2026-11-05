@@ -5,7 +5,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -103,6 +103,7 @@ public class DatabaseBackupExportService {
             int rowIndex = 1;
             while (result.next()) {
                 if (rowIndex >= MAX_ROWS_PER_SHEET) {
+                    autoSizeColumns(sheet, columns.getColumnCount());
                     sheetPart++;
                     sheet = createTableSheet(workbook, tableName, sheetPart, usedSheetNames, columnNames);
                     rowIndex = 1;
@@ -119,6 +120,7 @@ public class DatabaseBackupExportService {
                     row.createCell(column - 1).setCellValue(text);
                 }
             }
+            autoSizeColumns(sheet, columns.getColumnCount());
         }
     }
 
@@ -133,6 +135,7 @@ public class DatabaseBackupExportService {
         String baseName = sanitizeSheetName(tableName, suffix);
         String sheetName = uniqueSheetName(baseName, usedSheetNames);
         Sheet sheet = workbook.createSheet(sheetName);
+        ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
         sheet.createFreezePane(0, 1);
         Row header = sheet.createRow(0);
         CellStyle headerStyle = workbook.createCellStyle();
@@ -145,6 +148,12 @@ public class DatabaseBackupExportService {
             cell.setCellStyle(headerStyle);
         }
         return sheet;
+    }
+
+    private void autoSizeColumns(Sheet sheet, int columnCount) {
+        for (int column = 0; column < columnCount; column++) {
+            sheet.autoSizeColumn(column);
+        }
     }
 
     private String sanitizeSheetName(String tableName, String suffix) {

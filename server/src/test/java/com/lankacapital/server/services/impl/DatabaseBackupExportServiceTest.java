@@ -13,6 +13,7 @@ import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -69,6 +70,7 @@ class DatabaseBackupExportServiceTest {
             assertEquals("email", customers.getRow(0).getCell(1).getStringCellValue());
             assertEquals("10", customers.getRow(1).getCell(0).getStringCellValue());
             assertEquals("two@example.com", customers.getRow(2).getCell(1).getStringCellValue());
+            assertTrue(customers.getColumnWidth(1) > 12 * 256);
 
             var loans = workbook.getSheet("loans");
             assertNotNull(loans);
