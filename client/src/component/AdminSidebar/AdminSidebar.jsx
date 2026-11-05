@@ -15,25 +15,33 @@ import {
   Binoculars,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 
-const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
-  { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
-  { name: "Loan Summary", icon: Summary, path: "/ad/loan-summary" },
-  { name: "Administrative Expenses", icon: WalletMinimal, path: "/ad/admin-exp" },
-  // { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
-  { name: "Financials", icon: Files, path: "/ad/financials" },
-  { name: "Customer Management", icon: Users, path: "/ad/customers" },
-  { name: "User Management", icon: CircleUser, path: "/ad/users" },
-  { name: "Salary Management", icon: CircleDollarSign, path: "/ad/salary" },
-  { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
-  { name: "System Configuration", icon: Settings, path: "/ad/settings" },
-];
+const menuIcons = {
+  dashboard: LayoutDashboard,
+  "loan-applications": FileText,
+  "loan-summary": Summary,
+  "admin-exp": WalletMinimal,
+  financials: Files,
+  customers: Users,
+  users: CircleUser,
+  salary: CircleDollarSign,
+  officers: Binoculars,
+  settings: Settings,
+};
+const menuItems = ADMIN_MENU_ITEMS.map((item) => ({ ...item, icon: menuIcons[item.id] }));
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
+  const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
+  const visibleMenuItems = isLoading
+    ? []
+    : isSuperAdmin
+      ? menuItems
+      : menuItems.filter((item) => permissions.includes(item.id));
 
   const logoutFunc = () => {
     localStorage.clear();
@@ -76,7 +84,7 @@ const Sidebar = () => {
 
         {/* Horizontal scroll menu */}
         <div className="flex gap-2 overflow-x-auto overflow-y-hidden px-2 pb-3">
-          {menuItems.map((item, index) => {
+          {visibleMenuItems.map((item, index) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -125,7 +133,7 @@ const Sidebar = () => {
           </p>
 
           <ul className="space-y-1">
-            {menuItems.map((item, index) => {
+            {visibleMenuItems.map((item, index) => {
               const Icon = item.icon;
 
               return (

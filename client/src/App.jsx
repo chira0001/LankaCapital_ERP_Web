@@ -26,6 +26,8 @@ import UserManagementPage from "./pages/Admin/UserManagementPage";
 // import AuditLogsPage from "./pages/Admin/AuditLogsPage";
 import SystemConfigurationPage from "./pages/Admin/SystemConfigurationPage";
 import AdminProfile from "./pages/Admin/AdminProfile";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
+import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
 
 import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
 import ReceptionistHome from "./pages/Receptionist/ReceptionistHome";
@@ -77,6 +79,18 @@ const ProtectedRoute = ({ children, role }) => {
   return children;
 };
 
+const AdminMenuRoute = ({ permission, children }) => {
+  const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
+
+  if (isLoading) {
+    return <div className="p-6 text-sm text-gray-500">Loading access...</div>;
+  }
+  if (isSuperAdmin || permissions.includes(permission)) return children;
+
+  const firstAllowedItem = ADMIN_MENU_ITEMS.find((item) => permissions.includes(item.id));
+  return <Navigate to={firstAllowedItem?.path ?? "/ad/profile"} replace />;
+};
+
 const PublicRoute = ({ children }) => {
   const user = getUser();
 
@@ -113,23 +127,23 @@ const App = () => {
             <AdminLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="loan-applications" element={<LoanApplications />} />
-          <Route path="loan-summary" element={<LoanSummary />} />
+          <Route index element={<AdminMenuRoute permission="dashboard"><Dashboard /></AdminMenuRoute>} />
+          <Route path="dashboard" element={<AdminMenuRoute permission="dashboard"><Dashboard /></AdminMenuRoute>} />
+          <Route path="loan-applications" element={<AdminMenuRoute permission="loan-applications"><LoanApplications /></AdminMenuRoute>} />
+          <Route path="loan-summary" element={<AdminMenuRoute permission="loan-summary"><LoanSummary /></AdminMenuRoute>} />
           {/* <Route path="portfolio" element={<PortfolioOverview />} /> */}
           {/* <Route path="performance" element={<LoanPerformance />} /> */}
           {/* <Route path="revenue" element={<RevenueTracking />} /> */}
-          <Route path="salary" element={<Salary />} />
-          <Route path="customers" element={<CustomerManagementPage />} />
-          <Route path="officers" element={<FieldOfficerPerformancePage />} />
-          <Route path="admin-exp" element={<PettyCashPage />} />
+          <Route path="salary" element={<AdminMenuRoute permission="salary"><Salary /></AdminMenuRoute>} />
+          <Route path="customers" element={<AdminMenuRoute permission="customers"><CustomerManagementPage /></AdminMenuRoute>} />
+          <Route path="officers" element={<AdminMenuRoute permission="officers"><FieldOfficerPerformancePage /></AdminMenuRoute>} />
+          <Route path="admin-exp" element={<AdminMenuRoute permission="admin-exp"><PettyCashPage /></AdminMenuRoute>} />
           {/* <Route path="petty-cash" element={<PettyCashPage />} /> */}
-          <Route path="financials" element={<FinancialReportsPage />} />
+          <Route path="financials" element={<AdminMenuRoute permission="financials"><FinancialReportsPage /></AdminMenuRoute>} />
           {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
-          <Route path="users" element={<UserManagementPage />} />
+          <Route path="users" element={<AdminMenuRoute permission="users"><UserManagementPage /></AdminMenuRoute>} />
           {/* <Route path="audit" element={<AuditLogsPage />} /> */}
-          <Route path="settings" element={<SystemConfigurationPage />} />
+          <Route path="settings" element={<AdminMenuRoute permission="settings"><SystemConfigurationPage /></AdminMenuRoute>} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
 

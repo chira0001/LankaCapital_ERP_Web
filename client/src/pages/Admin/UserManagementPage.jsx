@@ -4,8 +4,11 @@ import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
+import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 
 const UserManagementPage = () => {
+  const { isSuperAdmin } = useAdminMenuAccess();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -185,6 +188,12 @@ const UserManagementPage = () => {
   const updateEmployee = async () => {
     try {
       await axiosAPI.put(`/admin/employees/${editEmployee.id}`, editEmployee);
+      if (isSuperAdmin && editEmployee.role === "ADMIN") {
+        await axiosAPI.put(
+          `/admin/employees/${editEmployee.id}/menu-permissions`,
+          editEmployee.menuPermissions ?? []
+        );
+      }
       toast.success("User updated");
       setOpenEditModal(false);
       setOpenModal(false);
@@ -565,7 +574,12 @@ const UserManagementPage = () => {
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 onClick={() => {
-                  setEditEmployee(selectedEmployee);
+                  setEditEmployee({
+                    ...selectedEmployee,
+                    menuPermissions: selectedEmployee.role === "ADMIN"
+                      ? selectedEmployee.menuPermissions ?? []
+                      : [],
+                  });
                   setOpenEditModal(true);
                 }}
               >
@@ -623,6 +637,44 @@ const UserManagementPage = () => {
                     ))}
                 </select>
               </div>
+
+              {isSuperAdmin && editEmployee.role === "ADMIN" && (
+                <fieldset className="rounded-lg border border-gray-200 p-4">
+                  <legend className="px-1 text-sm font-medium text-gray-700">
+                    Main Menu Access
+                  </legend>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Choose the sections this admin can access.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {ADMIN_MENU_ITEMS.map((item) => {
+                      const selectedPermissions = editEmployee.menuPermissions ?? [];
+                      return (
+                        <label
+                          key={item.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPermissions.includes(item.id)}
+                            onChange={(event) => {
+                              const nextPermissions = event.target.checked
+                                ? [...selectedPermissions, item.id]
+                                : selectedPermissions.filter((permission) => permission !== item.id);
+                              setEditEmployee({
+                                ...editEmployee,
+                                menuPermissions: nextPermissions,
+                              });
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          {item.name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              )}
 
               <div>
                 <label className="text-sm text-gray-500">Basic Salary</label>
