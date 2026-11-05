@@ -3,7 +3,6 @@ import CommonNavbar from '../../component/Navbar/CommonNavbar'
 import CompanyLogo from '../../component/ComapnyLogo/CompanyLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../../component/Footer/Footer'
-import axiosAPI from '../../api/axiosAPI'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { loginFunc } from "../../api/authService";
@@ -106,7 +105,14 @@ const Login = () => {
                                 </p>
                             </div>
 
-                            <div className="space-y-6">
+                            <form
+                                noValidate
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    login();
+                                }}
+                                className="space-y-6"
+                            >
 
                                 {/* Email */}
                                 <div className="flex flex-col gap-2">
@@ -150,8 +156,7 @@ const Login = () => {
 
                                 {/* Login Button */}
                                 <button
-                                    onClick={login}
-                                    onKeyDown={(e) => e.key === "Enter" && login()}
+                                    type="submit"
                                     disabled={isLogging}
                                     className="w-full flex items-center justify-center gap-2 
                                         bg-black text-white py-3 rounded-xl 
@@ -178,7 +183,7 @@ const Login = () => {
                                     </Link>
                                 </p>
 
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>

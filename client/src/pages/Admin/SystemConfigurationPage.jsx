@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
+import { Database, Download, LoaderCircle } from "lucide-react";
 
 const roles = ["ADMIN", "RECEPTIONIST", "FO"];
 
@@ -10,6 +11,7 @@ const SystemConfigurationPage = () => {
   const [salaryCondition, setSalaryCondition] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
 
   useEffect(() => {
     fetchSalaryCondition();
@@ -39,6 +41,29 @@ const SystemConfigurationPage = () => {
       toast.error("Failed to update configuration");
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleDatabaseExport = async () => {
+    try {
+      setBackupLoading(true);
+      const response = await axiosAPI.get("admin/database/export", {
+        responseType: "blob",
+      });
+      const downloadUrl = URL.createObjectURL(response.data);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `LankaCapital-Database-Backup-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      toast.success("Database backup downloaded");
+    } catch (error) {
+      console.error("Database backup export failed:", error);
+      toast.error("Database backup export failed");
+    } finally {
+      setBackupLoading(false);
     }
   };
 
@@ -322,6 +347,40 @@ const SystemConfigurationPage = () => {
               </div>
             )}
           </div>
+
+          <section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex items-start gap-3">
+                <span className="rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-700">
+                  <Database aria-hidden="true" size={20} />
+                </span>
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900 sm:text-base">
+                    Database Backup
+                  </h2>
+                  <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                    Export every database table to a separate worksheet in an Excel file.
+                  </p>
+                  <p className="mt-2 text-xs text-amber-700">
+                    The backup contains all database records. Store it securely.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleDatabaseExport}
+                disabled={backupLoading}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {backupLoading ? (
+                  <LoaderCircle aria-hidden="true" className="animate-spin" size={16} />
+                ) : (
+                  <Download aria-hidden="true" size={16} />
+                )}
+                {backupLoading ? "Exporting..." : "Export Database"}
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     </>
