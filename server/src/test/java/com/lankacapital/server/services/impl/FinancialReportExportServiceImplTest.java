@@ -76,6 +76,9 @@ class FinancialReportExportServiceImplTest {
             int incomeRow = findRow(trialBalance, "Income");
             assertEquals(receivablesRow + 2, incomeRow);
             assertEquals("'Working'!B2", trialBalance.getRow(incomeRow).getCell(2).getCellFormula());
+            int commissionIncomeRow = findRow(workbook.getSheet("P09"), "Commission Income", 1);
+            assertEquals("'TB'!C" + (incomeRow + 1),
+                    workbook.getSheet("P09").getRow(commissionIncomeRow).getCell(3).getCellFormula());
             assertTrue(isBold(workbook, trialBalance.getRow(receivablesRow).getCell(0)));
             assertTrue(!isBold(workbook, trialBalance.getRow(incomeRow).getCell(0)));
             int adminExpensesRow = findRow(trialBalance, "Administrative Expenses");
@@ -224,10 +227,15 @@ class FinancialReportExportServiceImplTest {
     }
 
     private static int findRow(org.apache.poi.ss.usermodel.Sheet sheet, String value) {
+        return findRow(sheet, value, 0);
+    }
+
+    private static int findRow(org.apache.poi.ss.usermodel.Sheet sheet, String value, int column) {
         for (int row = 0; row <= sheet.getLastRowNum(); row++) {
             var current = sheet.getRow(row);
-            if (current != null && current.getCell(0) != null
-                    && value.equals(current.getCell(0).getStringCellValue())) return row;
+            if (current != null && current.getCell(column) != null
+                    && current.getCell(column).getCellType() == CellType.STRING
+                    && value.equals(current.getCell(column).getStringCellValue())) return row;
         }
         throw new AssertionError("Could not find row: " + value);
     }

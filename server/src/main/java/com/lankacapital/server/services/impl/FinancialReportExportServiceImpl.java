@@ -451,7 +451,10 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
     private void fillP09(Workbook workbook) {
         Sheet sheet = requiredSheet(workbook, "P09");
         int incomeRow = findRow(sheet, "Commission Income", 1);
-        if (incomeRow >= 0) setFormula(sheet, incomeRow, 3, "'TB'!C" + (findRow(requiredSheet(workbook, "TB"), "Interest Income", 0) + 1));
+        int tbIncomeRow = findRow(requiredSheet(workbook, "TB"), "Income", 0);
+        if (incomeRow >= 0 && tbIncomeRow >= 0) {
+            setFormula(sheet, incomeRow, 3, "'TB'!C" + (tbIncomeRow + 1));
+        }
         int adminHeader = findRow(sheet, "Administration Expenses", 1);
         int financeHeader = findRow(sheet, "Finance Cost", 1);
         if (adminHeader < 0 || financeHeader < 0) throw new IllegalStateException("P09 sheet sections are missing");
