@@ -42,7 +42,8 @@ public class CollectionSchedulerService {
         this.loanRepository = loanRepository;
     }
 
-    @Scheduled(cron = "0 30 23 * * *", zone = "Asia/Colombo")
+//    @Scheduled(cron = "0 30 23 * * *", zone = "Asia/Colombo")
+    @Scheduled(cron = "0 */10 * * * *", zone = "Asia/Colombo")
     @Transactional
     public void runEndOfDayCollectionJob() {
         LocalDate today = LocalDate.now();

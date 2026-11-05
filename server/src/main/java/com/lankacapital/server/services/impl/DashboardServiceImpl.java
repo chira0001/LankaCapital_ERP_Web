@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 public class DashboardServiceImpl implements DashboardService {
 
 //    private final FinancialStatementRepository financialStatementRepository;
-    private final MonthlyIncomeRepository monthlyIncomeRepository;
-    private final MonthlyExpenseRepository monthlyExpenseRepository;
+//    private final MonthlyIncomeRepository monthlyIncomeRepository;
+//    private final MonthlyExpenseRepository monthlyExpenseRepository;
     private final LoanRepository loanRepository;
 
     @Override
@@ -23,15 +23,15 @@ public class DashboardServiceImpl implements DashboardService {
         FinancialDashboardDto dto = new FinancialDashboardDto();
 
         // 1. Income
-        BigDecimal totalIncome = monthlyIncomeRepository.sumAllIncome();
-        dto.setTotalIncome(totalIncome);
+//        BigDecimal totalIncome = monthlyIncomeRepository.sumAllIncome();
+//        dto.setTotalIncome(totalIncome);
 
         // 2. Expense
-        BigDecimal totalExpense = monthlyExpenseRepository.sumAllExpense();
-        dto.setTotalExpense(totalExpense);
+//        BigDecimal totalExpense = monthlyExpenseRepository.sumAllExpense();
+//        dto.setTotalExpense(totalExpense);
 
         // 3. Net Profit
-        dto.setNetProfit(totalIncome.subtract(totalExpense));
+//        dto.setNetProfit(totalIncome.subtract(totalExpense));
 
         // 4. Assets (example: total loan portfolio)
         BigDecimal totalAssets = loanRepository.sumTotalLoanAmount();

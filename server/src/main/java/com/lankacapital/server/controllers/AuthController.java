@@ -64,19 +64,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
-    @PostMapping(path = "/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-        boolean secureCookie = isSecureRequest(request);
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(secureCookie)
-                .path("/")
-                .sameSite(secureCookie ? "None" : "Lax")
-                .maxAge(0)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-        return ResponseEntity.ok().build();
-    }
     private boolean isSecureRequest(HttpServletRequest request) {
         return request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
