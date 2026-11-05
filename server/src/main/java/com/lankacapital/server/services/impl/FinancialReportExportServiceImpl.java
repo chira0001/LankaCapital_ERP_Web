@@ -65,7 +65,7 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(templateBytes));
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             removeDefinedNamesForRowShifts(workbook);
-            fillWorkbook(workbook, data, endDate);
+            fillWorkbook(workbook, data, startDate, endDate);
             workbook.setForceFormulaRecalculation(true);
             workbook.write(output);
             return restoreDefinedNames(templateBytes, output.toByteArray());
@@ -139,7 +139,7 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         return workbookXml.substring(start, end + "</definedNames>".length());
     }
 
-    private void fillWorkbook(Workbook workbook, Map<String, Object> data, LocalDate endDate) {
+    private void fillWorkbook(Workbook workbook, Map<String, Object> data, LocalDate startDate, LocalDate endDate) {
         if (data.get("ppe") instanceof List<?> ppe) fillPpe(workbook, ppe);
         if (data.get("working") != null) fillWorking(workbook, map(data.get("working")));
         if (data.get("tb") != null) {
@@ -149,7 +149,9 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         if (data.get("p11") != null) fillP11(workbook, map(data.get("p11")), endDate);
         if (data.get("ce") != null) fillEquity(workbook, map(data.get("ce")), endDate);
         if (data.get("cf") != null) fillCashFlow(workbook, map(data.get("cf")));
-        if (data.get("incomeTax") != null) fillIncomeTax(workbook, map(data.get("incomeTax")), endDate);
+        if (data.get("incomeTax") != null) {
+            fillIncomeTax(workbook, map(data.get("incomeTax")), startDate, endDate);
+        }
         fillPeriodHeaders(workbook, endDate);
         if (data.get("tb") != null) fillP09(workbook);
         if (data.get("cf") != null) updateCashFlowReferences(workbook);
@@ -580,9 +582,17 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
         if (depreciation >= 0) setFormula(cf, 8, 6, "'P09'!D" + (depreciation + 1));
     }
 
-    private void fillIncomeTax(Workbook workbook, Map<String, Object> tax, LocalDate endDate) {
+    private void fillIncomeTax(
+            Workbook workbook,
+            Map<String, Object> tax,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
         Sheet sheet = requiredSheet(workbook, "Income Tax");
         Sheet p10 = requiredSheet(workbook, "P10");
+        DateTimeFormatter balanceDateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        setText(sheet, 30, 3, "Balance as at " + startDate.format(balanceDateFormat));
+        setText(sheet, 30, 5, "Balance as at " + endDate.format(balanceDateFormat));
         List<Map<String, Object>> assets = entries(tax.get("assetYear"));
         int p10First = findRow(p10, "Cost", 1) + 1;
         int first = 34;
@@ -634,6 +644,7 @@ public class FinancialReportExportServiceImpl implements FinancialReportExportSe
 
     private void fillPeriodHeaders(Workbook workbook, LocalDate endDate) {
         String formatted = equityDate(endDate).toUpperCase();
+        setText(requiredSheet(workbook, "TB"), 2, 0, "As at " + equityDate(endDate));
         Sheet bs = requiredSheet(workbook, "BS");
         setText(bs, 2, 0, "AS AT " + formatted);
         setNumber(bs, 2, 4, endDate.getYear());

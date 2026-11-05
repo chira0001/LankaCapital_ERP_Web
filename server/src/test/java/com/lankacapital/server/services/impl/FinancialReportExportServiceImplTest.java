@@ -70,6 +70,7 @@ class FinancialReportExportServiceImplTest {
             assertEquals("B" + (totalRow + 1) + "-C" + (totalRow + 1),
                     workbook.getSheet("TB").getRow(totalRow + 1).getCell(1).getCellFormula());
             var trialBalance = workbook.getSheet("TB");
+            assertEquals("As at 31st March 2027", trialBalance.getRow(2).getCell(0).getStringCellValue());
             int receivablesRow = findRow(trialBalance, "Receivables");
             assertEquals("Receivables balance",
                     trialBalance.getRow(receivablesRow + 1).getCell(0).getStringCellValue());
@@ -278,6 +279,8 @@ class FinancialReportExportServiceImplTest {
                     p10.getRow(depreciationFirst + 1).getCell(9).getCellFormula());
                         var incomeTax = workbook.getSheet("Income Tax");
                         int taxFirst = 34;
+                            assertEquals("Balance as at 01/04/2026", incomeTax.getRow(30).getCell(3).getStringCellValue());
+                            assertEquals("Balance as at 31/03/2027", incomeTax.getRow(30).getCell(5).getStringCellValue());
                         assertEquals("'P10'!B6", incomeTax.getRow(taxFirst).getCell(0).getCellFormula());
                         assertEquals(5, incomeTax.getRow(taxFirst).getCell(2).getNumericCellValue());
                         assertEquals("'P10'!B7", incomeTax.getRow(taxFirst + 1).getCell(0).getCellFormula());
