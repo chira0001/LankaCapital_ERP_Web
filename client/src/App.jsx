@@ -1,44 +1,35 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
-
-import CommonNavbar from './component/Navbar/CommonNavbar'
-import Footer from './component/Footer/Footer'
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";//add sonner toaster for notifications
 import { jwtDecode } from 'jwt-decode'
 
-import Home from './pages/User/Home'
-import About from './pages/User/About'
-import Contact from "./pages/User/Contact";
-import Login from "./pages/User/Login";
-import Signup from "./pages/User/Signup";
-
 import AdminLayout from "./component/AdminLayout";
-import LoanApplications from "./pages/Admin/LoanApplication";
-import Dashboard from "./pages/Admin/Dashboard";
-// import PortfolioOverview from "./pages/Admin/PortfolioOverviewPage";
-// import LoanPerformance from "./pages/Admin/LoanPerformancePage";
-// import RevenueTracking from "./pages/Admin/RevenueTrackingPage";
-import CustomerManagementPage from "./pages/Admin/CustomerManagementPage";
-import FieldOfficerPerformancePage from "./pages/Admin/FeildOfficerPerformance";
-import PettyCashPage from "./pages/Admin/PettyCashPage";
-import FinancialReportsPage from "./pages/Admin/FinancialReportsPage";
-// import PerformanceTargetsPages from "./pages/Admin/PerformanceTargetsPages";
-import UserManagementPage from "./pages/Admin/UserManagementPage";
-// import AuditLogsPage from "./pages/Admin/AuditLogsPage";
-import SystemConfigurationPage from "./pages/Admin/SystemConfigurationPage";
-import AdminProfile from "./pages/Admin/AdminProfile";
 import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
 
-import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
-import ReceptionistHome from "./pages/Receptionist/ReceptionistHome";
-import ReceptionistLoan from "./pages/Receptionist/ReceptionistLoan";
-import ReceptionistSalary from "./pages/Receptionist/ReceptionistSalary";
-import ReceptionistView from "./pages/Receptionist/ReceptionistView";
-import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
-import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
-import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
-import LoanSummary from "./component/LoanSummary/LoanSummary";
-import Salary from "./pages/Admin/Salary";
+const Home = lazy(() => import("./pages/User/Home"));
+const About = lazy(() => import("./pages/User/About"));
+const Contact = lazy(() => import("./pages/User/Contact"));
+const Login = lazy(() => import("./pages/User/Login"));
+const Signup = lazy(() => import("./pages/User/Signup"));
+const LoanApplications = lazy(() => import("./pages/Admin/LoanApplication"));
+const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const CustomerManagementPage = lazy(() => import("./pages/Admin/CustomerManagementPage"));
+const FieldOfficerPerformancePage = lazy(() => import("./pages/Admin/FeildOfficerPerformance"));
+const PettyCashPage = lazy(() => import("./pages/Admin/PettyCashPage"));
+const FinancialReportsPage = lazy(() => import("./pages/Admin/FinancialReportsPage"));
+const UserManagementPage = lazy(() => import("./pages/Admin/UserManagementPage"));
+const SystemConfigurationPage = lazy(() => import("./pages/Admin/SystemConfigurationPage"));
+const AdminProfile = lazy(() => import("./pages/Admin/AdminProfile"));
+const Salary = lazy(() => import("./pages/Admin/Salary"));
+const ReceptionistDashboard = lazy(() => import("./pages/Receptionist/ReceptionistDashboard"));
+const ReceptionistHome = lazy(() => import("./pages/Receptionist/ReceptionistHome"));
+const ReceptionistLoan = lazy(() => import("./pages/Receptionist/ReceptionistLoan"));
+const ReceptionistSalary = lazy(() => import("./pages/Receptionist/ReceptionistSalary"));
+const ReceptionistView = lazy(() => import("./pages/Receptionist/ReceptionistView"));
+const ReceptionistSetting = lazy(() => import("./pages/Receptionist/ReceptionistSetting"));
+const ReceptionistPettyCash = lazy(() => import("./pages/Receptionist/ReceptionistPettyCash"));
+const LoanSummary = lazy(() => import("./component/LoanSummary/LoanSummary"));
 
 const getUser = () => {
   const token = localStorage.getItem("token");
@@ -78,6 +69,13 @@ const ProtectedRoute = ({ children, role }) => {
   // Correct role
   return children;
 };
+
+const RouteLoading = () => (
+  <div className="flex min-h-[50vh] items-center justify-center" role="status">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-black motion-reduce:animate-none" />
+    <span className="sr-only">Loading page...</span>
+  </div>
+);
 
 const AdminMenuRoute = ({ permission, children }) => {
   const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
@@ -149,6 +147,7 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
+      <Suspense fallback={<RouteLoading />}>
       <Routes>
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
         <Route path="/about" element={<PublicRoute><About /></PublicRoute>}></Route>
@@ -201,6 +200,7 @@ const App = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
+      </Suspense>
       <Toaster position="top-right" />
     </BrowserRouter>
   )

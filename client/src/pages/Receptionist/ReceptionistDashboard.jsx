@@ -118,6 +118,7 @@ const ReceptionistDashboard = () => {
 
     const logoutFunc = () => {
         localStorage.clear();
+        sessionStorage.clear();
         navigate("/");
     };
 
