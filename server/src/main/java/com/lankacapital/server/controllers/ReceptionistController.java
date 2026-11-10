@@ -29,6 +29,7 @@ public class ReceptionistController {
     private final PettyCashCategoryService pettyCashCategoryService;
     private final PettyCashService pettyCashService;
     private final FinancialStatementService financialStatementService;
+    private final ReceptionistDashboardService receptionistDashboardService;
 
     @PutMapping(path = "/customers")
     public ResponseEntity<?> updateCustomer(
@@ -70,6 +71,11 @@ public class ReceptionistController {
         return ResponseEntity.ok(
                 loanService.getAllLoans(authentication.getName(), page, size, search)
         );
+    }
+
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<?> getDashboardSummary() {
+        return ResponseEntity.ok(receptionistDashboardService.getDashboardStats());
     }
 
     @GetMapping("/loans/lastFileNumber/{loanType}")

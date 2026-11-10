@@ -127,7 +127,10 @@ public class LoanServiceImpl implements LoanService {
         if(loanCreateDto.getFileNumber() != null){
             Optional<Loan> loan = loanRepository.findByFileNumber(loanCreateDto.getFileNumber());
             if(loan.isPresent()){
-                loan.get().setStatus(LoanStatus.COMPLETED);
+                if (loan.get().getStatus() != LoanStatus.COMPLETED) {
+                    loan.get().setStatus(LoanStatus.COMPLETED);
+                    loan.get().setCompletedAt(LocalDateTime.now());
+                }
                 loan.get().setUpdateStatus(loan.get().getUpdateStatus() + 1);
                 loanRepository.save(loan.get());
                 return loan.get();
@@ -179,7 +182,8 @@ public class LoanServiceImpl implements LoanService {
 
         Page<Loan> loanPage = loanRepository.findLoansForRoleWithSearch(isReceptionist, search, pageable);
 
-        Page<LoanResponseDto> dtoPage = loanPage.map(LoanMapper::mapToLoanResponseDto);
+        Page<LoanResponseDto> dtoPage =
+                loanPage.map(LoanMapper::mapToLoanResponseDtoWithoutCustomerLoans);
 
         return PageResponse.from(dtoPage, page);
     }
@@ -689,5 +693,3 @@ public class LoanServiceImpl implements LoanService {
         return PageResponse.from(dtoPage, page);
     }
 }
-
-

@@ -16,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +25,7 @@ public class SecurityConfiguration {
 
     @Lazy
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
+    private final AdminMenuPermissionFilter adminMenuPermissionFilter;
     private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
 
@@ -44,8 +46,16 @@ public class SecurityConfiguration {
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(
                         jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class
-                );
+                ).addFilterAfter(adminMenuPermissionFilter, JWTAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<AdminMenuPermissionFilter> adminMenuPermissionFilterRegistration() {
+        FilterRegistrationBean<AdminMenuPermissionFilter> registration =
+                new FilterRegistrationBean<>(adminMenuPermissionFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

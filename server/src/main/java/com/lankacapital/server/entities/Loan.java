@@ -87,4 +87,7 @@ public class Loan {
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 }

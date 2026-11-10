@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,29 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
 
     List<DailyCollection> findByLoanFileNumberOrderByInstallmentNumberDesc(String fileNumber);
     List<DailyCollection> findByPaidAtBetween(
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+    @Query("""
+        select coalesce(sum(dc.paidAmount), 0)
+        from DailyCollection dc
+        where dc.paidAt between :start and :end
+    """)
+    BigDecimal sumPaidAmountByPaidAtBetween(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    @EntityGraph(attributePaths = {
+            "employee.role",
+            "loan",
+            "loan.customer.role",
+            "loan.createdEmployee.role",
+            "loan.updatedEmployee.role",
+            "loan.approvedEmployee.role"
+    })
+    List<DailyCollection> findDetailedByPaidAtBetween(
             LocalDateTime start,
             LocalDateTime end
     );

@@ -4,6 +4,7 @@ import com.lankacapital.server.entities.Role;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class EmployeeResponseDto {
@@ -17,4 +18,5 @@ public class EmployeeResponseDto {
     private String phoneNumber;
     private BigDecimal basicSalary;
     private String accountStatus;
+    private List<String> menuPermissions;
 }

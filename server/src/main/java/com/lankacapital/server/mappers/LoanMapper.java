@@ -78,6 +78,14 @@ public class LoanMapper {
     }
 
     public static LoanResponseDto mapToLoanResponseDto(Loan loan) {
+        return mapToLoanResponseDto(loan, true);
+    }
+
+    public static LoanResponseDto mapToLoanResponseDtoWithoutCustomerLoans(Loan loan) {
+        return mapToLoanResponseDto(loan, false);
+    }
+
+    private static LoanResponseDto mapToLoanResponseDto(Loan loan, boolean includeCustomerLoans) {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
@@ -122,7 +130,9 @@ public class LoanMapper {
         responseDto.setDecisionNote(loan.getDecisionNote());
         responseDto.setCustomer(
                 loan.getCustomer() != null
-                        ? CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
+                        ? includeCustomerLoans
+                                ? CustomerMapper.mapToCustomerResponseDto(loan.getCustomer())
+                                : CustomerMapper.mapToCustomerResponseDtoWithoutLoans(loan.getCustomer())
                         : null
         );
         BigDecimal amount = loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO;
@@ -409,4 +419,3 @@ public class LoanMapper {
 //        return dto;
 //    }
 }
-

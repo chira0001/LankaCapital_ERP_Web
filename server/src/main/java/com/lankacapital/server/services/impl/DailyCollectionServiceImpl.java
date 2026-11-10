@@ -55,14 +55,9 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         LocalDate today = LocalDate.now();
 
         LocalDateTime start = today.atStartOfDay();
-        LocalDateTime end = today.atTime(23,59,59);
+        LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
 
-        List<DailyCollection> collections =
-                dailyCollectionRepository.findByPaidAtBetween(start,end);
-
-        return collections.stream()
-                .map(DailyCollection::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return dailyCollectionRepository.sumPaidAmountByPaidAtBetween(start, end);
     }
 
     @Override
@@ -71,14 +66,9 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         LocalDate today = LocalDate.now();
 
         LocalDateTime start = today.minusDays(6).atStartOfDay();
-        LocalDateTime end = today.atTime(23,59,59);
+        LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
 
-        List<DailyCollection> collections =
-                dailyCollectionRepository.findByPaidAtBetween(start,end);
-
-        return collections.stream()
-                .map(DailyCollection::getPaidAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return dailyCollectionRepository.sumPaidAmountByPaidAtBetween(start, end);
     }
 
     @Override
@@ -132,9 +122,10 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         LocalDate end = LocalDate.parse(dailyCollectionRequestDto.getEndDate());
 
         LocalDateTime startDate = start.atStartOfDay();
-        LocalDateTime endDate = end.plusDays(1).atStartOfDay().minusSeconds(1);
+        LocalDateTime endDate = end.plusDays(1).atStartOfDay().minusNanos(1);
 
-        List<DailyCollection> collections = dailyCollectionRepository.findByPaidAtBetween(startDate, endDate);
+        List<DailyCollection> collections =
+                dailyCollectionRepository.findDetailedByPaidAtBetween(startDate, endDate);
 
         return collections.stream().map(DailyCollectionMapper::mapToAdminDailyCollectionResponseDto).toList();
     }
@@ -257,6 +248,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         if (isFullyPaid) {
             loan.setUpdateStatus(loan.getUpdateStatus() + 1);
             loan.setStatus(LoanStatus.COMPLETED);
+            loan.setCompletedAt(LocalDateTime.now());
             loanRepository.save(loan);
         }
 

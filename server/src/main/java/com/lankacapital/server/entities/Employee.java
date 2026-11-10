@@ -66,6 +66,9 @@ public class Employee implements UserDetails {
     @Column(nullable = false)
     private String accountStatus = "Active";
 
+    @Column(name = "admin_menu_permissions", length = 512)
+    private String adminMenuPermissions;
+
     @Column(nullable = false)
     private Boolean deleted = false;
 

@@ -1,42 +1,35 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
-
-import CommonNavbar from './component/Navbar/CommonNavbar'
-import Footer from './component/Footer/Footer'
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";//add sonner toaster for notifications
 import { jwtDecode } from 'jwt-decode'
 
-import Home from './pages/User/Home'
-import About from './pages/User/About'
-import Contact from "./pages/User/Contact";
-import Login from "./pages/User/Login";
-import Signup from "./pages/User/Signup";
-
 import AdminLayout from "./component/AdminLayout";
-import LoanApplications from "./pages/Admin/LoanApplication";
-import Dashboard from "./pages/Admin/Dashboard";
-// import PortfolioOverview from "./pages/Admin/PortfolioOverviewPage";
-// import LoanPerformance from "./pages/Admin/LoanPerformancePage";
-// import RevenueTracking from "./pages/Admin/RevenueTrackingPage";
-import CustomerManagementPage from "./pages/Admin/CustomerManagementPage";
-import FieldOfficerPerformancePage from "./pages/Admin/FeildOfficerPerformance";
-import PettyCashPage from "./pages/Admin/PettyCashPage";
-import FinancialReportsPage from "./pages/Admin/FinancialReportsPage";
-// import PerformanceTargetsPages from "./pages/Admin/PerformanceTargetsPages";
-import UserManagementPage from "./pages/Admin/UserManagementPage";
-// import AuditLogsPage from "./pages/Admin/AuditLogsPage";
-import SystemConfigurationPage from "./pages/Admin/SystemConfigurationPage";
-import AdminProfile from "./pages/Admin/AdminProfile";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
+import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
 
-import ReceptionistDashboard from "./pages/Receptionist/ReceptionistDashboard";
-import ReceptionistHome from "./pages/Receptionist/ReceptionistHome";
-import ReceptionistLoan from "./pages/Receptionist/ReceptionistLoan";
-import ReceptionistSalary from "./pages/Receptionist/ReceptionistSalary";
-import ReceptionistView from "./pages/Receptionist/ReceptionistView";
-import ReceptionistSetting from "./pages/Receptionist/ReceptionistSetting";
-import ReceptionistMonthlyExpense from "./pages/Receptionist/ReceptionistMonthlyExpense";
-import ReceptionistPettyCash from "./pages/Receptionist/ReceptionistPettyCash";
-import LoanSummary from "./component/LoanSummary/LoanSummary";
-import Salary from "./pages/Admin/Salary";
+const Home = lazy(() => import("./pages/User/Home"));
+const About = lazy(() => import("./pages/User/About"));
+const Contact = lazy(() => import("./pages/User/Contact"));
+const Login = lazy(() => import("./pages/User/Login"));
+const Signup = lazy(() => import("./pages/User/Signup"));
+const LoanApplications = lazy(() => import("./pages/Admin/LoanApplication"));
+const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const CustomerManagementPage = lazy(() => import("./pages/Admin/CustomerManagementPage"));
+const FieldOfficerPerformancePage = lazy(() => import("./pages/Admin/FeildOfficerPerformance"));
+const PettyCashPage = lazy(() => import("./pages/Admin/PettyCashPage"));
+const FinancialReportsPage = lazy(() => import("./pages/Admin/FinancialReportsPage"));
+const UserManagementPage = lazy(() => import("./pages/Admin/UserManagementPage"));
+const SystemConfigurationPage = lazy(() => import("./pages/Admin/SystemConfigurationPage"));
+const AdminProfile = lazy(() => import("./pages/Admin/AdminProfile"));
+const Salary = lazy(() => import("./pages/Admin/Salary"));
+const ReceptionistDashboard = lazy(() => import("./pages/Receptionist/ReceptionistDashboard"));
+const ReceptionistHome = lazy(() => import("./pages/Receptionist/ReceptionistHome"));
+const ReceptionistLoan = lazy(() => import("./pages/Receptionist/ReceptionistLoan"));
+const ReceptionistSalary = lazy(() => import("./pages/Receptionist/ReceptionistSalary"));
+const ReceptionistView = lazy(() => import("./pages/Receptionist/ReceptionistView"));
+const ReceptionistSetting = lazy(() => import("./pages/Receptionist/ReceptionistSetting"));
+const ReceptionistPettyCash = lazy(() => import("./pages/Receptionist/ReceptionistPettyCash"));
+const LoanSummary = lazy(() => import("./component/LoanSummary/LoanSummary"));
 
 const getUser = () => {
   const token = localStorage.getItem("token");
@@ -77,6 +70,59 @@ const ProtectedRoute = ({ children, role }) => {
   return children;
 };
 
+const RouteLoading = () => (
+  <div className="flex min-h-[50vh] items-center justify-center" role="status">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-black motion-reduce:animate-none" />
+    <span className="sr-only">Loading page...</span>
+  </div>
+);
+
+const AdminMenuRoute = ({ permission, children }) => {
+  const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
+
+  if (isLoading) {
+    return (
+      <div
+        className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-4 py-10"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="w-full max-w-xl rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-10 w-10 shrink-0 animate-spin rounded-full border-4 border-gray-200 border-t-black motion-reduce:animate-none"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                Loading Access Details
+              </p>
+              <p className="text-xs text-gray-500">
+                Please wait while we verify your access...
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2" aria-hidden="true">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div
+                key={index}
+                className="h-10 w-full animate-pulse rounded border border-gray-100 bg-gray-50 motion-reduce:animate-none"
+              />
+            ))}
+          </div>
+
+          <span className="sr-only">Loading access...</span>
+        </div>
+      </div>
+    );
+  }
+  if (isSuperAdmin || permissions.includes(permission)) return children;
+
+  const firstAllowedItem = ADMIN_MENU_ITEMS.find((item) => permissions.includes(item.id));
+  return <Navigate to={firstAllowedItem?.path ?? "/ad/profile"} replace />;
+};
+
 const PublicRoute = ({ children }) => {
   const user = getUser();
 
@@ -101,6 +147,7 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
+      <Suspense fallback={<RouteLoading />}>
       <Routes>
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
         <Route path="/about" element={<PublicRoute><About /></PublicRoute>}></Route>
@@ -113,23 +160,23 @@ const App = () => {
             <AdminLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="loan-applications" element={<LoanApplications />} />
-          <Route path="loan-summary" element={<LoanSummary />} />
+          <Route index element={<AdminMenuRoute permission="dashboard"><Dashboard /></AdminMenuRoute>} />
+          <Route path="dashboard" element={<AdminMenuRoute permission="dashboard"><Dashboard /></AdminMenuRoute>} />
+          <Route path="loan-applications" element={<AdminMenuRoute permission="loan-applications"><LoanApplications /></AdminMenuRoute>} />
+          <Route path="loan-summary" element={<AdminMenuRoute permission="loan-summary"><LoanSummary /></AdminMenuRoute>} />
           {/* <Route path="portfolio" element={<PortfolioOverview />} /> */}
           {/* <Route path="performance" element={<LoanPerformance />} /> */}
           {/* <Route path="revenue" element={<RevenueTracking />} /> */}
-          <Route path="salary" element={<Salary />} />
-          <Route path="customers" element={<CustomerManagementPage />} />
-          <Route path="officers" element={<FieldOfficerPerformancePage />} />
-          <Route path="admin-exp" element={<PettyCashPage />} />
+          <Route path="salary" element={<AdminMenuRoute permission="salary"><Salary /></AdminMenuRoute>} />
+          <Route path="customers" element={<AdminMenuRoute permission="customers"><CustomerManagementPage /></AdminMenuRoute>} />
+          <Route path="officers" element={<AdminMenuRoute permission="officers"><FieldOfficerPerformancePage /></AdminMenuRoute>} />
+          <Route path="admin-exp" element={<AdminMenuRoute permission="admin-exp"><PettyCashPage /></AdminMenuRoute>} />
           {/* <Route path="petty-cash" element={<PettyCashPage />} /> */}
-          <Route path="financials" element={<FinancialReportsPage />} />
+          <Route path="financials" element={<AdminMenuRoute permission="financials"><FinancialReportsPage /></AdminMenuRoute>} />
           {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
-          <Route path="users" element={<UserManagementPage />} />
+          <Route path="users" element={<AdminMenuRoute permission="users"><UserManagementPage /></AdminMenuRoute>} />
           {/* <Route path="audit" element={<AuditLogsPage />} /> */}
-          <Route path="settings" element={<SystemConfigurationPage />} />
+          <Route path="settings" element={<AdminMenuRoute permission="settings"><SystemConfigurationPage /></AdminMenuRoute>} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
 
@@ -153,6 +200,7 @@ const App = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
+      </Suspense>
       <Toaster position="top-right" />
     </BrowserRouter>
   )

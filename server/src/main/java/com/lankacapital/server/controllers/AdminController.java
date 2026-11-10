@@ -51,6 +51,22 @@ public class AdminController {
     private final FinancialNoteDataService financialNoteDataService;
     private final NoteSharesDataService noteSharesDataService;
     private final IncomeTaxDataService incomeTaxDataService;
+    private final com.lankacapital.server.services.impl.AdminMenuPermissionService adminMenuPermissionService;
+
+    @GetMapping("/menu-permissions")
+    public ResponseEntity<AdminMenuAccessDto> getMenuPermissions(Authentication authentication) {
+        return ResponseEntity.ok(adminMenuPermissionService.getCurrentAccess(authentication.getName()));
+    }
+
+    @PutMapping("/employees/{id}/menu-permissions")
+    public ResponseEntity<List<String>> updateMenuPermissions(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody List<String> permissions
+    ) {
+        return ResponseEntity.ok(adminMenuPermissionService.updatePermissions(
+                authentication.getName(), id, permissions));
+    }
 
     @GetMapping(path = "/role")
     public ResponseEntity<?> getAllRoles(){
@@ -131,6 +147,7 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody EmployeeResponseDto dto
     ) {
+        System.out.println("Employee : " + dto);
 
         return ResponseEntity.ok(
                 employeeService.updateEmployee(authentication.getName(),id, dto)
@@ -322,6 +339,15 @@ public class AdminController {
                 dailyCollectionService.getDailyCollections(dto),
                 HttpStatus.OK
         );
+    }
+
+    @GetMapping(path = "/dailyCollections/today-total")
+    public ResponseEntity<?> getTodayCollectionTotal(Authentication authentication) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return ResponseEntity.ok(dailyCollectionService.getTodayCollection());
     }
 
     @GetMapping(path = "/pettyCashCategories")

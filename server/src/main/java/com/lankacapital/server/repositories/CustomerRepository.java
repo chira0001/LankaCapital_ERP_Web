@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, String> {
 
+    long countByDeletedFalse();
+
     @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.loans")
     List<Customer> findAllWithLoans();
 

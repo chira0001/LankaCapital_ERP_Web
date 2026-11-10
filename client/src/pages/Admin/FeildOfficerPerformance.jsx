@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import axiosAPI from '@/api/axiosAPI';
 import { UserCheck } from 'lucide-react';
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -10,8 +10,12 @@ const formatLKR = (amount) =>
     currency: 'LKR',
   }).format(amount || 0);
 
+const RECORDS_PER_PAGE = 10;
+
 const FieldOfficerPerformancePage = () => {
   const [performanceData, setPerformanceData] = useState([]);
+  const [officerPages, setOfficerPages] = useState({});
+  const [todayCollection, setTodayCollection] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const getToday = () => {
@@ -27,6 +31,20 @@ const FieldOfficerPerformancePage = () => {
     fetchDailyCollectionDetails();
   }, []);
 
+  useEffect(() => {
+    const fetchTodayCollection = async () => {
+      try {
+        const response = await axiosAPI.get('/admin/dailyCollections/today-total');
+        setTodayCollection(response.data);
+      } catch (error) {
+        console.error('Failed to fetch today collection total:', error);
+        toast.error('Failed to fetch today collection total');
+      }
+    };
+
+    fetchTodayCollection();
+  }, []);
+
   const fetchDailyCollectionDetails = async () => {
     setLoading(true);
     try {
@@ -38,9 +56,11 @@ const FieldOfficerPerformancePage = () => {
       });
 
       setPerformanceData(Array.isArray(response.data) ? response.data : []);
+      setOfficerPages({});
     } catch (error) {
       console.error('Failed to fetch performance data:', error);
       setPerformanceData([]);
+      setOfficerPages({});
     } finally {
       setLoading(false);
     }
@@ -104,6 +124,16 @@ const FieldOfficerPerformancePage = () => {
             </h1>
             <p className="text-gray-600">
               View collection records grouped by Field Officer
+            </p>
+          </div>
+
+          {/* Today's Total Collection */}
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 shadow-sm sm:p-6">
+            <p className="text-sm font-medium text-blue-800">
+              Today&apos;s Total Collection
+            </p>
+            <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
+              {todayCollection === null ? 'Loading...' : formatLKR(todayCollection)}
             </p>
           </div>
 
@@ -172,11 +202,17 @@ const FieldOfficerPerformancePage = () => {
               No collection data available
             </div>
           ) : (
-            Object.entries(groupedByOfficer).map(([officerId, data]) => (
-              <div
-                key={officerId}
-                className="bg-white rounded-xl shadow border overflow-hidden"
-              >
+            Object.entries(groupedByOfficer).map(([officerId, data]) => {
+              const totalPages = Math.ceil(data.records.length / RECORDS_PER_PAGE);
+              const currentPage = Math.min(officerPages[officerId] || 1, totalPages);
+              const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
+              const pageRecords = data.records.slice(startIndex, startIndex + RECORDS_PER_PAGE);
+
+              return (
+                <div
+                  key={officerId}
+                  className="bg-white rounded-xl shadow border overflow-hidden"
+                >
                 {/* Officer Header */}
                 <div className="p-6 border-b bg-gray-50 flex items-center gap-3">
                   <UserCheck className="w-5 h-5 text-gray-600" />
@@ -217,7 +253,7 @@ const FieldOfficerPerformancePage = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {data.records.map((record, index) => (
+                      {pageRecords.map((record, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-6 py-3">
                             {record.loan?.fileNumber}
@@ -226,10 +262,14 @@ const FieldOfficerPerformancePage = () => {
                             {record.installmentNumber}
                           </td>
                           <td className={`px-6 py-3 ${record.dueAmount < 0 ? "text-red-400" : "text-gray-500"}`}>
-                            {formatLKR(record.dueAmount)}
+                            {Number(record.dueAmount) === 0
+                              ? "No outstanding due"
+                              : formatLKR(record.dueAmount)}
                           </td>
                           <td className="px-6 py-3 text-green-600 font-semibold">
-                            {formatLKR(record.paidAmount)}
+                            {Number(record.paidAmount) === 0
+                              ? "No payment"
+                              : formatLKR(record.paidAmount)}
                           </td>
                           <td className="px-6 py-3">
                             {new Date(record.paidAt).toLocaleString()}
@@ -242,8 +282,43 @@ const FieldOfficerPerformancePage = () => {
                     </tbody>
                   </table>
                 </div>
+                <div className="flex items-center justify-between border-t px-6 py-3 text-sm text-gray-600">
+                  <span>
+                    Showing {startIndex + 1}–{Math.min(startIndex + RECORDS_PER_PAGE, data.records.length)} of {data.records.length}
+                  </span>
+                  {totalPages > 1 && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOfficerPages((pages) => ({
+                          ...pages,
+                          [officerId]: currentPage - 1,
+                        }))}
+                        disabled={currentPage === 1}
+                        className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-2 py-1">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setOfficerPages((pages) => ({
+                          ...pages,
+                          [officerId]: currentPage + 1,
+                        }))}
+                        disabled={currentPage === totalPages}
+                        className="rounded border px-3 py-1 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

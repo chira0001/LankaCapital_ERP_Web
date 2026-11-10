@@ -72,12 +72,14 @@ public class CollectionSchedulerService {
 
                 if (isLoanCompleted(loan, record.getInstallmentNumber())) {
                     loan.setStatus(LoanStatus.COMPLETED);
+                    loan.setCompletedAt(now);
                     completedLoans.add(loan);
                 }
             } else {
                 Integer currentMaxInstallment = collectionRepository.findMaxInstallmentNumberByLoanId(loan.getId());
                 if (isLoanCompleted(loan, currentMaxInstallment)) {
                     loan.setStatus(LoanStatus.COMPLETED);
+                    loan.setCompletedAt(now);
                     completedLoans.add(loan);
                 }
             }
@@ -103,12 +105,14 @@ public class CollectionSchedulerService {
 
                     if (isLoanCompleted(loan, record.getInstallmentNumber())) {
                         loan.setStatus(LoanStatus.COMPLETED);
+                        loan.setCompletedAt(now);
                         completedLoans.add(loan);
                     }
                 } else {
                     Integer currentMaxInstallment = collectionRepository.findMaxInstallmentNumberByLoanId(loan.getId());
                     if (isLoanCompleted(loan, currentMaxInstallment)) {
                         loan.setStatus(LoanStatus.COMPLETED);
+                        loan.setCompletedAt(now);
                         completedLoans.add(loan);
                     }
                 }
