@@ -1,301 +1,201 @@
-# 💰 Money Lending Management System - NKRS Lanka Capital Pvt. Ltd.
+<div align="center">
+  <img src="client/src/assets/Logo.png" alt="Lanka Capital logo" width="180" />
 
-> A secure, modern, and efficient web-based ERP solution designed to streamline the operations of a money lending business by managing customers, loans, repayments, financial statements, and administrative activities.
+  # Lanka Capital ERP
 
----
+  **A lending operations and financial management platform for NKRS Lanka Capital Pvt. Ltd.**
 
-# 📖 Overview
+  Manage customers, loans, collections, staff, and financial reporting through one role-aware web application.
 
-The **Money Lending Management System** is a comprehensive ERP solution developed to replace manual processes with a centralized digital platform. The system enables money lending companies to efficiently manage customer records, loan processing, repayment tracking, financial reporting, and overall business administration.
-
-Developed using the **Agile Software Development Methodology**, this project emphasizes scalability, security, accuracy, and ease of use while reducing paperwork and improving operational efficiency.
-
----
-
-# ✨ Features
-
-## 👥 Customer Management
-- Customer Registration
-- Customer Search & Filtering
-- Customer Loan History
-- Customer Status Management
+  <p>
+    <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
+    <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4-6DB33F?logo=springboot&logoColor=white" />
+    <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white" />
+    <img alt="Java" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white" />
+    <img alt="License" src="https://img.shields.io/badge/Use-Portfolio%20demonstration-6C5CE7" />
+  </p>
+</div>
 
 ---
 
-## 💰 Loan Management
-- Loan Creation
-- Loan Approval Process
-- Automatic Interest Calculation
-- Installment Calculation
-- Loan Status Tracking
-- Outstanding Balance Monitoring
-- Loan History
+## At a glance
 
----
+Lanka Capital ERP brings day-to-day lending workflows into a single system. Staff can register customers, process loan applications, record repayments, and review operational activity, while administrators manage users and access financial information.
 
-## 💳 Repayment Management
-- Record Loan Repayments
-- Installment History
-- Partial Payment Support
-- Late Payment Tracking
-- Penalty Calculation
-- Remaining Balance Calculation
+| Area | What it helps with |
+| --- | --- |
+| **Customers & loans** | Customer records, loan applications, approvals, loan status, and summaries |
+| **Collections** | Daily collection entry, installment history, due tracking, and officer collection views |
+| **People & operations** | Role-aware screens, employee management, salaries, and administrative expenses |
+| **Financials** | Financial dashboards, reports, and supporting worksheets |
 
----
+## Explore the workflows
 
-## 📊 Financial Statements
+```mermaid
+flowchart LR
+    C[Customer records] --> L[Loan application]
+    L --> A{Review and approval}
+    A -->|Approved| R[Repayment and collections]
+    A -->|Needs attention| L
+    R --> S[Loan summary and status]
+    R --> F[Financial reporting]
+    U[Role-based staff access] --> L
+    U --> R
+    U --> F
+```
 
-The system automatically generates:
+### By role
 
-- Income Statement
-- Balance Sheet
-- Cash Flow Statement
-- Profit Summary
-- Monthly Financial Report
+- **Administrators** — oversee loan and customer activity, manage employees and menu access, review collections, and access reports.
+- **Receptionists** — work with customer and loan records, view loan information, and submit or track administrative expenses.
+- **Field officers** — access field workflows and collection information relevant to their role.
 
----
+## Feature tour
 
-## 👨‍💼 Administration
+<details>
+  <summary><strong>Customer and loan operations</strong></summary>
 
-- Secure Admin Dashboard
-- User Management
-- Role-Based Access Control
-- Audit Logs
-- Business Analytics
-- System Settings
+- Register and search customer records.
+- Submit and review loan applications.
+- Track loan status, installment amounts, payments, and outstanding due.
+- Review loan summaries and payment history.
+</details>
 
----
+<details>
+  <summary><strong>Collections</strong></summary>
 
-## 🔐 Security Features
+- Record daily repayments and partial payments.
+- Review collection history and due amounts.
+- View collection performance by field officer and today's collection totals.
+</details>
 
-- Secure Authentication
-- Password Encryption
-- JWT Authentication
-- Role-Based Authorization
-- Activity Logging
-- Protected Routes
-- Secure Database Access
+<details>
+  <summary><strong>Administration and financials</strong></summary>
 
----
+- Manage employees, roles, and administrator menu permissions.
+- Review salary and administrative expense records.
+- Access financial dashboards, reports, and supporting financial worksheets.
+</details>
 
-# 🚀 System Benefits
+## Built with
 
-- Centralized Data Management
-- Faster Loan Processing
-- Automated Financial Calculations
-- Reduced Manual Errors
-- Better Decision Making
-- Improved Financial Reporting
-- Secure Business Operations
-- Increased Productivity
-- Easy Business Monitoring
+| Layer | Technologies |
+| --- | --- |
+| **Web client** | React 19, Vite, JavaScript, Tailwind CSS, React Router |
+| **API** | Java 21, Spring Boot, Spring Web, Spring Data JPA, Spring Security |
+| **Persistence** | MySQL |
+| **Authentication** | JWT-based authentication and role-aware access |
+| **Build tools** | npm, Maven Wrapper |
 
----
+## How the project fits together
 
-# 🛠 Technology Stack
+```text
+LankaCapital_ERP_Web/
+├── client/                         # React/Vite application
+│   └── src/
+│       ├── api/                    # API client
+│       ├── component/              # Shared layouts and UI
+│       └── pages/                  # Admin, receptionist, field, and public screens
+└── server/                         # Spring Boot API
+    └── src/main/java/com/lankacapital/server/
+        ├── config/                 # Security, CORS, and application configuration
+        ├── controllers/            # REST endpoints
+        ├── dtos/                   # Request and response models
+        ├── entities/               # JPA persistence models
+        ├── mappers/                # Entity/DTO mapping
+        ├── repositories/           # Database access
+        └── services/               # Application and business logic
+```
 
-## Frontend
+## Run locally
 
-- React.js
-- HTML5
-- CSS3
-- Tailwind
-- JavaScript (ES6)
+### Prerequisites
 
-## Backend
-
-- Springboot
-
-## Database
-
+- Java 21
+- Node.js and npm
 - MySQL
 
-## Development Tools
-
-- Git
-- GitHub
-- Postman
-- Visual Studio Code
-- CI/CD Automation
-
----
-
-# 📂 Project Structure
-
-```
-Money-Lending-Management-System/
-│
-├── client/
-│   ├── src/
-│   ├── public/
-│   └── package.json
-│
-├── server/
-│   ├── config/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   ├── uploads/
-│   └── server.js
-│
-├── .env.example
-├── README.md
-└── LICENSE
-```
-
----
-
-# ⚙ Installation
-
-## Clone the Repository
+### 1. Get the code and prepare the database
 
 ```bash
-git clone https://github.com/yourusername/money-lending-management-system.git
+git clone https://github.com/chira0001/LankaCapital_ERP_Web.git
+cd LankaCapital_ERP_Web
 ```
 
----
+Create a MySQL database for the application, then create `server/.env` with values for your local environment:
 
-## Navigate to Project
-
-```bash
-cd money-lending-management-system
+```dotenv
+DB_URL=jdbc:mysql://localhost:3306/lankacapital_erp
+DB_USERNAME=your_mysql_username
+DB_PASSWORD=your_mysql_password
+DB_DRIVER=com.mysql.cj.jdbc.Driver
+SECRET_STRING=replace_with_a_long_random_secret
+FRONTEND_URL=http://localhost:5173
 ```
 
----
+Keep `.env` local—never commit database passwords or signing secrets.
 
-## Install Backend Dependencies
+> **Existing database?** If it still has the previous expense table names, run [`administrative-expense-migration.sql`](server/src/main/resources/templates/administrative-expense-migration.sql) once before starting the updated backend. The migration renames the tables and preserves their records.
+
+### 2. Start the API
 
 ```bash
-mvnw spring-boot:run
+cd server
+./mvnw spring-boot:run
 ```
 
----
+On Windows PowerShell, use:
 
-## Install Frontend Dependencies
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+The API starts on `http://localhost:8080`; API routes are under `/api/v1`.
+
+### 3. Start the web client
+
+In another terminal:
 
 ```bash
-cd ../client
+cd client
 npm install
-```
-
----
-
-## Environment Variables
-
-Create a `.env` file inside the server directory.
-
-```env
-PORT=5000
-
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=money_lending
-DB_USER=root
-DB_PASSWORD=password
-
-JWT_SECRET=your_secret_key
-```
-
----
-
-## Start Frontend
-
-```bash
 npm run dev
 ```
 
----
+Open `http://localhost:5173`. Vite proxies `/api` requests to the local API. To use a different backend URL, set `VITE_BACKEND_URL` in the client environment (the default is `http://localhost:8080/api/v1`).
 
-## 📋 Database Tables
+## Useful commands
 
-| Table | Purpose |
-|--------|---------|
-| `customers` | Customer information |
-| `loans` | Loan records |
-| `installments` | Loan repayment installments |
-| `interest_rates` | Interest rate configurations |
-| `daily_collections` | Daily collection transactions |
-| `employees` | Employee information |
-| `roles` | User roles and permissions |
-| `salaries` | Employee salary records |
-| `salary_conditions` | Salary calculation rules |
-| `salary_meta_data` | Payroll metadata |
-| `monthly_expenses` | Monthly business expenses |
-| `administrative_expense` | Administrative expense transactions |
-| `administrative_expense_category` | Administrative expense categories |
+| From | Command | Purpose |
+| --- | --- | --- |
+| `client/` | `npm run dev` | Start the development server |
+| `client/` | `npm run build` | Create the production client build |
+| `client/` | `npm run lint` | Run ESLint |
+| `server/` | `./mvnw spring-boot:run` | Start the Spring Boot API |
+| `server/` | `./mvnw test` | Run backend tests |
 
-For an existing database, run `server/src/main/resources/templates/administrative-expense-migration.sql` once before starting the updated backend to rename the existing expense tables without losing their data.
+## API areas
 
----
+| Prefix | Purpose |
+| --- | --- |
+| `/api/v1/auth` | Authentication |
+| `/api/v1/admin` | Administration and reporting |
+| `/api/v1/recep` | Receptionist workflows |
+| `/api/v1/field` | Field officer workflows |
 
-# 🔄 Development Methodology
+## Project team
 
-This project was developed using the **Agile Software Development Methodology**, allowing continuous development through iterative sprints. Regular client feedback and testing ensured that the final product met business requirements while maintaining software quality.
+- **Chirath Wijesinghe**
+- **Shanuka Gamlath**
+- **Vihaga Yasitha**
+- **Piumika Fernando**
 
----
-
-# 🎯 Project Objectives
-
-- Digitize money lending operations
-- Reduce paperwork
-- Automate loan processing
-- Generate financial statements
-- Improve business efficiency
-- Secure customer information
-- Support business growth
-- Provide accurate financial reporting
-
----
-
-# 📈 Future Enhancements
-
-- SMS Notifications
-- Email Notifications
-- Online Loan Applications
-- Mobile Application
-- Multi-Branch Support
-- QR Code Receipts
-- Cloud Deployment
-
----
-
-# 📚 Documentation
-
-The project documentation includes:
-
-- Deployment Guide
-
----
-
-# 🤝 Contributing
-
-This repository is maintained as a portfolio project.
-
-If you have suggestions for improvements, feel free to notify via chirathwijesinghe123@gmail.com
-
----
-
-# 📄 License
+## License and use
 
 Copyright © 2026.
 
-This repository is published **for portfolio and demonstration purposes only**.
+This repository is published for portfolio and demonstration purposes. The deployed software and business implementation belong to the client under the signed Software Handover Agreement. Do not copy, redistribute, or commercially reuse this work without written permission.
 
-The deployed software and business implementation belong to the client under the signed Software Handover Agreement. This repository remains the intellectual work of the developers and must not be copied, redistributed, or commercially reused without written permission.
-
----
-
-# 👨‍💻 Author
-
-## Chirath Wijesinghe
-## Shanuka Gamlath
-## Vihaga Yasitha
-## Piumika Fernando
-
----
-
-## ⭐ Project Summary
-
-The **Money Lending Management System** is a complete ERP solution developed for a real-world money lending business. It provides secure customer management, loan processing, repayment tracking, automated financial statements, and business reporting through a modern web-based platform, enabling efficient and reliable business operations.
+<div align="center">
+  <sub>Built to make lending operations clearer, more connected, and easier to manage.</sub>
+</div>
