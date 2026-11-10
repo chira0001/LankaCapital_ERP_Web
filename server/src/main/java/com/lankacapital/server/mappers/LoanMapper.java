@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -247,7 +246,7 @@ public class LoanMapper {
     public static LoanSummaryResponseDto mapToLoanSummaryResponseDto(
             Loan loan,
             BigDecimal totalPaid,
-            long paidPeriods
+            BigDecimal totalDue
     ) {
         LoanSummaryResponseDto dto = new LoanSummaryResponseDto();
 
@@ -289,31 +288,8 @@ public class LoanMapper {
         BigDecimal paid = totalPaid != null ? totalPaid : BigDecimal.ZERO;
         dto.setRemainingBalance(totalWithInterest.subtract(paid));
 
-        // ✅ Arrears: unpaid periods since createdAt * installmentValue
-        long elapsedPeriods = 0;
-        LocalDate start = (loan.getCreatedAt() != null)
-                ? loan.getCreatedAt().toLocalDate()
-                : LocalDate.now();
-        LocalDate today = LocalDate.now();
-
-        LoanType type = loan.getLoanType();
-        if (type == LoanType.DAILY) {
-            elapsedPeriods = ChronoUnit.DAYS.between(start, today);
-        } else if (type == LoanType.WEEKLY) {
-            elapsedPeriods = ChronoUnit.WEEKS.between(start, today);
-        } else {
-            elapsedPeriods = 0;
-        }
-
-        // Optional safety clamp: arrears should not exceed total installments schedule
-        if (installmentCount > 0) {
-            elapsedPeriods = Math.min(elapsedPeriods, (long) installmentCount);
-        }
-
-        long paidClamped = Math.min(paidPeriods, elapsedPeriods);
-        long unpaidPeriods = Math.max(0, elapsedPeriods - paidClamped);
-
-        dto.setArrearsAmount(installmentValue.multiply(BigDecimal.valueOf(unpaidPeriods)));
+        BigDecimal due = totalDue != null ? totalDue : BigDecimal.ZERO;
+        dto.setArrearsAmount(due.abs());
 
         return dto;
     }
