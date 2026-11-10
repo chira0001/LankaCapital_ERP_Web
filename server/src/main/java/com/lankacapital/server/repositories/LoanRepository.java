@@ -83,7 +83,12 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 """)
     List<Loan> fetchApprovedLoansWithCollections();
 
-    @EntityGraph(attributePaths = {"customer", "createdEmployee", "updatedEmployee", "approvedEmployee"})
+    @EntityGraph(attributePaths = {
+            "customer.role",
+            "createdEmployee.role",
+            "updatedEmployee.role",
+            "approvedEmployee.role"
+    })
     @Query("""
         select l
         from Loan l

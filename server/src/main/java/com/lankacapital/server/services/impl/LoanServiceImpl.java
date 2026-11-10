@@ -182,7 +182,8 @@ public class LoanServiceImpl implements LoanService {
 
         Page<Loan> loanPage = loanRepository.findLoansForRoleWithSearch(isReceptionist, search, pageable);
 
-        Page<LoanResponseDto> dtoPage = loanPage.map(LoanMapper::mapToLoanResponseDto);
+        Page<LoanResponseDto> dtoPage =
+                loanPage.map(LoanMapper::mapToLoanResponseDtoWithoutCustomerLoans);
 
         return PageResponse.from(dtoPage, page);
     }
@@ -692,4 +693,3 @@ public class LoanServiceImpl implements LoanService {
         return PageResponse.from(dtoPage, page);
     }
 }
-

@@ -51,7 +51,7 @@ public class DailyCollectionMapper {
         dto.setPaidAmount(dailyCollection.getPaidAmount());
         dto.setPaidAt(dailyCollection.getPaidAt());
         dto.setEnteredBy(EmployeeMapper.mapToEmployeeResponseDto(dailyCollection.getEmployee()));
-        dto.setLoan(LoanMapper.mapToLoanResponseDto(dailyCollection.getLoan()));
+        dto.setLoan(LoanMapper.mapToLoanResponseDtoWithoutCustomerLoans(dailyCollection.getLoan()));
         return dto;
     }
 }

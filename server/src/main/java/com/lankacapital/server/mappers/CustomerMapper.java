@@ -33,10 +33,20 @@ public class CustomerMapper {
     }
 
     public static CustomerResponseDto mapToCustomerResponseDto(Customer customer) {
+        return mapToCustomerResponseDto(customer, true);
+    }
 
+    public static CustomerResponseDto mapToCustomerResponseDtoWithoutLoans(Customer customer) {
+        return mapToCustomerResponseDto(customer, false);
+    }
+
+    private static CustomerResponseDto mapToCustomerResponseDto(
+            Customer customer,
+            boolean includeLoans
+    ) {
         CustomerResponseDto dto = new CustomerResponseDto();
 
-        List<LoanResponseDto> loans = customer.getLoans() == null ? List.of() :
+        List<LoanResponseDto> loans = !includeLoans || customer.getLoans() == null ? List.of() :
                 customer.getLoans().stream()
                         .map(loan -> {
                             LoanResponseDto loanDto = new LoanResponseDto();
