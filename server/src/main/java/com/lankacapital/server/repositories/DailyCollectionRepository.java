@@ -62,7 +62,7 @@ public interface DailyCollectionRepository extends JpaRepository<DailyCollection
     @Query("""
         select dc.loan.id as loanId,
                coalesce(sum(dc.paidAmount), 0) as totalPaid,
-               coalesce(sum(case when dc.paidAt is not null then 1 else 0 end), 0) as paidCount
+               coalesce(sum(dc.dueAmount), 0) as totalDue
         from DailyCollection dc
         where dc.loan.id in :loanIds
         group by dc.loan.id

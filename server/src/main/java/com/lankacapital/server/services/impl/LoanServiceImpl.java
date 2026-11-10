@@ -663,11 +663,11 @@ public class LoanServiceImpl implements LoanService {
                     ? stats.getTotalPaid()
                     : BigDecimal.ZERO;
 
-            long paidCount = (stats != null && stats.getPaidCount() != null)
-                    ? stats.getPaidCount()
-                    : 0L;
+            BigDecimal totalDue = (stats != null && stats.getTotalDue() != null)
+                    ? stats.getTotalDue()
+                    : BigDecimal.ZERO;
 
-            return LoanMapper.mapToLoanSummaryResponseDto(loan, totalPaid, paidCount);
+            return LoanMapper.mapToLoanSummaryResponseDto(loan, totalPaid, totalDue);
         }).toList();
 
         Page<LoanSummaryResponseDto> dtoPage =
