@@ -699,7 +699,9 @@ const LoanSummary = () => {
                                                 </td>
 
                                                 <td className="px-3 py-3 font-bold text-gray-900 sm:px-6 sm:py-4">
-                                                    {formatLKR(value.paidAmount)}
+                                                    {Number(value.paidAmount) === 0
+                                                        ? "No payment received"
+                                                        : formatLKR(value.paidAmount)}
                                                 </td>
 
                                                 <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 md:table-cell sm:px-6 sm:py-4">
