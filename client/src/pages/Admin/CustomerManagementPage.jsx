@@ -269,7 +269,7 @@ const CustomerManagementPage = () => {
         interestRate: Number(loanForm.interestRate),
         documentCharge: loanForm.documentCharge ? Number(loanForm.documentCharge) : 0,
         numberOfInstallments: Number(loanForm.numberOfInstallments),
-        customerId: Number(loanForm.customerId),
+        customerId: loanForm.customerId,
       };
 
       await axiosAPI.post(`admin/loans`, payload);
@@ -286,7 +286,9 @@ const CustomerManagementPage = () => {
       await loadCustomers({ force: true });
     } catch (err) {
       console.error("Failed to add loan:", err);
-      setLoanError("Failed to add loan.");
+      const responseMessage = err.response?.data?.message
+        || (typeof err.response?.data === "string" ? err.response.data : "");
+      setLoanError(responseMessage || "Failed to add loan.");
     } finally {
       setLoanSaving(false);
     }
