@@ -26,8 +26,8 @@ public class ReceptionistController {
     private final EmployeeService employeeService;
 //    private final InstallmentService installmentService;
     private final DailyCollectionService dailyCollectionService;
-    private final PettyCashCategoryService pettyCashCategoryService;
-    private final PettyCashService pettyCashService;
+    private final AdministrativeExpenseCategoryService administrativeExpenseCategoryService;
+    private final AdministrativeExpenseService administrativeExpenseService;
     private final FinancialStatementService financialStatementService;
     private final ReceptionistDashboardService receptionistDashboardService;
 
@@ -149,34 +149,34 @@ public class ReceptionistController {
         return ResponseEntity.ok(collections);
     }
 
-    @PostMapping("/pettyCash")
-    public ResponseEntity<?> addPettyCashRequest(@RequestBody PettyCashDto pettyCashDto, Authentication authentication){
-        return new ResponseEntity<>(pettyCashService.addPettyCash(pettyCashDto, authentication.getName()), HttpStatus.CREATED);
+    @PostMapping("/administrative-expenses")
+    public ResponseEntity<?> addAdministrativeExpenseRequest(@RequestBody AdministrativeExpenseDto administrativeExpenseDto, Authentication authentication){
+        return new ResponseEntity<>(administrativeExpenseService.addAdministrativeExpense(administrativeExpenseDto, authentication.getName()), HttpStatus.CREATED);
     }
 
-    @GetMapping("/pettyCash")
-    public ResponseEntity<?> getEmployeeAddedPettyCash(Authentication authentication){
-        return new ResponseEntity<>(pettyCashService.getPettyCashForEmployee(authentication.getName()), HttpStatus.OK);
+    @GetMapping("/administrative-expenses")
+    public ResponseEntity<?> getEmployeeAddedAdministrativeExpense(Authentication authentication){
+        return new ResponseEntity<>(administrativeExpenseService.getAdministrativeExpenseForEmployee(authentication.getName()), HttpStatus.OK);
     }
 
-    @PutMapping(path = "/pettyCash/{id}")
-    public ResponseEntity<?> updatePettyCash(
+    @PutMapping(path = "/administrative-expenses/{id}")
+    public ResponseEntity<?> updateAdministrativeExpense(
             Authentication authentication,
-            @RequestBody PettyCashDto pettyCashDto,
+            @RequestBody AdministrativeExpenseDto administrativeExpenseDto,
             @PathVariable Long id
     ){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
-        return new ResponseEntity<>(pettyCashService.updatePettyCash(authentication.getName(),id,pettyCashDto), HttpStatus.OK);
+        return new ResponseEntity<>(administrativeExpenseService.updateAdministrativeExpense(authentication.getName(),id,administrativeExpenseDto), HttpStatus.OK);
     }
 
-    @GetMapping(path = "/pettyCashCategories")
-    public ResponseEntity<?> getAllPettyCashCategories(Authentication authentication){
+    @GetMapping(path = "/administrative-expense-categories")
+    public ResponseEntity<?> getAllAdministrativeExpenseCategories(Authentication authentication){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
-        return new ResponseEntity<>(pettyCashCategoryService.getAllCategories(), HttpStatus.OK);
+        return new ResponseEntity<>(administrativeExpenseCategoryService.getAllCategories(), HttpStatus.OK);
     }
 
 //    @PostMapping("/financials")

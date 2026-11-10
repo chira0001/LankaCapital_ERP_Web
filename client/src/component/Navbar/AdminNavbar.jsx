@@ -36,7 +36,7 @@ const AdminNavbar = () => {
     { keyword: "revenue", path: "/ad/revenue" },
     { keyword: "customers", path: "/ad/customers" },
     { keyword: "officers", path: "/ad/officers" },
-    { keyword: "petty cash", path: "/ad/petty-cash" },
+    { keyword: "administrative expense", path: "/ad/admin-exp" },
     { keyword: "reports", path: "/ad/reports" },
     { keyword: "targets", path: "/ad/targets" },
     { keyword: "categories", path: "/ad/categories" },

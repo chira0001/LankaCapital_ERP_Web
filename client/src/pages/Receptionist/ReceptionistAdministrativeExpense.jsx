@@ -3,26 +3,26 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axiosAPI from '../../api/axiosAPI'
 
-const ReceptionistPettyCash = () => {
+const ReceptionistAdministrativeExpense = () => {
 
-    const [pettyCashDetails, setPettyCashDetails] = useState([]);
+    const [administrativeExpenseDetails, setAdministrativeExpenseDetails] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     // const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [pettyCashCategories, setPettyCashCategories] = useState([]);
+    const [administrativeExpenseCategories, setAdministrativeExpenseCategories] = useState([]);
 
     // ✅ Edit States
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [selectedPettyCashId, setSelectedPettyCashId] = useState(null);
-    const [pettyCashUpdatePayload, setPettyCashUpdatePayload] = useState({
+    const [selectedAdministrativeExpenseId, setSelectedAdministrativeExpenseId] = useState(null);
+    const [administrativeExpenseUpdatePayload, setAdministrativeExpenseUpdatePayload] = useState({
         narration: "",
         amount: "",
         category: ""
     });
 
-    const [pettyCashForm, setPettyCashForm] = useState({
+    const [administrativeExpenseForm, setAdministrativeExpenseForm] = useState({
         narration: "",
         amount: "",
         category: ""
@@ -45,30 +45,30 @@ const ReceptionistPettyCash = () => {
 
     // ================= FETCH =================
 
-    const fetchPettyCashTypes = async () => {
+    const fetchAdministrativeExpenseTypes = async () => {
         try {
-            const response = await axiosAPI.get("/recep/pettyCashCategories");
-            setPettyCashCategories(response.data);
+            const response = await axiosAPI.get("/recep/administrative-expense-categories");
+            setAdministrativeExpenseCategories(response.data);
         } catch {
-            toast.error('Failed to fetch petty cash categories');
+            toast.error('Failed to fetch administrative expense categories');
         }
     }
 
-    const fetchPettyCashDetails = async () => {
+    const fetchAdministrativeExpenseDetails = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosAPI.get("/recep/pettyCash");
-            setPettyCashDetails(response.data);
+            const response = await axiosAPI.get("/recep/administrative-expenses");
+            setAdministrativeExpenseDetails(response.data);
         } catch {
-            toast.error('Failed to fetch petty cash details');
+            toast.error('Failed to fetch administrative expense details');
         } finally {
             setIsLoading(false);
         }
     }
 
     useEffect(() => {
-        fetchPettyCashDetails();
-        fetchPettyCashTypes();
+        fetchAdministrativeExpenseDetails();
+        fetchAdministrativeExpenseTypes();
     }, [])
 
     // ================= ADD =================
@@ -77,39 +77,39 @@ const ReceptionistPettyCash = () => {
         const { name, value } = e.target;
         if (name === 'amount') {
             if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
-                setPettyCashForm({ ...pettyCashForm, [name]: value });
+                setAdministrativeExpenseForm({ ...administrativeExpenseForm, [name]: value });
             }
         } else {
-            setPettyCashForm({ ...pettyCashForm, [name]: value });
+            setAdministrativeExpenseForm({ ...administrativeExpenseForm, [name]: value });
         }
     };
 
     const handleReset = () => {
-        setPettyCashForm({ narration: "", amount: "", category: "" });
+        setAdministrativeExpenseForm({ narration: "", amount: "", category: "" });
     };
 
     const handleSubmit = async () => {
-        if (!pettyCashForm.amount || parseFloat(pettyCashForm.amount) <= 0) {
+        if (!administrativeExpenseForm.amount || parseFloat(administrativeExpenseForm.amount) <= 0) {
             toast.error("Please enter a valid amount");
             return;
         }
-        if (!pettyCashForm.narration.trim()) {
+        if (!administrativeExpenseForm.narration.trim()) {
             toast.error("Please provide a narration");
             return;
         }
-        if (!pettyCashForm.category) {
+        if (!administrativeExpenseForm.category) {
             toast.error("Please provide a category");
             return;
         }
 
         setIsSubmitting(true);
         try {
-            await axiosAPI.post("/recep/pettyCash", pettyCashForm);
-            toast.success("Petty cash expense submitted successfully");
+            await axiosAPI.post("/recep/administrative-expenses", administrativeExpenseForm);
+            toast.success("Administrative expense submitted successfully");
             handleReset();
-            fetchPettyCashDetails();
+            fetchAdministrativeExpenseDetails();
         } catch (e) {
-            toast.error(e.response?.data?.message || "Failed to submit petty cash expense");
+            toast.error(e.response?.data?.message || "Failed to submit administrative expense");
         } finally {
             setIsSubmitting(false);
         }
@@ -118,17 +118,17 @@ const ReceptionistPettyCash = () => {
     // ================= EDIT =================
 
     const handleRowClick = (item) => {
-        setSelectedPettyCashId(item.id);
-        setPettyCashUpdatePayload({
+        setSelectedAdministrativeExpenseId(item.id);
+        setAdministrativeExpenseUpdatePayload({
             narration: item.narration,
             amount: item.amount,
-            category: item.pettyCashCategory?.id || ""
+            category: item.administrativeExpenseCategory?.id || ""
         });
         setIsEditOpen(true);
     };
 
     const handleUpdate = async () => {
-        if (!pettyCashUpdatePayload.amount || parseFloat(pettyCashUpdatePayload.amount) <= 0) {
+        if (!administrativeExpenseUpdatePayload.amount || parseFloat(administrativeExpenseUpdatePayload.amount) <= 0) {
             toast.error("Enter valid amount");
             return;
         }
@@ -136,12 +136,12 @@ const ReceptionistPettyCash = () => {
         setIsUpdating(true);
         try {
             await axiosAPI.put(
-                `/recep/pettyCash/${selectedPettyCashId}`,
-                pettyCashUpdatePayload
+                `/recep/administrative-expenses/${selectedAdministrativeExpenseId}`,
+                administrativeExpenseUpdatePayload
             );
             toast.success("Updated successfully");
             setIsEditOpen(false);
-            fetchPettyCashDetails();
+            fetchAdministrativeExpenseDetails();
         } catch (e) {
             toast.error(e.response?.data?.message || "Update failed");
         } finally {
@@ -151,21 +151,21 @@ const ReceptionistPettyCash = () => {
 
     // ================= FILTER =================
 
-    const filteredPettyCash = pettyCashDetails.filter(detail => {
+    const filteredAdministrativeExpense = administrativeExpenseDetails.filter(detail => {
         const d = new Date(detail.dateTime);
         return d.getMonth() === selectedMonth;
         //  &&
         //     d.getFullYear() === selectedYear;
     });
 
-    const monthlyTotal = filteredPettyCash.reduce((sum, d) =>
+    const monthlyTotal = filteredAdministrativeExpense.reduce((sum, d) =>
         sum + parseFloat(d.amount), 0
     );
 
     const monthlyStats = {
-        approved: filteredPettyCash.filter(d => d.request === 'APPROVED').length,
-        pending: filteredPettyCash.filter(d => d.request === 'PENDING').length,
-        rejected: filteredPettyCash.filter(d => d.request === 'REJECTED').length,
+        approved: filteredAdministrativeExpense.filter(d => d.request === 'APPROVED').length,
+        pending: filteredAdministrativeExpense.filter(d => d.request === 'PENDING').length,
+        rejected: filteredAdministrativeExpense.filter(d => d.request === 'REJECTED').length,
     };
 
     const getStatusColor = (status) => {
@@ -187,7 +187,7 @@ const ReceptionistPettyCash = () => {
 
         <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">
-                {/* Petty Cash Management */}
+                {/* Administrative Expense Management */}
                 Administrative Expense Management
             </h1>
             <p className="text-gray-500 mt-1">
@@ -204,7 +204,7 @@ const ReceptionistPettyCash = () => {
                 <input
                     type="text"
                     name="amount"
-                    value={pettyCashForm.amount}
+                    value={administrativeExpenseForm.amount}
                     onChange={handleInputChange}
                     placeholder="Amount (Rs.)"
                     className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -213,7 +213,7 @@ const ReceptionistPettyCash = () => {
                 <input
                     type="text"
                     name="narration"
-                    value={pettyCashForm.narration}
+                    value={administrativeExpenseForm.narration}
                     onChange={handleInputChange}
                     placeholder="Narration"
                     className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -221,12 +221,12 @@ const ReceptionistPettyCash = () => {
 
                 <select
                     name="category"
-                    value={pettyCashForm.category}
+                    value={administrativeExpenseForm.category}
                     onChange={handleInputChange}
                     className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                     <option value="">Select category</option>
-                    {pettyCashCategories.map(cat => (
+                    {administrativeExpenseCategories.map(cat => (
                         <option key={cat.id} value={cat.id}>
                             {cat.categoryName}
                         </option>
@@ -314,7 +314,7 @@ const ReceptionistPettyCash = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredPettyCash.length === 0 && (
+                    {filteredAdministrativeExpense.length === 0 && (
                         <tr>
                             <td colSpan="3" className="text-center py-10 text-gray-400">
                                 No expenses found for selected month.
@@ -322,7 +322,7 @@ const ReceptionistPettyCash = () => {
                         </tr>
                     )}
 
-                    {filteredPettyCash.map(item => (
+                    {filteredAdministrativeExpense.map(item => (
                         <tr
                             key={item.id}
                             onClick={() => handleRowClick(item)}
@@ -350,16 +350,16 @@ const ReceptionistPettyCash = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                 <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-700">
-                        {/* Edit Petty Cash */}
+                        {/* Edit Administrative Expense */}
                         Edit Administrative Expense
                     </h2>
 
                     <div className="space-y-3">
                         <input
                             type="number"
-                            value={pettyCashUpdatePayload.amount}
+                            value={administrativeExpenseUpdatePayload.amount}
                             onChange={(e) =>
-                                setPettyCashUpdatePayload(prev => ({
+                                setAdministrativeExpenseUpdatePayload(prev => ({
                                     ...prev,
                                     amount: e.target.value
                                 }))
@@ -369,9 +369,9 @@ const ReceptionistPettyCash = () => {
                         />
 
                         <textarea
-                            value={pettyCashUpdatePayload.narration}
+                            value={administrativeExpenseUpdatePayload.narration}
                             onChange={(e) =>
-                                setPettyCashUpdatePayload(prev => ({
+                                setAdministrativeExpenseUpdatePayload(prev => ({
                                     ...prev,
                                     narration: e.target.value
                                 }))
@@ -381,9 +381,9 @@ const ReceptionistPettyCash = () => {
                         />
 
                         <select
-                            value={pettyCashUpdatePayload.category}
+                            value={administrativeExpenseUpdatePayload.category}
                             onChange={(e) =>
-                                setPettyCashUpdatePayload(prev => ({
+                                setAdministrativeExpenseUpdatePayload(prev => ({
                                     ...prev,
                                     category: e.target.value
                                 }))
@@ -391,7 +391,7 @@ const ReceptionistPettyCash = () => {
                             className="border rounded-lg w-full px-3 py-2"
                         >
                             <option value="">Select category</option>
-                            {pettyCashCategories.map(cat => (
+                            {administrativeExpenseCategories.map(cat => (
                                 <option key={cat.id} value={cat.id}>
                                     {cat.categoryName}
                                 </option>
@@ -421,4 +421,4 @@ const ReceptionistPettyCash = () => {
 )
 }
 
-export default ReceptionistPettyCash
+export default ReceptionistAdministrativeExpense

@@ -61,7 +61,8 @@ public class AdminMenuPermissionFilter extends OncePerRequestFilter {
         if (endpoint.equals("/salary") || endpoint.equals("/salary/approve")) return List.of("salary");
         if (endpoint.startsWith("/loans")) return List.of("loan-applications", "customers");
         if (endpoint.startsWith("/loan-summary")) return List.of("loan-summary");
-        if (endpoint.startsWith("/pettyCash") || endpoint.startsWith("/undo")) return List.of("admin-exp");
+        if (endpoint.startsWith("/administrative-expenses")
+                || endpoint.startsWith("/administrative-expense-categories")) return List.of("admin-exp");
         if (endpoint.startsWith("/customers")) return List.of("customers");
         if (endpoint.startsWith("/financial-dashboard")) return List.of("dashboard");
         if (endpoint.startsWith("/dailyCollections")) return List.of("officers");

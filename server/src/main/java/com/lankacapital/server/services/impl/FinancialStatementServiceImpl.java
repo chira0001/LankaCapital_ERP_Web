@@ -12,7 +12,7 @@ import com.lankacapital.server.enums.AccountType;
 import com.lankacapital.server.mappers.statementMappers.PPE_WORKING_Mapper;
 import com.lankacapital.server.repositories.EmployeeRepository;
 import com.lankacapital.server.repositories.LoanRepository;
-import com.lankacapital.server.repositories.PettyCashRepository;
+import com.lankacapital.server.repositories.AdministrativeExpenseRepository;
 import com.lankacapital.server.repositories.ReportsRepository.*;
 import com.lankacapital.server.repositories.SalaryRepository;
 import com.lankacapital.server.services.*;
@@ -35,7 +35,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
 
     private final EmployeeRepository employeeRepository;
     private final LoanRepository loanRepository;
-    private final PettyCashRepository pettyCashRepository;
+    private final AdministrativeExpenseRepository administrativeExpenseRepository;
     private final SalaryRepository salaryRepository;
 
     private final AssetsRegistryRepository assetsRegistryRepository;
@@ -91,7 +91,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         BigDecimal income = loanRepository.fetchApprovedLoansAndCreatedAtBetweenStartPeriodAndEndPeriod(startDateTime,endDateTime);
         working.setInterestIncome(income);
 
-        List<WorkingAdministrativeExpenseDto> expenseDtos = pettyCashRepository.fetchApprovedPettyCashAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
+        List<WorkingAdministrativeExpenseDto> expenseDtos = administrativeExpenseRepository.fetchApprovedAdministrativeExpenseAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
         working.setWorkingAdministrativeExpenseDtos(expenseDtos);
 
         List<PPE> ppeList = generatePPE();
@@ -123,7 +123,7 @@ public class FinancialStatementServiceImpl implements FinancialStatementService 
         grouped.computeIfAbsent(AccountType.Assets, k -> new ArrayList<>()).addAll(ppeDtos);
 
         List<WorkingAdministrativeExpenseDto> expenseDtos =
-                pettyCashRepository.fetchApprovedPettyCashAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
+                administrativeExpenseRepository.fetchApprovedAdministrativeExpenseAndDateTimeBetweenStartPeriodAndEndPeriod(beginPeriod, endPeriod);
 
         List<TrialBalanceDataDto> expenseTbDtos = expenseDtos.stream()
                 .map(PPE_WORKING_Mapper::mapToTrialBalanceDataDtoFromWorkingAdministrativeExpenseDto)

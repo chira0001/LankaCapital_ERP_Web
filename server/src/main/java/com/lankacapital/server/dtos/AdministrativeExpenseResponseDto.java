@@ -1,6 +1,6 @@
 package com.lankacapital.server.dtos;
 
-import com.lankacapital.server.dtos.AdminDto.PettyCashCategoryResponseDto;
+import com.lankacapital.server.dtos.AdminDto.AdministrativeExpenseCategoryResponseDto;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.enums.Request;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class PettyCashResponseDto {
+public class AdministrativeExpenseResponseDto {
     private Long id;
     private LocalDateTime dateTime;
     private String narration;
@@ -17,6 +17,6 @@ public class PettyCashResponseDto {
     private EmployeeResponseDto requestEmployee;
     private EmployeeResponseDto approvedEmployee;
     private EmployeeResponseDto updatedEmployee;
-    private PettyCashCategoryResponseDto pettyCashCategory;
+    private AdministrativeExpenseCategoryResponseDto administrativeExpenseCategory;
     private Request request;
 }

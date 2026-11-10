@@ -6,11 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "petty_cash_category")
+@Table(name = "administrative_expense_category")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PettyCashCategory {
+public class AdministrativeExpenseCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

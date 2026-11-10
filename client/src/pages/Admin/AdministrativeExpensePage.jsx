@@ -27,38 +27,38 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const PettyCashPage = () => {
-  const [pettyCashData, setPettyCashData] = useState([]);
+const AdministrativeExpensePage = () => {
+  const [administrativeExpenseData, setAdministrativeExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
   const [isRowClicked, setIsRowClicked] = useState(false);
-  const [pettyCashInfo, setPettyCashInfo] = useState(null);
+  const [administrativeExpenseInfo, setAdministrativeExpenseInfo] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
 
-  const [pettyCashCategoryDetails, setPettyCashCategoryDetails] = useState([]);
+  const [administrativeExpenseCategoryDetails, setAdministrativeExpenseCategoryDetails] = useState([]);
   const [newCategory, setNewCategory] = useState("");
 
-  const [pettyCashUpdatePayload, setPettyCashUpdatePayload] = useState({
+  const [administrativeExpenseUpdatePayload, setAdministrativeExpenseUpdatePayload] = useState({
     amount: "",
     narration: "",
     categoryId: ""
   });
 
   useEffect(() => {
-    fetchPettyCash();
-    fetchPettyCashCategories();
+    fetchAdministrativeExpense();
+    fetchAdministrativeExpenseCategories();
   }, []);
 
-  const options = pettyCashCategoryDetails.map(cat => ({
+  const options = administrativeExpenseCategoryDetails.map(cat => ({
     value: cat.id,
     label: cat.categoryName
   }));
 
-  const fetchPettyCash = async () => {
+  const fetchAdministrativeExpense = async () => {
     try {
-      const res = await axiosAPI.get("/admin/pettyCash");
-      setPettyCashData(res.data);
+      const res = await axiosAPI.get("/admin/administrative-expenses");
+      setAdministrativeExpenseData(res.data);
     } catch (e) {
       console.log(e);
     } finally {
@@ -66,38 +66,38 @@ const PettyCashPage = () => {
     }
   };
 
-  const fetchPettyCashCategories = async () => {
+  const fetchAdministrativeExpenseCategories = async () => {
     try {
-      const res = await axiosAPI.get("/admin/pettyCashCategories");
-      setPettyCashCategoryDetails(res.data);
+      const res = await axiosAPI.get("/admin/administrative-expense-categories");
+      setAdministrativeExpenseCategoryDetails(res.data);
     } catch (e) {
       console.log(e);
     }
   };
 
-  const updatePettyCashRequest = async (id) => {
+  const updateAdministrativeExpenseRequest = async (id) => {
     try {
       setActionLoadingId({ action: "save", id });
 
-      let categoryId = pettyCashUpdatePayload.categoryId;
+      let categoryId = administrativeExpenseUpdatePayload.categoryId;
 
       if (newCategory.trim() !== "") {
         const categoryRes = await axiosAPI.post(
-          `/admin/pettyCashCategories?newCategory=${newCategory}`
+          `/admin/administrative-expense-categories?newCategory=${newCategory}`
         );
         categoryId = categoryRes.data;
-        await fetchPettyCashCategories();
+        await fetchAdministrativeExpenseCategories();
       }
 
       const finalPayload = {
-        amount: pettyCashUpdatePayload.amount,
-        narration: pettyCashUpdatePayload.narration,
+        amount: administrativeExpenseUpdatePayload.amount,
+        narration: administrativeExpenseUpdatePayload.narration,
         category: categoryId
       };
 
-      await axiosAPI.put(`/admin/pettyCash/${id}`, finalPayload);
+      await axiosAPI.put(`/admin/administrative-expenses/${id}`, finalPayload);
 
-      await fetchPettyCash();
+      await fetchAdministrativeExpense();
       setIsEdit(false);
       setIsRowClicked(false);
       setNewCategory("");
@@ -111,8 +111,8 @@ const PettyCashPage = () => {
   const approve = async (id) => {
     try {
       setActionLoadingId({ action: "approve", id });
-      await axiosAPI.put(`/admin/pettyCash/approve/${id}`);
-      await fetchPettyCash();
+      await axiosAPI.put(`/admin/administrative-expenses/approve/${id}`);
+      await fetchAdministrativeExpense();
     } catch (e) {
       console.log(e);
     } finally {
@@ -123,8 +123,8 @@ const PettyCashPage = () => {
   const reject = async (id) => {
     try {
       setActionLoadingId({ action: "reject", id });
-      await axiosAPI.put(`/admin/pettyCash/reject/${id}`);
-      await fetchPettyCash();
+      await axiosAPI.put(`/admin/administrative-expenses/reject/${id}`);
+      await fetchAdministrativeExpense();
     } catch (e) {
       console.log(e);
     } finally {
@@ -136,8 +136,8 @@ const PettyCashPage = () => {
     try {
       setActionLoadingId({ action: "undo", id });
       const username = localStorage.getItem("username");
-      await axiosAPI.put(`/admin/undo/${id}/${username}`);
-      await fetchPettyCash();
+      await axiosAPI.put(`/admin/administrative-expenses/undo/${id}/${username}`);
+      await fetchAdministrativeExpense();
     } catch (e) {
       console.log(e);
     } finally {
@@ -146,13 +146,13 @@ const PettyCashPage = () => {
   };
 
   const handleExportExcel = () => {
-    const exportData = pettyCashData
+    const exportData = administrativeExpenseData
       .filter(item => item.request === "APPROVED")
       .map(item => ({
         Date: new Date(item.dateTime).toLocaleDateString(),
         Amount: item.amount,
         Narration: item.narration || '',
-        Category: item.pettyCashCategory?.categoryName || '',
+        Category: item.administrativeExpenseCategory?.categoryName || '',
         Requested_By: item.requestEmployee
           ? `${item.requestEmployee.firstName} ${item.requestEmployee.lastName}`
           : 'N/A',
@@ -167,16 +167,16 @@ const PettyCashPage = () => {
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Petty Cash');
-    XLSX.writeFile(wb, `PettyCash_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Administrative Expense');
+    XLSX.writeFile(wb, `AdministrativeExpense_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const openDetails = (record) => {
-    setPettyCashInfo(record);
-    setPettyCashUpdatePayload({
+    setAdministrativeExpenseInfo(record);
+    setAdministrativeExpenseUpdatePayload({
       amount: record.amount,
       narration: record.narration,
-      categoryId: record.pettyCashCategory?.id
+      categoryId: record.administrativeExpenseCategory?.id
     });
     setIsRowClicked(true);
   };
@@ -189,7 +189,7 @@ const PettyCashPage = () => {
         <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            {/* Petty Cash Requests */}
+            {/* Administrative Expense Requests */}
             Administrative Expense Request
           </h1>
 
@@ -210,7 +210,7 @@ const PettyCashPage = () => {
                   <div className="h-11 w-11 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900">
-                      Loading Petty Cash Information
+                      Loading Administrative Expense Information
                     </p>
                     <p className="text-xs text-gray-500">
                       Please wait while we fetch the latest data...
@@ -228,7 +228,7 @@ const PettyCashPage = () => {
               </div>
             </div>
           ) : (
-            pettyCashData.map((record) => (
+            administrativeExpenseData.map((record) => (
               <div
                 key={record.id}
                 className="rounded-xl border border-gray-200 bg-white shadow p-3"
@@ -253,7 +253,7 @@ const PettyCashPage = () => {
                     <p className="mt-2 text-xs text-slate-500">
                       Category:{" "}
                       <span className="text-slate-800 font-medium">
-                        {record.pettyCashCategory?.categoryName || "—"}
+                        {record.administrativeExpenseCategory?.categoryName || "—"}
                       </span>
                     </p>
                   </div>
@@ -365,7 +365,7 @@ const PettyCashPage = () => {
                 </thead>
 
                 <tbody className="divide-y">
-                  {pettyCashData.map((record) => (
+                  {administrativeExpenseData.map((record) => (
                     <tr
                       key={record.id}
                       className="hover:bg-slate-100 cursor-pointer"
@@ -387,7 +387,7 @@ const PettyCashPage = () => {
                       <td className="px-6 py-4">{record.narration}</td>
 
                       <td className="px-6 py-4">
-                        {record.pettyCashCategory?.categoryName || "—"}
+                        {record.administrativeExpenseCategory?.categoryName || "—"}
                       </td>
 
                       <td className="px-6 py-4 text-center">
@@ -436,7 +436,7 @@ const PettyCashPage = () => {
         </div>
 
         {/* DETAILS DRAWER */}
-        {isRowClicked && pettyCashInfo && (
+        {isRowClicked && administrativeExpenseInfo && (
           <div
             className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-sm"
             onClick={() => setIsRowClicked(false)}
@@ -447,68 +447,68 @@ const PettyCashPage = () => {
             >
               <div className="flex justify-between mb-6">
                 <h2 className="font-semibold text-lg">Administrative Expense Details</h2>
-                {/* <h2 className="font-semibold text-lg">Petty Cash Details</h2> */}
+                {/* <h2 className="font-semibold text-lg">Administrative Expense Details</h2> */}
                 <button onClick={() => setIsRowClicked(false)}>✕</button>
               </div>
 
               <div className="space-y-4 text-sm">
                 <div>
                   <p className="text-xs text-slate-400">Date</p>
-                  <p>{new Date(pettyCashInfo.dateTime).toLocaleDateString()}</p>
+                  <p>{new Date(administrativeExpenseInfo.dateTime).toLocaleDateString()}</p>
                 </div>
 
                 <div>
                   <p className="text-xs text-slate-400">Amount</p>
-                  <p className="font-bold text-lg">{formatLKR(pettyCashInfo.amount)}</p>
+                  <p className="font-bold text-lg">{formatLKR(administrativeExpenseInfo.amount)}</p>
                 </div>
 
                 <div>
                   <p className="text-xs text-slate-400">Narration</p>
-                  <p>{pettyCashInfo.narration}</p>
+                  <p>{administrativeExpenseInfo.narration}</p>
                 </div>
 
                 <div>
                   <p className="text-xs text-slate-400">Requested Employee</p>
                   <p>
-                    {pettyCashInfo.requestEmployee.firstName} {pettyCashInfo.requestEmployee.lastName}
+                    {administrativeExpenseInfo.requestEmployee.firstName} {administrativeExpenseInfo.requestEmployee.lastName}
                     <br />
-                    <span>{pettyCashInfo.requestEmployee.nic}</span>
+                    <span>{administrativeExpenseInfo.requestEmployee.nic}</span>
                   </p>
                 </div>
 
-                {pettyCashInfo.updatedEmployee.email !== "" &&
+                {administrativeExpenseInfo.updatedEmployee.email !== "" &&
                   <div>
                     <p className="text-xs text-slate-400">Updated Employee</p>
                     <p>
-                      {pettyCashInfo.updatedEmployee.firstName} {pettyCashInfo.updatedEmployee.lastName}
+                      {administrativeExpenseInfo.updatedEmployee.firstName} {administrativeExpenseInfo.updatedEmployee.lastName}
                       <br />
-                      <span>{pettyCashInfo.updatedEmployee.nic}</span>
+                      <span>{administrativeExpenseInfo.updatedEmployee.nic}</span>
                     </p>
                   </div>
                 }
 
-                {pettyCashInfo.approvedEmployee.email &&
+                {administrativeExpenseInfo.approvedEmployee.email &&
                   <div>
                     <p className="text-xs text-slate-400">
-                      {pettyCashInfo.request == "APPROVED" ? "Approved Employee" : "Rejected Employee"}
+                      {administrativeExpenseInfo.request == "APPROVED" ? "Approved Employee" : "Rejected Employee"}
                     </p>
                     <p>
-                      {pettyCashInfo.approvedEmployee.firstName} {pettyCashInfo.approvedEmployee.lastName}
+                      {administrativeExpenseInfo.approvedEmployee.firstName} {administrativeExpenseInfo.approvedEmployee.lastName}
                       <br />
-                      <span>{pettyCashInfo.approvedEmployee.nic}</span>
+                      <span>{administrativeExpenseInfo.approvedEmployee.nic}</span>
                     </p>
                   </div>
                 }
 
                 <div>
                   <p className="text-xs text-slate-400">Category</p>
-                  <p>{pettyCashInfo.pettyCashCategory?.categoryName}</p>
+                  <p>{administrativeExpenseInfo.administrativeExpenseCategory?.categoryName}</p>
                 </div>
 
                 <div>
-                  <StatusBadge status={pettyCashInfo.request} />
+                  <StatusBadge status={administrativeExpenseInfo.request} />
                 </div>
-                {pettyCashInfo.request != "APPROVED" &&
+                {administrativeExpenseInfo.request != "APPROVED" &&
                   <button
                     onClick={() => setIsEdit(true)}
                     className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-900"
@@ -522,28 +522,28 @@ const PettyCashPage = () => {
         )}
 
         {/* EDIT MODAL */}
-        {isEdit && pettyCashInfo && (
+        {isEdit && administrativeExpenseInfo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
             <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg font-semibold mb-4">Edit Administrative Expense Request</h2>
-              {/* <h2 className="text-lg font-semibold mb-4">Edit Petty Cash</h2> */}
+              {/* <h2 className="text-lg font-semibold mb-4">Edit Administrative Expense</h2> */}
 
               <div className="space-y-4">
                 <span className='text-sm text-slate-400'>Amount</span>
                 <input
                   type="number"
-                  value={pettyCashUpdatePayload.amount}
+                  value={administrativeExpenseUpdatePayload.amount}
                   onChange={(e) =>
-                    setPettyCashUpdatePayload(prev => ({ ...prev, amount: e.target.value }))
+                    setAdministrativeExpenseUpdatePayload(prev => ({ ...prev, amount: e.target.value }))
                   }
                   className="w-full border rounded px-3 py-2"
                 />
 
                 <span className='text-sm text-slate-400'>Narration</span>
                 <textarea
-                  value={pettyCashUpdatePayload.narration}
+                  value={administrativeExpenseUpdatePayload.narration}
                   onChange={(e) =>
-                    setPettyCashUpdatePayload(prev => ({ ...prev, narration: e.target.value }))
+                    setAdministrativeExpenseUpdatePayload(prev => ({ ...prev, narration: e.target.value }))
                   }
                   className="w-full border rounded px-3 py-2 h-fit"
                 />
@@ -551,7 +551,7 @@ const PettyCashPage = () => {
                 <span className='text-sm text-slate-400'>
                   Current Category :{" "}
                   <span className='text-slate-700 font-bold'>
-                    {pettyCashCategoryDetails.find(cat => cat.id === pettyCashUpdatePayload.categoryId)?.categoryName}
+                    {administrativeExpenseCategoryDetails.find(cat => cat.id === administrativeExpenseUpdatePayload.categoryId)?.categoryName}
                   </span>
                 </span>
 
@@ -560,12 +560,12 @@ const PettyCashPage = () => {
                   onChange={(selectedOption) => {
                     if (selectedOption.__isNew__) {
                       setNewCategory(selectedOption.label);
-                      setPettyCashUpdatePayload(prev => ({
+                      setAdministrativeExpenseUpdatePayload(prev => ({
                         ...prev,
                         categoryId: null
                       }));
                     } else {
-                      setPettyCashUpdatePayload(prev => ({
+                      setAdministrativeExpenseUpdatePayload(prev => ({
                         ...prev,
                         categoryId: selectedOption.value
                       }));
@@ -583,7 +583,7 @@ const PettyCashPage = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => updatePettyCashRequest(pettyCashInfo.id)}
+                    onClick={() => updateAdministrativeExpenseRequest(administrativeExpenseInfo.id)}
                     className="px-4 py-2 bg-slate-800 text-white rounded w-full sm:w-auto"
                   >
                     {actionLoadingId?.action === "save"
@@ -601,4 +601,4 @@ const PettyCashPage = () => {
   );
 };
 
-export default PettyCashPage;
+export default AdministrativeExpensePage;
