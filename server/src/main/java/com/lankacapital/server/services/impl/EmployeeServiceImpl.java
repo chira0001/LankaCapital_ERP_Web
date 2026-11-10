@@ -224,7 +224,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
 
-        employee.setDeleted(true);
+        employee.setDeleted(1);
         employee.setAccountStatus("Deleted");
         employeeRepository.save(employee);
     }

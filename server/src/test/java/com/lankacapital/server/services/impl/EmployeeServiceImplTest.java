@@ -21,6 +21,25 @@ import static org.mockito.Mockito.when;
 
 class EmployeeServiceImplTest {
     @Test
+    void deletingEmployeeSetsIntegerDeletedFlag() {
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        Employee employee = employee(2L, "FO");
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee));
+
+        EmployeeServiceImpl service = new EmployeeServiceImpl(
+                employeeRepository,
+                mock(RoleRepository.class),
+                mock(PasswordEncoder.class),
+                mock(AdminMenuPermissionService.class)
+        );
+
+        service.deleteEmployee(2L);
+
+        assertEquals(1, employee.getDeleted());
+        verify(employeeRepository).save(employee);
+    }
+
+    @Test
     void regularAdminCannotPromoteEmployeeToSuperAdmin() {
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         RoleRepository roleRepository = mock(RoleRepository.class);
