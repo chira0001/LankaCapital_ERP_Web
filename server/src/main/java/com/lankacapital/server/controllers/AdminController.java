@@ -34,7 +34,7 @@ public class AdminController {
 
     private final EmployeeService employeeService;
     private final LoanService loanService;
-    private final PettyCashService pettyCashService;
+    private final AdministrativeExpenseService administrativeExpenseService;
 //    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
     private final FinancialReportExportService financialReportExportService;
@@ -43,7 +43,7 @@ public class AdminController {
     private final CustomerService customerService;
     private final DashboardService dashboardService;
     private final SalaryMetaDataService salaryMetaDataService;
-    private final PettyCashCategoryService pettyCashCategoryService;
+    private final AdministrativeExpenseCategoryService administrativeExpenseCategoryService;
     private final TrialBalanceDataService trialBalanceDataService;
     private final EquityChangeService equityChangeService;
     private final SalaryService salaryService;
@@ -199,49 +199,49 @@ public class AdminController {
     }
 
     //admin interest management
-    //petty cash
-    @GetMapping("/pettyCash")
-    public ResponseEntity<?>getAllPettyCash(){
-        return ResponseEntity.ok(pettyCashService.getAllPettyCash());
+    //administrative expense
+    @GetMapping("/administrative-expenses")
+    public ResponseEntity<?>getAllAdministrativeExpense(){
+        return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense());
     }
 
-    @PutMapping(path = "/pettyCash/{id}")
-    public ResponseEntity<?> updatePettyCash(
+    @PutMapping(path = "/administrative-expenses/{id}")
+    public ResponseEntity<?> updateAdministrativeExpense(
             Authentication authentication,
-            @RequestBody PettyCashDto pettyCashDto,
+            @RequestBody AdministrativeExpenseDto administrativeExpenseDto,
             @PathVariable Long id
     ){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
-        return new ResponseEntity<>(pettyCashService.updatePettyCash(authentication.getName(),id,pettyCashDto), HttpStatus.OK);
+        return new ResponseEntity<>(administrativeExpenseService.updateAdministrativeExpense(authentication.getName(),id,administrativeExpenseDto), HttpStatus.OK);
     }
 
-    @PutMapping("/pettyCash/approve/{id}")
-    public ResponseEntity<?>approvePettyCash(
+    @PutMapping("/administrative-expenses/approve/{id}")
+    public ResponseEntity<?>approveAdministrativeExpense(
             @PathVariable Long id,
             Authentication authentication
     ){
         return ResponseEntity.ok(
-                pettyCashService.approvePettyCash(id,authentication.getName())
+                administrativeExpenseService.approveAdministrativeExpense(id,authentication.getName())
         );
 
     }
 
-    @PutMapping("/pettyCash/reject/{id}")
-    public ResponseEntity<?>rejectPettyCash(
+    @PutMapping("/administrative-expenses/reject/{id}")
+    public ResponseEntity<?>rejectAdministrativeExpense(
             @PathVariable Long id,
             Authentication authentication
             ){
         return ResponseEntity.ok(
-                pettyCashService.rejectPettyCash(id,authentication.getName())
+                administrativeExpenseService.rejectAdministrativeExpense(id,authentication.getName())
         );
     }
 
-    @PutMapping("/undo/{id}/{adminUsername}")
-    public PettyCashResponseDto undo(@PathVariable Long id,
+    @PutMapping("/administrative-expenses/undo/{id}/{adminUsername}")
+    public AdministrativeExpenseResponseDto undo(@PathVariable Long id,
                                      @PathVariable String adminUsername) {
-        return pettyCashService.undoStatus(id, adminUsername);
+        return administrativeExpenseService.undoStatus(id, adminUsername);
     }
 
     // ================= CUSTOMER MANAGEMENT =================
@@ -350,21 +350,21 @@ public class AdminController {
         return ResponseEntity.ok(dailyCollectionService.getTodayCollection());
     }
 
-    @GetMapping(path = "/pettyCashCategories")
-    public ResponseEntity<?> getAllPettyCashCategories(Authentication authentication){
+    @GetMapping(path = "/administrative-expense-categories")
+    public ResponseEntity<?> getAllAdministrativeExpenseCategories(Authentication authentication){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
-        return new ResponseEntity<>(pettyCashCategoryService.getAllCategories(), HttpStatus.OK);
+        return new ResponseEntity<>(administrativeExpenseCategoryService.getAllCategories(), HttpStatus.OK);
     }
 
-    @PostMapping(path = "/pettyCashCategories")
+    @PostMapping(path = "/administrative-expense-categories")
     public ResponseEntity<?> createNewCategory(Authentication authentication, @RequestParam String newCategory){
         if(authentication == null || authentication.getName().isEmpty()){
             throw new ResourceNotFoundException("Token is invalid");
         }
         
-        return new ResponseEntity<>(pettyCashCategoryService.createNewCategory(newCategory, authentication.getName()), HttpStatus.OK);
+        return new ResponseEntity<>(administrativeExpenseCategoryService.createNewCategory(newCategory, authentication.getName()), HttpStatus.OK);
     }
 
     @GetMapping(path = "/loan-summary")

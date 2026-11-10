@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "petty_cash")
+@Table(name = "administrative_expense")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PettyCash {
+public class AdministrativeExpense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class PettyCash {
 
     @ManyToOne
     @JoinColumn(name = "category_id")
-    private PettyCashCategory pettyCashCategory;
+    private AdministrativeExpenseCategory administrativeExpenseCategory;
 
     @ManyToOne
     @JoinColumn(name = "requested_by")

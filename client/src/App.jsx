@@ -16,7 +16,7 @@ const LoanApplications = lazy(() => import("./pages/Admin/LoanApplication"));
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
 const CustomerManagementPage = lazy(() => import("./pages/Admin/CustomerManagementPage"));
 const FieldOfficerPerformancePage = lazy(() => import("./pages/Admin/FeildOfficerPerformance"));
-const PettyCashPage = lazy(() => import("./pages/Admin/PettyCashPage"));
+const AdministrativeExpensePage = lazy(() => import("./pages/Admin/AdministrativeExpensePage"));
 const FinancialReportsPage = lazy(() => import("./pages/Admin/FinancialReportsPage"));
 const UserManagementPage = lazy(() => import("./pages/Admin/UserManagementPage"));
 const SystemConfigurationPage = lazy(() => import("./pages/Admin/SystemConfigurationPage"));
@@ -28,7 +28,7 @@ const ReceptionistLoan = lazy(() => import("./pages/Receptionist/ReceptionistLoa
 const ReceptionistSalary = lazy(() => import("./pages/Receptionist/ReceptionistSalary"));
 const ReceptionistView = lazy(() => import("./pages/Receptionist/ReceptionistView"));
 const ReceptionistSetting = lazy(() => import("./pages/Receptionist/ReceptionistSetting"));
-const ReceptionistPettyCash = lazy(() => import("./pages/Receptionist/ReceptionistPettyCash"));
+const ReceptionistAdministrativeExpense = lazy(() => import("./pages/Receptionist/ReceptionistAdministrativeExpense"));
 const LoanSummary = lazy(() => import("./component/LoanSummary/LoanSummary"));
 
 const getUser = () => {
@@ -170,8 +170,7 @@ const App = () => {
           <Route path="salary" element={<AdminMenuRoute permission="salary"><Salary /></AdminMenuRoute>} />
           <Route path="customers" element={<AdminMenuRoute permission="customers"><CustomerManagementPage /></AdminMenuRoute>} />
           <Route path="officers" element={<AdminMenuRoute permission="officers"><FieldOfficerPerformancePage /></AdminMenuRoute>} />
-          <Route path="admin-exp" element={<AdminMenuRoute permission="admin-exp"><PettyCashPage /></AdminMenuRoute>} />
-          {/* <Route path="petty-cash" element={<PettyCashPage />} /> */}
+          <Route path="admin-exp" element={<AdminMenuRoute permission="admin-exp"><AdministrativeExpensePage /></AdminMenuRoute>} />
           <Route path="financials" element={<AdminMenuRoute permission="financials"><FinancialReportsPage /></AdminMenuRoute>} />
           {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
           <Route path="users" element={<AdminMenuRoute permission="users"><UserManagementPage /></AdminMenuRoute>} />
@@ -192,8 +191,7 @@ const App = () => {
           <Route path="salary" element={<ReceptionistSalary />} />
           <Route path="view" element={<ReceptionistView />} />
           {/* <Route path="monthlyExp" element={<ReceptionistMonthlyExpense />} /> */}
-          <Route path="admin-exp" element={<ReceptionistPettyCash />} />
-          {/* <Route path="monthlyPetty" element={<ReceptionistPettyCash />} /> */}
+          <Route path="admin-exp" element={<ReceptionistAdministrativeExpense />} />
           <Route path="settings" element={<ReceptionistSetting />} />
         </Route>
 

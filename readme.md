@@ -223,7 +223,10 @@ npm run dev
 | `salary_conditions` | Salary calculation rules |
 | `salary_meta_data` | Payroll metadata |
 | `monthly_expenses` | Monthly business expenses |
-| `petty_cash` | Petty cash transactions |
+| `administrative_expense` | Administrative expense transactions |
+| `administrative_expense_category` | Administrative expense categories |
+
+For an existing database, run `server/src/main/resources/templates/administrative-expense-migration.sql` once before starting the updated backend to rename the existing expense tables without losing their data.
 
 ---
 

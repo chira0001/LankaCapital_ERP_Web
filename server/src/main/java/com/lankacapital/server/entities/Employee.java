@@ -70,7 +70,7 @@ public class Employee implements UserDetails {
     private String adminMenuPermissions;
 
     @Column(nullable = false)
-    private Boolean deleted = false;
+    private Integer deleted = 0;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

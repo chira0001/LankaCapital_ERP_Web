@@ -33,7 +33,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
         select e
         from Employee e
         left join e.role r
-        where e.deleted = false
+        where e.deleted = 0
           and lower(e.email) <> lower(:currentEmail)
           and (
                 :search is null or :search = '' or

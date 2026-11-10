@@ -4,7 +4,7 @@ import com.lankacapital.server.dtos.EmployeeResponseDto;
 import lombok.Data;
 
 @Data
-public class PettyCashCategoryResponseDto {
+public class AdministrativeExpenseCategoryResponseDto {
 
     private Integer id;
     private String categoryName;
