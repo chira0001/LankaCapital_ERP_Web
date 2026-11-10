@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const ReceptionistHome = () => {
     const [pendingLoans, setPendingLoans] = useState([]);
+    const [dashboardStats, setDashboardStats] = useState(null);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -45,6 +46,29 @@ const ReceptionistHome = () => {
         fetchPendingLoans();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, debouncedSearch]);
+
+    useEffect(() => {
+        let isCurrent = true;
+
+        const fetchDashboardStats = async () => {
+            try {
+                const response = await axiosAPI.get("/recep/dashboard/summary");
+                if (isCurrent) {
+                    setDashboardStats(response.data);
+                }
+            } catch (e) {
+                console.error(e);
+                if (isCurrent) {
+                    toast.error("Error fetching dashboard statistics");
+                }
+            }
+        };
+
+        fetchDashboardStats();
+        return () => {
+            isCurrent = false;
+        };
+    }, []);
 
     const fetchlastFileNumber = async (loanType) => {
         try {
@@ -158,9 +182,10 @@ const ReceptionistHome = () => {
     }
 
     const stats = [
-        { title: "Total Customers", value: "1,240", growth: "+8 this week", bg: "bg-blue-50", text: "text-blue-600" },
-        { title: "Active Loans", value: "860", growth: "+12 this month", bg: "bg-green-50", text: "text-green-600" },
-        { title: "Completed Today", value: "24", growth: "+3 vs yesterday", bg: "bg-purple-50", text: "text-purple-600" },
+        { title: "Total Customers", value: dashboardStats?.totalCustomers, description: "Registered customers", bg: "bg-blue-50", text: "text-blue-600" },
+        { title: "Active Loans", value: dashboardStats?.activeLoans, description: "Currently active", bg: "bg-green-50", text: "text-green-600" },
+        { title: "Completed Today", value: dashboardStats?.completedToday, description: "Closed today", bg: "bg-purple-50", text: "text-purple-600" },
+        { title: "Closed Loans", value: dashboardStats?.closedLoans, description: "All completed loans", bg: "bg-red-50", text: "text-red-600" },
     ];
 
     const startIndex = totalElements === 0 ? 0 : (page - 1) * size + 1;
@@ -181,8 +206,8 @@ const ReceptionistHome = () => {
                         className={`${item.bg} rounded-xl p-6 shadow-sm border border-gray-100`}
                     >
                         <p className="text-gray-600 text-sm font-medium">{item.title}</p>
-                        <h2 className={`text-3xl font-bold mt-2 ${item.text}`}>{item.value}</h2>
-                        <p className="text-sm text-gray-500 mt-2">{item.growth}</p>
+                        <h2 className={`text-3xl font-bold mt-2 ${item.text}`}>{item.value ?? "—"}</h2>
+                        <p className="text-sm text-gray-500 mt-2">{item.description}</p>
                     </div>
                 ))}
             </div>

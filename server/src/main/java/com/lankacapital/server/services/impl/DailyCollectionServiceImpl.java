@@ -257,6 +257,7 @@ public class DailyCollectionServiceImpl implements DailyCollectionService {
         if (isFullyPaid) {
             loan.setUpdateStatus(loan.getUpdateStatus() + 1);
             loan.setStatus(LoanStatus.COMPLETED);
+            loan.setCompletedAt(LocalDateTime.now());
             loanRepository.save(loan);
         }
 

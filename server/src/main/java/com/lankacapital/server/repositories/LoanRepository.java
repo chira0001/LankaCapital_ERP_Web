@@ -32,6 +32,12 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     @Query("SELECT s FROM Loan s WHERE s.fileNumber IN :fileNumber")
     List<Loan> findLoansByIds(@Param("fileNumber") List<String> fileNumber);
     List<Loan> findByStatus(LoanStatus status);
+    long countByStatus(LoanStatus status);
+    long countByStatusAndCompletedAtBetween(
+            LoanStatus status,
+            LocalDateTime start,
+            LocalDateTime end
+    );
     List<Loan> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT COALESCE(SUM(l.amount), 0) FROM Loan l")
