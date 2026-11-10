@@ -341,6 +341,15 @@ public class AdminController {
         );
     }
 
+    @GetMapping(path = "/dailyCollections/today-total")
+    public ResponseEntity<?> getTodayCollectionTotal(Authentication authentication) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+
+        return ResponseEntity.ok(dailyCollectionService.getTodayCollection());
+    }
+
     @GetMapping(path = "/pettyCashCategories")
     public ResponseEntity<?> getAllPettyCashCategories(Authentication authentication){
         if(authentication == null || authentication.getName().isEmpty()){

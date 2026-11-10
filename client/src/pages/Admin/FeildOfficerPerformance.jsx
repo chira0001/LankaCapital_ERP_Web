@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import axiosAPI from '@/api/axiosAPI';
 import { UserCheck } from 'lucide-react';
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -15,6 +15,7 @@ const RECORDS_PER_PAGE = 10;
 const FieldOfficerPerformancePage = () => {
   const [performanceData, setPerformanceData] = useState([]);
   const [officerPages, setOfficerPages] = useState({});
+  const [todayCollection, setTodayCollection] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const getToday = () => {
@@ -28,6 +29,20 @@ const FieldOfficerPerformancePage = () => {
 
   useEffect(() => {
     fetchDailyCollectionDetails();
+  }, []);
+
+  useEffect(() => {
+    const fetchTodayCollection = async () => {
+      try {
+        const response = await axiosAPI.get('/admin/dailyCollections/today-total');
+        setTodayCollection(response.data);
+      } catch (error) {
+        console.error('Failed to fetch today collection total:', error);
+        toast.error('Failed to fetch today collection total');
+      }
+    };
+
+    fetchTodayCollection();
   }, []);
 
   const fetchDailyCollectionDetails = async () => {
@@ -109,6 +124,16 @@ const FieldOfficerPerformancePage = () => {
             </h1>
             <p className="text-gray-600">
               View collection records grouped by Field Officer
+            </p>
+          </div>
+
+          {/* Today's Total Collection */}
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 shadow-sm sm:p-6">
+            <p className="text-sm font-medium text-blue-800">
+              Today&apos;s Total Collection
+            </p>
+            <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
+              {todayCollection === null ? 'Loading...' : formatLKR(todayCollection)}
             </p>
           </div>
 
