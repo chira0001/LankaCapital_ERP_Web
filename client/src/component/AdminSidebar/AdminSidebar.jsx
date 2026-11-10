@@ -15,25 +15,33 @@ import {
   Binoculars,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 
-const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/ad/dashboard" },
-  { name: "Loan Applications", icon: FileText, path: "/ad/loan-applications" },
-  { name: "Loan Summary", icon: Summary, path: "/ad/loan-summary" },
-  { name: "Administrative Expenses", icon: WalletMinimal, path: "/ad/admin-exp" },
-  // { name: "Petty Cash", icon: WalletMinimal, path: "/ad/petty-cash" },
-  { name: "Financials", icon: Files, path: "/ad/financials" },
-  { name: "Customer Management", icon: Users, path: "/ad/customers" },
-  { name: "User Management", icon: CircleUser, path: "/ad/users" },
-  { name: "Salary Management", icon: CircleDollarSign, path: "/ad/salary" },
-  { name: "Field Officer Collection", icon: Binoculars, path: "/ad/officers" },
-  { name: "System Configuration", icon: Settings, path: "/ad/settings" },
-];
+const menuIcons = {
+  dashboard: LayoutDashboard,
+  "loan-applications": FileText,
+  "loan-summary": Summary,
+  "admin-exp": WalletMinimal,
+  financials: Files,
+  customers: Users,
+  users: CircleUser,
+  salary: CircleDollarSign,
+  officers: Binoculars,
+  settings: Settings,
+};
+const menuItems = ADMIN_MENU_ITEMS.map((item) => ({ ...item, icon: menuIcons[item.id] }));
 
 const Sidebar = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
+  const { isLoading, isSuperAdmin, permissions } = useAdminMenuAccess();
+  const visibleMenuItems = isLoading
+    ? []
+    : isSuperAdmin
+      ? menuItems
+      : menuItems.filter((item) => permissions.includes(item.id));
 
   const logoutFunc = () => {
     localStorage.clear();
@@ -76,31 +84,37 @@ const Sidebar = () => {
 
         {/* Horizontal scroll menu */}
         <div className="flex gap-2 overflow-x-auto overflow-y-hidden px-2 pb-3">
-          {menuItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={index}
-                to={item.path}
-                className={({ isActive }) =>
-                  `shrink-0 flex items-center justify-center rounded-lg px-3 py-2 transition-all duration-200
-                   ${isActive ? "bg-slate-800 text-white" : "hover:bg-slate-800/60 hover:text-white"}`
-                }
-                aria-label={item.name}
-                title={item.name}
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon
-                      size={18}
-                      className={`${isActive ? "text-blue-400" : "text-slate-400"}`}
-                    />
-                    <span className="sr-only">{item.name}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
+          {isLoading ? (
+            <p className="px-2 text-xs text-slate-400" role="status">
+              Checking your access...
+            </p>
+          ) : (
+            visibleMenuItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={index}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `shrink-0 flex items-center justify-center rounded-lg px-3 py-2 transition-all duration-200
+                     ${isActive ? "bg-slate-800 text-white" : "hover:bg-slate-800/60 hover:text-white"}`
+                  }
+                  aria-label={item.name}
+                  title={item.name}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        size={18}
+                        className={`${isActive ? "text-blue-400" : "text-slate-400"}`}
+                      />
+                      <span className="sr-only">{item.name}</span>
+                    </>
+                  )}
+                </NavLink>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -125,46 +139,50 @@ const Sidebar = () => {
           </p>
 
           <ul className="space-y-1">
-            {menuItems.map((item, index) => {
-              const Icon = item.icon;
+            {isLoading
+              ? Array.from({ length: 5 }, (_, index) => (
+                  <li
+                    key={index}
+                    className="h-10 animate-pulse rounded-lg bg-slate-900/70 motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                ))
+              : visibleMenuItems.map((item, index) => {
+                  const Icon = item.icon;
 
-              return (
-                <li key={index}>
-
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `group relative flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 sm:gap-3 sm:px-4 sm:py-3 sm:text-sm
-                      ${
-                        isActive
-                          ? "bg-slate-800 text-white"
-                          : "hover:bg-slate-800/60 hover:text-white"
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {/* Active Indicator */}
-                        {isActive && (
-                          <span className="absolute left-0 top-0 h-full w-1 rounded-r-md bg-blue-500"></span>
-                        )}
-
-                        <Icon
-                          size={16}
-                          className={`sm:h-5 sm:w-5 ${
+                  return (
+                    <li key={index}>
+                      <NavLink
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `group relative flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 sm:gap-3 sm:px-4 sm:py-3 sm:text-sm
+                          ${
                             isActive
-                              ? "text-blue-400"
-                              : "text-slate-400 group-hover:text-white"
-                          }`}
-                        />
-
-                        <span className="hidden sm:inline">{item.name}</span>
-                      </>
-                    )}
-                  </NavLink>
-                </li>
-              );
-            })}
+                              ? "bg-slate-800 text-white"
+                              : "hover:bg-slate-800/60 hover:text-white"
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <span className="absolute left-0 top-0 h-full w-1 rounded-r-md bg-blue-500" />
+                            )}
+                            <Icon
+                              size={16}
+                              className={`sm:h-5 sm:w-5 ${
+                                isActive
+                                  ? "text-blue-400"
+                                  : "text-slate-400 group-hover:text-white"
+                              }`}
+                            />
+                            <span className="hidden sm:inline">{item.name}</span>
+                          </>
+                        )}
+                      </NavLink>
+                    </li>
+                  );
+                })}
           </ul>
         </div>
 

@@ -5,6 +5,8 @@ import com.lankacapital.server.dtos.EmployeeResponseDto;
 import com.lankacapital.server.dtos.FieldOfficerResAsyncDto;
 import com.lankacapital.server.entities.Employee;
 
+import java.util.Arrays;
+
 public class EmployeeMapper {
 
     public static Employee mapToEmployee(EmployeeAddDto dto){
@@ -43,6 +45,12 @@ public class EmployeeMapper {
         dto.setPhoneNumber(employee.getPhoneNumber());
         dto.setBasicSalary(employee.getBasicSalary());
         dto.setAccountStatus(employee.getAccountStatus());
+        String menuPermissions = employee.getAdminMenuPermissions();
+        dto.setMenuPermissions(menuPermissions == null
+            ? null
+            : menuPermissions.isBlank()
+            ? java.util.List.of()
+            : Arrays.stream(menuPermissions.split(",")).toList());
 
         return dto;
     }
