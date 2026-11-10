@@ -188,7 +188,6 @@ Open `http://localhost:5173`. Vite proxies `/api` requests to the local API. To 
 - **Chirath Wijesinghe**
 - **Shanuka Gamlath**
 - **Vihaga Yasitha**
-- **Piumika Fernando**
 
 ## License and use
 
