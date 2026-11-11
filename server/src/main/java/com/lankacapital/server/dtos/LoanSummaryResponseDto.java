@@ -21,6 +21,7 @@ public class LoanSummaryResponseDto {
     private LoanType loanType;
     private LocalDate endAt;
     private BigDecimal installmentValue;
+    private BigDecimal totalPaid;
     private BigDecimal remainingBalance;
     private BigDecimal arrearsAmount;
     private BigDecimal dueAmount;

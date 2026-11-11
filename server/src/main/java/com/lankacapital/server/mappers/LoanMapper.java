@@ -286,6 +286,7 @@ public class LoanMapper {
         dto.setInstallmentValue(installmentValue);
 
         BigDecimal paid = totalPaid != null ? totalPaid : BigDecimal.ZERO;
+        dto.setTotalPaid(paid);
         dto.setRemainingBalance(totalWithInterest.subtract(paid));
 
         BigDecimal due = totalDue != null ? totalDue : BigDecimal.ZERO;
