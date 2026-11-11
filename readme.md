@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="client/src/assets/Logo.png" alt="Lanka Capital logo" width="180" />
+  <img src="client/src/assets/LogoWhiteBackground.png" alt="Lanka Capital logo on a white background" width="180" />
 
   # Lanka Capital ERP
 

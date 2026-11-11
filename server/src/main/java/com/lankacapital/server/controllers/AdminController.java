@@ -35,7 +35,6 @@ public class AdminController {
     private final EmployeeService employeeService;
     private final LoanService loanService;
     private final AdministrativeExpenseService administrativeExpenseService;
-//    private final MonthlyExpenseService monthlyExpenseService;
     private final FinancialStatementService financialStatementService;
     private final FinancialReportExportService financialReportExportService;
     private final AssetsRegistryService assetsRegistryService;
@@ -123,11 +122,6 @@ public class AdminController {
         Employee newEmployee = employeeService.addNewEmployee(authentication.getName(), dto);
         return new ResponseEntity<>(newEmployee, HttpStatus.CREATED);
     }
-
-//    @GetMapping("/employees")
-//    public ResponseEntity<List<EmployeeResponseDto>> getAllEmployees(Authentication authentication) {
-//        return ResponseEntity.ok(employeeService.getAllEmployees(authentication.getName()));
-//    }
 
     @GetMapping("/employees")
     public ResponseEntity<?> getAllEmployees(

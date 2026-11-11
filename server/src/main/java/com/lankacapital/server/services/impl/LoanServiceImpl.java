@@ -276,9 +276,11 @@ public class LoanServiceImpl implements LoanService {
 
         if (LoanStatus.APPROVED.name().equals(loanUpdateDto.getStatus())) {
             loan.setApprovedEmployee(employee);
+            loan.setApprovedAt(LocalDateTime.now());
         } else if (LoanStatus.PENDING.name().equals(loanUpdateDto.getStatus())) {
             loan.setApprovedEmployee(null);
             loan.setUpdatedEmployee(employee);
+            loan.setApprovedAt(null);
         } else {
             loan.setUpdatedEmployee(employee);
         }
