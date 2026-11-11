@@ -164,17 +164,12 @@ const App = () => {
           <Route path="dashboard" element={<AdminMenuRoute permission="dashboard"><Dashboard /></AdminMenuRoute>} />
           <Route path="loan-applications" element={<AdminMenuRoute permission="loan-applications"><LoanApplications /></AdminMenuRoute>} />
           <Route path="loan-summary" element={<AdminMenuRoute permission="loan-summary"><LoanSummary /></AdminMenuRoute>} />
-          {/* <Route path="portfolio" element={<PortfolioOverview />} /> */}
-          {/* <Route path="performance" element={<LoanPerformance />} /> */}
-          {/* <Route path="revenue" element={<RevenueTracking />} /> */}
           <Route path="salary" element={<AdminMenuRoute permission="salary"><Salary /></AdminMenuRoute>} />
           <Route path="customers" element={<AdminMenuRoute permission="customers"><CustomerManagementPage /></AdminMenuRoute>} />
           <Route path="officers" element={<AdminMenuRoute permission="officers"><FieldOfficerPerformancePage /></AdminMenuRoute>} />
           <Route path="admin-exp" element={<AdminMenuRoute permission="admin-exp"><AdministrativeExpensePage /></AdminMenuRoute>} />
           <Route path="financials" element={<AdminMenuRoute permission="financials"><FinancialReportsPage /></AdminMenuRoute>} />
-          {/* <Route path="targets" element={<PerformanceTargetsPages />} /> */}
           <Route path="users" element={<AdminMenuRoute permission="users"><UserManagementPage /></AdminMenuRoute>} />
-          {/* <Route path="audit" element={<AuditLogsPage />} /> */}
           <Route path="settings" element={<AdminMenuRoute permission="settings"><SystemConfigurationPage /></AdminMenuRoute>} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
