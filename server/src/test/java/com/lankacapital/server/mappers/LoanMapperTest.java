@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class LoanMapperTest {
     @Test
-    void loanSummaryArrearsAreTheAbsoluteSumOfOutstandingDueAmounts() {
+    void loanSummaryPreservesTheSignedSumOfOutstandingDueAmounts() {
         Loan loan = new Loan();
         loan.setAmount(new BigDecimal("30000.00"));
         loan.setInterestRate(20.0);
@@ -30,7 +30,7 @@ class LoanMapperTest {
                 new BigDecimal("-1200.00")
         );
 
-        assertEquals(new BigDecimal("1200.00"), summary.getArrearsAmount());
+        assertEquals(new BigDecimal("-1200.00"), summary.getArrearsAmount());
     }
 
     @Test
