@@ -293,35 +293,35 @@ const LoanSummary = () => {
     const currentPayments = paymentRecords; // already backend-paged
 
     return (
-        <div className="min-h-screen w-full p-3">
+        <div className="min-h-screen w-full p-2 sm:p-3">
             <ToastContainer position="top-right" autoClose={3000} />
 
             <div className="mx-auto max-w-[1600px]">
                 {/* Page header */}
-                <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+                <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
                     <div>
-                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500 sm:text-xs">
+                        <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-gray-500 sm:text-[10px]">
                             Finance overview
                         </p>
 
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">
+                        <h1 className="text-[1.85rem] font-bold tracking-tight text-gray-950 sm:text-[2.2rem]">
                             Loan Summary
                         </h1>
 
-                        <p className="mt-1 text-xs text-gray-500 sm:mt-2 sm:text-sm">
+                        <p className="mt-1 text-[11px] text-gray-500 sm:mt-2 sm:text-xs">
                             Review ongoing loans and inspect individual payment records.
                         </p>
                     </div>
 
-                    <div className="rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm sm:px-4">
-                        <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500 sm:text-xs">
+                    <div className="rounded-xl border border-gray-200 bg-white px-2.5 py-2 shadow-sm sm:px-3 sm:py-2.5">
+                        <p className="text-[9px] font-medium uppercase tracking-wide text-gray-500 sm:text-[10px]">
                             Total loans
                         </p>
 
                         {loading ? (
-                            <div className="mt-2 h-7 w-16 rounded bg-gray-100 animate-pulse" />
+                            <div className="mt-2 h-6 w-12 rounded bg-gray-100 animate-pulse" />
                         ) : (
-                            <p className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
+                            <p className="mt-1 text-lg font-bold text-gray-900 sm:text-xl">
                                 {totalLoans}
                             </p>
                         )}
@@ -330,12 +330,12 @@ const LoanSummary = () => {
 
                 {/* Main Table for md+ */}
                 <section className="hidden md:block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <div className="flex flex-col gap-2 border-b border-gray-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+                    <div className="flex flex-col gap-2 border-b border-gray-200 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-3">
                         <div>
                             <h2 className="text-sm font-semibold text-gray-900 sm:text-base">
                                 Ongoing loan records
                             </h2>
-                            <p className="mt-1 text-[10px] text-gray-500 sm:text-xs">
+                            <p className="mt-1 text-[10px] text-gray-500 sm:text-[11px]">
                                 Select a row to view its payment history.
                             </p>
                         </div>
@@ -348,12 +348,12 @@ const LoanSummary = () => {
                                 placeholder="Search by Loan ID / Applicant"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full sm:w-[260px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-800 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] text-gray-800 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200 sm:w-[230px]"
                             />
                         </div>
 
                         {!loading && totalLoans > 0 && (
-                            <p className="text-[10px] text-gray-500 sm:text-xs">
+                            <p className="text-[10px] text-gray-500 sm:text-[11px]">
                                 Showing{" "}
                                 <span className="font-semibold text-gray-800">
                                     {startIndex}–{endIndex}
@@ -391,40 +391,40 @@ const LoanSummary = () => {
                                 </div>
                             </div>
                         ) : (
-                            <table className="w-full min-w-[900px] text-xs sm:text-sm">
+                            <table className="w-full min-w-[760px] text-[10px] sm:text-xs">
                                 <thead className="border-b border-gray-200 bg-gray-50">
-                                    <tr className="text-left text-[9px] font-bold uppercase tracking-wider text-gray-500 sm:text-[11px]">
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
+                                    <tr className="text-left text-[8px] font-bold uppercase tracking-wider text-gray-500 sm:text-[10px]">
+                                        <th className="whitespace-nowrap px-2 py-2 sm:px-3 sm:py-3">
                                             Loan ID
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 lg:table-cell sm:px-3 sm:py-3">
                                             Loan Date
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
+                                        <th className="whitespace-nowrap px-2 py-2 sm:px-3 sm:py-3">
                                             Applicant
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden sm:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 sm:table-cell sm:px-3 sm:py-3">
                                             Installments
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
+                                        <th className="whitespace-nowrap px-2 py-2 sm:px-3 sm:py-3">
                                             Amount
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 md:table-cell sm:px-3 sm:py-3">
                                             Total Paid Amount
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 lg:table-cell sm:px-3 sm:py-3">
                                             Per Installment
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
+                                        <th className="whitespace-nowrap px-2 py-2 sm:px-3 sm:py-3">
                                             Type
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 md:table-cell sm:px-3 sm:py-3">
                                             Remaining Balance
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 md:table-cell sm:px-3 sm:py-3">
                                             Arrears
                                         </th>
-                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
+                                        <th className="hidden whitespace-nowrap px-2 py-2 lg:table-cell sm:px-3 sm:py-3">
                                             Approved By
                                         </th>
                                     </tr>
@@ -448,13 +448,13 @@ const LoanSummary = () => {
                                             }}
                                             className="cursor-pointer transition-colors hover:bg-blue-50/50 focus:bg-blue-50 focus:outline-none"
                                         >
-                                            <td className="px-3 py-3 sm:px-5 sm:py-4">
+                                            <td className="px-2 py-2 sm:px-3 sm:py-3">
                                                 <span className="font-bold text-gray-900">
                                                     {app.fileNumber || "—"}
                                                 </span>
                                             </td>
 
-                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-600 lg:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden whitespace-nowrap px-2 py-2 text-gray-600 lg:table-cell sm:px-3 sm:py-3">
                                                 <span className="font-bold text-black">
                                                     {formatDate(app.createdAt)}
                                                 </span>
@@ -462,39 +462,39 @@ const LoanSummary = () => {
                                                 <span>{formatDate(app.endAt)}</span>
                                             </td>
 
-                                            <td className="px-3 py-3 sm:px-5 sm:py-4">
+                                            <td className="px-2 py-2 sm:px-3 sm:py-3">
                                                 <div className="font-semibold text-gray-800">
                                                     {app.customer?.name || "—"}
                                                 </div>
-                                                <div className="mt-1 text-[10px] text-gray-500 sm:text-xs">
+                                                <div className="mt-1 text-[9px] text-gray-500 sm:text-[10px]">
                                                     {app.customer?.nic || "—"}
                                                 </div>
                                             </td>
 
-                                            <td className="hidden px-3 py-3 text-gray-700 sm:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden px-2 py-2 text-gray-700 sm:table-cell sm:px-3 sm:py-3">
                                                 <span className="font-medium">
                                                     {app.installment || 0}x
                                                 </span>
-                                                <div className="mt-1 text-[10px] text-gray-500 sm:text-xs">
+                                                <div className="mt-1 text-[9px] text-gray-500 sm:text-[10px]">
                                                     {app.interestRate || 0}% interest
                                                 </div>
                                             </td>
 
-                                            <td className="whitespace-nowrap px-3 py-3 font-semibold text-gray-900 sm:px-5 sm:py-4">
+                                            <td className="whitespace-nowrap px-2 py-2 font-semibold text-gray-900 sm:px-3 sm:py-3">
                                                 {formatLKR(app.amount)}
                                             </td>
 
-                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-700 md:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden whitespace-nowrap px-2 py-2 text-gray-700 md:table-cell sm:px-3 sm:py-3">
                                                 {formatLKR(app.totalPaid)}
                                             </td>
 
-                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-700 lg:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden whitespace-nowrap px-2 py-2 text-gray-700 lg:table-cell sm:px-3 sm:py-3">
                                                 {formatLKR(app.installmentValue)}
                                             </td>
 
-                                            <td className="px-3 py-3 sm:px-5 sm:py-4">
+                                            <td className="px-2 py-2 sm:px-3 sm:py-3">
                                                 <span
-                                                    className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold sm:px-3 ${getStatusBadge(
+                                                    className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold sm:px-2 sm:text-[10px] ${getStatusBadge(
                                                         app.loanType
                                                     )}`}
                                                 >
@@ -502,19 +502,19 @@ const LoanSummary = () => {
                                                 </span>
                                             </td>
 
-                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-700 lg:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden whitespace-nowrap px-2 py-2 text-gray-700 md:table-cell sm:px-3 sm:py-3">
                                                 {formatLKR(app.remainingBalance)}
                                             </td>
 
                                             <td
-                                                className={`hidden whitespace-nowrap px-3 py-3 font-bold md:table-cell sm:px-5 sm:py-4 ${styleArrearsAmount(
+                                                className={`hidden whitespace-nowrap px-2 py-2 font-bold md:table-cell sm:px-3 sm:py-3 ${styleArrearsAmount(
                                                     app.arrearsAmount
                                                 )}`}
                                             >
                                                 {formatLKR(app.arrearsAmount)}
                                             </td>
 
-                                            <td className="hidden px-3 py-3 text-gray-700 lg:table-cell sm:px-5 sm:py-4">
+                                            <td className="hidden px-2 py-2 text-gray-700 lg:table-cell sm:px-3 sm:py-3">
                                                 <div>
                                                     {app.approvedEmployee?.firstName ||
                                                         app.approvedEmployee?.lastName
@@ -522,7 +522,7 @@ const LoanSummary = () => {
                                                         }`
                                                         : "—"}
                                                 </div>
-                                                <div className="mt-1 text-[10px] text-gray-500 sm:text-xs">
+                                                <div className="mt-1 text-[9px] text-gray-500 sm:text-[10px]">
                                                     {app.approvedEmployee?.nic || "—"}
                                                 </div>
                                             </td>
