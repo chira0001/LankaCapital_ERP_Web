@@ -409,6 +409,9 @@ const LoanSummary = () => {
                                         <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4">
                                             Amount
                                         </th>
+                                        <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden md:table-cell">
+                                            Total Paid Amount
+                                        </th>
                                         <th className="whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 hidden lg:table-cell">
                                             Per Installment
                                         </th>
@@ -479,6 +482,10 @@ const LoanSummary = () => {
 
                                             <td className="whitespace-nowrap px-3 py-3 font-semibold text-gray-900 sm:px-5 sm:py-4">
                                                 {formatLKR(app.amount)}
+                                            </td>
+
+                                            <td className="hidden whitespace-nowrap px-3 py-3 text-gray-700 md:table-cell sm:px-5 sm:py-4">
+                                                {formatLKR(app.totalPaid)}
                                             </td>
 
                                             <td className="hidden whitespace-nowrap px-3 py-3 text-gray-700 lg:table-cell sm:px-5 sm:py-4">
