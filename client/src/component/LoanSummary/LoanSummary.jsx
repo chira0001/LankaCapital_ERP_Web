@@ -253,8 +253,8 @@ const LoanSummary = () => {
         const numericAmount = Number(amount) || 0;
 
         if (numericAmount === 0) return "text-amber-600";
-        if (numericAmount < 0) return "text-emerald-600";
-        if (numericAmount > 0) return "text-red-600";
+        if (numericAmount < 0) return "text-red-600";
+        if (numericAmount > 0) return "text-emerald-600";
 
         return "text-gray-600";
     };

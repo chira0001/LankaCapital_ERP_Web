@@ -290,7 +290,7 @@ public class LoanMapper {
         dto.setRemainingBalance(totalWithInterest.subtract(paid));
 
         BigDecimal due = totalDue != null ? totalDue : BigDecimal.ZERO;
-        dto.setArrearsAmount(due.abs());
+        dto.setArrearsAmount(due);
 
         return dto;
     }
