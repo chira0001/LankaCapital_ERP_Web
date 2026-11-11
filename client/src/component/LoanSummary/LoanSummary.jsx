@@ -30,6 +30,8 @@ const LoanSummary = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [paymentPage, setPaymentPage] = useState(1);
+    const [expandedPaymentKey, setExpandedPaymentKey] = useState(null);
+    const [expandedLoanKey, setExpandedLoanKey] = useState(null);
 
     const [applicationData, setApplicationData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -238,6 +240,7 @@ const LoanSummary = () => {
         setSelectedLoan(null);
         setSelectedApp(null);
         setPaymentPage(1);
+        setExpandedPaymentKey(null);
         setPaymentsTotalPages(1);
         setPaymentsTotalElements(0);
         setPaymentsLoading(false);
@@ -281,6 +284,7 @@ const LoanSummary = () => {
         setSelectedLoan(app);
         setSelectedApp([]); // will be loaded from backend
         setPaymentPage(1);
+        setExpandedPaymentKey(null);
         fetchPayments(app?.id, 1);
     };
 
@@ -578,12 +582,252 @@ const LoanSummary = () => {
                         </div>
                     )}
                 </section>
+
+                <section className="md:hidden">
+                    <div className="mb-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                        <div className="mb-3">
+                            <h2 className="text-sm font-semibold text-gray-900">
+                                Ongoing loan records
+                            </h2>
+                            <p className="mt-1 text-[11px] text-gray-500">
+                                Tap a loan to view its payment history.
+                            </p>
+                        </div>
+                        <input
+                            type="text"
+                            name="mobile-search"
+                            placeholder="Search by Loan ID / Applicant"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-800 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                        />
+                        {!loading && totalLoans > 0 && (
+                            <p className="mt-2 text-[10px] text-gray-500">
+                                Showing{" "}
+                                <span className="font-semibold text-gray-800">
+                                    {startIndex}–{endIndex}
+                                </span>{" "}
+                                of{" "}
+                                <span className="font-semibold text-gray-800">
+                                    {totalLoans}
+                                </span>
+                            </p>
+                        )}
+                    </div>
+
+                    {loading ? (
+                        <div className="space-y-3" aria-label="Loading loan records">
+                            {Array.from({ length: 3 }).map((_, index) => (
+                                <div
+                                    key={index}
+                                    className="h-40 animate-pulse rounded-xl border border-gray-200 bg-white"
+                                />
+                            ))}
+                        </div>
+                    ) : applicationData.length > 0 ? (
+                        <div className="space-y-2.5">
+                            {applicationData.map((app, index) => {
+                                const loanKey = app.id || app.fileNumber || index;
+                                const isExpanded = expandedLoanKey === loanKey;
+
+                                return (
+                                    <article
+                                        key={loanKey}
+                                        className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                                    >
+                                        <button
+                                            type="button"
+                                            aria-expanded={isExpanded}
+                                            aria-controls={`loan-details-${loanKey}`}
+                                            onClick={() =>
+                                                setExpandedLoanKey((currentKey) =>
+                                                    currentKey === loanKey ? null : loanKey
+                                                )
+                                            }
+                                            className="w-full p-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-xs font-bold text-gray-900">
+                                                        {app.customer?.name || "—"}
+                                                    </p>
+                                                    <p className="mt-0.5 truncate text-[10px] text-gray-500">
+                                                        {app.fileNumber || "—"} · {app.customer?.nic || "—"}
+                                                    </p>
+                                                </div>
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    <span
+                                                        className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${getStatusBadge(
+                                                            app.loanType
+                                                        )}`}
+                                                    >
+                                                        {app.loanType || "UNKNOWN"}
+                                                    </span>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className={`text-sm text-gray-500 transition-transform ${
+                                                            isExpanded ? "rotate-180" : ""
+                                                        }`}
+                                                    >
+                                                        ▾
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-2.5">
+                                                <div>
+                                                    <p className="text-[9px] font-medium uppercase tracking-wide text-gray-500">
+                                                        Loan amount
+                                                    </p>
+                                                    <p className="mt-0.5 text-xs font-semibold text-gray-900">
+                                                        {formatLKR(app.amount)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-medium uppercase tracking-wide text-gray-500">
+                                                        Total paid
+                                                    </p>
+                                                    <p className="mt-0.5 text-xs font-semibold text-emerald-700">
+                                                        {formatLKR(app.totalPaid)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div
+                                                id={`loan-details-${loanKey}`}
+                                                className="border-t border-gray-100 bg-slate-50/70 px-3 py-3"
+                                            >
+                                                <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Loan date
+                                                        </p>
+                                                        <p className="text-xs text-gray-800">
+                                                            {formatDate(app.createdAt)}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500">
+                                                            Ends {formatDate(app.endAt)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Installments
+                                                        </p>
+                                                        <p className="text-xs text-gray-800">
+                                                            {app.installment || 0} installments
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500">
+                                                            {app.interestRate || 0}% interest
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Per installment
+                                                        </p>
+                                                        <p className="text-xs text-gray-800">
+                                                            {formatLKR(app.installmentValue)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Remaining balance
+                                                        </p>
+                                                        <p className="text-xs text-gray-800">
+                                                            {formatLKR(app.remainingBalance)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Arrears
+                                                        </p>
+                                                        <p
+                                                            className={`text-xs font-semibold ${styleArrearsAmount(
+                                                                app.arrearsAmount
+                                                            )}`}
+                                                        >
+                                                            {formatLKR(app.arrearsAmount)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-medium text-gray-500">
+                                                            Approved by
+                                                        </p>
+                                                        <p className="truncate text-xs text-gray-800">
+                                                            {app.approvedEmployee?.firstName ||
+                                                            app.approvedEmployee?.lastName
+                                                                ? `${app.approvedEmployee?.firstName || ""} ${
+                                                                      app.approvedEmployee?.lastName || ""
+                                                                  }`.trim()
+                                                                : "—"}
+                                                        </p>
+                                                        <p className="truncate text-[10px] text-gray-500">
+                                                            {app.approvedEmployee?.nic || ""}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openLoanDetails(app)}
+                                                    className="mt-3 w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                                                >
+                                                    View payment history
+                                                </button>
+                                            </div>
+                                        )}
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center shadow-sm">
+                            <h3 className="text-sm font-semibold text-gray-900">
+                                No loan records found
+                            </h3>
+                            <p className="mt-1 text-xs text-gray-500">
+                                There are currently no ongoing loans to display.
+                            </p>
+                        </div>
+                    )}
+
+                    {!loading && totalMainPages > 1 && (
+                        <div className="mt-3 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                            <p className="text-[11px] text-gray-500">
+                                Page {currentPage} of {totalMainPages}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setCurrentPage((page) => Math.max(page - 1, 1))
+                                    }
+                                    disabled={currentPage === 1}
+                                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setCurrentPage((page) =>
+                                            Math.min(page + 1, totalMainPages)
+                                        )
+                                    }
+                                    disabled={currentPage === totalMainPages}
+                                    className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </section>
             </div>
 
             {/* Payment details modal */}
             {selectedLoan && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 p-3 backdrop-blur-sm sm:p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 p-2 backdrop-blur-sm sm:p-4"
                     onClick={closeModal}
                     aria-hidden="true"
                 >
@@ -592,18 +836,18 @@ const LoanSummary = () => {
                         aria-modal="true"
                         aria-labelledby="payment-details-title"
                         onClick={(event) => event.stopPropagation()}
-                        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                        className="flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
                     >
                         {/* Modal header */}
-                        <div className="flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6 sm:py-5">
+                        <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-5">
                             <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                                     Payment history
                                 </p>
 
                                 <h2
                                     id="payment-details-title"
-                                    className="mt-1 text-lg font-bold text-gray-900 sm:text-2xl"
+                                    className="mt-0.5 text-base font-bold text-gray-900 sm:mt-1 sm:text-2xl"
                                 >
                                     {selectedLoan?.fileNumber
                                         ? `Loan ${selectedLoan.fileNumber}`
@@ -611,7 +855,7 @@ const LoanSummary = () => {
                                 </h2>
 
                                 {selectedLoan?.customer?.name && (
-                                    <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                                    <p className="mt-0.5 text-[10px] text-gray-500 sm:mt-1 sm:text-sm">
                                         {selectedLoan.customer.name}
                                     </p>
                                 )}
@@ -621,43 +865,43 @@ const LoanSummary = () => {
                                 type="button"
                                 onClick={closeModal}
                                 aria-label="Close payment details"
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 sm:h-9 sm:w-9 sm:text-xl"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 sm:h-9 sm:w-9 sm:text-xl"
                             >
                                 ×
                             </button>
                         </div>
 
                         {/* Payment summary */}
-                        <div className="grid grid-cols-2 gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 sm:gap-3 sm:grid-cols-3 sm:px-6 sm:py-4">
+                        <div className="grid grid-cols-3 gap-1.5 border-b border-gray-200 bg-gray-50 px-2.5 py-2 sm:gap-3 sm:px-6 sm:py-4">
                             <div>
-                                <p className="text-[10px] text-gray-500 sm:text-xs">
+                                <p className="text-[8px] text-gray-500 sm:text-xs">
                                     Total records
                                 </p>
-                                <p className="mt-1 font-bold text-gray-900">
+                                <p className="mt-0.5 text-[10px] font-bold text-gray-900 sm:mt-1 sm:text-base">
                                     {paymentsTotalElements}
                                 </p>
                             </div>
 
                             <div>
-                                <p className="text-[10px] text-gray-500 sm:text-xs">
+                                <p className="text-[8px] text-gray-500 sm:text-xs">
                                     Loan type
                                 </p>
-                                <p className="mt-1 font-bold text-gray-900">
+                                <p className="mt-0.5 text-[10px] font-bold text-gray-900 sm:mt-1 sm:text-base">
                                     {selectedLoan?.loanType || "—"}
                                 </p>
                             </div>
 
                             <div>
-                                <p className="text-[10px] text-gray-500 sm:text-xs">
+                                <p className="text-[8px] text-gray-500 sm:text-xs">
                                     Installment value
                                 </p>
-                                <p className="mt-1 font-bold text-gray-900">
+                                <p className="mt-0.5 text-[10px] font-bold text-gray-900 sm:mt-1 sm:text-base">
                                     {formatLKR(selectedLoan?.installmentValue)}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="overflow-auto">
+                        <div className="min-h-0 flex-1 overflow-y-auto">
                             {paymentsLoading ? (
                                 <div className="p-6">
                                     <div className="flex items-center gap-3">
@@ -673,7 +917,131 @@ const LoanSummary = () => {
                                     </div>
                                 </div>
                             ) : currentPayments.length > 0 ? (
-                                <table className="w-full min-w-[500px] text-xs sm:text-sm">
+                                <>
+                                <div className="space-y-1.5 p-2 md:hidden">
+                                    {currentPayments.map((value, index) => {
+                                        const dueAmount =
+                                            (value.paidAmount || 0) -
+                                            (selectedLoan?.installmentValue || 0);
+                                        const paymentKey =
+                                            value.id || value.installmentNumber || index;
+                                        const isPaymentExpanded =
+                                            expandedPaymentKey === paymentKey;
+
+                                        return (
+                                            <article
+                                                key={paymentKey}
+                                                className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    aria-expanded={isPaymentExpanded}
+                                                    aria-controls={`payment-details-${paymentKey}`}
+                                                    onClick={() =>
+                                                        setExpandedPaymentKey((currentKey) =>
+                                                            currentKey === paymentKey
+                                                                ? null
+                                                                : paymentKey
+                                                        )
+                                                    }
+                                                    className="w-full px-2.5 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400"
+                                                >
+                                                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                                                        <span className="text-left text-xs font-bold text-gray-900">
+                                                            #{value.installmentNumber || "—"}
+                                                        </span>
+                                                        <span className="flex min-w-0 items-center justify-end gap-2">
+                                                            <span className="max-w-[155px] truncate text-right text-[11px] font-semibold text-gray-800">
+                                                                {Number(value.paidAmount) === 0
+                                                                    ? "No payment received"
+                                                                    : formatLKR(value.paidAmount)}
+                                                            </span>
+                                                            <span
+                                                                aria-hidden="true"
+                                                                className={`shrink-0 text-xs text-gray-500 transition-transform ${
+                                                                    isPaymentExpanded ? "rotate-180" : ""
+                                                                }`}
+                                                            >
+                                                                ▾
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-1.5 flex items-center justify-between border-t border-gray-100 pt-1.5">
+                                                        <span className="text-left text-[9px] text-gray-500">
+                                                            Due amount
+                                                        </span>
+                                                        <span
+                                                            className={`ml-auto rounded-full bg-amber-50 px-1.5 py-0.5 text-right text-[9px] font-semibold ${styleDueAmount(
+                                                                dueAmount
+                                                            )}`}
+                                                        >
+                                                            {formatLKR(dueAmount)}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                                {isPaymentExpanded && (
+                                                <div
+                                                    id={`payment-details-${paymentKey}`}
+                                                    className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 bg-slate-50/70 px-2.5 py-2"
+                                                >
+                                                    <div className="min-w-0 text-left">
+                                                        <p className="text-[9px] font-medium text-gray-500">
+                                                            Paid at
+                                                        </p>
+                                                        {value.paidAt ? (
+                                                            <>
+                                                                <p className="text-[10px] text-gray-800">
+                                                                    {new Date(
+                                                                        value.paidAt
+                                                                    ).toLocaleDateString("en-LK", {
+                                                                        day: "numeric",
+                                                                        month: "short",
+                                                                        year: "numeric",
+                                                                    })}
+                                                                </p>
+                                                                <p className="text-[9px] text-gray-500">
+                                                                    {new Date(
+                                                                        value.paidAt
+                                                                    ).toLocaleTimeString("en-LK", {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                        hour12: true,
+                                                                    })}
+                                                                </p>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-[10px] text-gray-800">
+                                                                —
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0 text-right">
+                                                        <p className="text-[9px] font-medium text-gray-500">
+                                                            Processed by
+                                                        </p>
+                                                        {value.employee?.firstName ? (
+                                                            <>
+                                                                <p className="truncate text-[10px] font-medium text-gray-800">
+                                                                    {value.employee.firstName}{" "}
+                                                                    {value.employee.lastName}
+                                                                </p>
+                                                                <p className="truncate text-[9px] text-gray-500">
+                                                                    {value.employee.nic || "—"}
+                                                                </p>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-[10px] text-gray-800">
+                                                                —
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                )}
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                                <table className="hidden w-full min-w-[500px] text-xs md:table sm:text-sm">
                                     <thead className="sticky top-0 border-b border-gray-200 bg-white">
                                         <tr className="text-left text-[9px] font-bold uppercase tracking-wide text-gray-500 sm:text-xs">
                                             <th className="px-3 py-3 sm:px-6 sm:py-4">
@@ -771,8 +1139,9 @@ const LoanSummary = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                                </>
                             ) : (
-                                <div className="px-4 py-12 text-center sm:px-6 sm:py-16">
+                                <div className="px-4 py-10 text-center sm:px-6 sm:py-16">
                                     <h3 className="font-semibold text-gray-900">
                                         No payment records
                                     </h3>
@@ -785,36 +1154,38 @@ const LoanSummary = () => {
 
                         {/* Payment pagination */}
                         {paymentsTotalPages > 1 && (
-                            <div className="flex flex-col gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4">
-                                <p className="text-xs text-gray-500">
+                            <div className="flex items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 sm:px-6 sm:py-4">
+                                <p className="hidden text-xs text-gray-500 sm:block">
                                     Page {paymentPage} of {paymentsTotalPages}
                                 </p>
 
-                                <div className="flex items-center justify-between gap-2">
+                                <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
                                     <button
                                         type="button"
-                                        onClick={() =>
+                                        onClick={() => {
+                                            setExpandedPaymentKey(null);
                                             setPaymentPage((p) => Math.max(p - 1, 1))
-                                        }
+                                        }}
                                         disabled={paymentPage === 1}
-                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
                                     >
                                         Previous
                                     </button>
 
-                                    <span className="min-w-[80px] text-center text-xs font-medium text-gray-600">
+                                    <span className="min-w-[80px] text-center text-[10px] font-medium text-gray-600 sm:text-xs">
                                         Page {paymentPage} of {paymentsTotalPages}
                                     </span>
 
                                     <button
                                         type="button"
-                                        onClick={() =>
+                                        onClick={() => {
+                                            setExpandedPaymentKey(null);
                                             setPaymentPage((p) =>
                                                 Math.min(p + 1, paymentsTotalPages)
                                             )
-                                        }
+                                        }}
                                         disabled={paymentPage === paymentsTotalPages}
-                                        className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 sm:text-sm"
                                     >
                                         Next
                                     </button>
