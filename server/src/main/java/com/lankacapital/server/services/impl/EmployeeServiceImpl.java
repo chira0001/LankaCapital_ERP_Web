@@ -230,6 +230,28 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public List<EmployeeResponseDto> getDeletedEmployees() {
+        return employeeRepository.findAllByDeletedOrderByIdDesc(1)
+                .stream()
+                .map(EmployeeMapper::mapToEmployeeResponseDto)
+                .toList();
+    }
+
+    @Override
+    public EmployeeResponseDto restoreDeletedEmployee(Long id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        if (!Integer.valueOf(1).equals(employee.getDeleted())) {
+            throw new ResourceNotFoundException("Deleted employee not found");
+        }
+
+        employee.setDeleted(0);
+        employee.setAccountStatus("Active");
+        return EmployeeMapper.mapToEmployeeResponseDto(employeeRepository.save(employee));
+    }
+
+    @Override
     public List<EmployeeManageDto> manageEmployees(String username, int page) {
         Employee authEmployee = employeeRepository.findByEmail(username);
         if(authEmployee == null){

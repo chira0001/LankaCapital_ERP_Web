@@ -2,9 +2,40 @@ import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
-import { Database, Download, LoaderCircle } from "lucide-react";
+import { Database, Download, LoaderCircle, RotateCcw } from "lucide-react";
 
 const roles = ["ADMIN", "RECEPTIONIST", "FO"];
+
+const LoadingTableSkeleton = () => (
+  <div className="p-4 sm:p-6">
+    <div className="flex items-center gap-3">
+      <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-gray-900">
+          Loading Salary Configuration
+        </p>
+        <p className="text-xs text-gray-500">
+          Please wait while we fetch the latest data...
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-6 space-y-3">
+      <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+      <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+      <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+    </div>
+
+    <div className="mt-6 space-y-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-10 w-full rounded bg-gray-50 border border-gray-100 animate-pulse"
+        />
+      ))}
+    </div>
+  </div>
+);
 
 const SystemConfigurationPage = () => {
   const [loading, setLoading] = useState(true);
@@ -12,23 +43,9 @@ const SystemConfigurationPage = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
-
-  useEffect(() => {
-    fetchSalaryCondition();
-  }, []);
-
-  const fetchSalaryCondition = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosAPI.get("admin/salary-meta-data");
-      setSalaryCondition(res.data);
-    } catch (error) {
-      console.error("Failed to fetch configs:", error);
-      toast.error("Failed to load configuration");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [deletedEmployees, setDeletedEmployees] = useState([]);
+  const [deletedEmployeesLoading, setDeletedEmployeesLoading] = useState(true);
+  const [restoringEmployeeId, setRestoringEmployeeId] = useState(null);
 
   const handleSave = async () => {
     try {
@@ -37,7 +54,7 @@ const SystemConfigurationPage = () => {
       setSalaryCondition(res.data);
       setIsEdit(false);
       toast.success("Salary Information updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update configuration");
     } finally {
       setSaveLoading(false);
@@ -64,6 +81,56 @@ const SystemConfigurationPage = () => {
       toast.error("Database backup export failed");
     } finally {
       setBackupLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    axiosAPI
+      .get("admin/salary-meta-data")
+      .then((response) => {
+        if (active) setSalaryCondition(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch configs:", error);
+        toast.error("Failed to load configuration");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    axiosAPI
+      .get("/admin/employees/deleted")
+      .then((response) => {
+        if (active) setDeletedEmployees(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch deleted employees:", error);
+        toast.error("Failed to load deleted employees");
+      })
+      .finally(() => {
+        if (active) setDeletedEmployeesLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleRestoreEmployee = async (employeeId) => {
+    try {
+      setRestoringEmployeeId(employeeId);
+      await axiosAPI.put(`/admin/employees/${employeeId}/restore`);
+      setDeletedEmployees((employees) =>
+        employees.filter((employee) => employee.id !== employeeId)
+      );
+      toast.success("Employee restored successfully");
+    } catch (error) {
+      console.error("Failed to restore employee:", error);
+      toast.error("Failed to restore employee");
+    } finally {
+      setRestoringEmployeeId(null);
     }
   };
 
@@ -100,37 +167,6 @@ const SystemConfigurationPage = () => {
       setSalaryCondition(updated);
     }
   };
-
-  const LoadingTableSkeleton = () => (
-    <div className="p-4 sm:p-6">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full border-4 border-gray-200 border-t-black animate-spin" />
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">
-            Loading Salary Configuration
-          </p>
-          <p className="text-xs text-gray-500">
-            Please wait while we fetch the latest data...
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-3">
-        <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
-        <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-        <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
-      </div>
-
-      <div className="mt-6 space-y-2">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-10 w-full rounded bg-gray-50 border border-gray-100 animate-pulse"
-          />
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -349,6 +385,84 @@ const SystemConfigurationPage = () => {
           </div>
 
           <section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+              <h2 className="text-sm font-semibold text-gray-900 sm:text-base">
+                Deleted Employees
+              </h2>
+              <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                Review deleted employee accounts and restore them when needed.
+              </p>
+            </div>
+
+            {deletedEmployeesLoading ? (
+              <div className="flex items-center justify-center gap-2 p-10 text-sm text-gray-500">
+                <LoaderCircle aria-hidden="true" className="animate-spin" size={18} />
+                Loading deleted employees...
+              </div>
+            ) : deletedEmployees.length === 0 ? (
+              <div className="p-10 text-center">
+                <p className="text-sm font-semibold text-gray-900">
+                  No deleted employees
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Deleted employee accounts will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-[760px] w-full border-collapse text-left text-sm">
+                  <thead className="bg-white text-xs uppercase tracking-wide text-gray-500">
+                    <tr>
+                      <th className="border-b border-gray-200 px-4 py-3 sm:px-6">Employee</th>
+                      <th className="border-b border-gray-200 px-4 py-3">NIC</th>
+                      <th className="border-b border-gray-200 px-4 py-3">Email</th>
+                      <th className="border-b border-gray-200 px-4 py-3">Role</th>
+                      <th className="border-b border-gray-200 px-4 py-3">Phone</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-right sm:px-6">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deletedEmployees.map((employee) => (
+                      <tr key={employee.id} className="hover:bg-gray-50">
+                        <td className="border-b border-gray-100 px-4 py-3 font-medium text-gray-900 sm:px-6">
+                          {employee.firstName} {employee.lastName}
+                        </td>
+                        <td className="border-b border-gray-100 px-4 py-3 text-gray-600">
+                          {employee.nic || "—"}
+                        </td>
+                        <td className="border-b border-gray-100 px-4 py-3 text-gray-600">
+                          {employee.email}
+                        </td>
+                        <td className="border-b border-gray-100 px-4 py-3 text-gray-600">
+                          {employee.role || "—"}
+                        </td>
+                        <td className="border-b border-gray-100 px-4 py-3 text-gray-600">
+                          {employee.phoneNumber || "—"}
+                        </td>
+                        <td className="border-b border-gray-100 px-4 py-3 text-right sm:px-6">
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreEmployee(employee.id)}
+                            disabled={restoringEmployeeId !== null}
+                            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {restoringEmployeeId === employee.id ? (
+                              <LoaderCircle aria-hidden="true" className="animate-spin" size={14} />
+                            ) : (
+                              <RotateCcw aria-hidden="true" size={14} />
+                            )}
+                            {restoringEmployeeId === employee.id ? "Restoring..." : "Restore"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div className="flex items-start gap-3">
                 <span className="rounded-lg border border-gray-200 bg-gray-50 p-2 text-gray-700">
@@ -381,6 +495,7 @@ const SystemConfigurationPage = () => {
               </button>
             </div>
           </section>
+          
         </div>
       </div>
     </>

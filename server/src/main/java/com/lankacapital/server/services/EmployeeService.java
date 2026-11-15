@@ -29,6 +29,10 @@ public interface EmployeeService {
     EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto);
 
     void deleteEmployee(Long id);
+
+    List<EmployeeResponseDto> getDeletedEmployees();
+
+    EmployeeResponseDto restoreDeletedEmployee(Long id);
     
     List<EmployeeManageDto> manageEmployees(String username, int page);
 }
