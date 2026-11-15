@@ -55,6 +55,8 @@ public class AdminMenuPermissionFilter extends OncePerRequestFilter {
         String endpoint = path.substring(ADMIN_API_PREFIX.length());
         if (endpoint.equals("/menu-permissions")
                 || endpoint.startsWith("/employees/profile")) return List.of();
+        if (endpoint.equals("/employees/deleted")
+                || endpoint.matches("/employees/\\d+/restore")) return List.of("settings");
         if (endpoint.startsWith("/employees") || endpoint.equals("/employee")
                 || endpoint.equals("/role")) return List.of("users");
         if (endpoint.startsWith("/salary-meta-data")) return List.of("salary", "settings");

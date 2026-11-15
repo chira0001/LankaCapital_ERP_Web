@@ -158,6 +158,16 @@ public class AdminController {
         return ResponseEntity.ok("Employee deleted successfully");
     }
 
+    @GetMapping("/employees/deleted")
+    public ResponseEntity<List<EmployeeResponseDto>> getDeletedEmployees() {
+        return ResponseEntity.ok(employeeService.getDeletedEmployees());
+    }
+
+    @PutMapping("/employees/{id}/restore")
+    public ResponseEntity<EmployeeResponseDto> restoreDeletedEmployee(@PathVariable Long id) {
+        return ResponseEntity.ok(employeeService.restoreDeletedEmployee(id));
+    }
+
     @GetMapping("/loans")
     public ResponseEntity<?> getAllLoans(
             @RequestParam(defaultValue = "1") int page,

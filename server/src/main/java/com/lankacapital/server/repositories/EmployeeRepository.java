@@ -29,6 +29,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     List<Employee> findByRoleIsNotNull();
 
     @EntityGraph(attributePaths = {"role"})
+    List<Employee> findAllByDeletedOrderByIdDesc(Integer deleted);
+
+    @EntityGraph(attributePaths = {"role"})
     @Query("""
         select e
         from Employee e
