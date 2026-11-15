@@ -28,6 +28,8 @@ public interface EmployeeService {
 
     EmployeeResponseDto updateEmployee(String username, Long id, EmployeeResponseDto dto);
 
+    void resetEmployeePassword(String username, Long id);
+
     void deleteEmployee(Long id);
 
     List<EmployeeResponseDto> getDeletedEmployees();

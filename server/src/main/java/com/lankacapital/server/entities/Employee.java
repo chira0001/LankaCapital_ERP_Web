@@ -21,6 +21,8 @@ import java.util.List;
 @NoArgsConstructor
 public class Employee implements UserDetails {
 
+    public static final String DEFAULT_PASSWORD = "pass@123";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,7 +53,7 @@ public class Employee implements UserDetails {
     private BigDecimal basicSalary = BigDecimal.valueOf(0);
 
     @JsonIgnore
-    private String password = "pass@123";
+    private String password = DEFAULT_PASSWORD;
 
     private Long updateStatus = 0L;
 

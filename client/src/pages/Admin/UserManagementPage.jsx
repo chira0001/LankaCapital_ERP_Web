@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { UserPlus, X, Search } from "lucide-react";
+import { UserPlus, X, Search, KeyRound } from "lucide-react";
 import { Button } from "@/component/ui/button";
 import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
@@ -18,9 +18,11 @@ const UserManagementPage = () => {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
 
   const [selectedEmployee, setSelecetedEmployee] = useState();
   const [editEmployee, setEditEmployee] = useState();
@@ -261,6 +263,24 @@ const UserManagementPage = () => {
       toast.error("User not deleted");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const resetEmployeePassword = async () => {
+    if (!isSuperAdmin || !selectedEmployee || resettingPassword) {
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      await axiosAPI.put(`/admin/employees/${selectedEmployee.id}/reset-password`);
+      setShowResetPasswordModal(false);
+      toast.success("Employee password reset to the default password");
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to reset employee password");
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -604,6 +624,16 @@ const UserManagementPage = () => {
             </div>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              {isSuperAdmin && (
+                <Button
+                  className="bg-amber-500 text-white hover:bg-amber-600 w-full sm:w-auto"
+                  disabled={resettingPassword}
+                  onClick={() => setShowResetPasswordModal(true)}
+                >
+                  Reset Password
+                </Button>
+              )}
+
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
                 onClick={() => {
@@ -626,6 +656,57 @@ const UserManagementPage = () => {
               >
                 {deleting ? "Deleting..." : "Delete"}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResetPasswordModal && selectedEmployee && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-xl bg-white p-4 shadow-2xl sm:p-6">
+            <button
+              type="button"
+              onClick={() => setShowResetPasswordModal(false)}
+              disabled={resettingPassword}
+              aria-label="Close password reset confirmation"
+              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 rounded-full bg-amber-100 p-3">
+                <KeyRound className="text-amber-600" size={24} />
+              </div>
+
+              <h2 className="text-lg font-semibold text-gray-800">
+                Confirm Password Reset
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Reset {selectedEmployee.firstName} {selectedEmployee.lastName}&apos;s
+                password to the default employee password?
+              </p>
+
+              <div className="mt-6 flex w-full gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowResetPasswordModal(false)}
+                  disabled={resettingPassword}
+                  className="flex-1 rounded-lg border border-gray-300 py-2.5 text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={resetEmployeePassword}
+                  disabled={resettingPassword}
+                  className="flex-1 rounded-lg bg-amber-500 py-2.5 text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {resettingPassword ? "Resetting..." : "Reset Password"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

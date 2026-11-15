@@ -21,6 +21,58 @@ import static org.mockito.Mockito.when;
 
 class EmployeeServiceImplTest {
     @Test
+    void superAdminCanResetEmployeePasswordToEntityDefault() {
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
+        Employee employee = employee(2L, "FO");
+        Employee superAdmin = employee(1L, "ADMIN");
+        when(adminMenuPermissionService.isSuperAdmin("admin@email.com")).thenReturn(true);
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee));
+        when(employeeRepository.findByEmail("admin@email.com")).thenReturn(superAdmin);
+        when(passwordEncoder.encode(Employee.DEFAULT_PASSWORD)).thenReturn("encoded-default");
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EmployeeServiceImpl service = new EmployeeServiceImpl(
+                employeeRepository,
+                mock(RoleRepository.class),
+                passwordEncoder,
+                adminMenuPermissionService
+        );
+
+        service.resetEmployeePassword("admin@email.com", 2L);
+
+        assertEquals("encoded-default", employee.getPassword());
+        assertEquals(superAdmin, employee.getUpdatedEmployee());
+        verify(passwordEncoder).encode(Employee.DEFAULT_PASSWORD);
+        verify(employeeRepository).save(employee);
+    }
+
+    @Test
+    void regularAdminCannotResetEmployeePassword() {
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
+        Employee employee = employee(2L, "FO");
+        when(adminMenuPermissionService.isSuperAdmin("manager@email.com")).thenReturn(false);
+
+        EmployeeServiceImpl service = new EmployeeServiceImpl(
+                employeeRepository,
+                mock(RoleRepository.class),
+                mock(PasswordEncoder.class),
+                adminMenuPermissionService
+        );
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.resetEmployeePassword("manager@email.com", 2L)
+        );
+
+        assertEquals(403, exception.getStatusCode().value());
+        verify(employeeRepository, never()).findById(2L);
+        verify(employeeRepository, never()).save(any(Employee.class));
+    }
+
+    @Test
     void deletingEmployeeSetsIntegerDeletedFlag() {
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         Employee employee = employee(2L, "FO");

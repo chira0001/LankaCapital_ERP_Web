@@ -219,6 +219,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public void resetEmployeePassword(String username, Long id) {
+        if (!adminMenuPermissionService.isSuperAdmin(username)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can reset employee passwords"
+            );
+        }
+
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+        employee.setPassword(passwordEncoder.encode(Employee.DEFAULT_PASSWORD));
+        employee.setUpdatedEmployee(employeeRepository.findByEmail(username));
+        employeeRepository.save(employee);
+    }
+
+    @Override
     public void deleteEmployee(Long id) {
 
         Employee employee = employeeRepository.findById(id)

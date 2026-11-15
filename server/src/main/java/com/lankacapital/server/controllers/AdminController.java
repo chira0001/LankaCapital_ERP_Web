@@ -148,6 +148,15 @@ public class AdminController {
         );
     }
 
+    @PutMapping("/employees/{id}/reset-password")
+    public ResponseEntity<?> resetEmployeePassword(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        employeeService.resetEmployeePassword(authentication.getName(), id);
+        return ResponseEntity.ok("Employee password reset successfully");
+    }
+
     @PostMapping("/employees/delete/{id}")
     public ResponseEntity<?> deleteEmployee(
             Authentication authentication,
