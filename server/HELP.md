@@ -19,6 +19,12 @@ The following guides illustrate how to use some features concretely:
 * [Accessing Data with JPA](https://spring.io/guides/gs/accessing-data-jpa/)
 * [Accessing data with MySQL](https://spring.io/guides/gs/accessing-data-mysql/)
 
+### API response cache
+
+Successful JSON responses from API `GET` endpoints are cached in server memory for five minutes. Cache keys include the authenticated user and request parameters. The server creates the `api_cache_revisions` table and MySQL triggers at startup; database changes update resource revisions so subsequent requests receive fresh data before the five-minute expiration.
+
+The database user configured for the server must be allowed to create a table and triggers. If that permission is unavailable, startup fails rather than serving responses without reliable invalidation.
+
 ### Maven Parent overrides
 
 Due to Maven's design, elements are inherited from the parent POM to the project POM.

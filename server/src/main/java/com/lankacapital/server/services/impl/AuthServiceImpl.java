@@ -11,6 +11,7 @@ import com.lankacapital.server.services.AuthService;
 import com.lankacapital.server.services.JWTService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,8 +50,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtAuthenticationResponse signIn(SignInRequest signInRequest) {
-        if(!employeeRepository.existsByEmail(signInRequest.getUsername())){
+        var employee = employeeRepository.findByEmail(signInRequest.getUsername());
+        if(employee == null){
             throw new ResourceNotFoundException("Employee not found with username : "+signInRequest.getUsername());
+        }
+        if (Integer.valueOf(1).equals(employee.getDeleted())) {
+            throw new DisabledException("User has been disabled");
         }
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -58,7 +63,6 @@ public class AuthServiceImpl implements AuthService {
                         signInRequest.getPassword()
                 )
         );
-        var employee = employeeRepository.findByEmail(signInRequest.getUsername());
 
         var jwt = jwtService.generateToken(employee, employee.getRole().getRoleName());
         var refreshToken = jwtService.generateRefreshToken(new HashMap<>(), employee);

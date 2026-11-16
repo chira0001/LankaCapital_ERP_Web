@@ -2,6 +2,7 @@ package com.lankacapital.server.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -10,6 +11,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<Map<String, Object>> handleDisabledException(DisabledException disabledException) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", HttpStatus.FORBIDDEN.value());
+        error.put("message", disabledException.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
 
     @ExceptionHandler(ResourceExistException.class)
     public ResponseEntity<Map<String,Object>> handleResourceExistException(ResourceExistException resourceExistException){
