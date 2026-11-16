@@ -5,6 +5,7 @@ import { Label } from "@/component/ui/label";
 import { Textarea } from "@/component/ui/textarea";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
@@ -18,6 +19,7 @@ const formatLKR = (amount) =>
 
 const LoanApplication = () => {
   const toast = useToast();
+  const { isSuperAdmin } = useAdminMenuAccess();
 
   const rowsPerPage = 10;
 
@@ -185,7 +187,10 @@ const LoanApplication = () => {
       console.error("Update failed:", error);
       toast({
         title: "Error",
-        description: "Failed to update loan",
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.detail ||
+          "Failed to update loan",
         variant: "destructive",
       });
     }
@@ -720,6 +725,7 @@ const LoanApplication = () => {
                     <div className="flex flex-col gap-2">
                       <Label>Status</Label>
                       <select
+                        disabled={!isSuperAdmin}
                         className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
                           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
                           disabled:opacity-50"
@@ -734,7 +740,15 @@ const LoanApplication = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED">REJECTED</option>
+                        {loanUpdatePayload.status === "COMPLETED" && (
+                          <option value="COMPLETED">COMPLETED</option>
+                        )}
                       </select>
+                      {!isSuperAdmin && (
+                        <p className="text-xs text-gray-500">
+                          Only the Super Admin can change loan status.
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-2">

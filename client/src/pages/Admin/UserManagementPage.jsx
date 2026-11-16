@@ -6,6 +6,7 @@ import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
 import { ADMIN_MENU_ITEMS } from "@/lib/adminMenuItems";
 import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
+import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
 
 const formatRoleLabel = (role) =>
   role === "SUPERADMIN" ? "SUPER ADMIN" : role;
@@ -23,6 +24,7 @@ const UserManagementPage = () => {
   const [openModal, setOpenModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const [selectedEmployee, setSelecetedEmployee] = useState();
   const [editEmployee, setEditEmployee] = useState();
@@ -243,6 +245,7 @@ const UserManagementPage = () => {
 
       toast.success("User deleted successfully");
 
+      setShowDeleteConfirmation(false);
       setOpenModal(false);
       setSelecetedEmployee(null);
 
@@ -652,7 +655,7 @@ const UserManagementPage = () => {
               <Button
                 className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
                 disabled={deleting}
-                onClick={() => deleteUser(selectedEmployee.id)}
+                onClick={() => setShowDeleteConfirmation(true)}
               >
                 {deleting ? "Deleting..." : "Delete"}
               </Button>
@@ -660,6 +663,17 @@ const UserManagementPage = () => {
           </div>
         </div>
       )}
+
+      <ActionConfirmationDialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+        title="Confirm Employee Deletion"
+        description={`Are you sure you want to delete ${[selectedEmployee?.firstName, selectedEmployee?.lastName].filter(Boolean).join(" ") || "this employee"}? The account will be disabled.`}
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        pending={deleting}
+        onConfirm={() => selectedEmployee && deleteUser(selectedEmployee.id)}
+      />
 
       {showResetPasswordModal && selectedEmployee && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">

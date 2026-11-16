@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/component/ui/dialog";
 import { ToastContainer } from "react-toastify";
+import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
 
 const emptyCustomer = {
   nic: "",
@@ -66,6 +67,8 @@ const CustomerManagementPage = () => {
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -207,14 +210,16 @@ const CustomerManagementPage = () => {
   };
 
   // ================= DELETE =================
-  const deleteCustomer = async (nic) => {
-    const ok = window.confirm("Are you sure you want to delete this customer?");
-    if (!ok) return;
+  const deleteCustomer = async () => {
+    if (!selectedCustomer?.nic) return;
 
     try {
+      setDeletingCustomer(true);
+      const nic = selectedCustomer.nic;
       await axiosAPI.delete(`admin/customers/${nic}`);
 
       clearCustomerCache();
+      setShowDeleteConfirmation(false);
       setShowCustomerDetails(false);
       setSelectedCustomer(null);
 
@@ -222,6 +227,8 @@ const CustomerManagementPage = () => {
     } catch (err) {
       console.error("Failed to delete customer:", err);
       alert("Failed to delete customer.");
+    } finally {
+      setDeletingCustomer(false);
     }
   };
 
@@ -671,11 +678,12 @@ const CustomerManagementPage = () => {
                 </button>
 
                 <button
-                  onClick={() => deleteCustomer(selectedCustomer.nic)}
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  disabled={deletingCustomer}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 text-red-600 text-sm transition"
                 >
                   <Trash2 size={14} />
-                  Delete
+                  {deletingCustomer ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
@@ -808,6 +816,17 @@ const CustomerManagementPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ActionConfirmationDialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+        title="Confirm Customer Deletion"
+        description={`Are you sure you want to delete ${selectedCustomer?.name || "this customer"}?`}
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        pending={deletingCustomer}
+        onConfirm={deleteCustomer}
+      />
     </div>
   );
 };

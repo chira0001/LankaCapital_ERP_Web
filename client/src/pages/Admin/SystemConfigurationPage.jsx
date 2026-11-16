@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
 import { Database, Download, LoaderCircle, RotateCcw } from "lucide-react";
+import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
 
 const roles = ["ADMIN", "RECEPTIONIST", "FO"];
 
@@ -46,6 +47,7 @@ const SystemConfigurationPage = () => {
   const [deletedEmployees, setDeletedEmployees] = useState([]);
   const [deletedEmployeesLoading, setDeletedEmployeesLoading] = useState(true);
   const [restoringEmployeeId, setRestoringEmployeeId] = useState(null);
+  const [employeeToRestore, setEmployeeToRestore] = useState(null);
 
   const handleSave = async () => {
     try {
@@ -118,13 +120,17 @@ const SystemConfigurationPage = () => {
     };
   }, []);
 
-  const handleRestoreEmployee = async (employeeId) => {
+  const handleRestoreEmployee = async () => {
+    if (!employeeToRestore) return;
+
+    const employeeId = employeeToRestore.id;
     try {
       setRestoringEmployeeId(employeeId);
       await axiosAPI.put(`/admin/employees/${employeeId}/restore`);
       setDeletedEmployees((employees) =>
         employees.filter((employee) => employee.id !== employeeId)
       );
+      setEmployeeToRestore(null);
       toast.success("Employee restored successfully");
     } catch (error) {
       console.error("Failed to restore employee:", error);
@@ -442,7 +448,7 @@ const SystemConfigurationPage = () => {
                         <td className="border-b border-gray-100 px-4 py-3 text-right sm:px-6">
                           <button
                             type="button"
-                            onClick={() => handleRestoreEmployee(employee.id)}
+                            onClick={() => setEmployeeToRestore(employee)}
                             disabled={restoringEmployeeId !== null}
                             className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                           >
@@ -497,6 +503,20 @@ const SystemConfigurationPage = () => {
           </section>
           
         </div>
+
+        <ActionConfirmationDialog
+          open={employeeToRestore !== null}
+          onOpenChange={(open) => {
+            if (!open) setEmployeeToRestore(null);
+          }}
+          title="Confirm Employee Restore"
+          description={`Restore ${[employeeToRestore?.firstName, employeeToRestore?.lastName].filter(Boolean).join(" ") || "this employee"}? This will re-enable the employee's account.`}
+          confirmLabel="Restore"
+          pendingLabel="Restoring..."
+          pending={restoringEmployeeId !== null}
+          variant="default"
+          onConfirm={handleRestoreEmployee}
+        />
       </div>
     </>
   );
