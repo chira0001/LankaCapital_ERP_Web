@@ -445,6 +445,7 @@ const FinancialReportsPage = () => {
                       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <Button
                           variant="outline"
+                          disabled={isSaving}
                           onClick={() => setIsAddingAsset(false)}
                           className="w-full sm:w-auto"
                         >

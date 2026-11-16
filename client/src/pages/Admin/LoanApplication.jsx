@@ -5,6 +5,9 @@ import { Label } from "@/component/ui/label";
 import { Textarea } from "@/component/ui/textarea";
 import axiosAPI from "@/api/axiosAPI";
 import { ToastContainer } from "react-toastify";
+import { useAdminMenuAccess } from "@/lib/adminMenuAccess";
+import LoanDetailsPaymentPanel from "@/component/LoanDetails/LoanDetailsPaymentPanel";
+import { formatLoanDateTime } from "@/component/LoanDetails/loanDateTime";
 
 const useToast = () => {
   return (toast) => console.log("Toast:", toast);
@@ -18,6 +21,7 @@ const formatLKR = (amount) =>
 
 const LoanApplication = () => {
   const toast = useToast();
+  const { isSuperAdmin } = useAdminMenuAccess();
 
   const rowsPerPage = 10;
 
@@ -34,8 +38,11 @@ const LoanApplication = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [selectedApp, setSelectedApp] = useState(null);
+  const canEditLoanStatus =
+    isSuperAdmin || selectedApp?.status?.toUpperCase() === "PENDING";
   const [showLoan, setShowLoan] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [isUpdatingLoan, setIsUpdatingLoan] = useState(false);
 
   const [loanUpdatePayload, setLoanUpdatePayload] = useState({
     amount: "",
@@ -158,17 +165,11 @@ const LoanApplication = () => {
     return styles[normalized] || styles.PENDING;
   };
 
-  const Info = ({ label, children }) => (
-    <div className="flex flex-col">
-      <span className="text-xs text-gray-500 mb-1">{label}</span>
-      <span className="text-sm font-medium text-gray-800 break-words">
-        {children}
-      </span>
-    </div>
-  );
-
   const handleUpdateLoan = async () => {
+    if (isUpdatingLoan) return;
+
     try {
+      setIsUpdatingLoan(true);
       await axiosAPI.put(`/admin/loans/${selectedApp.fileNumber}`, loanUpdatePayload);
 
       toast({
@@ -185,9 +186,15 @@ const LoanApplication = () => {
       console.error("Update failed:", error);
       toast({
         title: "Error",
-        description: "Failed to update loan",
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.detail ||
+          "Failed to update loan",
         variant: "destructive",
       });
+    }
+    finally {
+      setIsUpdatingLoan(false);
     }
   };
 
@@ -279,11 +286,7 @@ const LoanApplication = () => {
                           {formatLKR(app.amount)}
                         </p>
                         <p className="mt-1 text-[11px] text-gray-500">
-                          {new Date(app.createdAt).toLocaleDateString("en-LK", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {formatLoanDateTime(app.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -403,11 +406,7 @@ const LoanApplication = () => {
                             {app.fileNumber?.slice(0, 8)}
                           </td>
                           <td className="hidden px-3 py-3 sm:table-cell sm:px-4 md:px-6 md:py-4 text-xs sm:text-sm">
-                            {new Date(app.createdAt).toLocaleDateString("en-LK", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {formatLoanDateTime(app.createdAt)}
                           </td>
                           <td className="hidden px-3 py-3 lg:table-cell lg:px-6 lg:py-4 text-xs sm:text-sm">
                             {app.customer?.nic}
@@ -511,130 +510,21 @@ const LoanApplication = () => {
                     </p>
                   </div>
 
-                  <div className="p-4 sm:p-8 space-y-6 sm:space-y-10">
-                    <div>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-800">
-                          Loan Information
-                        </h3>
-
-                        <button
-                          onClick={() => {
-                            setLoanUpdatePayload({
-                              amount: selectedApp.amount || "",
-                              decisionNote: selectedApp.decisionNote || "",
-                              documentCharge: selectedApp.documentCharge || "",
-                              interestRate: selectedApp.interestRate || "",
-                              installment: selectedApp.noOfInstallments || "",
-                              status: selectedApp.status || "PENDING",
-                            });
-                            setIsEdit(true);
-                          }}
-                          className="w-full sm:w-auto bg-gray-800 text-white px-4 sm:px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors shadow-md"
-                        >
-                          Edit
-                        </button>
-                      </div>
-
-                      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
-                        <Info label="Loan Date">
-                          {new Date(selectedApp.createdAt).toLocaleString("en-LK", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                          })}
-                        </Info>
-
-                        <Info label="Amount">Rs. {selectedApp.amount}</Info>
-
-                        <Info label="Installment Value">
-                          Rs. {selectedApp.installmentValue}
-                        </Info>
-
-                        <Info label="Document Charge">
-                          Rs. {selectedApp.documentCharge}
-                        </Info>
-
-                        <Info label="Installments">
-                          {selectedApp.noOfInstallments}
-                        </Info>
-
-                        <Info label="Interest Rate">
-                          {selectedApp.interestRate}%
-                        </Info>
-
-                        <Info label="Status">{selectedApp.status || "Not available"}</Info>
-
-                        <Info label="Entered By">
-                          Id: {selectedApp.enteredBy?.nic} <br />
-                          {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
-                        </Info>
-
-                        <Info label="Updated By">
-                          {selectedApp.updatedBy?.id ? (
-                            <>
-                              Id: {selectedApp.updatedBy.nic} <br />
-                              {selectedApp.updatedBy.firstName} {selectedApp.updatedBy.lastName}
-                            </>
-                          ) : (
-                            "No updates made"
-                          )}
-                        </Info>
-
-                        <Info label="Approved By">
-                          {selectedApp.approvedBy?.id ? (
-                            <>
-                              Id: {selectedApp.approvedBy.nic} <br />
-                              {selectedApp.approvedBy.firstName} {selectedApp.approvedBy.lastName}
-                            </>
-                          ) : (
-                            "Approval Pending"
-                          )}
-                        </Info>
-
-                        <Info label="Loan Type">{selectedApp.loanType || "Not available"}</Info>
-
-                        <div className="col-span-1 md:col-span-2">
-                          <Info label="Loan End Date">
-                            {selectedApp.endAt
-                              ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                })
-                              : "Not Entered"}
-                          </Info>
-                        </div>
-
-                        {selectedApp.decisionNote ? (
-                          <div className="col-span-1 md:col-span-2 lg:col-span-3 border border-gray-200 p-3 sm:p-4 rounded-md bg-white">
-                            <Info label="Decision Note">{selectedApp.decisionNote}</Info>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">
-                        Customer Information
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
-                        <Info label="NIC">{selectedApp.customer?.nic}</Info>
-                        <Info label="Name">{selectedApp.customer?.name}</Info>
-                        <Info label="Address">{selectedApp.customer?.address}</Info>
-                        <Info label="Phone">{selectedApp.customer?.phoneNumber}</Info>
-                        <Info label="Email">{selectedApp.customer?.email || "N/A"}</Info>
-                        <Info label="Bank">
-                          {selectedApp.customer?.bank || "N/A"} <br />
-                          {selectedApp.customer?.bankAccount || "N/A"}
-                        </Info>
-                      </div>
-                    </div>
-                  </div>
+                  <LoanDetailsPaymentPanel
+                    key={selectedApp.id || selectedApp.fileNumber}
+                    loan={selectedApp}
+                    onEdit={() => {
+                      setLoanUpdatePayload({
+                        amount: selectedApp.amount || "",
+                        decisionNote: selectedApp.decisionNote || "",
+                        documentCharge: selectedApp.documentCharge || "",
+                        interestRate: selectedApp.interestRate || "",
+                        installment: selectedApp.noOfInstallments || "",
+                        status: selectedApp.status || "PENDING",
+                      });
+                      setIsEdit(true);
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -720,6 +610,7 @@ const LoanApplication = () => {
                     <div className="flex flex-col gap-2">
                       <Label>Status</Label>
                       <select
+                        disabled={!canEditLoanStatus}
                         className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
                           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
                           disabled:opacity-50"
@@ -734,7 +625,20 @@ const LoanApplication = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="APPROVED">APPROVED</option>
                         <option value="REJECTED">REJECTED</option>
+                        {loanUpdatePayload.status === "COMPLETED" && (
+                          <option value="COMPLETED">COMPLETED</option>
+                        )}
                       </select>
+                      {!isSuperAdmin && selectedApp?.status?.toUpperCase() === "PENDING" && (
+                        <p className="text-xs text-gray-500">
+                          Pending loans can be approved or rejected by admins.
+                        </p>
+                      )}
+                      {!isSuperAdmin && selectedApp?.status?.toUpperCase() !== "PENDING" && (
+                        <p className="text-xs text-gray-500">
+                          Only the Super Admin can change this loan's status.
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -753,6 +657,7 @@ const LoanApplication = () => {
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
                       <button
                         onClick={() => setIsEdit(false)}
+                        disabled={isUpdatingLoan}
                         className="w-full sm:w-auto px-4 py-2 rounded-lg border"
                       >
                         Cancel
@@ -760,9 +665,11 @@ const LoanApplication = () => {
 
                       <button
                         onClick={handleUpdateLoan}
-                        className="w-full sm:w-auto px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                        disabled={isUpdatingLoan}
+                        aria-busy={isUpdatingLoan}
+                        className="w-full sm:w-auto px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Update Loan
+                        {isUpdatingLoan ? "Updating..." : "Update Loan"}
                       </button>
                     </div>
                   </div>

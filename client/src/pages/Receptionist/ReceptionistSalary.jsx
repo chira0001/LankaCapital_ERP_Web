@@ -44,9 +44,11 @@ const ReceptionistSalary = () => {
     };
 
     const submitSalaries = async (e) => {
+        e.preventDefault();
+        if (submitting) return;
+
         try {
             setIsSubmitting(true);
-            e.preventDefault();
             const payload = employees.map(employee => ({
                 employeeId: employee.id,
                 workingDays: parseFloat(employeeSalaries[employee.id]?.workingDays) || 0,
@@ -57,13 +59,13 @@ const ReceptionistSalary = () => {
             }));
 
             const response = await axiosAPI.post('/recep/employees/salary', payload);
-            setIsSubmitting(false);
             toast.success('Salaries submitted successfully!');
             clearAllSalaries();
         } catch (error) {
-            setIsSubmitting(false);
             console.error('Error submitting salaries:', error);
             toast.error('Failed to submit salaries: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setIsSubmitting(false);
         }
     };
     
@@ -225,6 +227,7 @@ const ReceptionistSalary = () => {
                     <div className="flex justify-end gap-4 items-center px-6 py-4 bg-gray-50 border-t">
                         <button
                             onClick={clearAllSalaries}
+                            disabled={submitting}
                             className="border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             Clear All
@@ -233,6 +236,7 @@ const ReceptionistSalary = () => {
                         <button
                             onClick={submitSalaries}
                             disabled={submitting}
+                            aria-busy={submitting}
                             className={`px-6 py-3 rounded-lg text-sm font-medium hover:bg-blue-800 transition-all shadow-md hover:shadow-lg ${submitting ? "bg-blue-200 text-gray-600" : "bg-blue-600 text-white"}`}
                         >
                             {submitting ? "Submitting..." : "Submit All Salaries"}

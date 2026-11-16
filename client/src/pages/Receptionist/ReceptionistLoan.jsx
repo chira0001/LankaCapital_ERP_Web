@@ -24,6 +24,7 @@ const ReceptionistLoan = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [isCheckingCustomer, setIsCheckingCustomer] = useState(false);
 
     const handleCustomerChange = (e) => {
         setCustomerForm({ ...customerForm, [e.target.name]: e.target.value });
@@ -78,11 +79,13 @@ const ReceptionistLoan = () => {
     };
 
     const checkCustomerExists = async () => {
+        if (isCheckingCustomer) return;
         if (!searchCustomer.trim()) {
             toast.error('Please enter a customer NIC');
             return;
         }
         try {
+            setIsCheckingCustomer(true);
             const response = await axiosAPI.get(`/recep/customers/${searchCustomer}`);
             if (response.status === 200) {
                 setExistCustomer(response.data);
@@ -117,6 +120,8 @@ const ReceptionistLoan = () => {
             else {
                 toast.error('Error checking customer. Please try again.');
             }
+        } finally {
+            setIsCheckingCustomer(false);
         }
     };
     const clearCustomerForm = () => {
@@ -246,9 +251,10 @@ const ReceptionistLoan = () => {
                        whitespace-nowrap hover:bg-blue-700 
                        transition-colors shadow-md 
                        disabled:bg-gray-400 disabled:cursor-not-allowed'
-                            disabled={!searchCustomer.trim()}
+                            disabled={!searchCustomer.trim() || isCheckingCustomer}
+                            aria-busy={isCheckingCustomer}
                         >
-                            Search
+                            {isCheckingCustomer ? "Searching..." : "Search"}
                         </button>
 
                         {/* Suggestions Dropdown */}
@@ -718,6 +724,7 @@ const ReceptionistLoan = () => {
                         <button
                             type="button"
                             onClick={clearLoanForm}
+                            disabled={isCreating}
                             className='border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors'
                         >
                             Clear

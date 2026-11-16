@@ -23,6 +23,9 @@ const ReceptionistView = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+    const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+    const [loadingLoanFileNumber, setLoadingLoanFileNumber] = useState(null);
 
     const [infoForm, setInfoForm] = useState({
         businessName: '',
@@ -127,6 +130,7 @@ const ReceptionistView = () => {
         }
 
         try {
+            setIsSavingCustomer(true);
             const payload = {
                 nic: infoForm.customerId || existCustomer?.customerId,
                 name: infoForm.businessName,
@@ -176,6 +180,8 @@ const ReceptionistView = () => {
             } else {
                 toast.error('Failed to update customer. Please try again.');
             }
+        } finally {
+            setIsSavingCustomer(false);
         }
     };
 
@@ -207,7 +213,10 @@ const ReceptionistView = () => {
             return;
         }
 
+        if (isSearchingCustomer) return;
+
         try {
+            setIsSearchingCustomer(true);
             const response = await axiosAPI.get(`/recep/customers/loans/${searchCustomer}`);
 
             if (response.status === 200) {
@@ -250,6 +259,8 @@ const ReceptionistView = () => {
             } else {
                 toast.error('Error checking customer. Please try again.');
             }
+        } finally {
+            setIsSearchingCustomer(false);
         }
     };
 
@@ -275,7 +286,10 @@ const ReceptionistView = () => {
     };
 
     const viewLoanDetails = async (fileNumber) => {
+        if (loadingLoanFileNumber) return;
+
         try {
+            setLoadingLoanFileNumber(fileNumber);
             const response = await axiosAPI.get(`/recep/loan/collection/${fileNumber}`);
             setLoanDetails(response.data);
             setShowLoanModal(true);
@@ -285,6 +299,8 @@ const ReceptionistView = () => {
             } else {
                 toast.error("Failed to load loan details");
             }
+        } finally {
+            setLoadingLoanFileNumber(null);
         }
     };
 
@@ -334,9 +350,10 @@ const ReceptionistView = () => {
                        whitespace-nowrap hover:bg-blue-700 
                        transition-colors shadow-md 
                        disabled:bg-gray-400 disabled:cursor-not-allowed'
-                            disabled={!searchCustomer.trim()}
+                            disabled={!searchCustomer.trim() || isSearchingCustomer}
+                            aria-busy={isSearchingCustomer}
                         >
-                            Search
+                            {isSearchingCustomer ? "Searching..." : "Search"}
                         </button>
 
                         {/* Suggestions Dropdown */}
@@ -399,12 +416,14 @@ const ReceptionistView = () => {
                                     </button>
                                     <button
                                         onClick={saveCustomer}
-                                        className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-md'
+                                        disabled={isSavingCustomer}
+                                        aria-busy={isSavingCustomer}
+                                        className='bg-green-600 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-md disabled:cursor-not-allowed disabled:opacity-60'
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                                         </svg>
-                                        Save
+                                        {isSavingCustomer ? "Saving..." : "Save"}
                                     </button>
                                 </div>
                             ) : (
@@ -612,9 +631,13 @@ const ReceptionistView = () => {
                                     <div
                                         key={key}
                                         id={`loan-${infoDetail.fileNumber}`}
-                                        className='border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card'
+                                        aria-busy={loadingLoanFileNumber === infoDetail.fileNumber}
+                                        className={`border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white loan-card ${loadingLoanFileNumber === infoDetail.fileNumber ? "opacity-70" : ""}`}
                                         onClick={() => viewLoanDetails(infoDetail.fileNumber)}
                                     >
+                                        {loadingLoanFileNumber === infoDetail.fileNumber && (
+                                            <p className="mb-2 text-sm text-blue-700">Loading payment details...</p>
+                                        )}
                                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                                             <div className='flex flex-col'>
                                                 <span className='text-xs text-gray-500 font-medium uppercase'>File Number</span>

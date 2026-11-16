@@ -20,7 +20,9 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.RoundingMode;
 import java.util.*;
@@ -45,6 +47,7 @@ public class LoanServiceImpl implements LoanService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final DailyCollectionRepository dailyCollectionRepository;
+    private final AdminMenuPermissionService adminMenuPermissionService;
 
     @Transactional
     @Override
@@ -265,6 +268,22 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = loanRepository.findByFileNumber(fileNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not Found " + fileNumber));
 
+        LoanStatus requestedStatus = LoanStatus.valueOf(loanUpdateDto.getStatus());
+        boolean statusChanged = loan.getStatus() != requestedStatus;
+        if (statusChanged) {
+            boolean isSuperAdmin = adminMenuPermissionService.isSuperAdmin(username);
+            boolean isPendingLoanReview =
+                    loan.getStatus() == LoanStatus.PENDING
+                            && (requestedStatus == LoanStatus.APPROVED
+                            || requestedStatus == LoanStatus.REJECTED);
+            if (!isSuperAdmin && !isPendingLoanReview) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Admins can approve or reject pending loans; other status changes require the Super Admin"
+                );
+            }
+        }
+
         Employee employee = employeeRepository.findByEmail(username);
 
         loan.setAmount(loanUpdateDto.getAmount());
@@ -272,17 +291,17 @@ public class LoanServiceImpl implements LoanService {
         loan.setDocumentCharge(loanUpdateDto.getDocumentCharge());
         loan.setInterestRate(loanUpdateDto.getInterestRate());
         loan.setInstallment(loanUpdateDto.getInstallment());
-        loan.setStatus(LoanStatus.valueOf(loanUpdateDto.getStatus()));
+        loan.setStatus(requestedStatus);
+        loan.setUpdatedEmployee(employee);
 
-        if (LoanStatus.APPROVED.name().equals(loanUpdateDto.getStatus())) {
-            loan.setApprovedEmployee(employee);
-            loan.setApprovedAt(LocalDateTime.now());
-        } else if (LoanStatus.PENDING.name().equals(loanUpdateDto.getStatus())) {
-            loan.setApprovedEmployee(null);
-            loan.setUpdatedEmployee(employee);
-            loan.setApprovedAt(null);
-        } else {
-            loan.setUpdatedEmployee(employee);
+        if (statusChanged) {
+            if (requestedStatus == LoanStatus.APPROVED) {
+                loan.setApprovedEmployee(employee);
+                loan.setApprovedAt(LocalDateTime.now());
+            } else if (requestedStatus == LoanStatus.PENDING) {
+                loan.setApprovedEmployee(null);
+                loan.setApprovedAt(null);
+            }
         }
 
         loan.setUpdateStatus(loan.getUpdateStatus() + 1);

@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class LoanResponseDto {
 
+    private Long id;
     private String fileNumber;
     private Double interestRate;
     private BigDecimal amount;

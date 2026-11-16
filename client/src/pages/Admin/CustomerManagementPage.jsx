@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosAPI from "@/api/axiosAPI";
-import { Search, Trash2, Plus, Edit, DollarSign } from "lucide-react";
+import { Search, Trash2, Plus, Edit, DollarSign, XCircle } from "lucide-react";
 import { Input } from "@/component/ui/input";
 import {
   Dialog,
@@ -9,6 +9,9 @@ import {
   DialogTitle,
 } from "@/component/ui/dialog";
 import { ToastContainer } from "react-toastify";
+import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
+import LoanDetailsPaymentPanel from "@/component/LoanDetails/LoanDetailsPaymentPanel";
+import { formatLoanDateTime } from "@/component/LoanDetails/loanDateTime";
 
 const emptyCustomer = {
   nic: "",
@@ -65,7 +68,11 @@ const CustomerManagementPage = () => {
   const [error, setError] = useState("");
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [viewingCustomerNic, setViewingCustomerNic] = useState(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -207,14 +214,16 @@ const CustomerManagementPage = () => {
   };
 
   // ================= DELETE =================
-  const deleteCustomer = async (nic) => {
-    const ok = window.confirm("Are you sure you want to delete this customer?");
-    if (!ok) return;
+  const deleteCustomer = async () => {
+    if (!selectedCustomer?.nic) return;
 
     try {
+      setDeletingCustomer(true);
+      const nic = selectedCustomer.nic;
       await axiosAPI.delete(`admin/customers/${nic}`);
 
       clearCustomerCache();
+      setShowDeleteConfirmation(false);
       setShowCustomerDetails(false);
       setSelectedCustomer(null);
 
@@ -222,18 +231,25 @@ const CustomerManagementPage = () => {
     } catch (err) {
       console.error("Failed to delete customer:", err);
       alert("Failed to delete customer.");
+    } finally {
+      setDeletingCustomer(false);
     }
   };
 
   // ================= VIEW =================
   const viewCustomer = async (customer) => {
+    if (viewingCustomerNic) return;
+
     try {
+      setViewingCustomerNic(customer.nic);
       const res = await axiosAPI.get(`admin/customers/${customer.nic}`);
       setSelectedCustomer(res.data);
       setShowCustomerDetails(true);
     } catch {
       setSelectedCustomer(customer);
       setShowCustomerDetails(true);
+    } finally {
+      setViewingCustomerNic(null);
     }
   };
 
@@ -351,7 +367,8 @@ const CustomerManagementPage = () => {
           customers.map((c) => (
             <div
               key={c.nic}
-              className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-gray-50"
+              aria-busy={viewingCustomerNic === c.nic}
+              className={`cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-gray-50 ${viewingCustomerNic === c.nic ? "opacity-70" : ""}`}
               onClick={() => viewCustomer(c)}
               role="button"
             >
@@ -359,6 +376,9 @@ const CustomerManagementPage = () => {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
                   <p className="mt-1 text-xs text-gray-500 break-all">NIC: {c.nic}</p>
+                  {viewingCustomerNic === c.nic && (
+                    <p className="mt-1 text-xs text-blue-700">Loading details...</p>
+                  )}
 
                   <div className="mt-3 grid grid-cols-1 gap-1 text-xs text-gray-600">
                     <p className="break-all">
@@ -435,10 +455,16 @@ const CustomerManagementPage = () => {
                 customers.map((c) => (
                   <tr
                     key={c.nic}
-                    className="hover:bg-gray-50 transition cursor-pointer"
+                    aria-busy={viewingCustomerNic === c.nic}
+                    className={`hover:bg-gray-50 transition cursor-pointer ${viewingCustomerNic === c.nic ? "opacity-70" : ""}`}
                     onClick={() => viewCustomer(c)}
                   >
-                    <td className="px-6 py-4 font-medium text-gray-900">{c.name}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {c.name}
+                      {viewingCustomerNic === c.nic && (
+                        <span className="ml-2 text-xs font-normal text-blue-700">Loading details...</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">{c.nic}</td>
                     <td className="px-6 py-4 text-gray-600">{c.phoneNumber || "No phone"}</td>
                     <td className="px-6 py-4 text-gray-600">{c.email || "No email"}</td>
@@ -545,7 +571,20 @@ const CustomerManagementPage = () => {
                   <>
                     <div className="md:hidden space-y-3">
                       {selectedCustomer.loans.map((loan, idx) => (
-                        <div key={idx} className="rounded-lg border bg-white p-3">
+                        <div
+                          key={loan.id || loan.fileNumber || idx}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`View loan ${loan.fileNumber} details and payment history`}
+                          onClick={() => setSelectedLoan(loan)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              setSelectedLoan(loan);
+                            }
+                          }}
+                          className="cursor-pointer rounded-lg border bg-white p-3 transition hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-xs text-gray-500">File No.</p>
@@ -592,7 +631,9 @@ const CustomerManagementPage = () => {
 
                             <div className="shrink-0 text-right text-xs text-gray-500">
                               <p>Created</p>
-                              <p className="text-gray-900">{loan.createdAt || "-"}</p>
+                              <p className="text-gray-900">
+                                {formatLoanDateTime(loan.createdAt)}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -629,7 +670,20 @@ const CustomerManagementPage = () => {
 
                         <tbody className="divide-y divide-gray-100 text-center">
                           {selectedCustomer.loans.map((loan, idx) => (
-                            <tr key={idx} className="hover:bg-gray-50">
+                            <tr
+                              key={loan.id || loan.fileNumber || idx}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`View loan ${loan.fileNumber} details and payment history`}
+                              onClick={() => setSelectedLoan(loan)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  setSelectedLoan(loan);
+                                }
+                              }}
+                              className="cursor-pointer hover:bg-gray-50 focus:outline-none focus:bg-gray-100"
+                            >
                               <td className="px-4 py-2 font-medium">{loan.fileNumber}</td>
                               <td className="px-4 py-2">{loan.amount}</td>
                               <td className="px-4 py-2">{loan.interestRate}%</td>
@@ -640,7 +694,9 @@ const CustomerManagementPage = () => {
                               >
                                 {loan.status || "-"}
                               </td>
-                              <td className="px-4 py-2">{loan.createdAt || "-"}</td>
+                              <td className="px-4 py-2">
+                                {formatLoanDateTime(loan.createdAt)}
+                              </td>
                               <td className="px-4 py-2">
                                 {loan.enteredBy?.firstName} {loan.enteredBy?.lastName}
                                 <div className="text-xs text-gray-400">{loan.enteredBy?.nic}</div>
@@ -671,14 +727,51 @@ const CustomerManagementPage = () => {
                 </button>
 
                 <button
-                  onClick={() => deleteCustomer(selectedCustomer.nic)}
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  disabled={deletingCustomer}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 text-red-600 text-sm transition"
                 >
                   <Trash2 size={14} />
-                  Delete
+                  {deletingCustomer ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedLoan && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-4"
+          onClick={() => setSelectedLoan(null)}
+        >
+          <div
+            className="relative max-h-[92vh] w-full max-w-7xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 rounded-t-2xl border-b bg-gray-50 px-4 py-4 sm:px-8">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">
+                  Loan Details &amp; Payment History
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  File #{selectedLoan.fileNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close loan details"
+                onClick={() => setSelectedLoan(null)}
+                className="text-gray-500 transition hover:text-black"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+            <LoanDetailsPaymentPanel
+              key={selectedLoan.id || selectedLoan.fileNumber}
+              loan={selectedLoan}
+              customer={selectedCustomer}
+            />
           </div>
         </div>
       )}
@@ -808,6 +901,17 @@ const CustomerManagementPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ActionConfirmationDialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+        title="Confirm Customer Deletion"
+        description={`Are you sure you want to delete ${selectedCustomer?.name || "this customer"}?`}
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        pending={deletingCustomer}
+        onConfirm={deleteCustomer}
+      />
     </div>
   );
 };

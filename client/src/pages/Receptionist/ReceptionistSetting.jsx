@@ -7,6 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const ReceptionistSetting = () => {
 
     const [viewPasswordForm, setViewPasswordForm] = useState(false);
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [visiblePasswords, setVisiblePasswords] = useState({});
     const [passwordForm, setPasswordForm] = useState({
         oldPassword: "",
@@ -60,6 +62,7 @@ const ReceptionistSetting = () => {
         }
 
         try {
+            setIsUpdatingPassword(true);
             const response = await axiosAPI.put("/recep/employees/profile/password", passwordForm);
             if (response.status === 200) {
                 toast.success("Password changed successfully");
@@ -75,11 +78,14 @@ const ReceptionistSetting = () => {
         } catch (e) {
             console.log(e);
             toast.error(e.response?.data?.message || "Failed to update password");
+        } finally {
+            setIsUpdatingPassword(false);
         }
     }
 
     const updateProfileInfo = async () => {
         try {
+            setIsUpdatingProfile(true);
             const payload = {
                 address: profileForm.address,
                 basicSalary: profileForm.basicSalary,
@@ -102,6 +108,8 @@ const ReceptionistSetting = () => {
         } catch (e) {
             console.log(e);
             toast.error(e.response?.data?.message || "Failed to update profile");
+        } finally {
+            setIsUpdatingProfile(false);
         }
     }
 
@@ -141,12 +149,14 @@ const ReceptionistSetting = () => {
                         </h2>
                         <button
                             onClick={updateProfileInfo}
+                            disabled={isUpdatingProfile}
+                            aria-busy={isUpdatingProfile}
                             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 
                                text-white rounded-lg text-sm font-medium
                                hover:from-blue-700 hover:to-blue-800
-                               transition-all shadow-md hover:shadow-lg"
+                               transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Save Changes
+                            {isUpdatingProfile ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
 
@@ -282,6 +292,7 @@ const ReceptionistSetting = () => {
                     <div className="flex justify-end gap-3">
                         {viewPasswordForm && (
                             <button
+                                disabled={isUpdatingPassword}
                                 onClick={() => {
                                     setViewPasswordForm(false);
                                     setPasswordForm({
@@ -298,12 +309,18 @@ const ReceptionistSetting = () => {
 
                         <button
                             onClick={handlePasswordButtonClick}
+                            disabled={isUpdatingPassword}
+                            aria-busy={isUpdatingPassword}
                             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700
                                text-white rounded-lg text-sm font-medium
                                hover:from-blue-700 hover:to-blue-800
-                               transition-all shadow-md hover:shadow-lg"
+                               transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {viewPasswordForm ? "Update Password" : "Change Password"}
+                            {isUpdatingPassword
+                                ? "Updating..."
+                                : viewPasswordForm
+                                    ? "Update Password"
+                                    : "Change Password"}
                         </button>
                     </div>
                 </div>

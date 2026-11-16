@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axiosApi from "@/api/axiosAPI";
 import { Button } from "@/component/ui/button";
 import { Label } from "@/component/ui/label";
+import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import dayjs from "dayjs";
@@ -25,6 +26,7 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
     });
 
     const [tbEditIndex, setTbEditIndex] = useState(null);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
     // keep financialDate synced to endDate
     useEffect(() => {
@@ -138,6 +140,7 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
         setTbEditIndex(null);
         setIsEditTrialBalanceData(false);
         resetTBForm();
+        setShowDeleteConfirmation(false);
     }, [tbEditIndex, resetTBForm]);
 
     const handleSaveTBData = useCallback(async () => {
@@ -396,7 +399,7 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
                             Cancel
                         </Button>
                         <Button
-                            onClick={handleDeleteTBRow}
+                            onClick={() => setShowDeleteConfirmation(true)}
                             className="w-full sm:w-auto bg-red-600 text-white hover:bg-red-700"
                             disabled={isSavingTB}
                         >
@@ -412,6 +415,15 @@ const TrialBalance = ({ periodStartDate, periodEndDate }) => {
                     </div>
                 </div>
             )}
+
+            <ActionConfirmationDialog
+                open={showDeleteConfirmation}
+                onOpenChange={setShowDeleteConfirmation}
+                title="Confirm Trial Balance Removal"
+                description={`Remove ${TrialBalanceArrayData.accountName || "this row"} from the unsaved Trial Balance entries?`}
+                confirmLabel="Remove"
+                onConfirm={handleDeleteTBRow}
+            />
         </div>
     );
 };

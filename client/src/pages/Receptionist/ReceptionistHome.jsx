@@ -484,6 +484,7 @@ const ReceptionistHome = () => {
                         <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
                             <button
                                 onClick={handleCloseModal}
+                                disabled={submitting}
                                 className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors"
                             >
                                 Cancel

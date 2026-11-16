@@ -88,6 +88,7 @@ public class LoanMapper {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
+        responseDto.setId(loan.getId());
         responseDto.setEndAt(loan.getEndAt());
         responseDto.setFileNumber(loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);
@@ -105,23 +106,15 @@ public class LoanMapper {
                         : 0.0
         );
 
-        responseDto.setEnteredBy(
-                loan.getCreatedEmployee() != null
-                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee())
-                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
-        );
-
-        responseDto.setUpdatedBy(
-                loan.getCreatedEmployee() != null
-                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getUpdatedEmployee())
-                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
-        );
-
-        responseDto.setApprovedBy(
-                loan.getCreatedEmployee() != null
-                        ? EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee())
-                        : EmployeeMapper.mapToEmployeeResponseDto(new Employee())
-        );
+        responseDto.setEnteredBy(loan.getCreatedEmployee() == null
+                ? null
+                : EmployeeMapper.mapToEmployeeResponseDto(loan.getCreatedEmployee()));
+        responseDto.setUpdatedBy(loan.getUpdatedEmployee() == null
+                ? null
+                : EmployeeMapper.mapToEmployeeResponseDto(loan.getUpdatedEmployee()));
+        responseDto.setApprovedBy(loan.getApprovedEmployee() == null
+                ? null
+                : EmployeeMapper.mapToEmployeeResponseDto(loan.getApprovedEmployee()));
 
         responseDto.setInterestRate(loan.getInterestRate() == null ? 0.0 : loan.getInterestRate());
 
