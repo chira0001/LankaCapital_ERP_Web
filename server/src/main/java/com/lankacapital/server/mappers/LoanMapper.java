@@ -88,6 +88,7 @@ public class LoanMapper {
 
         LoanResponseDto responseDto = new LoanResponseDto();
 
+        responseDto.setId(loan.getId());
         responseDto.setEndAt(loan.getEndAt());
         responseDto.setFileNumber(loan.getFileNumber());
         responseDto.setAmount(loan.getAmount() != null ? loan.getAmount() : BigDecimal.ZERO);

@@ -59,6 +59,7 @@ class LoanMapperTest {
     @Test
     void loanResponseMapsEachEmployeeIndependently() {
         Loan loan = new Loan();
+        loan.setId(10L);
         loan.setAmount(new BigDecimal("30000.00"));
         loan.setInterestRate(20.0);
         loan.setInstallment(60);
@@ -77,6 +78,7 @@ class LoanMapperTest {
 
         var response = LoanMapper.mapToLoanResponseDto(loan);
 
+        assertEquals(10L, response.getId());
         assertNull(response.getEnteredBy());
         assertEquals(12L, response.getUpdatedBy().getId());
         assertEquals("Updated", response.getUpdatedBy().getFirstName());
@@ -87,6 +89,7 @@ class LoanMapperTest {
     @Test
     void loanResponseMapsCreatorWhenPresent() {
         Loan loan = new Loan();
+        loan.setId(11L);
         loan.setAmount(new BigDecimal("30000.00"));
         loan.setInstallment(60);
 

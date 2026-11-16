@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosAPI from "@/api/axiosAPI";
-import { Search, Trash2, Plus, Edit, DollarSign } from "lucide-react";
+import { Search, Trash2, Plus, Edit, DollarSign, XCircle } from "lucide-react";
 import { Input } from "@/component/ui/input";
 import {
   Dialog,
@@ -10,6 +10,8 @@ import {
 } from "@/component/ui/dialog";
 import { ToastContainer } from "react-toastify";
 import ActionConfirmationDialog from "@/component/ui/ActionConfirmationDialog";
+import LoanDetailsPaymentPanel from "@/component/LoanDetails/LoanDetailsPaymentPanel";
+import { formatLoanDateTime } from "@/component/LoanDetails/loanDateTime";
 
 const emptyCustomer = {
   nic: "",
@@ -66,6 +68,7 @@ const CustomerManagementPage = () => {
   const [error, setError] = useState("");
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedLoan, setSelectedLoan] = useState(null);
   const [viewingCustomerNic, setViewingCustomerNic] = useState(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -568,7 +571,20 @@ const CustomerManagementPage = () => {
                   <>
                     <div className="md:hidden space-y-3">
                       {selectedCustomer.loans.map((loan, idx) => (
-                        <div key={idx} className="rounded-lg border bg-white p-3">
+                        <div
+                          key={loan.id || loan.fileNumber || idx}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`View loan ${loan.fileNumber} details and payment history`}
+                          onClick={() => setSelectedLoan(loan)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              setSelectedLoan(loan);
+                            }
+                          }}
+                          className="cursor-pointer rounded-lg border bg-white p-3 transition hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                               <p className="text-xs text-gray-500">File No.</p>
@@ -615,7 +631,9 @@ const CustomerManagementPage = () => {
 
                             <div className="shrink-0 text-right text-xs text-gray-500">
                               <p>Created</p>
-                              <p className="text-gray-900">{loan.createdAt || "-"}</p>
+                              <p className="text-gray-900">
+                                {formatLoanDateTime(loan.createdAt)}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -652,7 +670,20 @@ const CustomerManagementPage = () => {
 
                         <tbody className="divide-y divide-gray-100 text-center">
                           {selectedCustomer.loans.map((loan, idx) => (
-                            <tr key={idx} className="hover:bg-gray-50">
+                            <tr
+                              key={loan.id || loan.fileNumber || idx}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`View loan ${loan.fileNumber} details and payment history`}
+                              onClick={() => setSelectedLoan(loan)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  setSelectedLoan(loan);
+                                }
+                              }}
+                              className="cursor-pointer hover:bg-gray-50 focus:outline-none focus:bg-gray-100"
+                            >
                               <td className="px-4 py-2 font-medium">{loan.fileNumber}</td>
                               <td className="px-4 py-2">{loan.amount}</td>
                               <td className="px-4 py-2">{loan.interestRate}%</td>
@@ -663,7 +694,9 @@ const CustomerManagementPage = () => {
                               >
                                 {loan.status || "-"}
                               </td>
-                              <td className="px-4 py-2">{loan.createdAt || "-"}</td>
+                              <td className="px-4 py-2">
+                                {formatLoanDateTime(loan.createdAt)}
+                              </td>
                               <td className="px-4 py-2">
                                 {loan.enteredBy?.firstName} {loan.enteredBy?.lastName}
                                 <div className="text-xs text-gray-400">{loan.enteredBy?.nic}</div>
@@ -703,6 +736,42 @@ const CustomerManagementPage = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedLoan && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-4"
+          onClick={() => setSelectedLoan(null)}
+        >
+          <div
+            className="relative max-h-[92vh] w-full max-w-7xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 rounded-t-2xl border-b bg-gray-50 px-4 py-4 sm:px-8">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800 sm:text-2xl">
+                  Loan Details &amp; Payment History
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  File #{selectedLoan.fileNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close loan details"
+                onClick={() => setSelectedLoan(null)}
+                className="text-gray-500 transition hover:text-black"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+            <LoanDetailsPaymentPanel
+              key={selectedLoan.id || selectedLoan.fileNumber}
+              loan={selectedLoan}
+              customer={selectedCustomer}
+            />
           </div>
         </div>
       )}
