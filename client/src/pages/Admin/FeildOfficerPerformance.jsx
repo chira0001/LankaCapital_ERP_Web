@@ -173,9 +173,11 @@ const FieldOfficerPerformancePage = () => {
 
             <button
               onClick={fetchDailyCollectionDetails}
-              className="w-full rounded bg-black px-5 py-2 text-white sm:w-auto"
+              disabled={loading}
+              aria-busy={loading}
+              className="w-full rounded bg-black px-5 py-2 text-white sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Search
+              {loading ? "Searching..." : "Search"}
             </button>
           </div>
 

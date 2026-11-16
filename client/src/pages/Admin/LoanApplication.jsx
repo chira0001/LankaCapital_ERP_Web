@@ -38,6 +38,7 @@ const LoanApplication = () => {
   const [selectedApp, setSelectedApp] = useState(null);
   const [showLoan, setShowLoan] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [isUpdatingLoan, setIsUpdatingLoan] = useState(false);
 
   const [loanUpdatePayload, setLoanUpdatePayload] = useState({
     amount: "",
@@ -170,7 +171,10 @@ const LoanApplication = () => {
   );
 
   const handleUpdateLoan = async () => {
+    if (isUpdatingLoan) return;
+
     try {
+      setIsUpdatingLoan(true);
       await axiosAPI.put(`/admin/loans/${selectedApp.fileNumber}`, loanUpdatePayload);
 
       toast({
@@ -193,6 +197,9 @@ const LoanApplication = () => {
           "Failed to update loan",
         variant: "destructive",
       });
+    }
+    finally {
+      setIsUpdatingLoan(false);
     }
   };
 
@@ -767,6 +774,7 @@ const LoanApplication = () => {
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
                       <button
                         onClick={() => setIsEdit(false)}
+                        disabled={isUpdatingLoan}
                         className="w-full sm:w-auto px-4 py-2 rounded-lg border"
                       >
                         Cancel
@@ -774,9 +782,11 @@ const LoanApplication = () => {
 
                       <button
                         onClick={handleUpdateLoan}
-                        className="w-full sm:w-auto px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                        disabled={isUpdatingLoan}
+                        aria-busy={isUpdatingLoan}
+                        className="w-full sm:w-auto px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Update Loan
+                        {isUpdatingLoan ? "Updating..." : "Update Loan"}
                       </button>
                     </div>
                   </div>

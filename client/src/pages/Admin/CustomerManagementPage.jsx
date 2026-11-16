@@ -66,6 +66,7 @@ const CustomerManagementPage = () => {
   const [error, setError] = useState("");
 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [viewingCustomerNic, setViewingCustomerNic] = useState(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState(false);
@@ -234,13 +235,18 @@ const CustomerManagementPage = () => {
 
   // ================= VIEW =================
   const viewCustomer = async (customer) => {
+    if (viewingCustomerNic) return;
+
     try {
+      setViewingCustomerNic(customer.nic);
       const res = await axiosAPI.get(`admin/customers/${customer.nic}`);
       setSelectedCustomer(res.data);
       setShowCustomerDetails(true);
     } catch {
       setSelectedCustomer(customer);
       setShowCustomerDetails(true);
+    } finally {
+      setViewingCustomerNic(null);
     }
   };
 
@@ -358,7 +364,8 @@ const CustomerManagementPage = () => {
           customers.map((c) => (
             <div
               key={c.nic}
-              className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-gray-50"
+              aria-busy={viewingCustomerNic === c.nic}
+              className={`cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:bg-gray-50 ${viewingCustomerNic === c.nic ? "opacity-70" : ""}`}
               onClick={() => viewCustomer(c)}
               role="button"
             >
@@ -366,6 +373,9 @@ const CustomerManagementPage = () => {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
                   <p className="mt-1 text-xs text-gray-500 break-all">NIC: {c.nic}</p>
+                  {viewingCustomerNic === c.nic && (
+                    <p className="mt-1 text-xs text-blue-700">Loading details...</p>
+                  )}
 
                   <div className="mt-3 grid grid-cols-1 gap-1 text-xs text-gray-600">
                     <p className="break-all">
@@ -442,10 +452,16 @@ const CustomerManagementPage = () => {
                 customers.map((c) => (
                   <tr
                     key={c.nic}
-                    className="hover:bg-gray-50 transition cursor-pointer"
+                    aria-busy={viewingCustomerNic === c.nic}
+                    className={`hover:bg-gray-50 transition cursor-pointer ${viewingCustomerNic === c.nic ? "opacity-70" : ""}`}
                     onClick={() => viewCustomer(c)}
                   >
-                    <td className="px-6 py-4 font-medium text-gray-900">{c.name}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {c.name}
+                      {viewingCustomerNic === c.nic && (
+                        <span className="ml-2 text-xs font-normal text-blue-700">Loading details...</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">{c.nic}</td>
                     <td className="px-6 py-4 text-gray-600">{c.phoneNumber || "No phone"}</td>
                     <td className="px-6 py-4 text-gray-600">{c.email || "No email"}</td>

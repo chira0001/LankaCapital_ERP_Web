@@ -17,6 +17,7 @@ const ReceptionistMonthlyExpense = () => {
     });
 
     const [totalExpenses, setTotalExpenses] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const total = [
@@ -48,6 +49,8 @@ const ReceptionistMonthlyExpense = () => {
     };
 
     const handleSubmit = async () => {
+        if (isSubmitting) return;
+
         try {
             const hasExpense = [
                 expenseForm.vehicleAllowanceAndTravel,
@@ -64,6 +67,7 @@ const ReceptionistMonthlyExpense = () => {
                 return;
             }
 
+            setIsSubmitting(true);
             const payload = {
                 vehicleAllowanceAndTravel: parseFloat(expenseForm.vehicleAllowanceAndTravel) || 0,
                 fuelAllowance: parseFloat(expenseForm.fuelAllowance) || 0,
@@ -94,6 +98,8 @@ const ReceptionistMonthlyExpense = () => {
         } catch (e) {
             console.log(e);
             toast.error(e.response?.data?.message || "Failed to submit expenses");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -312,6 +318,7 @@ const ReceptionistMonthlyExpense = () => {
                 <div className="flex justify-end gap-3 pt-4 border-t">
                     <button
                         onClick={handleReset}
+                        disabled={isSubmitting}
                         className="border border-gray-400 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                         Reset
@@ -319,12 +326,14 @@ const ReceptionistMonthlyExpense = () => {
 
                     <button
                         onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        aria-busy={isSubmitting}
                         className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 
                                text-white rounded-lg text-sm font-medium
                                hover:from-blue-700 hover:to-blue-800 
-                               transition-all shadow-md hover:shadow-lg"
+                               transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Submit Expenses
+                        {isSubmitting ? "Submitting..." : "Submit Expenses"}
                     </button>
                 </div>
             </div>

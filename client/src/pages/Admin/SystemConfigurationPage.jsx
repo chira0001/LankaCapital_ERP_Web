@@ -199,6 +199,7 @@ const SystemConfigurationPage = () => {
               {isEdit ? (
                 <>
                   <button
+                    disabled={saveLoading}
                     onClick={() => {
                       setIsEdit(false);
                     }}

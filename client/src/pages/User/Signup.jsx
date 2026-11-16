@@ -24,6 +24,7 @@ const Signup = () => {
     const [nicNo, setNICNo] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [isRegistering, setIsRegistering] = useState(false);
     const [errors, setErrors] = useState({
         fname: false,
         lname: false,
@@ -68,6 +69,8 @@ const Signup = () => {
 
     const signup = async (e) => {
         e.preventDefault();
+        if (isRegistering) return;
+
         const newErrors = {
             fname: !fname || fname.trim() === "",
             lname: !lname || lname.trim() === "",
@@ -91,6 +94,7 @@ const Signup = () => {
                 password: password
             };
             try {
+                setIsRegistering(true);
                 const response = await axios.post(`${BASE_URL}/auth/register`, payload);
                 if (response.status == 201) {
                     toast.success("Registered successfully. Please Login");
@@ -101,6 +105,8 @@ const Signup = () => {
             } catch (e) {
                 console.log(e);
                 toast.error(e.response?.data?.message || "Failed to register");
+            } finally {
+                setIsRegistering(false);
             }
         }
     }
@@ -255,9 +261,11 @@ const Signup = () => {
                                 {/* SUBMIT BUTTON */}
                                 <button
                                     type="submit"
-                                    className="w-full bg-black text-white py-3 rounded-lg font-semibold tracking-wide hover:bg-gray-800 transition duration-300"
+                                    disabled={isRegistering}
+                                    aria-busy={isRegistering}
+                                    className="w-full bg-black text-white py-3 rounded-lg font-semibold tracking-wide hover:bg-gray-800 transition duration-300 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    Create Account
+                                    {isRegistering ? "Creating Account..." : "Create Account"}
                                 </button>
                             </form>
 
