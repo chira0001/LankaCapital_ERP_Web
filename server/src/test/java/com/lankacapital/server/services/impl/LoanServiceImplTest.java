@@ -45,7 +45,7 @@ class LoanServiceImplTest {
                 adminMenuPermissionService
         );
         LoanUpdateDto update = new LoanUpdateDto();
-        update.setStatus(LoanStatus.REJECTED.name());
+        update.setStatus(LoanStatus.PENDING.name());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -56,6 +56,16 @@ class LoanServiceImplTest {
         assertEquals(LoanStatus.APPROVED, loan.getStatus());
         verify(employeeRepository, never()).findByEmail("regular-admin@email.com");
         verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void regularAdminCanApprovePendingLoan() {
+        assertRegularAdminCanReviewPendingLoan(LoanStatus.APPROVED);
+    }
+
+    @Test
+    void regularAdminCanRejectPendingLoan() {
+        assertRegularAdminCanReviewPendingLoan(LoanStatus.REJECTED);
     }
 
     @Test
@@ -88,7 +98,7 @@ class LoanServiceImplTest {
     }
 
     @Test
-    void superAdminCanChangeApprovedLoanStatus() {
+    void superAdminCanApprovePendingLoan() {
         LoanRepository loanRepository = mock(LoanRepository.class);
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
@@ -115,6 +125,62 @@ class LoanServiceImplTest {
 
         assertEquals(LoanStatus.APPROVED, loan.getStatus());
         assertEquals(superAdmin, loan.getApprovedEmployee());
+        verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void superAdminCanReturnApprovedLoanToPending() {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
+        Loan loan = approvedLoan();
+        Employee superAdmin = new Employee();
+        when(loanRepository.findByFileNumber("LN-100")).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any(Loan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(employeeRepository.findByEmail("admin@email.com")).thenReturn(superAdmin);
+        when(adminMenuPermissionService.isSuperAdmin("admin@email.com")).thenReturn(true);
+
+        LoanServiceImpl service = new LoanServiceImpl(
+                loanRepository,
+                mock(CustomerRepository.class),
+                employeeRepository,
+                mock(RoleRepository.class),
+                mock(DailyCollectionRepository.class),
+                adminMenuPermissionService
+        );
+
+        service.updateLoan("admin@email.com", loanUpdate(LoanStatus.PENDING), "LN-100");
+
+        assertEquals(LoanStatus.PENDING, loan.getStatus());
+        verify(loanRepository).save(loan);
+    }
+
+    private void assertRegularAdminCanReviewPendingLoan(LoanStatus status) {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
+        AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
+        Loan loan = new Loan();
+        loan.setStatus(LoanStatus.PENDING);
+        loan.setInstallment(1);
+        loan.setAmount(BigDecimal.valueOf(30_000));
+        Employee admin = new Employee();
+        when(loanRepository.findByFileNumber("LN-100")).thenReturn(Optional.of(loan));
+        when(loanRepository.save(any(Loan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(employeeRepository.findByEmail("regular-admin@email.com")).thenReturn(admin);
+        when(adminMenuPermissionService.isSuperAdmin("regular-admin@email.com")).thenReturn(false);
+
+        LoanServiceImpl service = new LoanServiceImpl(
+                loanRepository,
+                mock(CustomerRepository.class),
+                employeeRepository,
+                mock(RoleRepository.class),
+                mock(DailyCollectionRepository.class),
+                adminMenuPermissionService
+        );
+
+        service.updateLoan("regular-admin@email.com", loanUpdate(status), "LN-100");
+
+        assertEquals(status, loan.getStatus());
         verify(loanRepository).save(loan);
     }
 

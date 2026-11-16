@@ -270,11 +270,18 @@ public class LoanServiceImpl implements LoanService {
 
         LoanStatus requestedStatus = LoanStatus.valueOf(loanUpdateDto.getStatus());
         boolean statusChanged = loan.getStatus() != requestedStatus;
-        if (statusChanged && !adminMenuPermissionService.isSuperAdmin(username)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Only the Super Admin can update loan status"
-            );
+        if (statusChanged) {
+            boolean isSuperAdmin = adminMenuPermissionService.isSuperAdmin(username);
+            boolean isPendingLoanReview =
+                    loan.getStatus() == LoanStatus.PENDING
+                            && (requestedStatus == LoanStatus.APPROVED
+                            || requestedStatus == LoanStatus.REJECTED);
+            if (!isSuperAdmin && !isPendingLoanReview) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Admins can approve or reject pending loans; other status changes require the Super Admin"
+                );
+            }
         }
 
         Employee employee = employeeRepository.findByEmail(username);

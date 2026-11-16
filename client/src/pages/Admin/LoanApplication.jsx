@@ -36,6 +36,8 @@ const LoanApplication = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [selectedApp, setSelectedApp] = useState(null);
+  const canEditLoanStatus =
+    isSuperAdmin || selectedApp?.status?.toUpperCase() === "PENDING";
   const [showLoan, setShowLoan] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [isUpdatingLoan, setIsUpdatingLoan] = useState(false);
@@ -595,8 +597,9 @@ const LoanApplication = () => {
                             "No updates made"
                           )}
                         </Info>
-
+                        {console.log("selectedApp: ", selectedApp)}
                         <Info label="Approved By">
+
                           {selectedApp.approvedBy?.id ? (
                             <>
                               Id: {selectedApp.approvedBy.nic} <br />
@@ -613,10 +616,10 @@ const LoanApplication = () => {
                           <Info label="Loan End Date">
                             {selectedApp.endAt
                               ? new Date(selectedApp.endAt).toLocaleString("en-LK", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                })
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
                               : "Not Entered"}
                           </Info>
                         </div>
@@ -732,7 +735,7 @@ const LoanApplication = () => {
                     <div className="flex flex-col gap-2">
                       <Label>Status</Label>
                       <select
-                        disabled={!isSuperAdmin}
+                        disabled={!canEditLoanStatus}
                         className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm 
                           focus:outline-none focus:ring-2 focus:ring-black focus:border-black 
                           disabled:opacity-50"
@@ -751,9 +754,14 @@ const LoanApplication = () => {
                           <option value="COMPLETED">COMPLETED</option>
                         )}
                       </select>
-                      {!isSuperAdmin && (
+                      {!isSuperAdmin && selectedApp?.status?.toUpperCase() === "PENDING" && (
                         <p className="text-xs text-gray-500">
-                          Only the Super Admin can change loan status.
+                          Pending loans can be approved or rejected by admins.
+                        </p>
+                      )}
+                      {!isSuperAdmin && selectedApp?.status?.toUpperCase() !== "PENDING" && (
+                        <p className="text-xs text-gray-500">
+                          Only the Super Admin can change this loan's status.
                         </p>
                       )}
                     </div>
