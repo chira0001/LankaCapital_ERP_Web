@@ -2,6 +2,7 @@ package com.lankacapital.server.mappers;
 
 import com.lankacapital.server.dtos.LoanSummaryResponseDto;
 import com.lankacapital.server.entities.Customer;
+import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.Loan;
 import com.lankacapital.server.enums.LoanType;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class LoanMapperTest {
     @Test
@@ -52,5 +54,51 @@ class LoanMapperTest {
         );
 
         assertEquals(BigDecimal.ZERO, summary.getArrearsAmount());
+    }
+
+    @Test
+    void loanResponseMapsEachEmployeeIndependently() {
+        Loan loan = new Loan();
+        loan.setAmount(new BigDecimal("30000.00"));
+        loan.setInterestRate(20.0);
+        loan.setInstallment(60);
+
+        Employee updater = new Employee();
+        updater.setId(12L);
+        updater.setFirstName("Updated");
+        updater.setLastName("By");
+        loan.setUpdatedEmployee(updater);
+
+        Employee approver = new Employee();
+        approver.setId(13L);
+        approver.setFirstName("Approved");
+        approver.setLastName("By");
+        loan.setApprovedEmployee(approver);
+
+        var response = LoanMapper.mapToLoanResponseDto(loan);
+
+        assertNull(response.getEnteredBy());
+        assertEquals(12L, response.getUpdatedBy().getId());
+        assertEquals("Updated", response.getUpdatedBy().getFirstName());
+        assertEquals(13L, response.getApprovedBy().getId());
+        assertEquals("Approved", response.getApprovedBy().getFirstName());
+    }
+
+    @Test
+    void loanResponseMapsCreatorWhenPresent() {
+        Loan loan = new Loan();
+        loan.setAmount(new BigDecimal("30000.00"));
+        loan.setInstallment(60);
+
+        Employee creator = new Employee();
+        creator.setId(11L);
+        creator.setFirstName("Entered");
+        creator.setLastName("By");
+        loan.setCreatedEmployee(creator);
+
+        var response = LoanMapper.mapToLoanResponseDto(loan);
+
+        assertEquals(11L, response.getEnteredBy().getId());
+        assertEquals("Entered", response.getEnteredBy().getFirstName());
     }
 }

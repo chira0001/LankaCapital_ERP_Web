@@ -292,6 +292,7 @@ public class LoanServiceImpl implements LoanService {
         loan.setInterestRate(loanUpdateDto.getInterestRate());
         loan.setInstallment(loanUpdateDto.getInstallment());
         loan.setStatus(requestedStatus);
+        loan.setUpdatedEmployee(employee);
 
         if (statusChanged) {
             if (requestedStatus == LoanStatus.APPROVED) {
@@ -299,10 +300,7 @@ public class LoanServiceImpl implements LoanService {
                 loan.setApprovedAt(LocalDateTime.now());
             } else if (requestedStatus == LoanStatus.PENDING) {
                 loan.setApprovedEmployee(null);
-                loan.setUpdatedEmployee(employee);
                 loan.setApprovedAt(null);
-            } else {
-                loan.setUpdatedEmployee(employee);
             }
         }
 

@@ -74,9 +74,10 @@ class LoanServiceImplTest {
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         AdminMenuPermissionService adminMenuPermissionService = mock(AdminMenuPermissionService.class);
         Loan loan = approvedLoan();
+        Employee regularAdmin = new Employee();
         when(loanRepository.findByFileNumber("LN-100")).thenReturn(Optional.of(loan));
         when(loanRepository.save(any(Loan.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(employeeRepository.findByEmail("regular-admin@email.com")).thenReturn(new Employee());
+        when(employeeRepository.findByEmail("regular-admin@email.com")).thenReturn(regularAdmin);
         when(adminMenuPermissionService.isSuperAdmin("regular-admin@email.com")).thenReturn(false);
 
         LoanServiceImpl service = new LoanServiceImpl(
@@ -94,6 +95,7 @@ class LoanServiceImplTest {
 
         assertEquals(LoanStatus.APPROVED, loan.getStatus());
         assertEquals(BigDecimal.valueOf(45_000), loan.getAmount());
+        assertEquals(regularAdmin, loan.getUpdatedEmployee());
         verify(loanRepository).save(loan);
     }
 
@@ -125,6 +127,7 @@ class LoanServiceImplTest {
 
         assertEquals(LoanStatus.APPROVED, loan.getStatus());
         assertEquals(superAdmin, loan.getApprovedEmployee());
+        assertEquals(superAdmin, loan.getUpdatedEmployee());
         verify(loanRepository).save(loan);
     }
 

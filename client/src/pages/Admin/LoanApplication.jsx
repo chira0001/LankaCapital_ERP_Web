@@ -583,8 +583,14 @@ const LoanApplication = () => {
                         <Info label="Status">{selectedApp.status || "Not available"}</Info>
 
                         <Info label="Entered By">
-                          Id: {selectedApp.enteredBy?.nic} <br />
-                          {selectedApp.enteredBy?.firstName} {selectedApp.enteredBy?.lastName}
+                          {selectedApp.enteredBy?.id ? (
+                            <>
+                              Id: {selectedApp.enteredBy.nic} <br />
+                              {selectedApp.enteredBy.firstName} {selectedApp.enteredBy.lastName}
+                            </>
+                          ) : (
+                            "Not recorded"
+                          )}
                         </Info>
 
                         <Info label="Updated By">
@@ -597,9 +603,7 @@ const LoanApplication = () => {
                             "No updates made"
                           )}
                         </Info>
-                        {console.log("selectedApp: ", selectedApp)}
                         <Info label="Approved By">
-
                           {selectedApp.approvedBy?.id ? (
                             <>
                               Id: {selectedApp.approvedBy.nic} <br />
