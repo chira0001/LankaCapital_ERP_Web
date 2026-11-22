@@ -203,9 +203,9 @@ const LoanApplication = () => {
 
   return (
     <>
-      <div className="flex w-full min-h-screen bg-gray-50">
+      <div className="flex min-w-0 w-full min-h-screen bg-gray-50">
         <ToastContainer position="top-right" autoClose={3000} />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4 sm:mb-6">
               <div>
@@ -262,7 +262,7 @@ const LoanApplication = () => {
                     }}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-gray-900">
                           {app.fileNumber?.slice(0, 8)}
                         </p>
@@ -274,7 +274,7 @@ const LoanApplication = () => {
                         </p>
                       </div>
 
-                      <div className="shrink-0 text-right">
+                      <div className="min-w-0 max-w-[46%] shrink-0 text-right">
                         <span
                           className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${getStatusBadge(
                             app.status
@@ -282,10 +282,10 @@ const LoanApplication = () => {
                         >
                           {(app.status || "").toUpperCase()}
                         </span>
-                        <p className="mt-2 text-xs font-semibold text-gray-900">
+                        <p className="mt-2 break-words text-xs font-semibold text-gray-900">
                           {formatLKR(app.amount)}
                         </p>
-                        <p className="mt-1 text-[11px] text-gray-500">
+                        <p className="mt-1 break-words text-[11px] text-gray-500">
                           {formatLoanDateTime(app.createdAt)}
                         </p>
                       </div>
