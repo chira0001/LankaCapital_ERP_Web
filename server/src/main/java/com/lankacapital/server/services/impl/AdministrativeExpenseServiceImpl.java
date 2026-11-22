@@ -53,6 +53,36 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
     }
 
     @Override
+    public AdministrativeExpenseResponseDto addAdministrativeExpenseByAdmin(
+            AdministrativeExpenseDto administrativeExpenseDto,
+            String username
+    ) {
+        Employee admin = employeeRepository.findByEmail(username);
+        if (admin == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+
+        AdministrativeExpenseCategory category = administrativeExpenseCategoryRepository
+                .findById(administrativeExpenseDto.getCategory())
+                .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Category Not Found"));
+
+        AdministrativeExpense expense = AdministrativeExpenseMapper.mapToAdministrativeExpense(administrativeExpenseDto);
+        expense.setAdministrativeExpenseCategory(category);
+        expense.setRequestEmployee(admin);
+        expense.setUpdatedEmployee(admin);
+        expense.setApprovedEmployee(admin);
+        expense.setRequest(Request.APPROVED);
+
+        if (administrativeExpenseDto.getExpenseDate() != null) {
+            expense.setDateTime(administrativeExpenseDto.getExpenseDate().atStartOfDay());
+        }
+
+        return AdministrativeExpenseMapper.mapToAdministrativeExpenseResponseDto(
+                administrativeExpenseRepository.save(expense)
+        );
+    }
+
+    @Override
     public List<AdministrativeExpenseResponseDto> getAdministrativeExpenseForEmployee(String username) {
 
         Employee requestEmployee = employeeRepository.findByEmail(username);

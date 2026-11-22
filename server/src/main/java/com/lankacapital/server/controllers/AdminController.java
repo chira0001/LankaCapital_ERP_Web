@@ -218,6 +218,23 @@ public class AdminController {
         return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense());
     }
 
+    @PostMapping("/administrative-expenses")
+    public ResponseEntity<?> addAdministrativeExpense(
+            Authentication authentication,
+            @RequestBody AdministrativeExpenseDto administrativeExpenseDto
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                administrativeExpenseService.addAdministrativeExpenseByAdmin(
+                        administrativeExpenseDto,
+                        authentication.getName()
+                ),
+                HttpStatus.CREATED
+        );
+    }
+
     @PutMapping(path = "/administrative-expenses/{id}")
     public ResponseEntity<?> updateAdministrativeExpense(
             Authentication authentication,

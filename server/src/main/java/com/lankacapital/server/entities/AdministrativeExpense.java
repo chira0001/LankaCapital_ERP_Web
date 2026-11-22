@@ -52,6 +52,8 @@ public class AdministrativeExpense {
 
     @PrePersist
     public void update(){
-        this.dateTime = LocalDateTime.now();
+        if (this.dateTime == null) {
+            this.dateTime = LocalDateTime.now();
+        }
     }
 }

@@ -5,7 +5,7 @@ import { Button } from '@/component/ui/button';
 import axiosAPI from '@/api/axiosAPI';
 import * as XLSX from 'xlsx';
 import CreatableSelect from "react-select/creatable";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import { useAdminMenuAccess } from '@/lib/adminMenuAccess';
 
 const formatLKR = (amount) =>
@@ -37,6 +37,8 @@ const AdministrativeExpensePage = () => {
   const [isRowClicked, setIsRowClicked] = useState(false);
   const [administrativeExpenseInfo, setAdministrativeExpenseInfo] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
 
   const [administrativeExpenseCategoryDetails, setAdministrativeExpenseCategoryDetails] = useState([]);
   const [newCategory, setNewCategory] = useState("");
@@ -45,6 +47,13 @@ const AdministrativeExpensePage = () => {
     amount: "",
     narration: "",
     categoryId: ""
+  });
+
+  const [administrativeExpenseAddPayload, setAdministrativeExpenseAddPayload] = useState({
+    amount: "",
+    narration: "",
+    categoryId: "",
+    expenseDate: new Date().toISOString().slice(0, 10)
   });
 
   useEffect(() => {
@@ -107,6 +116,66 @@ const AdministrativeExpensePage = () => {
       console.log(e);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const openAddExpense = () => {
+    setNewCategory("");
+    setAdministrativeExpenseAddPayload({
+      amount: "",
+      narration: "",
+      categoryId: "",
+      expenseDate: new Date().toISOString().slice(0, 10)
+    });
+    setIsAddExpenseOpen(true);
+  };
+
+  const addAdministrativeExpense = async () => {
+    const amount = Number(administrativeExpenseAddPayload.amount);
+    if (!amount || amount <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.narration.trim()) {
+      toast.error("Enter a narration");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.expenseDate) {
+      toast.error("Select the expense date");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.categoryId && !newCategory.trim()) {
+      toast.error("Select or enter a category");
+      return;
+    }
+
+    try {
+      setIsAddingExpense(true);
+      let categoryId = administrativeExpenseAddPayload.categoryId;
+
+      if (newCategory.trim()) {
+        const categoryRes = await axiosAPI.post(
+          `/admin/administrative-expense-categories?newCategory=${encodeURIComponent(newCategory.trim())}`
+        );
+        categoryId = categoryRes.data;
+        await fetchAdministrativeExpenseCategories();
+      }
+
+      await axiosAPI.post("/admin/administrative-expenses", {
+        amount,
+        narration: administrativeExpenseAddPayload.narration.trim(),
+        category: categoryId,
+        expenseDate: administrativeExpenseAddPayload.expenseDate
+      });
+
+      await fetchAdministrativeExpense();
+      setIsAddExpenseOpen(false);
+      setNewCategory("");
+      toast.success("Administrative expense added");
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Failed to add administrative expense");
+    } finally {
+      setIsAddingExpense(false);
     }
   };
 
@@ -195,8 +264,8 @@ const AdministrativeExpensePage = () => {
           </h1>
 
           <Button
-            onClick={handleExportExcel}
-            className="w-full sm:w-auto bg-blue-600 border border-slate-300 hover:bg-slate-100"
+            onClick={openAddExpense}
+            className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700"
           >
             Add Expense
           </Button>
@@ -516,6 +585,91 @@ const AdministrativeExpensePage = () => {
                     Edit Request
                   </button>
                 }
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ADD EXPENSE MODAL */}
+        {isAddExpenseOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-semibold mb-4">Add Administrative Expense</h2>
+
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="text-sm text-slate-500">Expense date</span>
+                  <input
+                    type="date"
+                    value={administrativeExpenseAddPayload.expenseDate}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, expenseDate: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm text-slate-500">Amount</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={administrativeExpenseAddPayload.amount}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, amount: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                    placeholder="0.00"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm text-slate-500">Narration</span>
+                  <textarea
+                    value={administrativeExpenseAddPayload.narration}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, narration: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                    placeholder="Describe the expense"
+                  />
+                </label>
+
+                <div>
+                  <span className="text-sm text-slate-500">Category</span>
+                  <CreatableSelect
+                    className="mt-1"
+                    options={options}
+                    value={options.find(option => option.value === administrativeExpenseAddPayload.categoryId) || null}
+                    onChange={(selectedOption) => {
+                      if (selectedOption?.__isNew__) {
+                        setNewCategory(selectedOption.label);
+                        setAdministrativeExpenseAddPayload(prev => ({ ...prev, categoryId: "" }));
+                      } else {
+                        setNewCategory("");
+                        setAdministrativeExpenseAddPayload(prev => ({ ...prev, categoryId: selectedOption?.value || "" }));
+                      }
+                    }}
+                    placeholder="Select or type category"
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    maxMenuHeight={200}
+                    styles={{ menuPortal: (base) => ({ ...base, zIndex: 60 }) }}
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+                  <button
+                    onClick={() => { setIsAddExpenseOpen(false); setNewCategory(""); }}
+                    disabled={isAddingExpense}
+                    className="px-4 py-2 border rounded w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={addAdministrativeExpense}
+                    disabled={isAddingExpense}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 w-full sm:w-auto"
+                  >
+                    {isAddingExpense ? "Adding..." : "Add Expense"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

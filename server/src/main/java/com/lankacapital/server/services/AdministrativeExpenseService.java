@@ -10,6 +10,7 @@ public interface AdministrativeExpenseService {
 
     BigDecimal getApprovedAdministrativeExpenseTotal();
     AdministrativeExpenseResponseDto addAdministrativeExpense(AdministrativeExpenseDto administrativeExpenseDto, String username);
+    AdministrativeExpenseResponseDto addAdministrativeExpenseByAdmin(AdministrativeExpenseDto administrativeExpenseDto, String username);
     List<AdministrativeExpenseResponseDto> getAdministrativeExpenseForEmployee(String username);
 
     //admin
