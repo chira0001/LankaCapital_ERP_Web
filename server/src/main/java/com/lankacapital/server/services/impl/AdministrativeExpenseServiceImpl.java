@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.AdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdministrativeExpenseResponseDto;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.AdministrativeExpense;
 import com.lankacapital.server.entities.AdministrativeExpenseCategory;
@@ -16,8 +17,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -175,12 +181,24 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
     }
 
     @Override
-    public List<AdministrativeExpenseResponseDto> getAllAdministrativeExpense() {
-
-        return administrativeExpenseRepository.findAll()
-                .stream()
-                .map(AdministrativeExpenseMapper::mapToAdministrativeExpenseResponseDto)
-                .toList();
+    public PageResponse<AdministrativeExpenseResponseDto> getAllAdministrativeExpense(
+            int page,
+            String requester,
+            LocalDate expenseDate
+    ) {
+        int normalizedPage = Math.max(page, 1);
+        LocalDateTime startDate = expenseDate == null ? null : expenseDate.atStartOfDay();
+        LocalDateTime endDate = expenseDate == null ? null : expenseDate.plusDays(1).atStartOfDay();
+        Page<AdministrativeExpense> expensePage = administrativeExpenseRepository.findPageByRequesterAndDate(
+                requester == null ? "" : requester.trim(),
+                startDate,
+                endDate,
+                PageRequest.of(normalizedPage - 1, 10, Sort.by(Sort.Direction.DESC, "dateTime"))
+        );
+        Page<AdministrativeExpenseResponseDto> dtoPage = expensePage.map(
+                AdministrativeExpenseMapper::mapToAdministrativeExpenseResponseDto
+        );
+        return PageResponse.from(dtoPage, normalizedPage);
     }
 
     @Override

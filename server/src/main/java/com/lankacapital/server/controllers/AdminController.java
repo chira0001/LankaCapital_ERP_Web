@@ -214,8 +214,12 @@ public class AdminController {
     //admin interest management
     //administrative expense
     @GetMapping("/administrative-expenses")
-    public ResponseEntity<?>getAllAdministrativeExpense(){
-        return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense());
+    public ResponseEntity<PageResponse<AdministrativeExpenseResponseDto>> getAllAdministrativeExpense(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String requester,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense(page, requester, date));
     }
 
     @PostMapping("/administrative-expenses")

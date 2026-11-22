@@ -5,17 +5,36 @@ import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.AdministrativeExpense;
 import com.lankacapital.server.enums.Request;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface AdministrativeExpenseRepository extends JpaRepository<AdministrativeExpense,Long> {
     List<AdministrativeExpense> findByRequestEmployee(Employee requestEmployee);
     List<AdministrativeExpense>findByRequest(Request request);
+    @Query("""
+        SELECT expense
+        FROM AdministrativeExpense expense
+        WHERE (:requester = '' OR LOWER(CONCAT(
+                    COALESCE(expense.requestEmployee.firstName, ''), ' ',
+                    COALESCE(expense.requestEmployee.lastName, '')
+                )) LIKE LOWER(CONCAT('%', :requester, '%')))
+          AND (:startDate IS NULL OR expense.dateTime >= :startDate)
+          AND (:endDate IS NULL OR expense.dateTime < :endDate)
+        """)
+    Page<AdministrativeExpense> findPageByRequesterAndDate(
+            @Param("requester") String requester,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
 //    List<AdministrativeExpense> findAllByRequestOrderByDateTimeDesc(Request request);
 
     @Query(value = """

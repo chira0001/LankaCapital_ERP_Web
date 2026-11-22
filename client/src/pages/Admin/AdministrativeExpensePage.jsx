@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { Calendar, FileText, Undo2, Trash2 } from 'lucide-react';
 import { Button } from '@/component/ui/button';
@@ -33,6 +33,14 @@ const AdministrativeExpensePage = () => {
   const [administrativeExpenseData, setAdministrativeExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [requesterFilter, setRequesterFilter] = useState("");
+  const [debouncedRequesterFilter, setDebouncedRequesterFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const expenseCacheRef = useRef(new Map());
+  const expenseAbortRef = useRef(null);
 
   const [isRowClicked, setIsRowClicked] = useState(false);
   const [administrativeExpenseInfo, setAdministrativeExpenseInfo] = useState(null);
@@ -58,23 +66,76 @@ const AdministrativeExpensePage = () => {
   });
 
   useEffect(() => {
-    fetchAdministrativeExpense();
     fetchAdministrativeExpenseCategories();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedRequesterFilter(requesterFilter);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [requesterFilter]);
+
+  useEffect(() => {
+    fetchAdministrativeExpense();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, debouncedRequesterFilter, dateFilter]);
 
   const options = administrativeExpenseCategoryDetails.map(cat => ({
     value: cat.id,
     label: cat.categoryName
   }));
 
-  async function fetchAdministrativeExpense() {
-    try {
-      const res = await axiosAPI.get("/admin/administrative-expenses");
-      setAdministrativeExpenseData(res.data);
-    } catch (e) {
-      console.log(e);
-    } finally {
+  function clearExpenseCache() {
+    expenseCacheRef.current.clear();
+  }
+
+  async function fetchAdministrativeExpense({ force = false } = {}) {
+    const cacheKey = `${currentPage}:10:${debouncedRequesterFilter}:${dateFilter}`;
+    if (!force && expenseCacheRef.current.has(cacheKey)) {
+      const cached = expenseCacheRef.current.get(cacheKey);
+      setAdministrativeExpenseData(cached.content);
+      setTotalRecords(cached.totalElements);
+      setTotalPages(cached.totalPages);
       setLoading(false);
+      return;
+    }
+
+    if (expenseAbortRef.current) expenseAbortRef.current.abort();
+    const controller = new AbortController();
+    expenseAbortRef.current = controller;
+    setLoading(true);
+    try {
+      const res = await axiosAPI.get("/admin/administrative-expenses", {
+        params: {
+          page: currentPage,
+          requester: debouncedRequesterFilter || undefined,
+          date: dateFilter || undefined
+        },
+        signal: controller.signal
+      });
+      const data = res.data || {};
+      const content = Array.isArray(data.content) ? data.content : [];
+      const totalElements = Number(data.totalElements) || 0;
+      const pages = Math.max(Number(data.totalPages) || 1, 1);
+
+      setAdministrativeExpenseData(content);
+      setTotalRecords(totalElements);
+      setTotalPages(pages);
+      expenseCacheRef.current.set(cacheKey, { content, totalElements, totalPages: pages });
+      if (currentPage > pages) {
+        setCurrentPage(pages);
+      }
+    } catch (e) {
+      if (e?.name !== "CanceledError" && e?.code !== "ERR_CANCELED") {
+        console.log(e);
+        setAdministrativeExpenseData([]);
+        setTotalRecords(0);
+        setTotalPages(1);
+      }
+    } finally {
+      if (expenseAbortRef.current === controller) setLoading(false);
     }
   }
 
@@ -109,7 +170,8 @@ const AdministrativeExpensePage = () => {
 
       await axiosAPI.put(`/admin/administrative-expenses/${id}`, finalPayload);
 
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
       setIsEdit(false);
       setIsRowClicked(false);
       setNewCategory("");
@@ -169,7 +231,8 @@ const AdministrativeExpensePage = () => {
         expenseDate: administrativeExpenseAddPayload.expenseDate
       });
 
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
       setIsAddExpenseOpen(false);
       setNewCategory("");
       toast.success("Administrative expense added");
@@ -184,7 +247,8 @@ const AdministrativeExpensePage = () => {
     try {
       setActionLoadingId({ action: "approve", id });
       await axiosAPI.put(`/admin/administrative-expenses/approve/${id}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -196,7 +260,8 @@ const AdministrativeExpensePage = () => {
     try {
       setActionLoadingId({ action: "reject", id });
       await axiosAPI.put(`/admin/administrative-expenses/reject/${id}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -209,7 +274,8 @@ const AdministrativeExpensePage = () => {
       setActionLoadingId({ action: "undo", id });
       const username = localStorage.getItem("username");
       await axiosAPI.put(`/admin/administrative-expenses/undo/${id}/${username}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -221,7 +287,8 @@ const AdministrativeExpensePage = () => {
     try {
       setActionLoadingId({ action: "delete", id });
       await axiosAPI.delete(`/admin/administrative-expenses/${id}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
       setExpenseToDelete(null);
       toast.success("Administrative expense deleted");
     } catch (e) {
@@ -259,6 +326,35 @@ const AdministrativeExpensePage = () => {
             Add Expense
           </Button>
         </header>
+
+        <div className="lg:mx-auto lg:max-w-7xl mb-4 grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end sm:p-4">
+          <label className="block">
+            <span className="text-xs font-medium text-slate-500">Requester</span>
+            <input
+              type="search"
+              value={requesterFilter}
+              onChange={(e) => setRequesterFilter(e.target.value)}
+              placeholder="Filter by requester name"
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-500">Expense date</span>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => { setRequesterFilter(""); setDateFilter(""); setCurrentPage(1); }}
+            className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Clear filters
+          </button>
+        </div>
 
         <div className="lg:mx-auto lg:max-w-7xl md:hidden space-y-3">
           {loading ? (
@@ -511,6 +607,35 @@ const AdministrativeExpensePage = () => {
             </div>
           )}
         </div>
+
+        {!loading && (
+          <div className="lg:mx-auto lg:max-w-7xl mt-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-600">
+              {totalRecords === 0
+                ? "No expenses found"
+                : `Showing ${(currentPage - 1) * 10 + 1}-${Math.min(currentPage * 10, totalRecords)} of ${totalRecords} expenses`}
+            </p>
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
+                disabled={currentPage === 1}
+                className="rounded border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-slate-600">Page {currentPage} of {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
+                disabled={currentPage >= totalPages}
+                className="rounded bg-slate-800 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* DETAILS DRAWER */}
         {isRowClicked && administrativeExpenseInfo && (

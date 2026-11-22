@@ -2,8 +2,10 @@ package com.lankacapital.server.services;
 
 import com.lankacapital.server.dtos.AdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdministrativeExpenseResponseDto;
+import com.lankacapital.server.dtos.Common.PageResponse;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AdministrativeExpenseService {
@@ -18,7 +20,7 @@ public interface AdministrativeExpenseService {
     AdministrativeExpenseResponseDto rejectAdministrativeExpense(Long id, String adminUsername);
     List<AdministrativeExpenseResponseDto> getPendingRequests();
 
-    List<AdministrativeExpenseResponseDto> getAllAdministrativeExpense();
+    PageResponse<AdministrativeExpenseResponseDto> getAllAdministrativeExpense(int page, String requester, LocalDate expenseDate);
     AdministrativeExpenseResponseDto updateAdministrativeExpense(String username,Long id, AdministrativeExpenseDto administrativeExpenseDto);
     AdministrativeExpenseResponseDto undoStatus(Long id, String adminUsername);
     void deleteApprovedAdministrativeExpense(Long id, String username);
