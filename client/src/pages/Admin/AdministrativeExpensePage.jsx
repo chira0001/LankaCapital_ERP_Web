@@ -189,7 +189,6 @@ const AdministrativeExpensePage = () => {
         <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            {/* Administrative Expense Requests */}
             Administrative Expense Request
           </h1>
 
@@ -197,8 +196,7 @@ const AdministrativeExpensePage = () => {
             onClick={handleExportExcel}
             className="w-full sm:w-auto bg-blue-600 border border-slate-300 hover:bg-slate-100"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
+            Add Expense
           </Button>
         </header>
 
@@ -551,12 +549,13 @@ const AdministrativeExpensePage = () => {
                 <span className='text-sm text-slate-400'>
                   Current Category :{" "}
                   <span className='text-slate-700 font-bold'>
-                    {administrativeExpenseCategoryDetails.find(cat => cat.id === administrativeExpenseUpdatePayload.categoryId)?.categoryName}
+                    {administrativeExpenseInfo.administrativeExpenseCategory?.categoryName || "Not assigned"}
                   </span>
                 </span>
 
                 <CreatableSelect
                   options={options}
+                  value={options.find(option => option.value === administrativeExpenseUpdatePayload.categoryId) || null}
                   onChange={(selectedOption) => {
                     if (selectedOption.__isNew__) {
                       setNewCategory(selectedOption.label);
@@ -573,6 +572,13 @@ const AdministrativeExpensePage = () => {
                     }
                   }}
                   placeholder="Select or type category"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
+                  maxMenuHeight={200}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 60 })
+                  }}
                 />
 
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
