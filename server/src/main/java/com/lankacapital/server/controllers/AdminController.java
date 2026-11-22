@@ -247,6 +247,18 @@ public class AdminController {
         return new ResponseEntity<>(administrativeExpenseService.updateAdministrativeExpense(authentication.getName(),id,administrativeExpenseDto), HttpStatus.OK);
     }
 
+    @DeleteMapping("/administrative-expenses/{id}")
+    public ResponseEntity<Void> deleteApprovedAdministrativeExpense(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        administrativeExpenseService.deleteApprovedAdministrativeExpense(id, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/administrative-expenses/approve/{id}")
     public ResponseEntity<?>approveAdministrativeExpense(
             @PathVariable Long id,

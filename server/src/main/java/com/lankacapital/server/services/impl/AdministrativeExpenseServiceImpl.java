@@ -213,6 +213,31 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
         return AdministrativeExpenseMapper.mapToAdministrativeExpenseResponseDto(administrativeExpenseRepository.save(administrativeExpense));
     }
 
+    @Override
+    public void deleteApprovedAdministrativeExpense(Long id, String username) {
+        Employee deletingEmployee = employeeRepository.findByEmail(username);
+        if (deletingEmployee == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+        if (!adminMenuPermissionService.isSuperAdmin(deletingEmployee.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can delete an approved administrative expense"
+            );
+        }
+
+        AdministrativeExpense administrativeExpense = administrativeExpenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Not Found"));
+        if (administrativeExpense.getRequest() != Request.APPROVED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only approved administrative expenses can be deleted"
+            );
+        }
+
+        administrativeExpenseRepository.delete(administrativeExpense);
+    }
+
 
     @Override
     public BigDecimal getApprovedAdministrativeExpenseTotal() {

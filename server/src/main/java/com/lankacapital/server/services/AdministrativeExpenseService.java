@@ -21,4 +21,5 @@ public interface AdministrativeExpenseService {
     List<AdministrativeExpenseResponseDto> getAllAdministrativeExpense();
     AdministrativeExpenseResponseDto updateAdministrativeExpense(String username,Long id, AdministrativeExpenseDto administrativeExpenseDto);
     AdministrativeExpenseResponseDto undoStatus(Long id, String adminUsername);
+    void deleteApprovedAdministrativeExpense(Long id, String username);
 }
