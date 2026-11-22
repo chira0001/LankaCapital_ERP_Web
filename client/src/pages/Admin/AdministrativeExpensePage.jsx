@@ -6,6 +6,7 @@ import axiosAPI from '@/api/axiosAPI';
 import * as XLSX from 'xlsx';
 import CreatableSelect from "react-select/creatable";
 import { ToastContainer } from 'react-toastify';
+import { useAdminMenuAccess } from '@/lib/adminMenuAccess';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -28,6 +29,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdministrativeExpensePage = () => {
+  const { isSuperAdmin } = useAdminMenuAccess();
   const [administrativeExpenseData, setAdministrativeExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -506,7 +508,7 @@ const AdministrativeExpensePage = () => {
                 <div>
                   <StatusBadge status={administrativeExpenseInfo.request} />
                 </div>
-                {administrativeExpenseInfo.request != "APPROVED" &&
+                {(administrativeExpenseInfo.request !== "APPROVED" || isSuperAdmin) &&
                   <button
                     onClick={() => setIsEdit(true)}
                     className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-900"

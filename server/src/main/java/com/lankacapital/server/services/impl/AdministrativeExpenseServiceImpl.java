@@ -14,6 +14,8 @@ import com.lankacapital.server.repositories.AdministrativeExpenseRepository;
 import com.lankacapital.server.services.AdministrativeExpenseService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,6 +26,7 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
     private AdministrativeExpenseRepository administrativeExpenseRepository;
     private EmployeeRepository employeeRepository;
     private AdministrativeExpenseCategoryRepository administrativeExpenseCategoryRepository;
+    private AdminMenuPermissionService adminMenuPermissionService;
 
     @Override
     public AdministrativeExpenseResponseDto addAdministrativeExpense(AdministrativeExpenseDto administrativeExpenseDto, String username) {
@@ -156,13 +159,26 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
         AdministrativeExpense administrativeExpense = administrativeExpenseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Not Found"));
 
+        Employee updatingEmployee = employeeRepository.findByEmail(username);
+        if (updatingEmployee == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+
+        if (administrativeExpense.getRequest() == Request.APPROVED
+                && !adminMenuPermissionService.isSuperAdmin(updatingEmployee.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can edit an approved administrative expense"
+            );
+        }
+
         AdministrativeExpenseCategory administrativeExpenseCategory = administrativeExpenseCategoryRepository.findById(administrativeExpenseDto.getCategory())
                 .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Category Not Found"));
 
         administrativeExpense.setAmount(administrativeExpenseDto.getAmount());
         administrativeExpense.setNarration(administrativeExpenseDto.getNarration());
         administrativeExpense.setAdministrativeExpenseCategory(administrativeExpenseCategory);
-        administrativeExpense.setUpdatedEmployee(employeeRepository.findByEmail(username));
+        administrativeExpense.setUpdatedEmployee(updatingEmployee);
 
         return AdministrativeExpenseMapper.mapToAdministrativeExpenseResponseDto(administrativeExpenseRepository.save(administrativeExpense));
     }
