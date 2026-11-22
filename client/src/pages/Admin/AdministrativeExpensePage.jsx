@@ -635,7 +635,9 @@ const AdministrativeExpensePage = () => {
                   <CreatableSelect
                     className="mt-1"
                     options={options}
-                    value={options.find(option => option.value === administrativeExpenseAddPayload.categoryId) || null}
+                    value={newCategory
+                      ? { value: "new-category", label: newCategory }
+                      : options.find(option => option.value === administrativeExpenseAddPayload.categoryId) || null}
                     onChange={(selectedOption) => {
                       if (selectedOption?.__isNew__) {
                         setNewCategory(selectedOption.label);
@@ -711,7 +713,9 @@ const AdministrativeExpensePage = () => {
 
                 <CreatableSelect
                   options={options}
-                  value={options.find(option => option.value === administrativeExpenseUpdatePayload.categoryId) || null}
+                  value={newCategory
+                    ? { value: "new-category", label: newCategory }
+                    : options.find(option => option.value === administrativeExpenseUpdatePayload.categoryId) || null}
                   onChange={(selectedOption) => {
                     if (selectedOption.__isNew__) {
                       setNewCategory(selectedOption.label);
