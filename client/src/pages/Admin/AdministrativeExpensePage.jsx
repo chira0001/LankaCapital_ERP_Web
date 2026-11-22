@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Download, Calendar, FileText, Undo2 } from 'lucide-react';
+import { Calendar, FileText, Undo2, Trash2 } from 'lucide-react';
 import { Button } from '@/component/ui/button';
 import axiosAPI from '@/api/axiosAPI';
-import * as XLSX from 'xlsx';
 import CreatableSelect from "react-select/creatable";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
+import { useAdminMenuAccess } from '@/lib/adminMenuAccess';
+import ActionConfirmationDialog from '@/component/ui/ActionConfirmationDialog';
 
 const formatLKR = (amount) =>
   new Intl.NumberFormat('en-LK', {
@@ -28,13 +29,25 @@ const StatusBadge = ({ status }) => {
 };
 
 const AdministrativeExpensePage = () => {
+  const { isSuperAdmin } = useAdminMenuAccess();
   const [administrativeExpenseData, setAdministrativeExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [requesterFilter, setRequesterFilter] = useState("");
+  const [debouncedRequesterFilter, setDebouncedRequesterFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const expenseCacheRef = useRef(new Map());
+  const expenseAbortRef = useRef(null);
 
   const [isRowClicked, setIsRowClicked] = useState(false);
   const [administrativeExpenseInfo, setAdministrativeExpenseInfo] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
 
   const [administrativeExpenseCategoryDetails, setAdministrativeExpenseCategoryDetails] = useState([]);
   const [newCategory, setNewCategory] = useState("");
@@ -45,35 +58,95 @@ const AdministrativeExpensePage = () => {
     categoryId: ""
   });
 
+  const [administrativeExpenseAddPayload, setAdministrativeExpenseAddPayload] = useState({
+    amount: "",
+    narration: "",
+    categoryId: "",
+    expenseDate: new Date().toISOString().slice(0, 10)
+  });
+
   useEffect(() => {
-    fetchAdministrativeExpense();
     fetchAdministrativeExpenseCategories();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedRequesterFilter(requesterFilter);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [requesterFilter]);
+
+  useEffect(() => {
+    fetchAdministrativeExpense();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, debouncedRequesterFilter, dateFilter]);
 
   const options = administrativeExpenseCategoryDetails.map(cat => ({
     value: cat.id,
     label: cat.categoryName
   }));
 
-  const fetchAdministrativeExpense = async () => {
-    try {
-      const res = await axiosAPI.get("/admin/administrative-expenses");
-      setAdministrativeExpenseData(res.data);
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  function clearExpenseCache() {
+    expenseCacheRef.current.clear();
+  }
 
-  const fetchAdministrativeExpenseCategories = async () => {
+  async function fetchAdministrativeExpense({ force = false } = {}) {
+    const cacheKey = `${currentPage}:10:${debouncedRequesterFilter}:${dateFilter}`;
+    if (!force && expenseCacheRef.current.has(cacheKey)) {
+      const cached = expenseCacheRef.current.get(cacheKey);
+      setAdministrativeExpenseData(cached.content);
+      setTotalRecords(cached.totalElements);
+      setTotalPages(cached.totalPages);
+      setLoading(false);
+      return;
+    }
+
+    if (expenseAbortRef.current) expenseAbortRef.current.abort();
+    const controller = new AbortController();
+    expenseAbortRef.current = controller;
+    setLoading(true);
+    try {
+      const res = await axiosAPI.get("/admin/administrative-expenses", {
+        params: {
+          page: currentPage,
+          requester: debouncedRequesterFilter || undefined,
+          date: dateFilter || undefined
+        },
+        signal: controller.signal
+      });
+      const data = res.data || {};
+      const content = Array.isArray(data.content) ? data.content : [];
+      const totalElements = Number(data.totalElements) || 0;
+      const pages = Math.max(Number(data.totalPages) || 1, 1);
+
+      setAdministrativeExpenseData(content);
+      setTotalRecords(totalElements);
+      setTotalPages(pages);
+      expenseCacheRef.current.set(cacheKey, { content, totalElements, totalPages: pages });
+      if (currentPage > pages) {
+        setCurrentPage(pages);
+      }
+    } catch (e) {
+      if (e?.name !== "CanceledError" && e?.code !== "ERR_CANCELED") {
+        console.log(e);
+        setAdministrativeExpenseData([]);
+        setTotalRecords(0);
+        setTotalPages(1);
+      }
+    } finally {
+      if (expenseAbortRef.current === controller) setLoading(false);
+    }
+  }
+
+  async function fetchAdministrativeExpenseCategories() {
     try {
       const res = await axiosAPI.get("/admin/administrative-expense-categories");
       setAdministrativeExpenseCategoryDetails(res.data);
     } catch (e) {
       console.log(e);
     }
-  };
+  }
 
   const updateAdministrativeExpenseRequest = async (id) => {
     try {
@@ -97,7 +170,8 @@ const AdministrativeExpensePage = () => {
 
       await axiosAPI.put(`/admin/administrative-expenses/${id}`, finalPayload);
 
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
       setIsEdit(false);
       setIsRowClicked(false);
       setNewCategory("");
@@ -108,11 +182,73 @@ const AdministrativeExpensePage = () => {
     }
   };
 
+  const openAddExpense = () => {
+    setNewCategory("");
+    setAdministrativeExpenseAddPayload({
+      amount: "",
+      narration: "",
+      categoryId: "",
+      expenseDate: new Date().toISOString().slice(0, 10)
+    });
+    setIsAddExpenseOpen(true);
+  };
+
+  const addAdministrativeExpense = async () => {
+    const amount = Number(administrativeExpenseAddPayload.amount);
+    if (!amount || amount <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.narration.trim()) {
+      toast.error("Enter a narration");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.expenseDate) {
+      toast.error("Select the expense date");
+      return;
+    }
+    if (!administrativeExpenseAddPayload.categoryId && !newCategory.trim()) {
+      toast.error("Select or enter a category");
+      return;
+    }
+
+    try {
+      setIsAddingExpense(true);
+      let categoryId = administrativeExpenseAddPayload.categoryId;
+
+      if (newCategory.trim()) {
+        const categoryRes = await axiosAPI.post(
+          `/admin/administrative-expense-categories?newCategory=${encodeURIComponent(newCategory.trim())}`
+        );
+        categoryId = categoryRes.data;
+        await fetchAdministrativeExpenseCategories();
+      }
+
+      await axiosAPI.post("/admin/administrative-expenses", {
+        amount,
+        narration: administrativeExpenseAddPayload.narration.trim(),
+        category: categoryId,
+        expenseDate: administrativeExpenseAddPayload.expenseDate
+      });
+
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
+      setIsAddExpenseOpen(false);
+      setNewCategory("");
+      toast.success("Administrative expense added");
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Failed to add administrative expense");
+    } finally {
+      setIsAddingExpense(false);
+    }
+  };
+
   const approve = async (id) => {
     try {
       setActionLoadingId({ action: "approve", id });
       await axiosAPI.put(`/admin/administrative-expenses/approve/${id}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -124,7 +260,8 @@ const AdministrativeExpensePage = () => {
     try {
       setActionLoadingId({ action: "reject", id });
       await axiosAPI.put(`/admin/administrative-expenses/reject/${id}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -137,7 +274,8 @@ const AdministrativeExpensePage = () => {
       setActionLoadingId({ action: "undo", id });
       const username = localStorage.getItem("username");
       await axiosAPI.put(`/admin/administrative-expenses/undo/${id}/${username}`);
-      await fetchAdministrativeExpense();
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
     } catch (e) {
       console.log(e);
     } finally {
@@ -145,30 +283,19 @@ const AdministrativeExpensePage = () => {
     }
   };
 
-  const handleExportExcel = () => {
-    const exportData = administrativeExpenseData
-      .filter(item => item.request === "APPROVED")
-      .map(item => ({
-        Date: new Date(item.dateTime).toLocaleDateString(),
-        Amount: item.amount,
-        Narration: item.narration || '',
-        Category: item.administrativeExpenseCategory?.categoryName || '',
-        Requested_By: item.requestEmployee
-          ? `${item.requestEmployee.firstName} ${item.requestEmployee.lastName}`
-          : 'N/A',
-        Updated_By: item.updatedEmployee
-          ? `${item.updatedEmployee.firstName} ${item.updatedEmployee.lastName}`
-          : 'N/A',
-        Approved_By: item.approvedEmployee
-          ? `${item.approvedEmployee.firstName} ${item.approvedEmployee.lastName}`
-          : 'N/A',
-        Status: item.request
-      }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Administrative Expense');
-    XLSX.writeFile(wb, `AdministrativeExpense_${new Date().toISOString().split('T')[0]}.xlsx`);
+  const deleteApprovedExpense = async (id) => {
+    try {
+      setActionLoadingId({ action: "delete", id });
+      await axiosAPI.delete(`/admin/administrative-expenses/${id}`);
+      clearExpenseCache();
+      await fetchAdministrativeExpense({ force: true });
+      setExpenseToDelete(null);
+      toast.success("Administrative expense deleted");
+    } catch (e) {
+      toast.error(e.response?.data?.message || "Failed to delete administrative expense");
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   const openDetails = (record) => {
@@ -189,18 +316,45 @@ const AdministrativeExpensePage = () => {
         <header className="max-w-7xl mx-auto mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end border-b pb-4">
           <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            {/* Administrative Expense Requests */}
             Administrative Expense Request
           </h1>
 
           <Button
-            onClick={handleExportExcel}
-            className="w-full sm:w-auto bg-blue-600 border border-slate-300 hover:bg-slate-100"
+            onClick={openAddExpense}
+            className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
+            Add Expense
           </Button>
         </header>
+
+        <div className="lg:mx-auto lg:max-w-7xl mb-4 grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end sm:p-4">
+          <label className="block">
+            <span className="text-xs font-medium text-slate-500">Requester</span>
+            <input
+              type="search"
+              value={requesterFilter}
+              onChange={(e) => setRequesterFilter(e.target.value)}
+              placeholder="Filter by requester name"
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-500">Expense date</span>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => { setRequesterFilter(""); setDateFilter(""); setCurrentPage(1); }}
+            className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Clear filters
+          </button>
+        </div>
 
         <div className="lg:mx-auto lg:max-w-7xl md:hidden space-y-3">
           {loading ? (
@@ -289,7 +443,17 @@ const AdministrativeExpensePage = () => {
                           : "Reject"}
                       </button>
                     </div>
-                  ) : (
+                  ) : record.request === "APPROVED" && isSuperAdmin ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setExpenseToDelete(record.id); }}
+                      className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded"
+                    >
+                      <Trash2 className="w-3 h-3 inline mr-1" />
+                      {actionLoadingId?.action === "delete" && actionLoadingId?.id === record.id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+                  ) : record.request === "REJECTED" ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); undo(record.id); }}
                       className="px-3 py-1.5 text-xs bg-slate-100 rounded"
@@ -299,7 +463,7 @@ const AdministrativeExpensePage = () => {
                         ? "Undoing..."
                         : "Undo"}
                     </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )))
@@ -414,8 +578,17 @@ const AdministrativeExpensePage = () => {
                                 : "Reject"}
                             </button>
                           </div>
-                        ) : (
-                          record.request != "APPROVED" &&
+                        ) : record.request === "APPROVED" && isSuperAdmin ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setExpenseToDelete(record.id); }}
+                            className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded"
+                          >
+                            <Trash2 className="w-3 h-3 inline mr-1" />
+                            {/* {actionLoadingId?.action === "delete" && actionLoadingId?.id === record.id
+                              ? "Deleting..."
+                              : "Delete"} */}
+                          </button>
+                        ) : record.request === "REJECTED" ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); undo(record.id); }}
                             className="px-3 py-1 text-xs bg-slate-100 rounded"
@@ -425,7 +598,7 @@ const AdministrativeExpensePage = () => {
                               ? "Undoing..."
                               : "Undo"}
                           </button>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   ))}
@@ -434,6 +607,35 @@ const AdministrativeExpensePage = () => {
             </div>
           )}
         </div>
+
+        {!loading && (
+          <div className="lg:mx-auto lg:max-w-7xl mt-4 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-600">
+              {totalRecords === 0
+                ? "No expenses found"
+                : `Showing ${(currentPage - 1) * 10 + 1}-${Math.min(currentPage * 10, totalRecords)} of ${totalRecords} expenses`}
+            </p>
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
+                disabled={currentPage === 1}
+                className="rounded border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-slate-600">Page {currentPage} of {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
+                disabled={currentPage >= totalPages}
+                className="rounded bg-slate-800 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* DETAILS DRAWER */}
         {isRowClicked && administrativeExpenseInfo && (
@@ -508,7 +710,7 @@ const AdministrativeExpensePage = () => {
                 <div>
                   <StatusBadge status={administrativeExpenseInfo.request} />
                 </div>
-                {administrativeExpenseInfo.request != "APPROVED" &&
+                {(administrativeExpenseInfo.request !== "APPROVED" || isSuperAdmin) &&
                   <button
                     onClick={() => setIsEdit(true)}
                     className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-900"
@@ -516,6 +718,93 @@ const AdministrativeExpensePage = () => {
                     Edit Request
                   </button>
                 }
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ADD EXPENSE MODAL */}
+        {isAddExpenseOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-semibold mb-4">Add Administrative Expense</h2>
+
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="text-sm text-slate-500">Expense date</span>
+                  <input
+                    type="date"
+                    value={administrativeExpenseAddPayload.expenseDate}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, expenseDate: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm text-slate-500">Amount</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={administrativeExpenseAddPayload.amount}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, amount: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                    placeholder="0.00"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm text-slate-500">Narration</span>
+                  <textarea
+                    value={administrativeExpenseAddPayload.narration}
+                    onChange={(e) => setAdministrativeExpenseAddPayload(prev => ({ ...prev, narration: e.target.value }))}
+                    className="mt-1 w-full border rounded px-3 py-2"
+                    placeholder="Describe the expense"
+                  />
+                </label>
+
+                <div>
+                  <span className="text-sm text-slate-500">Category</span>
+                  <CreatableSelect
+                    className="mt-1"
+                    options={options}
+                    value={newCategory
+                      ? { value: "new-category", label: newCategory }
+                      : options.find(option => option.value === administrativeExpenseAddPayload.categoryId) || null}
+                    onChange={(selectedOption) => {
+                      if (selectedOption?.__isNew__) {
+                        setNewCategory(selectedOption.label);
+                        setAdministrativeExpenseAddPayload(prev => ({ ...prev, categoryId: "" }));
+                      } else {
+                        setNewCategory("");
+                        setAdministrativeExpenseAddPayload(prev => ({ ...prev, categoryId: selectedOption?.value || "" }));
+                      }
+                    }}
+                    placeholder="Select or type category"
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    maxMenuHeight={200}
+                    styles={{ menuPortal: (base) => ({ ...base, zIndex: 60 }) }}
+                  />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+                  <button
+                    onClick={() => { setIsAddExpenseOpen(false); setNewCategory(""); }}
+                    disabled={isAddingExpense}
+                    className="px-4 py-2 border rounded w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={addAdministrativeExpense}
+                    disabled={isAddingExpense}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 w-full sm:w-auto"
+                  >
+                    {isAddingExpense ? "Adding..." : "Add Expense"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -551,12 +840,15 @@ const AdministrativeExpensePage = () => {
                 <span className='text-sm text-slate-400'>
                   Current Category :{" "}
                   <span className='text-slate-700 font-bold'>
-                    {administrativeExpenseCategoryDetails.find(cat => cat.id === administrativeExpenseUpdatePayload.categoryId)?.categoryName}
+                    {administrativeExpenseInfo.administrativeExpenseCategory?.categoryName || "Not assigned"}
                   </span>
                 </span>
 
                 <CreatableSelect
                   options={options}
+                  value={newCategory
+                    ? { value: "new-category", label: newCategory }
+                    : options.find(option => option.value === administrativeExpenseUpdatePayload.categoryId) || null}
                   onChange={(selectedOption) => {
                     if (selectedOption.__isNew__) {
                       setNewCategory(selectedOption.label);
@@ -573,6 +865,13 @@ const AdministrativeExpensePage = () => {
                     }
                   }}
                   placeholder="Select or type category"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                  menuPlacement="auto"
+                  maxMenuHeight={200}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 60 })
+                  }}
                 />
 
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
@@ -597,6 +896,18 @@ const AdministrativeExpensePage = () => {
         )}
 
       </div>
+      <ActionConfirmationDialog
+        open={expenseToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setExpenseToDelete(null);
+        }}
+        title="Confirm Expense Deletion"
+        description="Are you sure you want to delete this approved administrative expense? This cannot be undone."
+        confirmLabel="Delete"
+        pendingLabel="Deleting..."
+        pending={actionLoadingId?.action === "delete"}
+        onConfirm={() => deleteApprovedExpense(expenseToDelete)}
+      />
     </>
   );
 };

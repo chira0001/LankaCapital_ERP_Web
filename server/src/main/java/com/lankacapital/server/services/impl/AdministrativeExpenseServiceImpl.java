@@ -2,6 +2,7 @@ package com.lankacapital.server.services.impl;
 
 import com.lankacapital.server.dtos.AdministrativeExpenseDto;
 import com.lankacapital.server.dtos.AdministrativeExpenseResponseDto;
+import com.lankacapital.server.dtos.Common.PageResponse;
 import com.lankacapital.server.entities.Employee;
 import com.lankacapital.server.entities.AdministrativeExpense;
 import com.lankacapital.server.entities.AdministrativeExpenseCategory;
@@ -14,8 +15,15 @@ import com.lankacapital.server.repositories.AdministrativeExpenseRepository;
 import com.lankacapital.server.services.AdministrativeExpenseService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -24,6 +32,7 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
     private AdministrativeExpenseRepository administrativeExpenseRepository;
     private EmployeeRepository employeeRepository;
     private AdministrativeExpenseCategoryRepository administrativeExpenseCategoryRepository;
+    private AdminMenuPermissionService adminMenuPermissionService;
 
     @Override
     public AdministrativeExpenseResponseDto addAdministrativeExpense(AdministrativeExpenseDto administrativeExpenseDto, String username) {
@@ -47,6 +56,36 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
         } catch (RuntimeException e) {
             throw new RuntimeException("Administrative expense submission failed");
         }
+    }
+
+    @Override
+    public AdministrativeExpenseResponseDto addAdministrativeExpenseByAdmin(
+            AdministrativeExpenseDto administrativeExpenseDto,
+            String username
+    ) {
+        Employee admin = employeeRepository.findByEmail(username);
+        if (admin == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+
+        AdministrativeExpenseCategory category = administrativeExpenseCategoryRepository
+                .findById(administrativeExpenseDto.getCategory())
+                .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Category Not Found"));
+
+        AdministrativeExpense expense = AdministrativeExpenseMapper.mapToAdministrativeExpense(administrativeExpenseDto);
+        expense.setAdministrativeExpenseCategory(category);
+        expense.setRequestEmployee(admin);
+        expense.setUpdatedEmployee(admin);
+        expense.setApprovedEmployee(admin);
+        expense.setRequest(Request.APPROVED);
+
+        if (administrativeExpenseDto.getExpenseDate() != null) {
+            expense.setDateTime(administrativeExpenseDto.getExpenseDate().atStartOfDay());
+        }
+
+        return AdministrativeExpenseMapper.mapToAdministrativeExpenseResponseDto(
+                administrativeExpenseRepository.save(expense)
+        );
     }
 
     @Override
@@ -142,12 +181,24 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
     }
 
     @Override
-    public List<AdministrativeExpenseResponseDto> getAllAdministrativeExpense() {
-
-        return administrativeExpenseRepository.findAll()
-                .stream()
-                .map(AdministrativeExpenseMapper::mapToAdministrativeExpenseResponseDto)
-                .toList();
+    public PageResponse<AdministrativeExpenseResponseDto> getAllAdministrativeExpense(
+            int page,
+            String requester,
+            LocalDate expenseDate
+    ) {
+        int normalizedPage = Math.max(page, 1);
+        LocalDateTime startDate = expenseDate == null ? null : expenseDate.atStartOfDay();
+        LocalDateTime endDate = expenseDate == null ? null : expenseDate.plusDays(1).atStartOfDay();
+        Page<AdministrativeExpense> expensePage = administrativeExpenseRepository.findPageByRequesterAndDate(
+                requester == null ? "" : requester.trim(),
+                startDate,
+                endDate,
+                PageRequest.of(normalizedPage - 1, 10, Sort.by(Sort.Direction.DESC, "dateTime"))
+        );
+        Page<AdministrativeExpenseResponseDto> dtoPage = expensePage.map(
+                AdministrativeExpenseMapper::mapToAdministrativeExpenseResponseDto
+        );
+        return PageResponse.from(dtoPage, normalizedPage);
     }
 
     @Override
@@ -156,15 +207,53 @@ public class AdministrativeExpenseServiceImpl implements AdministrativeExpenseSe
         AdministrativeExpense administrativeExpense = administrativeExpenseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Not Found"));
 
+        Employee updatingEmployee = employeeRepository.findByEmail(username);
+        if (updatingEmployee == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+
+        if (administrativeExpense.getRequest() == Request.APPROVED
+                && !adminMenuPermissionService.isSuperAdmin(updatingEmployee.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can edit an approved administrative expense"
+            );
+        }
+
         AdministrativeExpenseCategory administrativeExpenseCategory = administrativeExpenseCategoryRepository.findById(administrativeExpenseDto.getCategory())
                 .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Category Not Found"));
 
         administrativeExpense.setAmount(administrativeExpenseDto.getAmount());
         administrativeExpense.setNarration(administrativeExpenseDto.getNarration());
         administrativeExpense.setAdministrativeExpenseCategory(administrativeExpenseCategory);
-        administrativeExpense.setUpdatedEmployee(employeeRepository.findByEmail(username));
+        administrativeExpense.setUpdatedEmployee(updatingEmployee);
 
         return AdministrativeExpenseMapper.mapToAdministrativeExpenseResponseDto(administrativeExpenseRepository.save(administrativeExpense));
+    }
+
+    @Override
+    public void deleteApprovedAdministrativeExpense(Long id, String username) {
+        Employee deletingEmployee = employeeRepository.findByEmail(username);
+        if (deletingEmployee == null) {
+            throw new ResourceNotFoundException("Employee verification not found");
+        }
+        if (!adminMenuPermissionService.isSuperAdmin(deletingEmployee.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only the super admin can delete an approved administrative expense"
+            );
+        }
+
+        AdministrativeExpense administrativeExpense = administrativeExpenseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Administrative Expense Not Found"));
+        if (administrativeExpense.getRequest() != Request.APPROVED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only approved administrative expenses can be deleted"
+            );
+        }
+
+        administrativeExpenseRepository.delete(administrativeExpense);
     }
 
 

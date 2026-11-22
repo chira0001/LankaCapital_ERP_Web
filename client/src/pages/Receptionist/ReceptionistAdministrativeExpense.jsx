@@ -118,6 +118,10 @@ const ReceptionistAdministrativeExpense = () => {
     // ================= EDIT =================
 
     const handleRowClick = (item) => {
+        if (item.request === "APPROVED") {
+            return;
+        }
+
         setSelectedAdministrativeExpenseId(item.id);
         setAdministrativeExpenseUpdatePayload({
             narration: item.narration,
@@ -326,7 +330,9 @@ const ReceptionistAdministrativeExpense = () => {
                         <tr
                             key={item.id}
                             onClick={() => handleRowClick(item)}
-                            className="hover:bg-blue-50 cursor-pointer transition"
+                            className={item.request === "APPROVED"
+                                ? "cursor-default"
+                                : "hover:bg-blue-50 cursor-pointer transition"}
                         >
                             <td className="px-6 py-4 font-medium text-gray-800">
                                 Rs. {parseFloat(item.amount).toFixed(2)}

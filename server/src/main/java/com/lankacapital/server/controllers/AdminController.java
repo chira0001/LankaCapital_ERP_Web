@@ -214,8 +214,29 @@ public class AdminController {
     //admin interest management
     //administrative expense
     @GetMapping("/administrative-expenses")
-    public ResponseEntity<?>getAllAdministrativeExpense(){
-        return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense());
+    public ResponseEntity<PageResponse<AdministrativeExpenseResponseDto>> getAllAdministrativeExpense(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String requester,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(administrativeExpenseService.getAllAdministrativeExpense(page, requester, date));
+    }
+
+    @PostMapping("/administrative-expenses")
+    public ResponseEntity<?> addAdministrativeExpense(
+            Authentication authentication,
+            @RequestBody AdministrativeExpenseDto administrativeExpenseDto
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        return new ResponseEntity<>(
+                administrativeExpenseService.addAdministrativeExpenseByAdmin(
+                        administrativeExpenseDto,
+                        authentication.getName()
+                ),
+                HttpStatus.CREATED
+        );
     }
 
     @PutMapping(path = "/administrative-expenses/{id}")
@@ -228,6 +249,18 @@ public class AdminController {
             throw new ResourceNotFoundException("Token is invalid");
         }
         return new ResponseEntity<>(administrativeExpenseService.updateAdministrativeExpense(authentication.getName(),id,administrativeExpenseDto), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/administrative-expenses/{id}")
+    public ResponseEntity<Void> deleteApprovedAdministrativeExpense(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        if (authentication == null || authentication.getName().isEmpty()) {
+            throw new ResourceNotFoundException("Token is invalid");
+        }
+        administrativeExpenseService.deleteApprovedAdministrativeExpense(id, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/administrative-expenses/approve/{id}")
